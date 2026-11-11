@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Latchkey: secrets for your Mac and your coding agents</title>
-  <meta name="description" content="Keep latchkey:// references in your project files and the values in iCloud Keychain. Latchkey fills them in when a command starts, after you approve with Touch ID.">
+  <meta name="description" content="Stop keeping secrets in .env files. Let coding agents use your keys without holding them. Keep every key in one place, on every Mac, with its history.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Latchkey">
   <meta property="og:title" content="Latchkey: secrets for your Mac and your coding agents">
-  <meta property="og:description" content="References in your files, values in iCloud Keychain, and Touch ID before anything is shared.">
+  <meta property="og:description" content="No more .env files. Agents use your keys without holding them. Every key in one place, on every Mac.">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
@@ -53,6 +53,9 @@
     .panel .btn { white-space: nowrap; padding: 6px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 13px; }
     .panel .btn.go { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
 
+    .pillars { list-style: none; margin: 56px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .pillars li { padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); border-top: 3px solid var(--accent); }
+    .pillars p { color: var(--muted); font-size: 16px; margin: 0; }
     .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 28px; }
     .compare figure.code { margin: 0; }
     .compare .bad figcaption { color: var(--warn); }
@@ -88,6 +91,7 @@
     @media (max-width: 900px) {
       .hero, .split { grid-template-columns: 1fr; }
       .steps, .grid { grid-template-columns: 1fr 1fr; }
+      .pillars { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
       section { padding-top: 56px; }
@@ -118,7 +122,7 @@
       <div>
         <p class="eyebrow">For macOS</p>
         <h1>Secrets for your Mac and your coding agents</h1>
-        <p class="lede">Your project files keep references. iCloud Keychain keeps the values. Latchkey fills them in when a command starts, and asks you first.</p>
+        <p class="lede">Stop keeping secrets in <code>.env</code> files. Let your agents use your keys without holding them. Keep every key in one place, on every Mac, with its history.</p>
         <div class="cta">
           <a class="button primary" href="#download">Download for Mac</a>
           <a class="button secondary" href="#how">How it works</a>
@@ -149,6 +153,12 @@
         </div>
       </div>
     </div>
+
+    <ul class="pillars" aria-label="What Latchkey does">
+      <li><h3>No more <code>.env</code> files</h3><p>Commands get their keys as they start: <code>lk run --env shop/development -- npm test</code>. A file, if you keep one, holds only <code>latchkey://</code> references.</p></li>
+      <li><h3>Agents use your keys, not hold them</h3><p>You decide which keys, in which folder, for how long. Everything else asks you first, and every use is logged.</p></li>
+      <li><h3>Every key in one place</h3><p>On every Mac you use, through iCloud Keychain, with the last 10 values of each and 30 days to undo a delete.</p></li>
+    </ul>
 
     <section aria-labelledby="files">
       <p class="eyebrow">The problem</p>
