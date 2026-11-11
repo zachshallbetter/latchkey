@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Approvals
+- One prompt at a time. A change asks with the macOS Touch ID sheet alone ("Latchkey is trying to add
+  shop/development/DB, asked by Claude in ~/Projects/shop"); its Details… button opens the panel with everything.
+  Releasing values, grants, earlier values and pushes show the panel first and ask for Touch ID after you choose.
+  Before, the panel and the system sheet appeared together.
+- Panels name the agent ("Claude wants to use 2 items"), with the process chain under "Asked by".
+- An unanswered sheet denies without opening the panel.
+- A plain-text export no longer offers "Allow from this folder", which it couldn't honour.
+
 ### App Store groundwork
 - The store experiment has a dedicated, mutually authenticated CLI endpoint. Commands continue to run in the
   terminal CLI; channel selection never falls back to another broker. Dynamic Security.framework identity checks

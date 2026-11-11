@@ -60,7 +60,7 @@ still need agent-safe, a grant or your approval.
 
 ## Approvals
 
-Reading an item asks you, unless it's agent-safe or covered by a grant. The approval panel shows:
+Reading an item asks you, unless it's agent-safe or covered by a grant. The approval panel shows, before Touch ID:
 
 - the items,
 - the program asking and its parents (for example `zsh › claude`),

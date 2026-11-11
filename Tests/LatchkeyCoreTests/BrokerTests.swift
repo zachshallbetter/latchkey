@@ -49,14 +49,39 @@ final class BrokerTests: XCTestCase {
         XCTAssertEqual(allow.handle(Request(op: "rm", names: ["DB_PASS"]), peer: peer).missing, ["DB_PASS"])
     }
 
-    func testTheTouchIDLineSaysWhatNotWho() {
-        var r = ApprovalRequest(action: .add, names: ["shop/development/DB"], chain: ["zsh", "claude"], folder: "/tmp/shop",
-                                reason: "add shop/development/DB, asked by zsh › claude in /tmp/shop (running latchkey set shop/development/DB)")
-        XCTAssertEqual(r.touchIDReason, "add shop/development/DB")
-        r.sessionName = "claude"
-        XCTAssertEqual(r.touchIDReason, "add shop/development/DB for claude")
+    func testTheTouchIDLineSaysWhatWhoAndWhere() {
+        var r = ApprovalRequest(action: .add, names: ["shop/development/DB"], chain: ["zsh", "claude", "disclaimer", "Claude"],
+                                folder: NSHomeDirectory() + "/Projects/shop",
+                                reason: "add shop/development/DB, asked by zsh › claude in ~/Projects/shop (running latchkey set shop/development/DB)")
+        XCTAssertEqual(r.asker, "Claude", "the nearest program that isn't a shell")
+        r.sessionName = "codex"
+        XCTAssertEqual(r.touchIDReason, "add shop/development/DB, asked by Codex in ~/Projects/shop")
+        var read = ApprovalRequest(action: .read, names: ["A", "B"], chain: ["zsh", "claude"], folder: "/tmp/x", reason: "release A and B, asked by zsh")
+        XCTAssertEqual(read.touchIDReason, "give A and B to Claude in /tmp/x")
+        read.fromApp = true
+        XCTAssertEqual(read.touchIDReason, "release A and B", "the window asking for itself names no one")
         let fill = ApprovalRequest(action: .read, names: ["A"], chain: [], folder: "", reason: "fill A into a field on vercel.com")
-        XCTAssertEqual(fill.touchIDReason, "fill A into a field on vercel.com", "a reason without a caller is kept whole")
+        XCTAssertEqual(fill.touchIDReason, "fill A into a field on vercel.com")
+    }
+
+    func testOnlyChangesWithoutWarningsGoStraightToTheSheet() {
+        func req(_ a: ApprovalRequest.Action) -> ApprovalRequest { ApprovalRequest(action: a, names: ["A"], chain: ["zsh"], folder: "/tmp", reason: "r") }
+        for a in [ApprovalRequest.Action.add, .change, .delete, .importItems, .move, .restore, .link] { XCTAssertTrue(req(a).sheetFirst, "\(a)") }
+        for a in [ApprovalRequest.Action.read, .readVersion, .grant, .push] { XCTAssertFalse(req(a).sheetFirst, "\(a)") }
+        var foreign = req(.delete); foreign.program = "/tmp/evil"
+        XCTAssertFalse(foreign.sheetFirst, "a program that isn't Latchkey's tool: its warning comes first")
+        var ssh = req(.add); ssh.overSSH = true
+        XCTAssertFalse(ssh.sheetFirst)
+    }
+
+    func testOnlyAReleaseOffersAGrant() throws {
+        let approver = RecordingApprover()
+        let store = MemoryStore()
+        try store.save(name: "A", value: "a", kind: .token, agentSafe: false, note: "")
+        let b = Broker(store: store, approver: approver, logURL: nil)
+        _ = b.handle(Request(op: "get", names: ["A"]), peer: peer)
+        _ = b.handle(Request(op: "export", names: ["A"], destination: "/tmp/project/.env"), peer: peer)
+        XCTAssertEqual(approver.requests.map(\.canGrant), [true, false], "an export asks like a read but can't become a grant")
     }
 
     func testDescribeUsesTheKernelsViewNotTheRequest() {
