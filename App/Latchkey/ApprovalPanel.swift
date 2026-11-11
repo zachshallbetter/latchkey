@@ -107,6 +107,18 @@ struct ApprovalView: View {
                     Text("Latchkey").font(.callout).foregroundStyle(.secondary)
                 }
             }
+            if request.overSSH {
+                VStack(alignment: .leading, spacing: 4) {
+                    Label("From another computer, through your SSH connection", systemImage: "network")
+                        .foregroundStyle(.orange).font(.callout.weight(.semibold))
+                    if let r = request.remote {
+                        Text("It says it's \(r.host), running \(r.command) in \(r.cwd). Latchkey can't check that.")
+                            .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        Text("Latchkey can't see what's asking on the other computer.").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+            }
             if let program = request.program {
                 Label("Asked by a program that isn't Latchkey's command-line tool: \(program)", systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange).font(.callout.weight(.semibold))

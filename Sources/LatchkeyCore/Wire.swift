@@ -164,6 +164,8 @@ public struct Request: Codable, Sendable {
     public var uses: Int?            // grant: only this many requests
     public var intended: [String]?   // check: the command the caller means to run, to test command-limited grants.
                                      // Nothing is released by a check, so this claim decides nothing.
+    public var remote: RemoteClaim?  // a request forwarded over SSH: what the tool on the other computer says it is
+                                     // doing. Shown as unverified; it decides nothing.
 
     public init(op: String, names: [String]? = nil, value: String? = nil, kind: ItemKind? = nil,
                 agentSafe: Bool? = nil, note: String? = nil,
@@ -171,7 +173,7 @@ public struct Request: Codable, Sendable {
                 folder: String? = nil, duration: Double? = nil, project: String? = nil, environment: String? = nil,
                 service: String? = nil, version: String? = nil, target: RemoteTarget? = nil, link: String? = nil,
                 only: [String]? = nil, origin: String? = nil, session: Bool? = nil, commands: [[String]]? = nil,
-                uses: Int? = nil, intended: [String]? = nil) {
+                uses: Int? = nil, intended: [String]? = nil, remote: RemoteClaim? = nil) {
         self.op = op
         self.names = names
         self.value = value
@@ -195,6 +197,21 @@ public struct Request: Codable, Sendable {
         self.commands = commands
         self.uses = uses
         self.intended = intended
+        self.remote = remote
+    }
+}
+
+/// What a `latchkey` on another computer says about itself when it reaches the app through an SSH forward. The app
+/// can't check any of it, so it's only shown, marked as unverified.
+public struct RemoteClaim: Codable, Sendable, Hashable {
+    public var host: String
+    public var cwd: String
+    public var command: String
+
+    public init(host: String, cwd: String, command: String) {
+        self.host = host
+        self.cwd = cwd
+        self.command = command
     }
 }
 
@@ -284,6 +301,12 @@ public enum Paths {
         return base.appendingPathComponent("Latchkey", isDirectory: true)
     }
     public static var socket: String { supportDir.appendingPathComponent("broker.sock").path }
+    /// Where the command-line tool connects: LATCHKEY_SOCKET (a socket forwarded over SSH from the Mac running the
+    /// app), or the app's own socket.
+    public static var clientSocket: String { forwardedSocket ?? socket }
+    public static var forwardedSocket: String? {
+        ProcessInfo.processInfo.environment["LATCHKEY_SOCKET"].flatMap { $0.isEmpty ? nil : $0 }
+    }
     public static var accessLog: URL { supportDir.appendingPathComponent("access.jsonl") }
 
     public static func ensureSupportDir() throws {

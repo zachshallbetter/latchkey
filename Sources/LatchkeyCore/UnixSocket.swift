@@ -121,10 +121,11 @@ public enum BrokerClient {
     /// Sends `request` once the other end has proved to be the Latchkey app signed by this tool's own team, so a
     /// program that took the socket while the app wasn't running never sees a request (or a value being saved).
     /// An unsigned tool (a development build) can't vouch for anyone and skips the check.
-    public static func send(_ request: Request, socketPath: String = Paths.socket) throws -> Response {
+    /// A forwarded socket (LATCHKEY_SOCKET) can't be checked: its other end is ssh, and the app is on another Mac.
+    public static func send(_ request: Request, socketPath: String = Paths.clientSocket) throws -> Response {
         let fd = try UnixSocket.connect(socketPath)
         defer { close(fd) }
-        if let team = CodeIdentity.ownTeam, !CodeIdentity.peer(fd, is: CodeIdentity.appIdentifier, team: team) {
+        if Paths.forwardedSocket == nil, let team = CodeIdentity.ownTeam, !CodeIdentity.peer(fd, is: CodeIdentity.appIdentifier, team: team) {
             throw SocketError.notLatchkey(PeerInfo.path(of: PeerInfo.pid(of: fd)))
         }
         try UnixSocket.writeLine(fd, try Wire.encoder().encode(request))

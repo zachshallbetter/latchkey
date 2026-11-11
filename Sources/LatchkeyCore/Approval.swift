@@ -31,6 +31,9 @@ public struct ApprovalRequest: Sendable {
     public var sessionName: String?
     /// What a signed `latchkey run` is starting, which a grant made here can be limited to.
     public var runCommand: [String]?
+    /// From another computer through an SSH forward, and what the tool there says about itself (unverified).
+    public var overSSH = false
+    public var remote: RemoteClaim?
 
     public init(action: Action, names: [String], chain: [String], folder: String, command: String? = nil,
                 duration: TimeInterval? = nil, reason: String) {
@@ -44,7 +47,7 @@ public struct ApprovalRequest: Sendable {
     }
 
     /// Reads from a folder can be turned into a grant from the approval itself.
-    public var canGrant: Bool { action == .read && !folder.isEmpty }
+    public var canGrant: Bool { action == .read && !folder.isEmpty && folder != "/" && remote == nil && !overSSH }
 }
 
 public enum ApprovalDecision: Sendable, Equatable {

@@ -109,7 +109,7 @@ func fail(_ message: String, code: Int32 = 1) -> Never {
 func appAnswers(within seconds: Double) -> Bool {
     let deadline = Date().addingTimeInterval(seconds)
     repeat {
-        if let fd = try? UnixSocket.connect(Paths.socket) { close(fd); return true }
+        if let fd = try? UnixSocket.connect(Paths.clientSocket) { close(fd); return true }
         usleep(150_000)
     } while Date() < deadline
     return false
@@ -119,7 +119,7 @@ func appAnswers(within seconds: Double) -> Bool {
 /// Launching is the last resort: a launch request that lands while the app is already starting ends that
 /// launch, so first give a starting copy a moment, and never launch while one is listed as running.
 func launchApp() -> Bool {
-    if ProcessInfo.processInfo.environment["LATCHKEY_NO_LAUNCH"] == "1" { return false }
+    if ProcessInfo.processInfo.environment["LATCHKEY_NO_LAUNCH"] == "1" || Paths.forwardedSocket != nil { return false }
     let bundleID = "io.snackstud.latchkey"
     if appAnswers(within: 1.5) { return true }
     if !NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty {
@@ -142,6 +142,10 @@ func launchApp() -> Bool {
 func call(_ request: Request) throws -> Response {
     var request = request
     if ProcessInfo.processInfo.environment["LATCHKEY_ORIGIN"] == "mcp" { request.origin = "mcp" }
+    if Paths.forwardedSocket != nil {
+        request.remote = RemoteClaim(host: ProcessInfo.processInfo.hostName, cwd: currentDirectory(),
+                                     command: Redact.arguments(Array(CommandLine.arguments.dropFirst())).joined(separator: " "))
+    }
     var launched = false
     var retries = 0
     while true {
@@ -158,7 +162,8 @@ func call(_ request: Request) throws -> Response {
                 usleep(500_000)
                 continue
             }
-            throw RunError.unreachable("cannot reach the Latchkey app (\(e)). Open Latchkey and try again.")
+            throw RunError.unreachable(Paths.forwardedSocket.map { "cannot reach Latchkey through \($0) (\(e)). Is the SSH connection forwarding it?" }
+                                       ?? "cannot reach the Latchkey app (\(e)). Open Latchkey and try again.")
         } catch {
             throw RunError.failed("\(error)")
         }
@@ -883,7 +888,8 @@ case "help", "--help", "-h":
 case "status":
     let r = send(Request(op: "status"))
     var info = r.info ?? [:]
-    info["app"] = CodeIdentity.ownTeam == nil ? "not checked (this tool is unsigned)" : "the Latchkey app (signature checked)"
+    info["app"] = Paths.forwardedSocket != nil ? "not checked (forwarded over SSH from \(Paths.forwardedSocket!))"
+        : CodeIdentity.ownTeam == nil ? "not checked (this tool is unsigned)" : "the Latchkey app (signature checked)"
     for (k, v) in info.sorted(by: { $0.key < $1.key }) { print("\(k): \(v)") }
 
 case "list":

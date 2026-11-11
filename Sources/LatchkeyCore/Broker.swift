@@ -112,7 +112,8 @@ public final class Broker: @unchecked Sendable {
     func status(_ peer: PeerInfo) -> Response {
         let count = (try? store.list().count).map(String.init) ?? "unknown"
         return Response(ok: true, info: [
-            "caller": peer.isLatchkeyTool ? "Latchkey's command-line tool (signature checked)"
+            "caller": peer.isSSHForward ? "another computer, through your ssh connection (\(peer.redactedCommandLine))"
+                : peer.isLatchkeyTool ? "Latchkey's command-line tool (signature checked)"
                 : "\(peer.path.isEmpty ? "unknown program" : peer.path) (not Latchkey's signed command-line tool)",
             "storage": store.location,
             "approval": approver.method,
@@ -134,13 +135,13 @@ public final class Broker: @unchecked Sendable {
         let safe = present.filter { infos[$0]!.agentSafe }
         var granted: [String] = []
         var covering: [Grant] = []
-        for name in present where !infos[name]!.agentSafe {
+        for name in present where !infos[name]!.agentSafe && !peer.isSSHForward {
             guard let g = grants.covering(name, cwd: cwd, ancestors: peer.ancestors, command: req.intended ?? peer.runCommand) else { continue }
             granted.append(name)
             if !covering.contains(g) { covering.append(g) }
         }
         let rest = present.filter { !infos[$0]!.agentSafe && !granted.contains($0) }
-        let remembered = !rest.isEmpty && memory.covers(ApprovalMemory.key(rest, peer))
+        let remembered = !rest.isEmpty && !peer.isSSHForward && memory.covers(ApprovalMemory.key(rest, peer))
         func some(_ a: [String]) -> [String]? { a.isEmpty ? nil : a }
         return Response(ok: true, missing: some(missing), grants: covering.isEmpty ? nil : covering,
                         agentSafe: some(safe), granted: some(granted), remembered: remembered ? rest : nil,
@@ -156,7 +157,8 @@ public final class Broker: @unchecked Sendable {
         let cwd = peer.cwd
         let needApproval = present.filter { !(infos[$0]!.agentSafe) }
         var byGrant: [Grant: [String]] = [:]
-        for name in needApproval {
+        // Over SSH this Mac sees only the ssh client, so no grant or recent approval can stand for the caller.
+        for name in needApproval where !peer.isSSHForward {
             if let g = grants.covering(name, cwd: cwd, ancestors: peer.ancestors, command: peer.runCommand) { byGrant[g, default: []].append(name) }
         }
         let granted = byGrant.values.flatMap { $0 }
@@ -168,7 +170,7 @@ public final class Broker: @unchecked Sendable {
         var denied: [String] = []
         if !toAsk.isEmpty {
             let key = ApprovalMemory.key(toAsk, peer)
-            if memory.covers(key) {
+            if !peer.isSSHForward && memory.covers(key) {
                 log("get", toAsk, "allowed (remembered)", peer, req)
             } else {
                 switch ask(.read, toAsk, peer, req, "release \(Self.count(toAsk)) to \(Self.describe(peer, req))") {
@@ -176,11 +178,11 @@ public final class Broker: @unchecked Sendable {
                     denied = toAsk
                     log("get", toAsk, "denied", peer, req)
                 case .once:
-                    memory.remember(key, for: readApprovalWindow)
+                    if !peer.isSSHForward { memory.remember(key, for: readApprovalWindow) }
                     log("get", toAsk, "approved", peer, req)
                 case .grant(let choice):
-                    memory.remember(key, for: readApprovalWindow)
-                    if cwd.isEmpty {
+                    if !peer.isSSHForward { memory.remember(key, for: readApprovalWindow) }
+                    if cwd.isEmpty || Grant.normalize(cwd) == "/" || peer.isSSHForward {
                         log("get", toAsk, "approved", peer, req)
                     } else {
                         let session = choice.untilAgentQuits ? peer.sessionProcess.map { GrantSession(process: $0.stamp, name: $0.name) } : nil
@@ -335,6 +337,7 @@ public final class Broker: @unchecked Sendable {
             return !Wire.isValidName(entry) || !existing.contains(entry)
         }
         guard missing.isEmpty else { return Response(ok: false, missing: missing) }
+        guard !peer.isSSHForward else { return Response(ok: false, error: "grants can't be made over SSH: make them on the Mac running Latchkey") }
         let folder = Grant.normalize(req.folder ?? peer.cwd)
         guard !folder.isEmpty, folder != "/" else { return Response(ok: false, error: "a grant needs a folder other than /") }
         var duration = min(req.duration ?? 3600, GrantStore.longest)
@@ -654,6 +657,12 @@ public final class Broker: @unchecked Sendable {
         request.sessionName = peer.sessionProcess?.name
         request.runCommand = peer.runCommand
         request.program = request.fromApp || peer.isLatchkeyTool || peer.path.isEmpty ? nil : peer.path
+        if peer.isSSHForward {
+            request.overSSH = true
+            request.remote = req.remote
+            request.program = nil
+            request.sessionName = nil
+        }
         request.byAgent = req.origin == "mcp"
         return request
     }

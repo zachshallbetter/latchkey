@@ -117,7 +117,7 @@ latchkey rotate --touched --since 4h --by claude --open --push</code></pre></fig
 <p>Where values are kept, how you approve, how many items and grants, and the socket path.</p>
 
 <h2 id="environment">Environment variables</h2>
-<table><thead><tr><th>Variable</th><th>Meaning</th></tr></thead><tbody><tr><td><code>LATCHKEY_NO_LAUNCH=1</code></td><td>Don&rsquo;t start the app if it isn&rsquo;t running; fail with exit 69 instead.</td></tr></tbody></table>
+<table><thead><tr><th>Variable</th><th>Meaning</th></tr></thead><tbody><tr><td><code>LATCHKEY_NO_LAUNCH=1</code></td><td>Don&rsquo;t start the app if it isn&rsquo;t running; fail with exit 69 instead.</td></tr><tr><td><code>LATCHKEY_SOCKET=PATH</code></td><td>Connect to a socket forwarded over SSH from the Mac running Latchkey (see <a href="agents.html#ssh">from another Mac</a>).</td></tr></tbody></table>
 
 <h2 id="exit-codes">Exit codes</h2>
 <table><thead><tr><th>Code</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>Done</td></tr><tr><td>64</td><td>Wrong usage</td></tr><tr><td>66</td><td>No item with that ID</td></tr><tr><td>69</td><td>The Latchkey app can&rsquo;t be reached</td></tr><tr><td>73</td><td>A file couldn&rsquo;t be rewritten</td></tr><tr><td>77</td><td>Refused: not agent-safe, not approved, no grant</td></tr><tr><td>127</td><td>The command couldn&rsquo;t start</td></tr></tbody></table>

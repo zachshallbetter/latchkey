@@ -194,6 +194,7 @@ Where values are kept, how you approve, how many items and grants, and the socke
 | Variable | |
 |---|---|
 | `LATCHKEY_NO_LAUNCH=1` | Don't start the app if it isn't running; fail with exit 69 instead. |
+| `LATCHKEY_SOCKET=PATH` | Connect to a socket forwarded over SSH from the Mac running Latchkey (see [From another Mac over SSH](agents.md#from-another-mac-over-ssh)). |
 
 ## Exit codes
 

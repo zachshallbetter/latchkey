@@ -124,6 +124,36 @@ final class BrokerGrantTests: XCTestCase {
         XCTAssertTrue(b.grants.all().isEmpty)
     }
 
+    func testNoGrantForTheWholeDisk() throws {
+        let b = try broker(.grant(GrantChoice(duration: 3600)))
+        let atRoot = PeerInfo(pid: 1, path: "/usr/libexec/somejob", cwd: "/", chain: ["launchd"])
+        XCTAssertEqual(b.handle(Request(op: "get", names: ["DB"]), peer: atRoot).values, ["DB": "db-value-123"])
+        XCTAssertTrue(b.grants.all().isEmpty, "approving from / must not grant every folder")
+        XCTAssertFalse(ApprovalRequest(action: .read, names: ["A"], chain: [], folder: "/", reason: "x").canGrant)
+    }
+
+    func testOverSSHEveryRequestAsks() throws {
+        let ssh = PeerInfo(pid: 1, path: "/usr/bin/ssh", cwd: "/tmp/site", chain: ["zsh", "Terminal"],
+                           arguments: ["ssh", "-R", "/tmp/lk.sock:/x/broker.sock", "devmac"])
+        let recorder = RecordingApprover()
+        let store = MemoryStore()
+        try store.save(name: "DB", value: "db-value-123", kind: .password, agentSafe: false, note: "")
+        let b = Broker(store: store, approver: recorder, readApprovalWindow: 120, logURL: nil)
+        // A grant on the ssh client's folder must not cover requests from the other computer.
+        b.grants.add(names: ["DB"], folder: "/tmp/site", duration: 3600, createdBy: "t")
+        let claim = RemoteClaim(host: "devmac", cwd: "/Users/x/shop", command: "run -- npm test")
+        _ = b.handle(Request(op: "get", names: ["DB"], remote: claim), peer: ssh)
+        _ = b.handle(Request(op: "get", names: ["DB"], remote: claim), peer: ssh)
+        XCTAssertEqual(recorder.requests.count, 2, "no grant or recent approval stands in over SSH")
+        let r = try XCTUnwrap(recorder.requests.first)
+        XCTAssertTrue(r.overSSH)
+        XCTAssertEqual(r.remote, claim)
+        XCTAssertFalse(r.canGrant)
+        XCTAssertNil(r.program)
+        XCTAssertFalse(b.handle(Request(op: "grant", names: ["DB"], folder: "/tmp/site"), peer: ssh).ok)
+        XCTAssertEqual(b.handle(Request(op: "check", names: ["DB"]), peer: ssh).needsApproval, ["DB"])
+    }
+
     func testApprovalCanGrantForTheSessionOrTheCommand() throws {
         let store = MemoryStore()
         try store.save(name: "DB", value: "db-value-123", kind: .password, agentSafe: false, note: "")

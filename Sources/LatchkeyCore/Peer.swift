@@ -28,6 +28,10 @@ public struct PeerInfo: Codable, Sendable, Hashable {
         self.ancestors = ancestors
     }
 
+    /// True when the caller is the `ssh` client forwarding a socket from another computer: the request was made
+    /// there, so this Mac's view of the caller (folder, command, parents) says nothing about it.
+    public var isSSHForward: Bool { (path as NSString).lastPathComponent == "ssh" }
+
     /// The command a signed `latchkey run` is about to start (what follows its options), or nil for anything else:
     /// only Latchkey's own tool can be trusted to start what its command line says.
     public var runCommand: [String]? {
