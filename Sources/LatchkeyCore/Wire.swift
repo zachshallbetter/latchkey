@@ -145,7 +145,7 @@ public struct Request: Codable, Sendable {
                                      // | history | deleted | version | restore | forget
                                      // | links | link | unlink | remote-status | push
                                      // | environments | environment-add | environment-set | environment-remove | export
-                                     // | projects | project-link | project-unlink
+                                     // | projects | project-link | project-unlink | log
     public var names: [String]?
     public var value: String?
     public var kind: ItemKind?
@@ -174,6 +174,7 @@ public struct Request: Codable, Sendable {
                                      // doing. Shown as unverified; it decides nothing.
     public var page: String?         // from the Safari extension: the site the value was found on, as Safari reported
                                      // it to the extension. Shown in the approval; for fill, the site it may go to.
+    public var logLimit: Int?  // log: bounded number of entries from the serving broker's own log
     public var fillSites: [String]?  // update: the only sites an item may be filled on; [] goes back to the default
     public var environments: [EnvironmentRecord]? // import, environment-set: variables to set; environment-add:
                                      // variables to add where missing
@@ -190,7 +191,8 @@ public struct Request: Codable, Sendable {
                 only: [String]? = nil, origin: String? = nil, session: Bool? = nil, commands: [[String]]? = nil,
                 uses: Int? = nil, intended: [String]? = nil, remote: RemoteClaim? = nil, page: String? = nil,
                 fillSites: [String]? = nil, environments: [EnvironmentRecord]? = nil, unset: [String]? = nil,
-                confirm: [String]? = nil, destination: String? = nil, origins: [String]? = nil) {
+                confirm: [String]? = nil, destination: String? = nil, origins: [String]? = nil, logLimit: Int? = nil) {
+        self.logLimit = logLimit
         self.op = op
         self.names = names
         self.value = value
@@ -271,6 +273,7 @@ public struct Response: Codable, Sendable {
     public var needsApproval: [String]?
     public var environments: [EnvironmentRecord]?
     public var projects: [ProjectRecord]?
+    public var logEntries: [Broker.LogEntry]?
 
     public init(ok: Bool, error: String? = nil, secrets: [SecretInfo]? = nil, values: [String: String]? = nil,
                 masked: [String]? = nil, denied: [String]? = nil, missing: [String]? = nil,
@@ -279,7 +282,8 @@ public struct Response: Codable, Sendable {
                 versions: [Version]? = nil, links: [RemoteLink]? = nil, remoteStatus: [RemoteStatus]? = nil,
                 pushResults: [PushResult]? = nil, agentSafe: [String]? = nil, granted: [String]? = nil,
                 remembered: [String]? = nil, needsApproval: [String]? = nil,
-                environments: [EnvironmentRecord]? = nil, projects: [ProjectRecord]? = nil) {
+                environments: [EnvironmentRecord]? = nil, projects: [ProjectRecord]? = nil, logEntries: [Broker.LogEntry]? = nil) {
+        self.logEntries = logEntries
         self.ok = ok
         self.error = error
         self.secrets = secrets

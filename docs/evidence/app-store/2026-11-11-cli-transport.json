@@ -1,0 +1,77 @@
+{
+  "boundary": "An independently signed terminal CLI executes commands; the sandboxed app only serves fixture credentials.",
+  "build": "0.1.0 (1), development-signed sandbox Debug app and same-team hardened terminal CLI",
+  "checks": [
+    {
+      "name": "signed CLI and sandbox broker authenticate",
+      "passed": true
+    },
+    {
+      "name": "log reads through the selected broker",
+      "passed": true
+    },
+    {
+      "name": "invalid log limit is refused",
+      "passed": true
+    },
+    {
+      "name": "fixture secret read",
+      "passed": true
+    },
+    {
+      "name": "unsigned caller refused before request handling",
+      "passed": true
+    },
+    {
+      "name": "impostor broker receives zero request bytes",
+      "passed": true
+    },
+    {
+      "name": "shell execution masking and exit status",
+      "passed": true
+    },
+    {
+      "name": "Node key-file delivery and cleanup",
+      "passed": true
+    },
+    {
+      "name": "npm project execution",
+      "passed": true
+    },
+    {
+      "name": "kernel command and folder grant matches",
+      "passed": true
+    },
+    {
+      "name": "command grant refuses other command",
+      "passed": true
+    },
+    {
+      "name": "folder grant refuses other folder",
+      "passed": true
+    },
+    {
+      "name": "grant revocation stops future reads",
+      "passed": true
+    },
+    {
+      "name": "SIGTERM reaches child and cleans key files",
+      "passed": true
+    }
+  ],
+  "notCovered": [
+    "App Store CLI packaging and review",
+    "TestFlight",
+    "real vault and approval UI",
+    "SSH forwarding to store",
+    "proxy upstream traffic",
+    "live AWS STS",
+    "session PID reuse",
+    "remote pushes",
+    "migration and sync"
+  ],
+  "passed": true,
+  "sourceBase": "e12f26e6295f38d1b9129a61ac7790ec90abb76b",
+  "submissionReady": false,
+  "verifiedOn": "2026-11-11"
+}

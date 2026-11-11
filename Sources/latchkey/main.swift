@@ -126,10 +126,30 @@ func fail(_ message: String, code: Int32 = 1) -> Never {
     exit(code)
 }
 
+/// Resolve once per connection, without probing or falling back to a different broker. A store app's
+/// distribution metadata is usable only after its signature matches this CLI's team and application ID.
+func clientEndpoint() throws -> BrokerEndpoint {
+    let environment = ProcessInfo.processInfo.environment
+    var store = false
+    if (environment["LATCHKEY_BROKER"] ?? "auto") == "auto",
+       let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: CodeIdentity.appIdentifier),
+       let bundle = Bundle(url: url),
+       let channel = bundle.object(forInfoDictionaryKey: "LatchkeyDistributionChannel") as? String,
+       channel == "app-store" || channel == "app-store-sandbox-experiment" {
+        guard let team = CodeIdentity.ownTeam, CodeIdentity.application(at: url, team: team) else {
+            throw BrokerEndpoint.ConfigurationError.signedToolRequired
+        }
+        store = true
+    }
+    return try BrokerEndpoint.select(environment: environment, team: CodeIdentity.ownTeam,
+        installedAppIsStore: store, home: FileManager.default.homeDirectoryForCurrentUser, directPath: Paths.socket)
+}
+
 func appAnswers(within seconds: Double) -> Bool {
+    guard let endpoint = try? clientEndpoint() else { return false }
     let deadline = Date().addingTimeInterval(seconds)
     repeat {
-        if let fd = try? UnixSocket.connect(Paths.clientSocket) { close(fd); return true }
+        if let fd = try? UnixSocket.connect(endpoint.path) { close(fd); return true }
         usleep(150_000)
     } while Date() < deadline
     return false
@@ -170,7 +190,7 @@ func call(_ request: Request) throws -> Response {
     var retries = 0
     while true {
         do {
-            return try BrokerClient.send(request)
+            return try BrokerClient.send(request, endpoint: clientEndpoint())
         } catch let e as SocketError {
             if case .sys(let what, _) = e, what == "connect", !launched, launchApp() {
                 launched = true
@@ -184,6 +204,8 @@ func call(_ request: Request) throws -> Response {
             }
             throw RunError.unreachable(Paths.forwardedSocket.map { "cannot reach Latchkey through \($0) (\(e)). Is the SSH connection forwarding it?" }
                                        ?? "cannot reach the Latchkey app (\(e)). Open Latchkey and try again.")
+        } catch let error as BrokerEndpoint.ConfigurationError {
+            throw RunError.unreachable(error.localizedDescription)
         } catch {
             throw RunError.failed("\(error)")
         }
@@ -284,6 +306,7 @@ func runCommand(_ input: [String]) -> Never {
     }
     guard !cmd.isEmpty else { fail("usage: latchkey run [--env-file FILE] [--env PROJECT/ENV] [--file NAME=ID] -- COMMAND [ARGS...]", code: 64) }
 
+    do { _ = try clientEndpoint() } catch { fail(error.localizedDescription, code: 69) }
     let spec = RunSpec(envFiles: envFiles, scopes: scopes, fileArgs: fileArgs, cwd: currentDirectory(), aws: aws)
     let prepared: PreparedRun
     do {
@@ -824,7 +847,7 @@ func pushCommand(_ args: [String]) -> Never {
         exit(0)
     }
     let r: Response
-    do { r = try BrokerClient.send(Request(op: "push", names: [scope], link: link, only: only)) }
+    do { r = try BrokerClient.send(Request(op: "push", names: [scope], link: link, only: only), endpoint: clientEndpoint()) }
     catch { fail("cannot reach the Latchkey app (\(error))", code: 69) }
     for p in (r.pushResults ?? []).sorted(by: { ($0.link, $0.item) < ($1.link, $1.item) }) {
         print("\(p.ok ? "pushed " : "FAILED ") \(ItemID(p.item)?.name ?? p.item)  → \(p.link)\(p.error.map { "  \($0)" } ?? "")")
@@ -1069,8 +1092,13 @@ case "log":
         fail("the access log was changed: line \(info["line"] ?? "?"), \(info["reason"] ?? "unknown")", code: 1)
     }
     var limit = 20
-    if let i = args.firstIndex(of: "--limit"), i + 1 < args.count, let n = Int(args[i + 1]) { limit = n }
-    for e in Broker.readLog(limit: limit) {
+    if let i = args.firstIndex(of: "--limit") {
+        guard i + 1 < args.count, let n = Int(args[i + 1]), (0...1000).contains(n) else {
+            fail("--limit takes a number between 0 and 1000", code: 64)
+        }
+        limit = n
+    }
+    for e in send(Request(op: "log", logLimit: limit)).logEntries ?? [] {
         let who = e.program ?? e.chain.prefix(3).joined(separator: " › ")
         print("\(e.time.formatted(date: .abbreviated, time: .standard))  \(e.op)  \(e.decision)  \(e.names.joined(separator: ", "))  \(who)  \(Broker.tilde(e.cwd))\(e.command.map { "  $ \($0)" } ?? "")")
     }

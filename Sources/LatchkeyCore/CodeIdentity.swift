@@ -22,12 +22,24 @@ public enum CodeIdentity {
     public static func peer(_ fd: Int32, is identifier: String, team: String) -> Bool {
         guard let token = auditToken(fd) else { return false }
         var code: SecCode?
-        let attributes = [kSecGuestAttributeAudit: token] as CFDictionary
+        // Ask Security.framework for the running code's signature through the audit-token-backed dynamic
+        // representation. The default disk representation tries to open the peer's executable, which a
+        // sandboxed broker cannot do for an external terminal CLI. Never fall back to a PID or claimed path.
+        let attributes = [kSecGuestAttributeAudit: token, kSecGuestAttributeDynamicCode: true] as CFDictionary
         guard SecCodeCopyGuestWithAttributes(nil, attributes, [], &code) == errSecSuccess, let code else { return false }
         let text = "anchor apple generic and identifier \"\(identifier)\" and certificate leaf[subject.OU] = \"\(team)\""
         var requirement: SecRequirement?
         guard SecRequirementCreateWithString(text as CFString, [], &requirement) == errSecSuccess, let requirement else { return false }
         return SecCodeCheckValidity(code, [], requirement) == errSecSuccess
+    }
+
+    /// Validate an installed app before using its distribution metadata for endpoint discovery.
+    public static func application(at url: URL, team: String) -> Bool {
+        var code: SecStaticCode?, requirement: SecRequirement?
+        let text = "anchor apple generic and identifier \"\(appIdentifier)\" and certificate leaf[subject.OU] = \"\(team)\""
+        guard SecStaticCodeCreateWithPath(url as CFURL, [], &code) == errSecSuccess, let code,
+              SecRequirementCreateWithString(text as CFString, [], &requirement) == errSecSuccess, let requirement else { return false }
+        return SecStaticCodeCheckValidity(code, SecCSFlags(rawValue: kSecCSStrictValidate), requirement) == errSecSuccess
     }
 
     /// The audit token of the process on the other end of a Unix socket.

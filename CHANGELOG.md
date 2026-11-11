@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+### App Store groundwork
+- The store experiment has a dedicated, mutually authenticated CLI endpoint. Commands continue to run in the
+  terminal CLI; channel selection never falls back to another broker. Dynamic Security.framework identity checks
+  avoid needing sandbox access to the external CLI executable. Signed execution probes cover Node/npm, masking,
+  temporary files, signals and grants; final CLI packaging, SSH and full submission gates remain pending.
+
+### Command line
+- `latchkey log` reads the access log of the Latchkey it's talking to, over its connection, so it works when that
+  Latchkey keeps its log in a sandbox container or on another Mac over SSH. It needs an updated app; `--limit` takes
+  0 to 1000.
+- The tool picks its broker once (`LATCHKEY_BROKER`: auto, direct or app-store) and never falls back to another.
+  `LATCHKEY_LOCAL_SOCKET` points it at a local socket for development, still checking the app's signature.
+- Caller details are read between two checks of the process's start time, so a reused process ID can't lend another
+  process's folder or command to a request.
+
 ## 0.1.0 (2026-11-11)
 
 The first release.

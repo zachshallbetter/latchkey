@@ -42,8 +42,12 @@ public struct PeerInfo: Codable, Sendable, Hashable {
         while i < arguments.count {
             let a = arguments[i]
             if a == "--" { i += 1; break }
-            if ["--env-file", "--env", "--file"].contains(a) { i += 2; continue }
-            if a.hasPrefix("-") { i += 1; continue }
+            if ["--env-file", "--env", "--file", "--aws-role", "--aws-for"].contains(a) {
+                guard i + 1 < arguments.count else { return nil }
+                i += 2; continue
+            }
+            if a.hasPrefix("--env-file=") || ["--no-masking", "--proxy", "--aws-session"].contains(a) { i += 1; continue }
+            if a.hasPrefix("-") { return nil }
             break
         }
         return i < arguments.count ? Array(arguments[i...]) : nil
@@ -88,6 +92,8 @@ public struct PeerInfo: Codable, Sendable, Hashable {
     public static func of(socket fd: Int32) -> PeerInfo {
         let pid = pid(of: fd)
         guard pid > 0 else { return PeerInfo(pid: 0, path: "", cwd: "", chain: []) }
+        // libproc reads are PID-based; a reused PID must never supply another process's grant context.
+        guard let began = started(pid) else { return PeerInfo(pid: pid, path: "", cwd: "", chain: []) }
         var chain: [String] = []
         var ancestors: [ProcessStamp] = []
         var cur = parent(of: pid)
@@ -99,8 +105,12 @@ public struct PeerInfo: Codable, Sendable, Hashable {
             cur = parent(of: cur)
             hops += 1
         }
+        let path = path(of: pid), cwd = cwd(of: pid), arguments = arguments(of: pid)
         let isTool = CodeIdentity.ownTeam.map { CodeIdentity.peer(fd, is: CodeIdentity.toolIdentifier, team: $0) } ?? false
-        return PeerInfo(pid: pid, path: path(of: pid), cwd: cwd(of: pid), chain: chain, arguments: arguments(of: pid),
+        guard let ended = started(pid), began == ended else {
+            return PeerInfo(pid: pid, path: "", cwd: "", chain: [])
+        }
+        return PeerInfo(pid: pid, path: path, cwd: cwd, chain: chain, arguments: arguments,
                         isLatchkeyTool: isTool, ancestors: ancestors)
     }
 
