@@ -305,7 +305,7 @@ struct ItemList: View {
                     .listRowSeparator(.visible)
             }
         }
-        .listStyle(.plain)
+        .listStyle(.inset)
         .scrollContentBackground(.hidden)
         .contextMenu(forSelectionType: String.self) { ids in
             SelectionMenu(model: model, ids: ids.sorted())

@@ -148,7 +148,7 @@ struct MoveSheet: View {
                 Toggle(isOn: Binding(get: { chosen.contains(item.name) },
                                      set: { if $0 { chosen.insert(item.name) } else { chosen.remove(item.name) } })) {
                     HStack(spacing: 8) {
-                        KindIcon(kind: item.kind, size: 18)
+                        IconTile(symbol: ItemType(item).symbol, tint: ItemType(item).tint, size: 18)
                         Text(item.name).font(.callout.monospaced())
                         Text(item.note).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }

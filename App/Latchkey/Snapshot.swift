@@ -128,6 +128,10 @@ enum Snapshot {
             drawOffscreen(MoveSheet(model: model, preselected: model.selection.sorted()), to: path)
             return
         }
+        if arg("--part") == "grant" {
+            drawOffscreen(NewGrantSheet(model: model, request: GrantRequest(ids: model.selection.sorted())), to: path)
+            return
+        }
         if arg("--part") == "menubar" {
             drawOffscreen(MenuBarPanel(model: model), to: path)
             return
