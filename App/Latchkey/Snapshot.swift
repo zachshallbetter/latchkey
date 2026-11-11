@@ -29,7 +29,10 @@ enum Snapshot {
         guard let path = arg("--snapshot"), !started else { return }
         started = true
         if CommandLine.arguments.contains("--sample") { model.items = sampleItems }
-        if let names = arg("--select") { model.selection = Set(names.split(separator: ",").map(String.init)) }
+        if let names = arg("--select") {
+            model.selection = Set(names.split(separator: ",").map(String.init))
+            model.reveal(Array(model.selection))
+        }
         if arg("--filter") == "activity" { model.filter = .activity }
         if arg("--filter") == "grants" { model.filter = .grants }
         if let f = arg("--filter"), f.hasPrefix("project:") { model.filter = .project(String(f.dropFirst(8))) }
@@ -43,6 +46,11 @@ enum Snapshot {
         if let f = arg("--import") { model.beginImport(URL(fileURLWithPath: f)) }
         if arg("--part") == "sidebar" {
             drawOffscreen(Sidebar(model: model).frame(width: 260, height: 640), to: path)
+            return
+        }
+        if let q = arg("--search") { model.search = q }
+        if arg("--part") == "list" {
+            drawOffscreen(ItemList(model: model).frame(width: 400, height: 620), to: path)
             return
         }
         if arg("--part") == "bulk" {
@@ -97,7 +105,8 @@ enum Snapshot {
         let window = NSWindow(contentRect: host.frame, styleMask: .borderless, backing: .buffered, defer: false)
         window.contentView = host
         host.layoutSubtreeIfNeeded()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            host.layoutSubtreeIfNeeded()
             guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { exit(1) }
             host.cacheDisplay(in: host.bounds, to: rep)
             try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))

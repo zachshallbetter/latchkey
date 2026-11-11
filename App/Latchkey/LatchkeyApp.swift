@@ -5,7 +5,23 @@ import SwiftUI
 
 @main
 struct LatchkeyApp: App {
-    @State private var model = AppModel()
+    init() {
+        // A second copy started outside Launch Services (from a shell, another build) hands over to the one
+        // already running and quits, before it touches the keychain or the broker socket.
+        #if DEBUG
+        let snapshot = Snapshot.requested
+        #else
+        let snapshot = false
+        #endif
+        if !snapshot, let other = NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")
+            .first(where: { $0.processIdentifier != getpid() }) {
+            other.activate()
+            exit(0)
+        }
+        _model = State(initialValue: AppModel())
+    }
+
+    @State private var model: AppModel
 
     var body: some Scene {
         Window("Latchkey", id: "main") {
@@ -124,6 +140,8 @@ final class AppModel {
     var showingAdd = false
     var importDraft: ImportDraft?
     var moveRequest: MoveRequest?
+    /// Open groups in item lists: a project name, "project/environment", or "shared". Everything starts closed.
+    var expanded: Set<String> = []
     /// Values currently shown in the detail pane; each hides itself after a short while.
     var revealed: [String: String] = [:]
 
@@ -221,6 +239,23 @@ final class AppModel {
 
     func item(_ name: String?) -> SecretInfo? { items.first { $0.name == name } }
 
+    /// Whether a list group is open. The only group in a list, and every group while searching, stay open.
+    func isOpen(_ key: String, single: Bool = false) -> Bool {
+        single || !search.trimmingCharacters(in: .whitespaces).isEmpty || expanded.contains(key)
+    }
+
+    func toggle(_ key: String) {
+        if expanded.contains(key) { expanded.remove(key) } else { expanded.insert(key) }
+    }
+
+    /// Opens the groups that contain these items, so a selection made elsewhere is visible.
+    func reveal(_ ids: [String]) {
+        for id in ids {
+            guard let ref = ItemID(id) else { continue }
+            if ref.isShared { expanded.insert("shared") } else { expanded.formUnion([ref.project, "\(ref.project)/\(ref.environment)"]) }
+        }
+    }
+
     /// The one selected item, when exactly one is selected.
     var selectedItem: SecretInfo? { selection.count == 1 ? item(selection.first) : nil }
 
@@ -279,6 +314,7 @@ final class AppModel {
         if !failed.isEmpty { text += "; couldn't update \(failed.joined(separator: ", "))" }
         notice = text + "."
         selection = Set(selection.map { moved[$0] ?? $0 })
+        reveal(Array(selection))
         if !project.isEmpty { filter = .project(project) }
         return nil
     }

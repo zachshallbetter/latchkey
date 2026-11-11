@@ -84,8 +84,10 @@ can't drift from the references. Service and "used in" travel with the item in i
 
 - **Sidebar:** All, Agent-Safe, Ask First and Activity, a count per kind, then **Projects** (with a filter once there
   are many), **Shared** and **Services**.
-- **Lists:** views that span projects (All, Agent-Safe, a kind or a service) are grouped by project, with each
-  item's environment as a badge; a project's own view is grouped by environment.
+- **Lists:** a tree, never a flat list of every key. Views that span projects (All, Agent-Safe, a kind or a
+  service) show projects, then environments, then items; a project's own view starts at its environments. Groups
+  start closed, show their counts and environments while closed, and open by themselves when there's only one or
+  while you search. Right-click a project or environment header for actions on everything in it.
 - **Several items:** select with ⌘-click or ⇧-click. The detail pane and the right-click menu then act on all of
   them with one approval: require approval or let agents read, set kind or service, move, grant access, delete.
 - **A whole project:** right-click it in the sidebar to select all its items, change agent access, grant access to
@@ -112,7 +114,8 @@ can't drift from the references. Service and "used in" travel with the item in i
     # the app in Xcode
     cd App && xcodegen && open Latchkey.xcodeproj
 
-Run the app or `latchkey-broker`, not both: they answer on the same socket.
+Run the app or `latchkey-broker`, not both: they answer on the same socket. Only one copy of the app runs at a
+time; starting another brings the running one forward.
 Requires Xcode 16 or later on macOS 14 or later.
 
 Debug builds can draw their own UI to a PNG without clicking:

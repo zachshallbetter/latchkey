@@ -34,6 +34,8 @@ targets:
       properties:
         CFBundleDisplayName: Latchkey
         LSApplicationCategoryType: public.app-category.developer-tools
+        # One Latchkey at a time: two would compete for the broker socket and the approval panel.
+        LSMultipleInstancesProhibited: true
         NSHumanReadableCopyright: ""
         LatchkeyAccessGroup: $(AppIdentifierPrefix)io.latchkey.shared
     settings:

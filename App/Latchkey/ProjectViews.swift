@@ -57,24 +57,36 @@ struct ProjectsSection: View {
     }
 }
 
-/// Actions on every item in a project, from its row in the sidebar.
+/// Actions on every item in a project, from its row in the sidebar or its header in a list.
 struct ProjectMenu: View {
     let model: AppModel
     let project: String
 
     var body: some View {
-        let ids = model.ids(inProject: project)
+        GroupMenu(model: model, title: project, ids: model.ids(inProject: project), pattern: "\(project)/*", isProject: true)
+    }
+}
+
+/// Actions on every item in a group (a project, or one environment of it), each with one approval.
+struct GroupMenu: View {
+    let model: AppModel
+    let title: String
+    let ids: [String]
+    let pattern: String
+    var isProject = false
+
+    var body: some View {
         Button("Select All \(ids.count) Items") {
-            model.filter = .project(project)
+            model.reveal(ids)
             model.selection = Set(ids)
         }
         Divider()
         Button("Require Approval for All") { Task { await model.updateItems(ids, agentSafe: false) } }
         Button("Let Agents Read All Without Asking") { Task { await model.updateItems(ids, agentSafe: true) } }
-        Button("Grant Access to \(project)…") { model.grantRequest = GrantRequest(pattern: "\(project)/*") }
+        Button("Grant Access to \(title)…") { model.grantRequest = GrantRequest(pattern: pattern) }
         Divider()
-        Button("Move or Rename Project…") { model.moveRequest = MoveRequest(ids: ids) }
-        Button("Delete Project…", role: .destructive) { model.deleteRequest = DeleteRequest(ids: ids) }
+        Button(isProject ? "Move or Rename Project…" : "Move to Another Environment…") { model.moveRequest = MoveRequest(ids: ids) }
+        Button(isProject ? "Delete Project…" : "Delete \(title)…", role: .destructive) { model.deleteRequest = DeleteRequest(ids: ids) }
     }
 }
 

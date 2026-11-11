@@ -50,6 +50,7 @@ struct AddItemSheet: View {
                         if error == nil {
                             model.filter = .all
                             model.selection = [name]
+                            model.reveal([name])
                             dismiss()
                         }
                     }

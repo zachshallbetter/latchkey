@@ -9,7 +9,7 @@ struct MenuBarPanel: View {
     @State private var query = ""
 
     private func open(select name: String? = nil) {
-        if let name { model.filter = .all; model.selection = [name] }
+        if let name { model.filter = .all; model.selection = [name]; model.reveal([name]) }
         openWindow(id: "main")
         NSApp.activate()
     }

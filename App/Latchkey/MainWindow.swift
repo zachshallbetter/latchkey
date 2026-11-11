@@ -251,33 +251,37 @@ struct ItemList: View {
     var body: some View {
         let list = model.visibleItems
         List(selection: $model.selection) {
-            if case .project(let p) = model.filter, model.sort == .name {
-                // One section per environment, in their usual order.
-                ForEach(model.environments(in: p), id: \.self) { env in
-                    let rows = list.filter { $0.ref.environment == env }
-                    if !rows.isEmpty {
-                        Section {
-                            ForEach(rows) { item in
-                                ItemRow(item: item, showsProject: false).tag(item.name)
+            if model.sort == .name {
+                // A tree, never a flat list of every key: project, then environment, then items, all collapsed
+                // until opened. In a project's own view the tree starts at its environments.
+                let inProject: Bool = { if case .project = model.filter { return true } else { return false } }()
+                let groups = ItemTree.build(list)
+                ForEach(groups) { group in
+                    if inProject {
+                        ForEach(group.environments) { env in
+                            EnvironmentGroup(model: model, project: group.project, env: env, single: group.environments.count == 1, indent: 0)
+                        }
+                    } else if group.project.isEmpty {
+                        let open = model.isOpen("shared", single: groups.count == 1)
+                        TreeHeader(open: open, toggle: { model.toggle("shared") }) {
+                            GroupHeader(symbol: "tray.full", title: "Shared", count: group.count)
+                        }
+                        if open {
+                            ForEach(group.environments.flatMap(\.items)) { item in
+                                ItemRow(item: item, showsProject: false).padding(.leading, 18).tag(item.name)
                             }
-                        } header: {
-                            HStack { EnvBadge(environment: env); Text("\(rows.count)").foregroundStyle(.secondary) }
                         }
-                    }
-                }
-            } else if model.sort == .name {
-                // Every other view spans projects: one section per project, shared items last, so the same
-                // name in several projects reads as separate items.
-                ForEach(Self.groups(list), id: \.project) { group in
-                    Section {
-                        ForEach(group.items) { item in
-                            ItemRow(item: item, showsProject: false, showsEnvironment: true).tag(item.name)
+                    } else {
+                        let open = model.isOpen(group.project, single: groups.count == 1)
+                        TreeHeader(open: open, toggle: { model.toggle(group.project) }) {
+                            GroupHeader(symbol: "folder", title: group.project, count: group.count,
+                                        environments: group.environments.map { ($0.name, $0.items.count) })
                         }
-                    } header: {
-                        HStack(spacing: 6) {
-                            Image(systemName: group.project.isEmpty ? "tray.full" : "folder")
-                            Text(group.project.isEmpty ? "Shared" : group.project).font(.headline)
-                            Text("\(group.items.count)").foregroundStyle(.secondary)
+                        .contextMenu { ProjectMenu(model: model, project: group.project) }
+                        if open {
+                            ForEach(group.environments) { env in
+                                EnvironmentGroup(model: model, project: group.project, env: env, single: group.environments.count == 1, indent: 18)
+                            }
                         }
                     }
                 }
@@ -327,15 +331,109 @@ struct ItemList: View {
     }
 }
 
-extension ItemList {
-    /// Items split by project in the list's order (projects by name, shared last).
-    static func groups(_ items: [SecretInfo]) -> [(project: String, items: [SecretInfo])] {
-        var out: [(project: String, items: [SecretInfo])] = []
-        for item in items {
-            if out.last?.project == item.ref.project { out[out.count - 1].items.append(item) }
-            else { out.append((item.ref.project, [item])) }
+/// Items arranged as projects → environments → items, in the list's order (shared items last).
+enum ItemTree {
+    struct Environment: Identifiable {
+        let name: String
+        var items: [SecretInfo]
+        var id: String { name }
+    }
+
+    struct Project: Identifiable {
+        let project: String
+        var environments: [Environment]
+        var id: String { project }
+        var count: Int { environments.reduce(0) { $0 + $1.items.count } }
+    }
+
+    static func build(_ items: [SecretInfo]) -> [Project] {
+        var out: [Project] = []
+        for item in items.sorted(by: { $0.ref < $1.ref }) {
+            let p = item.ref.project, e = item.ref.environment
+            if out.last?.project != p { out.append(Project(project: p, environments: [])) }
+            if out[out.count - 1].environments.last?.name != e {
+                out[out.count - 1].environments.append(Environment(name: e, items: []))
+            }
+            out[out.count - 1].environments[out[out.count - 1].environments.count - 1].items.append(item)
         }
         return out
+    }
+}
+
+/// A header row that opens and closes its group. Plain rows rather than a disclosure control, so opening a
+/// group from code (selecting an item elsewhere) and clicking behave the same, on screen and in snapshots.
+struct TreeHeader<Label: View>: View {
+    let open: Bool
+    let toggle: () -> Void
+    @ViewBuilder let label: () -> Label
+
+    var body: some View {
+        Button(action: toggle) {
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                    .rotationEffect(.degrees(open ? 90 : 0))
+                    .frame(width: 12)
+                label()
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(open ? "Collapse" : "Expand")
+    }
+}
+
+/// A collapsible environment inside a project, with the bulk actions for everything in it.
+struct EnvironmentGroup: View {
+    let model: AppModel
+    let project: String
+    let env: ItemTree.Environment
+    var single = false
+    var indent: CGFloat = 18
+
+    var body: some View {
+        let key = "\(project)/\(env.name)"
+        let open = model.isOpen(key, single: single)
+        TreeHeader(open: open, toggle: { model.toggle(key) }) {
+            HStack(spacing: 6) {
+                EnvBadge(environment: env.name)
+                Text("\(env.items.count)").foregroundStyle(.secondary).monospacedDigit()
+                Spacer()
+                let safe = env.items.filter(\.agentSafe).count
+                if safe > 0 { Text("\(safe) agent-safe").font(.caption).foregroundStyle(.green) }
+            }
+        }
+        .padding(.leading, indent)
+        .contextMenu {
+            GroupMenu(model: model, title: key, ids: env.items.map(\.name), pattern: "\(key)/*")
+        }
+        if open {
+            ForEach(env.items) { item in
+                ItemRow(item: item, showsProject: false).padding(.leading, indent + 18).tag(item.name)
+            }
+        }
+    }
+}
+
+struct GroupHeader: View {
+    let symbol: String
+    let title: String
+    let count: Int
+    var environments: [(String, Int)] = []
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: symbol).foregroundStyle(.secondary).frame(width: 18)
+            Text(title).font(.body.weight(.semibold)).lineLimit(1)
+            Text("\(count)").foregroundStyle(.secondary).monospacedDigit()
+            Spacer(minLength: 4)
+            // Which environments the project has, at a glance, while it's collapsed.
+            HStack(spacing: 3) {
+                ForEach(environments.prefix(4), id: \.0) { EnvBadge(environment: $0.0, compact: true) }
+                if environments.count > 4 { Text("+\(environments.count - 4)").font(.caption2).foregroundStyle(.secondary) }
+            }
+        }
+        .padding(.vertical, 2)
     }
 }
 
