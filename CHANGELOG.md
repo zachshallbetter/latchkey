@@ -6,7 +6,6 @@
 - **Add Remote Location** is its own sheet: pick the service, fill in its details (each explained), choose the
   environment, and see whether the service's tool is installed, with a link to install it. **Add Location** stays
   disabled until the details are complete.
-- List rows show the item's type as a small label.
 
 ### The window
 - A new layout, arranged like 1Password: All Items, **Review** (what may need a look: values changed since a push,
@@ -18,6 +17,10 @@
   permanent delete, and grants in a table with revoke.
 - **Edit Details…** changes kind, access, service, note and fill sites together, with one Touch ID.
 - The sheets share one header and footer.
+- List rows are two lines, the name over its project, environment and service, with the type as the icon (hover
+  for its name). The header counts items, projects and services and has a **New Item** button; import and move
+  are in the options menu after the filters.
+- New Value, New Grant, Move to a Project and Import use the sheets' field cards and footer.
 
 ### Fixes
 - Copied values stay on this Mac: Universal Clipboard no longer hands them to your other devices.
