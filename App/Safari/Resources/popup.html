@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <style>
+    :root { color-scheme: light dark; }
+    body { margin: 0; width: 300px; padding: 14px; font: 13px/1.45 -apple-system, BlinkMacSystemFont, sans-serif; }
+    h1 { font-size: 14px; margin: 0 0 6px; display: flex; align-items: center; gap: 8px; }
+    h1 img { width: 20px; height: 20px; }
+    p { margin: 0 0 10px; }
+    ul { margin: 0 0 10px; padding-left: 18px; }
+    .status { padding: 7px 9px; border-radius: 7px; background: rgba(127, 127, 127, .14); }
+    .ok::before { content: "\25CF  "; color: #34c759; }
+    .no::before { content: "\25CF  "; color: #ff3b30; }
+    .muted { color: rgba(127, 127, 127, 1); font-size: 12px; margin: 0; }
+  </style>
+</head>
+<body>
+  <h1><img src="icon-48.png" alt="">Latchkey for Safari</h1>
+  <p class="status" id="status">Checking for Latchkey…</p>
+  <p>When one of these shows you a new API key, Latchkey offers to save it:</p>
+  <ul>
+    <li>Stripe: Developers › API keys</li>
+    <li>OpenAI: API keys</li>
+    <li>Anthropic: Console › API keys</li>
+    <li>GitHub: Settings › Developer settings › tokens</li>
+  </ul>
+  <p class="muted">If Safari shows a warning on this button, allow Latchkey on that site: Safari › Settings › Websites › Latchkey. It can't read the keys already in Latchkey.</p>
+  <script src="popup.js"></script>
+</body>
+</html>

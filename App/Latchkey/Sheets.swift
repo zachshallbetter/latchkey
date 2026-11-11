@@ -52,6 +52,14 @@ struct AddItemSheet: View {
                             model.selection = [name]
                             model.reveal([name])
                             dismiss()
+                            let added = name
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                                model.nextSteps = NextSteps(
+                                    title: "Added \(added)",
+                                    body: "Put this reference in an env file in place of the value, then run your project through lk run. Replace npm run dev with your own command.",
+                                    commands: ["\(ItemID(added)?.name ?? added)=latchkey://\(added)", "lk run --env-file .env -- npm run dev"],
+                                    agents: true)
+                            }
                         }
                     }
                 }
@@ -203,5 +211,54 @@ struct ImportSheet: View {
         }
         .padding(20)
         .frame(width: 620, height: 480)
+    }
+}
+
+
+/// What to do once keys are in Latchkey: the command to run, ready to copy, and where agents come in.
+struct NextSteps: Identifiable {
+    let id = UUID()
+    var title: String
+    var body: String
+    var commands: [String]
+    /// Mention how coding agents use the keys.
+    var agents: Bool
+}
+
+struct NextStepsSheet: View {
+    let steps: NextSteps
+    @Environment(\.dismiss) private var dismiss
+    @State private var copied: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Label(steps.title, systemImage: "checkmark.circle.fill").font(.title3.weight(.semibold)).foregroundStyle(.primary)
+            Text(steps.body).fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(steps.commands, id: \.self) { command in
+                    HStack {
+                        Text(command).font(.callout.monospaced()).textSelection(.enabled).lineLimit(1).truncationMode(.middle)
+                        Spacer()
+                        Button(copied == command ? "Copied" : "Copy") {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(command, forType: .string)
+                            copied = command
+                        }
+                    }
+                    .padding(8)
+                    .background(RoundedRectangle(cornerRadius: 6).fill(.quaternary.opacity(0.6)))
+                }
+            }
+            if steps.agents {
+                Text("Coding agents run commands the same way. They'll ask you here before reading a key, or you can allow a folder for a while when the panel appears. To teach an agent, install the Latchkey skill or tell it to use lk run.")
+                    .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+            HStack {
+                Spacer()
+                Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(width: 480)
     }
 }

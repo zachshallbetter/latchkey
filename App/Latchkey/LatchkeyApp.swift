@@ -157,6 +157,8 @@ final class AppModel {
     var sort: SortOrder = .name
     var showingAdd = false
     var importDraft: ImportDraft?
+    /// What to do now that keys are in Latchkey, shown after an import or an item added in the window.
+    var nextSteps: NextSteps?
     var moveRequest: MoveRequest?
     /// Open groups in item lists: a project name, "project/environment", or "shared". Everything starts closed.
     var expanded: Set<String> = []
@@ -635,6 +637,15 @@ final class AppModel {
         }
         notice = parts.joined(separator: ", ") + "."
         if !draft.shared { filter = .project(draft.project) }
+        let folder = draft.url.deletingLastPathComponent().path, file = draft.url.lastPathComponent
+        let rewritten = rewrite && parts.contains { $0.contains("now uses latchkey://") }
+        nextSteps = NextSteps(
+            title: "Imported \(saved.count) item\(saved.count == 1 ? "" : "s")",
+            body: rewritten
+                ? "\(file) now holds latchkey:// references instead of values. Run your project through lk run, and the values are filled in as it starts. Replace npm run dev with your own command."
+                : "The values are in Latchkey. Put latchkey:// references in your env file in their place, then run your project through lk run. Replace npm run dev with your own command.",
+            commands: ["cd \(Broker.tilde(folder))", "lk run --env-file \(file) -- npm run dev"],
+            agents: true)
         return nil
     }
 

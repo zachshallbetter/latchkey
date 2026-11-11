@@ -77,9 +77,15 @@ and **Add a Location…**. See [Remote locations](remote.md).
 
 ## The approval panel
 
-Appears when a command needs your approval. It shows the items, the program asking, its folder and command. Choose
-**Deny**, **Allow Once** or **Allow from this folder for** a time, then confirm with Touch ID. Pushes to production
-need **I mean to change production** ticked first. See [Concepts](concepts.md#approvals).
+Appears when a program needs your approval. It shows the items, the program asking, its folder and command. On a Mac
+with Touch ID it's one step: touch the sensor to allow once, or tick **Allow from this folder** (for a time, until the
+agent quits, or only for this command) first; **Deny** refuses. Without Touch ID, choose with the buttons and confirm
+with your password. Pushes always use the buttons, since production needs **I mean to change production** ticked
+first. Things you start yourself, in the window or in Latchkey for Safari, skip the panel and ask for Touch ID alone.
+See [Concepts](concepts.md#approvals).
+
+After an import or a new item, Latchkey shows what to do next: the reference to put in your env file and the
+`lk run` command for that folder, ready to copy.
 
 ## The menu bar
 
@@ -100,7 +106,8 @@ a small panel offers to save it: choose where it goes (shared, or a project's en
 **Save to Latchkey**. The app asks you to approve, showing the page's site, and the item's note says where it came
 from. Saving over an existing item keeps the old value in its history.
 
-Turn it on in Safari › Settings › Extensions, and allow it on those sites when Safari asks. If Latchkey isn't listed
+Turn it on in Safari › Settings › Extensions, and allow it on those sites when Safari asks. Its toolbar button says
+whether it can reach Latchkey and which pages it works on. After a save, it shows the reference to use, ready to copy. If Latchkey isn't listed
 there with a development build, turn on Safari › Settings › Advanced › **Show features for web developers**, then
 Develop › **Allow Unsigned Extensions**; a notarized release doesn't need this.
 

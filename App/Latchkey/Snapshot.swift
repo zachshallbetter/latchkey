@@ -50,7 +50,7 @@ enum Snapshot {
             let sample = ApprovalRequest(action: .read, names: ["DATABASE_URL", "STRIPE_KEY"], chain: ["zsh", "claude", "Terminal"],
                                          folder: NSHomeDirectory() + "/Projects/site", command: "npm test -- --watch=false",
                                          reason: "release DATABASE_URL, STRIPE_KEY")
-            drawOffscreen(ApprovalView(request: sample) { _ in }, to: path)
+            drawOffscreen(ApprovalView(request: sample) { _, _ in }, to: path)
             return
         }
         if let f = arg("--import") { model.beginImport(URL(fileURLWithPath: f)) }
@@ -76,7 +76,7 @@ enum Snapshot {
                                     chain: ["the Latchkey app"], folder: "", reason: "push 2 items")
             r.targets = ["Vercel shop · production", "GitHub Actions me/shop · environment production"]
             r.production = true
-            drawOffscreen(ApprovalView(request: r) { _ in }, to: path)
+            drawOffscreen(ApprovalView(request: r) { _, _ in }, to: path)
             return
         }
         if arg("--part") == "list" {

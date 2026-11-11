@@ -74,6 +74,7 @@ struct MainWindow: View {
         .safeAreaInset(edge: .bottom, spacing: 0) { NoticeBar(model: model) }
         .sheet(isPresented: $model.showingAdd) { AddItemSheet(model: model) }
         .sheet(item: $model.importDraft) { ImportSheet(model: model, draft: $0) }
+        .sheet(item: $model.nextSteps) { NextStepsSheet(steps: $0) }
         .sheet(item: $model.grantRequest) { NewGrantSheet(model: model, request: $0) }
         .sheet(item: $model.remoteRequest) { RemoteSheet(model: model, scope: $0.scope) }
         .confirmationDialog(deleteTitle, isPresented: Binding(get: { model.deleteRequest != nil },

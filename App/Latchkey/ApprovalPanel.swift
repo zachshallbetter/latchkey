@@ -1,10 +1,14 @@
 import AppKit
 import LatchkeyCore
+import LocalAuthentication
+import LocalAuthenticationEmbeddedUI
 import SwiftUI
 
-/// Shows who is asking, from where and for what, then confirms the choice with Touch ID.
-/// Requests made in the Latchkey window skip the panel (the person is already looking at what they clicked),
-/// except pushes, which always show it.
+/// Shows who is asking, from where and for what. With Touch ID, the panel has its own fingerprint area: touching the
+/// sensor approves what's selected, so one step approves a request. Without Touch ID (or for pushes, which have their
+/// own production check), its buttons choose and the system sheet confirms.
+/// Things you started yourself, in the Latchkey window or in Latchkey for Safari, skip the panel: the system sheet
+/// alone confirms them, except pushes, which always show it.
 final class PanelApprover: Approver, @unchecked Sendable {
     let system = SystemApprover()
     /// How long the panel waits before counting as a denial.
@@ -14,12 +18,14 @@ final class PanelApprover: Approver, @unchecked Sendable {
 
     func approve(_ request: ApprovalRequest) -> ApprovalDecision {
         // Pushes always show the panel, even from the window: it's where production is confirmed.
-        if request.fromApp && request.action != .push { return system.approve(request) }
+        if (request.fromApp || request.fromSafari) && request.action != .push { return system.approve(request) }
         let done = DispatchSemaphore(value: 0)
         nonisolated(unsafe) var choice = ApprovalDecision.deny
+        nonisolated(unsafe) var touched = false
         DispatchQueue.main.async {
-            ApprovalWindow.shared.show(request) { decision in
+            ApprovalWindow.shared.show(request) { decision, authenticated in
                 choice = decision
+                touched = authenticated
                 done.signal()
             }
         }
@@ -28,6 +34,7 @@ final class PanelApprover: Approver, @unchecked Sendable {
             return .deny
         }
         guard choice.allowed else { return .deny }
+        if touched { return choice }
         return system.confirm(request.reason) ? choice : .deny
     }
 }
@@ -36,12 +43,13 @@ final class PanelApprover: Approver, @unchecked Sendable {
 final class ApprovalWindow {
     static let shared = ApprovalWindow()
     private var panel: NSPanel?
-    private var reply: ((ApprovalDecision) -> Void)?
+    private var reply: ((ApprovalDecision, Bool) -> Void)?
 
-    func show(_ request: ApprovalRequest, reply: @escaping (ApprovalDecision) -> Void) {
+    /// `reply` gets the decision, and whether Touch ID in the panel already confirmed it.
+    func show(_ request: ApprovalRequest, reply: @escaping (ApprovalDecision, Bool) -> Void) {
         dismiss()
         self.reply = reply
-        let view = ApprovalView(request: request) { [weak self] decision in self?.finish(decision) }
+        let view = ApprovalView(request: request) { [weak self] decision, authenticated in self?.finish(decision, authenticated) }
         let host = NSHostingController(rootView: view)
         let panel = NSPanel(contentViewController: host)
         panel.styleMask = [.titled, .fullSizeContentView]
@@ -60,27 +68,88 @@ final class ApprovalWindow {
     func dismiss() {
         panel?.orderOut(nil)
         panel = nil
-        if let r = reply { reply = nil; r(.deny) }
+        if let r = reply { reply = nil; r(.deny, false) }
     }
 
-    private func finish(_ decision: ApprovalDecision) {
+    private func finish(_ decision: ApprovalDecision, _ authenticated: Bool) {
         let r = reply
         reply = nil
         panel?.orderOut(nil)
         panel = nil
-        r?(decision)
+        r?(decision, authenticated)
     }
+}
+
+/// What's selected in the panel, read when Touch ID succeeds.
+@MainActor
+final class ApprovalChoice: ObservableObject {
+    @Published var grant = false
+    /// Seconds, or `untilQuit` for "until the agent quits".
+    @Published var grantFor: Double = 3600
+    @Published var thisCommandOnly = false
+    static let untilQuit = -1.0
+
+    var decision: ApprovalDecision {
+        guard grant else { return .once }
+        let untilQuit = grantFor == Self.untilQuit
+        return .grant(GrantChoice(duration: untilQuit ? 86400 : grantFor, untilAgentQuits: untilQuit, thisCommandOnly: thisCommandOnly))
+    }
+}
+
+/// Touch ID drawn inside the panel instead of in a system sheet.
+struct TouchIDArea: NSViewRepresentable {
+    let context: LAContext
+    func makeNSView(context: Context) -> LAAuthenticationView { LAAuthenticationView(context: self.context, controlSize: .regular) }
+    func updateNSView(_ view: LAAuthenticationView, context: Context) {}
 }
 
 struct ApprovalView: View {
     let request: ApprovalRequest
-    let decide: (ApprovalDecision) -> Void
-    /// Seconds, or `untilQuit` for "until the agent quits".
-    @State private var grantFor: Double = 3600
-    @State private var thisCommandOnly = false
-    private static let untilQuit = -1.0
+    /// The decision, and whether Touch ID in the panel already confirmed it.
+    let decide: (ApprovalDecision, Bool) -> Void
+    @StateObject private var choice = ApprovalChoice()
     /// Production pushes need this ticked, on top of Touch ID.
     @State private var confirmedProduction = false
+    /// Set when this Mac can use Touch ID here; nil means buttons, then the system sheet.
+    @State private var touch: LAContext?
+    @State private var decided = false
+
+    /// Touch ID in the panel, where it can do the whole job: not for pushes (production has its own check first).
+    private static func embeddedTouchID(for request: ApprovalRequest) -> LAContext? {
+        guard request.action != .push else { return nil }
+        let ctx = LAContext()
+        guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil) else { return nil }
+        return ctx
+    }
+
+    private func finish(_ decision: ApprovalDecision, authenticated: Bool) {
+        guard !decided else { return }
+        decided = true
+        touch?.invalidate()
+        decide(decision, authenticated)
+    }
+
+    private func startTouchID() {
+        guard let ctx = Self.embeddedTouchID(for: request) else { return }
+        #if DEBUG
+        if Snapshot.requested { touch = ctx; return }   // draw the fingerprint area without asking for a finger
+        #endif
+        touch = ctx
+        ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: request.reason) { success, error in
+            DispatchQueue.main.async {
+                if success { finish(choice.decision, authenticated: true); return }
+                // Locked out, or no finger: fall back to the buttons and the system sheet (which offers the password).
+                if let e = error as? LAError, e.code != .appCancel, e.code != .systemCancel, !decided { touch = nil }
+            }
+        }
+    }
+
+    private var touchPrompt: String {
+        if request.action != .read { return "Touch ID to allow" }
+        guard choice.grant else { return "Touch ID to allow once" }
+        if choice.grantFor == ApprovalChoice.untilQuit, let agent = request.sessionName { return "Touch ID to allow until \(agent) quits" }
+        return "Touch ID to allow from this folder"
+    }
 
     var title: String {
         switch request.action {
@@ -151,44 +220,52 @@ struct ApprovalView: View {
             if request.canGrant {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text("Allow from this folder")
-                        Picker("", selection: $grantFor) {
-                            if let agent = request.sessionName { Text("until \(agent) quits").tag(Self.untilQuit) }
+                        Toggle("Allow from this folder", isOn: $choice.grant).toggleStyle(.checkbox)
+                        Picker("", selection: $choice.grantFor) {
+                            if let agent = request.sessionName { Text("until \(agent) quits").tag(ApprovalChoice.untilQuit) }
                             Text("for 1 hour").tag(3600.0)
                             Text("for 8 hours").tag(8 * 3600.0)
                             Text("for 1 day").tag(86400.0)
                             Text("for 7 days").tag(7 * 86400.0)
                         }
-                        .labelsHidden().fixedSize()
-                        Button("Allow") {
-                            let untilQuit = grantFor == Self.untilQuit
-                            decide(.grant(GrantChoice(duration: untilQuit ? 86400 : grantFor, untilAgentQuits: untilQuit,
-                                                      thisCommandOnly: thisCommandOnly)))
+                        .labelsHidden().fixedSize().disabled(!choice.grant)
+                        if touch == nil {
+                            Button("Allow") { choice.grant = true; finish(choice.decision, authenticated: false) }
                         }
                     }
                     if let command = request.runCommand {
-                        Toggle("Only for \(command.joined(separator: " "))", isOn: $thisCommandOnly)
-                            .toggleStyle(.checkbox).lineLimit(1).truncationMode(.middle)
+                        Toggle("Only for \(command.joined(separator: " "))", isOn: $choice.thisCommandOnly)
+                            .toggleStyle(.checkbox).lineLimit(1).truncationMode(.middle).disabled(!choice.grant)
                     }
                 }
                 // Narrowest first: a grant that ends with the agent's session.
-                .onAppear { if request.sessionName != nil { grantFor = Self.untilQuit } }
+                .onAppear { if request.sessionName != nil { choice.grantFor = ApprovalChoice.untilQuit } }
                 .font(.callout)
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 8).fill(.quaternary.opacity(0.5)))
             }
-            HStack {
-                Text("Touch ID confirms your choice.").font(.caption).foregroundStyle(.secondary)
-                Spacer()
-                Button("Deny", role: .cancel) { decide(.deny) }.keyboardShortcut(.cancelAction)
-                Button(request.action == .read ? "Allow Once" : request.action == .push ? "Push" : "Allow") { decide(.once) }
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(request.production && !confirmedProduction)
+            if let touch {
+                HStack(spacing: 12) {
+                    TouchIDArea(context: touch).frame(width: 34, height: 34)
+                    Text(touchPrompt).font(.callout.weight(.semibold))
+                    Spacer()
+                    Button("Deny", role: .cancel) { finish(.deny, authenticated: false) }.keyboardShortcut(.cancelAction)
+                }
+            } else {
+                HStack {
+                    Text("Touch ID confirms your choice.").font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Deny", role: .cancel) { finish(.deny, authenticated: false) }.keyboardShortcut(.cancelAction)
+                    Button(request.action == .read ? "Allow Once" : request.action == .push ? "Push" : "Allow") { finish(.once, authenticated: false) }
+                        .keyboardShortcut(.defaultAction)
+                        .disabled(request.production && !confirmedProduction)
+                }
             }
         }
         .padding(20)
         .frame(width: 440)
+        .onAppear(perform: startTouchID)
     }
 
     @ViewBuilder

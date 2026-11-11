@@ -25,6 +25,10 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         let page = message["page"] as? String
 
         switch message["op"] as? String {
+        case "status":
+            guard let r = send(Request(op: "status")), r.ok else { return unreachable() }
+            return ["ok": true]
+
         case "places":
             // Where a new item can go, and the items it might replace: IDs only, never values.
             guard let r = send(Request(op: "list")), r.ok else { return unreachable() }

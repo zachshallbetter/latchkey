@@ -75,6 +75,12 @@ The first release.
 ### Safari
 - Latchkey for Safari: on Stripe, OpenAI, Anthropic and GitHub key pages, offers to save a newly shown key, with your
   approval. It can't read values.
+- After a save, the extension shows the reference to use; its toolbar button says whether it can reach Latchkey.
+
+### Approvals
+- With Touch ID, the approval panel takes the fingerprint itself: one step, not a panel and then a sheet.
+- Things you start yourself, in the window or in Safari, ask for Touch ID alone.
+- After an import or a new item, Latchkey shows the reference and the `lk run` command to use next.
 
 ### Distribution
 - Developer ID-signed and notarized, in a disk image, with the command-line tool inside the app

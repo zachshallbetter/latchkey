@@ -662,6 +662,7 @@ public final class Broker: @unchecked Sendable {
             request.page = req.page
             request.program = nil
             request.folder = ""
+            request.command = nil
         }
         if peer.isSSHForward {
             request.overSSH = true

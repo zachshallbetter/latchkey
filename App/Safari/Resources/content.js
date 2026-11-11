@@ -56,6 +56,7 @@
       ".r{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}button{font:600 13px -apple-system,sans-serif;padding:6px 12px;border-radius:7px;border:1px solid #c9d0d9;background:transparent;color:inherit;cursor:pointer}" +
       "button.go{background:#0a63d1;border-color:#0a63d1;color:#fff}button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #0a63d1;outline-offset:1px}" +
       ".s{margin:10px 0 0;min-height:1em}.hint{margin:4px 0 0;font-size:12px}" +
+      ".ref{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:6px 8px;border-radius:7px;background:rgba(127,127,127,.14)}.ref code{flex:1;overflow-wrap:anywhere}" +
       "</style>" +
       '<div class="b" role="region" aria-label="Latchkey">' +
       "<b>Save this " + hit.kind.service + " key to Latchkey?</b>" +
@@ -64,7 +65,10 @@
       '<label for="lk-name">Name</label><input id="lk-name" autocomplete="off" spellcheck="false">' +
       '<p class="m hint" id="lk-hint"></p>' +
       '<div class="r"><button type="button" id="lk-no">Not now</button><button type="button" class="go" id="lk-save">Save to Latchkey</button></div>' +
-      '<p class="s m" id="lk-status" aria-live="polite"></p></div>';
+      '<p class="s m" id="lk-status" aria-live="polite"></p>' +
+      '<div id="lk-next" hidden><p class="m">Use it in an env file in place of the value:</p>' +
+      '<p class="ref"><code id="lk-ref"></code><button type="button" id="lk-copy">Copy</button></p>' +
+      '<p class="m">Then run your project with <code>lk run --env-file .env -- &lt;your command&gt;</code>. If this key replaces an older one, revoke the old one on this page.</p></div></div>';
     root.querySelector("code").textContent = preview(hit.value);
     var place = root.getElementById("lk-place"), name = root.getElementById("lk-name"), hint = root.getElementById("lk-hint");
     var status = root.getElementById("lk-status"), save = root.getElementById("lk-save");
@@ -97,12 +101,20 @@
     root.getElementById("lk-no").addEventListener("click", close);
     save.addEventListener("click", function () {
       save.disabled = true;
-      status.textContent = "Approve on your Mac…";
+      status.textContent = "Touch ID on your Mac to save it.";
       browser.runtime.sendMessage({ op: "save", id: id(), value: hit.value, kind: "token", service: hit.kind.service }).then(function (r) {
         if (r && r.ok) {
-          status.textContent = "Saved as " + r.id + ". Revoke the old key here if this one replaces it.";
+          status.textContent = "Saved to Latchkey as " + r.id + ".";
           save.hidden = true;
+          place.disabled = true; name.disabled = true; hint.hidden = true;
           root.getElementById("lk-no").textContent = "Done";
+          var ref = "latchkey://" + r.id;
+          root.getElementById("lk-ref").textContent = r.id.split("/").pop() + "=" + ref;
+          root.getElementById("lk-next").hidden = false;
+          root.getElementById("lk-copy").addEventListener("click", function (ev) {
+            var line = root.getElementById("lk-ref").textContent;
+            navigator.clipboard.writeText(line).then(function () { ev.target.textContent = "Copied"; }, function () { ev.target.textContent = "Select and copy"; });
+          });
         } else {
           status.textContent = (r && r.error) || "Not saved.";
           save.disabled = false;

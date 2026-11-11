@@ -61,6 +61,15 @@ if [[ -n "$TEAM" ]]; then
   fi
 fi
 
+# Only the installed copy should offer Latchkey's Safari extension: forget the build folder's copies, which macOS
+# registers when it sees them, so Safari doesn't list one extension per copy.
+LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+for built in "$DERIVED/Build/Products/Release/Latchkey.app" "$DERIVED/Build/Products/Debug/Latchkey.app"; do
+  [[ -d "$built" ]] || continue
+  pluginkit -r "$built/Contents/PlugIns/LatchkeySafari.appex" 2>/dev/null || true
+  "$LSREGISTER" -u "$built" 2>/dev/null || true
+done
+
 open /Applications/Latchkey.app
 for _ in {1..20}; do
   "$BIN_DIR/latchkey" status >/dev/null 2>&1 && break

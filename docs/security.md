@@ -33,7 +33,8 @@ command gets which value. This page says what it protects against, how, and wher
   talking to the socket is named by its path, with a warning. Grants are matched against the folder the caller
   really runs in.
 - **Approvals** use macOS LocalAuthentication: Touch ID, a paired Apple Watch, or your account password. The panel
-  shows context first; a panel nobody answers is a denial after 90 seconds.
+  shows context first and, with Touch ID, takes the fingerprint itself; a panel nobody answers is a denial after 90
+  seconds.
 - **Grants** are kept in a keychain item only Latchkey can read or change, on this Mac only, and last at most 7 days.
   No file holds them, so no other program can write itself one.
 - **The key proxy** (`latchkey run --proxy`) keeps OpenAI and Anthropic keys in the signed `latchkey` process, which

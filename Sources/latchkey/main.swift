@@ -542,9 +542,13 @@ func importCommand(_ input: [String]) -> Never {
         do {
             try EnvFile.rewriteFile(at: url, original: text, toReferences: plan.references.filter { saved.contains($0.value) })
             print("rewrote \(file): \(saved.count) value\(saved.count == 1 ? "" : "s") now latchkey://ID")
+            print("next: lk run --env-file \(file) -- <your command>")
         } catch {
             fail("items were saved, but \(file) could not be rewritten: \(error.localizedDescription)", code: 73)
         }
+    } else if !saved.isEmpty {
+        print("next: replace the values in \(file) with latchkey:// references (lk import \(file) --rewrite does it), then:")
+        print("  lk run --env-file \(file) -- <your command>")
     }
     exit(0)
 }
@@ -620,6 +624,10 @@ func batchImport(_ paths: [String], project: String?, environment: String?, shar
             failed += 1
             print("couldn't rewrite \(Broker.tilde(f.url.path)): \(error.localizedDescription)")
         }
+    }
+    if failed == 0, !saved.isEmpty {
+        print("next: run each project through Latchkey, from its folder:")
+        print("  lk run --env-file <its env file> -- <your command>")
     }
     exit(failed == 0 ? 0 : 73)
 }
@@ -974,6 +982,8 @@ case "set":
     _ = send(Request(op: "set", names: [name], value: value, kind: kind, agentSafe: agentSafe, note: note,
                      service: service))
     print("saved \(name)")
+    print("next: put \(ItemID(name)?.name ?? name)=latchkey://\(name) in your env file, then run your command through Latchkey:")
+    print("  lk run --env-file .env -- <your command>")
 
 case "rm":
     let ids = expandIDs(args)
