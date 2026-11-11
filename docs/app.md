@@ -106,6 +106,8 @@ npm, Hugging Face and others), private keys, database URLs with a password, and 
 secret or token. It skips what isn't secret or isn't a real key: masked values, examples, publishable keys,
 certificates, commit hashes.
 
+- When a page shows a new key and says it won't show it again, the save panel opens beside the key on its own, once;
+  press **Save to Latchkey** (or Return) to save it, or **Not now**.
 - For stronger matches, a **Save to Latchkey** button appears beside the key. Press it, choose where it goes (shared, or a
   project's environment; a live or test key is matched to production or development when it can be) and its name,
   then **Save to Latchkey**.
