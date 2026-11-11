@@ -14,6 +14,13 @@ served. It isn't hosted or connected to any service yet.
 | `llms.txt` | Plain-text facts, agent instructions and links for language-model tools |
 | `robots.txt` | Crawl policy |
 
+The home page has three scenes, each redrawing only what Latchkey really prints and shows. In the approval
+panel, the visitor plays the person at the Mac: Deny prints the real refusal, Allow Once runs the tests with the
+value concealed, and a grant shows the next run going through or, limited to one command, asking again. The env
+file rewrites itself into references. The proxy scene lets the visitor call the API, print, encode or send the key,
+and see only the placeholder leave. With reduced motion they jump between steps; without scripts, static figures
+stand in.
+
 Links are relative and end in `.html`, so the folder works from any host or opened from disk. Fonts are the
 system's, so pages make no third-party requests.
 

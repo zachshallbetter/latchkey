@@ -56,10 +56,9 @@ a { color: var(--accent); }
 
 header { display: grid; gap: 14px; }
 .brand { display: flex; align-items: center; gap: 12px; }
-/* Matches the app icon: a light tile with a blue key, or a near-black tile with a lighter blue key. */
-.mark { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; flex: none;
-  background: var(--mark-bg); box-shadow: inset 0 0 0 1px var(--line); }
-.mark svg { width: 24px; height: 24px; fill: var(--mark-key); }
+/* The mark on its own, blue, a little lighter in dark mode. */
+.mark { display: grid; place-items: center; flex: none; }
+.mark svg { width: 38px; height: 38px; fill: var(--mark-key); }
 header .lede { max-width: 65ch; color: var(--muted); font-size: 1.05rem; }
 .principle { max-width: 65ch; }
 .principle strong { font-family: var(--display); margin-right: 6px; }
