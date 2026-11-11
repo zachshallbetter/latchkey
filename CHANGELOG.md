@@ -54,6 +54,12 @@
 - An unanswered sheet denies without opening the panel.
 - A plain-text export no longer offers "Allow from this folder", which it couldn't honour.
 
+### Website
+- The home page shows Latchkey in use: self-playing scenes of a fresh clone rebuilt with `lk project` and
+  `lk export`, an env file imported, a second Mac (marked pending until tried), an agent being granted a folder and
+  asked again for production, and rotation. The approval demo follows the one-prompt panel.
+- New Features and Security pages; every page shares a header with Features, How it works, Security and Docs.
+
 ### App Store groundwork
 - The store experiment has a dedicated, mutually authenticated CLI endpoint. Commands continue to run in the
   terminal CLI; channel selection never falls back to another broker. Dynamic Security.framework identity checks
