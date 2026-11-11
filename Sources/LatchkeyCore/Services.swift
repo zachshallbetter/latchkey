@@ -35,6 +35,27 @@ public enum Services {
         ("ALGOLIA_", "Algolia"), ("FLY_", "Fly"), ("RAILWAY_", "Railway"), ("APPLE_", "Apple"), ("ASC_", "Apple"),
     ]
 
+    /// Where to make a new key, for services whose page is stable. Rotation sends you here; none of these services
+    /// lets Latchkey roll a key for you through an API.
+    public static let keyPages: [String: String] = [
+        "Stripe": "https://dashboard.stripe.com/apikeys",
+        "GitHub": "https://github.com/settings/tokens",
+        "OpenAI": "https://platform.openai.com/api-keys",
+        "Anthropic": "https://console.anthropic.com/settings/keys",
+        "Vercel": "https://vercel.com/account/tokens",
+        "Resend": "https://resend.com/api-keys",
+        "Neon": "https://console.neon.tech",
+        "Railway": "https://railway.com/account/tokens",
+        "Sentry": "https://sentry.io/settings/account/api/auth-tokens/",
+        "Cloudflare": "https://dash.cloudflare.com/profile/api-tokens",
+        "Google": "https://console.cloud.google.com/apis/credentials",
+        "AWS": "https://console.aws.amazon.com/iam/home#/security_credentials",
+        "Supabase": "https://supabase.com/dashboard",
+        "Clerk": "https://dashboard.clerk.com",
+        "Slack": "https://api.slack.com/apps",
+        "Fly": "https://fly.io/dashboard",
+    ]
+
     public static func guess(key: String, value: String) -> String? {
         for (prefix, service) in valuePrefixes where value.hasPrefix(prefix) { return service }
         let lower = value.lowercased()

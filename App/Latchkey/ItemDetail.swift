@@ -88,6 +88,10 @@ struct ItemDetail: View {
                 }
                 TextField("Service", text: $serviceDraft, prompt: Text("Stripe, Neon, GitHub…"))
                     .onSubmit { saveService() }
+                if let service = item.service, let page = Services.keyPages[service].flatMap(URL.init(string:)) {
+                    Link("Make a new key at \(service)", destination: page)
+                        .help("To rotate: make a new key there, revoke the old one, then Change Value here")
+                }
                 TextField("Note", text: $noteDraft, prompt: Text("What it's for, where it came from"))
                     .onSubmit { saveNote() }
             } footer: {

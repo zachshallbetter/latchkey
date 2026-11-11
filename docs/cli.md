@@ -118,6 +118,23 @@ Narrow a grant further with any of:
 
 The approval panel offers the same: **until claude quits** in the list, and **Only for …** for the command being run.
 
+## Rotating
+
+| Command | |
+|---|---|
+| `latchkey touched [--since 24h] [--by NAME] [--grant ID] [--json]` | Items Latchkey released in that time: to anything, to programs under NAME (such as `claude`), or under one grant. From the access log; never values. |
+| `latchkey rotate IDS\|PATTERN... \| --touched [...] [--open] [--push]` | Replace items one by one: ends grants that cover them, shows where to make each new key (`--open` opens the page), asks for the new value (the old one stays in history), then pushes to linked environments with `--push`. |
+
+After an agent session:
+
+```bash
+latchkey touched --since 4h --by claude
+latchkey rotate --touched --since 4h --by claude --open --push
+```
+
+Latchkey can't make the new key for you: Stripe, GitHub, OpenAI and most services only issue keys in their
+dashboards. It takes you to the page, saves what you paste, and puts it everywhere it's linked.
+
 ## Remote locations
 
 | Command | |

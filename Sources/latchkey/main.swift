@@ -76,6 +76,12 @@ Files refer to them as latchkey://ID.
       --command limits it to `latchkey run` of that command ("npm test" covers "npm test -- --ci").
       --once ends it after one use.
       PROJECT/* or PROJECT/ENV/* covers a whole project or environment, including items added later.
+  latchkey touched [--since 24h] [--by NAME] [--grant ID] [--json]
+      Items Latchkey released in that time (to anything, to programs under NAME such as claude, or under a grant),
+      with how often and to whom, from the access log.
+  latchkey rotate IDS|PATTERN... | --touched [--since 24h] [--by NAME] [--grant ID]  [--open] [--push]
+      Replace items: ends grants that cover them, shows where to make each new key (--open opens it), asks for the
+      new value (the old one stays in history), then pushes to linked environments with --push.
   latchkey grants                 Grants that are in effect.
   latchkey revoke ID|all
   latchkey status
@@ -961,6 +967,12 @@ case "run":
 
 case "check":
     checkCommand(args)
+
+case "touched":
+    touchedCommand(args)
+
+case "rotate":
+    rotateCommand(args)
 
 case "mcp":
     MCPServer().serve()

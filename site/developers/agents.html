@@ -36,7 +36,7 @@
       <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><a href="index.html">Developers</a></li><li><span aria-current="page">Agents and MCP</span></li></ol></nav>
       <h1>Agents and MCP</h1>
       <p class="lede">Coding agents need your keys to run tests and dev servers. With Latchkey they get them through <code>latchkey run</code>: the values reach the command, not the agent&rsquo;s files, and you decide what an agent may use without asking.</p>
-      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#pattern">The pattern</a></li><li><a href="#instructions">Instructions for agents</a></li><li><a href="#exit-codes">Exit codes to act on</a></li><li><a href="#unattended">Leaving an agent working</a></li><li><a href="#mcp">Latchkey&rsquo;s MCP server</a></li><li><a href="#other-mcp">Other MCP servers</a></li><li><a href="#key-files">Key files</a></li><li><a href="#limits">What Latchkey can&rsquo;t do for you</a></li></ul></nav>
+      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#pattern">The pattern</a></li><li><a href="#instructions">Instructions for agents</a></li><li><a href="#exit-codes">Exit codes to act on</a></li><li><a href="#unattended">Leaving an agent working</a></li><li><a href="#after">After an agent session</a></li><li><a href="#mcp">Latchkey&rsquo;s MCP server</a></li><li><a href="#other-mcp">Other MCP servers</a></li><li><a href="#key-files">Key files</a></li><li><a href="#limits">What Latchkey can&rsquo;t do for you</a></li></ul></nav>
 
 <h2 id="pattern">The pattern</h2>
 <ol>
@@ -65,6 +65,11 @@ write values in .env files. If latchkey exits with 77 (refused) or 66
 latchkey grant &#x27;shop/development/*&#x27; --command &quot;npm test&quot; --for 2h       # only this command
 latchkey grant &#x27;shop/development/*&#x27; --folder ~/Projects/shop --for 2h   # the folder, for a time</code></pre></figure>
 <p>Run them inside the agent&rsquo;s session (in Claude Code, start the line with <code>!</code>) so <code>--session</code> ties to the agent. The agent&rsquo;s reads go through without asking until the grant ends, and each one is in the app&rsquo;s Activity. End it early from <strong>Grants</strong> in the app or with <code>latchkey revoke ID</code>.</p>
+
+<h2 id="after">After an agent session</h2>
+<p>See what the agent was given, and replace anything you&rsquo;d rather it no longer knew:</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey touched --since 4h --by claude
+latchkey rotate --touched --since 4h --by claude --open --push</code></pre></figure>
 
 <h2 id="mcp">Latchkey&rsquo;s MCP server</h2>
 <p><code>latchkey mcp</code> gives agents Latchkey&rsquo;s tools over MCP: for clients without a shell, like Claude Desktop, and for structured refusals instead of exit codes. <strong>It never returns a value.</strong></p>
