@@ -3,7 +3,7 @@ import Foundation
 import Security
 
 /// Grants a coordinator agent arranges through ACP instead of the owner approving each one.
-/// See docs/acp-grants.md for the contract with acp-gateway.
+/// See docs/internal/acp-grants.md for the contract with acp-gateway.
 ///
 /// ACP decides whether a sub-agent may read some items for a repository and a ticket, and issues a capability
 /// signed with its Latchkey key (Ed25519, so Latchkey can check a signature but never make one). Latchkey checks it

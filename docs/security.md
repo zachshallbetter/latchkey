@@ -1,0 +1,63 @@
+# Security
+
+Latchkey's job is to keep secret values out of files and transcripts, and to make you the one who decides which
+command gets which value. This page says what it protects against, how, and where its protection ends.
+
+## What it protects against
+
+| Risk | How Latchkey handles it |
+|---|---|
+| Secrets committed, synced or backed up in `.env` files | Files hold references; values live in the keychain. |
+| Secrets in an agent's transcript or context | The agent runs commands through `latchkey run`; it sees references and IDs, not values. Output that repeats a value is masked. |
+| A program reading a secret you didn't mean to give it | Every read of an item that isn't agent-safe or granted asks you, showing the program chain, folder and command. |
+| Losing a value by mistake | Replaced values are kept (last 10); deleted items are restorable for 30 days. |
+| Not knowing what read what | Every read, change, grant, move, import and push is logged with the program chain and folder. Values are never logged. |
+| Values stolen from a lost or synced device | Values are keychain items: encrypted at rest, and end-to-end encrypted in iCloud Keychain. |
+| A value pasted into the wrong dashboard, or a stale value deployed | Remote locations push from one place, ask every time, and need an extra confirmation for production. |
+
+## How it works
+
+- **Storage.** Values are generic-password items in the data-protection keychain, in an access group only the signed
+  Latchkey app can use, synced through iCloud Keychain. Versions and remote links are keychain items too. Synced
+  items use the "after first unlock" protection class, so scheduled jobs can read agent-safe items while the screen
+  is locked.
+- **One process holds values.** The command-line tool never touches the keychain. It asks the app over a Unix socket
+  (`~/Library/Application Support/Latchkey/broker.sock`, readable and writable only by you). The app accepts
+  connections only from your user account.
+- **Knowing who asks.** For each connection the app reads the caller's process ID and walks its parent processes,
+  which is how the approval panel and the log name `zsh › claude` and the folder.
+- **Approvals** use macOS LocalAuthentication: Touch ID, a paired Apple Watch, or your account password. The panel
+  shows context first; a panel nobody answers is a denial after 90 seconds.
+- **Grants** are stored on this Mac only and last at most 7 days.
+- **Temporary key files** live in a new folder only you can open, are only readable by you, and are deleted when the
+  command exits.
+- **Remote pushes** pass values to each service's tool on standard input, never as arguments, so they don't appear
+  in process listings. No service tokens are stored.
+- **Logs and errors** never contain values. Tool errors are shortened and have any value replaced.
+
+## Where protection ends
+
+Be clear about these before you rely on Latchkey:
+
+- **Anything running as you can ask.** The socket is open to every process in your user account. Latchkey can't tell
+  a program you trust from one you don't, except by the process chain it shows you. Agent-safe items and grants are
+  released to any program that asks from the right place, so keep them narrow and short.
+- **The caller chain is informative, not proof.** Process names can be faked. Judge a request by its folder and
+  command as well, and deny anything unexpected.
+- **A released value is out of Latchkey's hands.** Once a command has a value, it can write it to a file, send it
+  over the network, or transform it. Masking only hides exact copies of values 6 characters or longer in what the
+  command prints; it doesn't stop a command that tries to leak.
+- **`latchkey get` prints the value.** Keep agents away from it (your agent instructions, or a hook that refuses it).
+- **The same Mac account.** Malware running as you could also ask for approvals until you click one, or read a
+  temporary key file while the command runs. Latchkey raises the bar; it doesn't replace a clean machine.
+- **History keeps old values.** That's what makes restore work, but an old value stays readable (with your approval)
+  for up to 30 days after deletion, or until it's one of more than 10 versions. Use **Forget History** when an old
+  value shouldn't linger, and rotate leaked keys at the service either way.
+- **Unsigned builds** fall back to the login keychain on one Mac. Each rebuild changes the build's identity, so macOS
+  asks for your login password the first time a new build reads each item.
+- **iCloud Keychain** protection is Apple's: anyone who controls your Apple Account and a trusted device can reach
+  synced items.
+
+## Reporting a problem
+
+Report security issues privately to the maintainer rather than in a public issue.

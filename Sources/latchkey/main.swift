@@ -54,10 +54,10 @@ Files refer to them as latchkey://ID.
   latchkey remote link PROJECT/ENV vercel|github|railway|fly KEY=VALUE...
       Link an environment to a place that holds its values. Keys: project, environment, repo, service, app,
       branch, dir (a folder linked with `vercel link` or `railway link`). For example:
-        latchkey remote link acp/vercel.preview vercel project=acp environment=preview
-        latchkey remote link acp/production github repo=me/acp environment=production
-        latchkey remote link acp/railway.production railway environment=production service=api dir=~/Projects/acp
-        latchkey remote link acp/production fly app=acp-api
+        latchkey remote link shop/vercel.preview vercel project=shop environment=preview
+        latchkey remote link shop/production github repo=me/shop environment=production
+        latchkey remote link shop/railway.production railway environment=production service=api dir=~/Projects/shop
+        latchkey remote link shop/production fly app=shop-api
   latchkey remote unlink LINK
   latchkey remote status PROJECT/ENV   Names missing on each side and values changed since the last push.
   latchkey push PROJECT/ENV [--to LINK] [--only ID,...] [--dry-run]
@@ -192,7 +192,7 @@ func runCommand(_ input: [String]) -> Never {
             guard !rest.isEmpty else { fail("--env-file takes a path", code: 64) }
             envFiles.append(rest.removeFirst())
         case "--env":
-            guard !rest.isEmpty, RemoteLink.isValidScope(rest[0]) else { fail("--env takes PROJECT/ENV, such as acp/development", code: 64) }
+            guard !rest.isEmpty, RemoteLink.isValidScope(rest[0]) else { fail("--env takes PROJECT/ENV, such as shop/development", code: 64) }
             scopes.append(rest.removeFirst())
         case "--file":
             guard !rest.isEmpty, let eq = rest[0].firstIndex(of: "="), Wire.isValidName(String(rest[0][rest[0].index(after: eq)...])) else {
@@ -732,7 +732,7 @@ func pushCommand(_ args: [String]) -> Never {
 /// that exist now. Fails on anything else, or on a pattern that matches nothing.
 func expandIDs(_ args: [String]) -> [String] {
     let words = args.flatMap { $0.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) } }.filter { !$0.isEmpty }
-    guard !words.isEmpty else { fail("give one or more item IDs, or a pattern such as acp/* or acp/production/*", code: 64) }
+    guard !words.isEmpty else { fail("give one or more item IDs, or a pattern such as shop/* or shop/production/*", code: 64) }
     var all: [String]?
     var out: [String] = []
     for w in words {
