@@ -75,7 +75,10 @@ final class ApprovalWindow {
 struct ApprovalView: View {
     let request: ApprovalRequest
     let decide: (ApprovalDecision) -> Void
-    @State private var grantFor: TimeInterval = 3600
+    /// Seconds, or `untilQuit` for "until the agent quits".
+    @State private var grantFor: Double = 3600
+    @State private var thisCommandOnly = false
+    private static let untilQuit = -1.0
     /// Production pushes need this ticked, on top of Touch ID.
     @State private var confirmedProduction = false
 
@@ -129,17 +132,30 @@ struct ApprovalView: View {
                 .background(RoundedRectangle(cornerRadius: 8).fill(.orange.opacity(0.12)))
             }
             if request.canGrant {
-                HStack {
-                    Text("Allow from this folder for")
-                    Picker("", selection: $grantFor) {
-                        Text("1 hour").tag(3600.0)
-                        Text("8 hours").tag(8 * 3600.0)
-                        Text("1 day").tag(86400.0)
-                        Text("7 days").tag(7 * 86400.0)
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Allow from this folder")
+                        Picker("", selection: $grantFor) {
+                            if let agent = request.sessionName { Text("until \(agent) quits").tag(Self.untilQuit) }
+                            Text("for 1 hour").tag(3600.0)
+                            Text("for 8 hours").tag(8 * 3600.0)
+                            Text("for 1 day").tag(86400.0)
+                            Text("for 7 days").tag(7 * 86400.0)
+                        }
+                        .labelsHidden().fixedSize()
+                        Button("Allow") {
+                            let untilQuit = grantFor == Self.untilQuit
+                            decide(.grant(GrantChoice(duration: untilQuit ? 86400 : grantFor, untilAgentQuits: untilQuit,
+                                                      thisCommandOnly: thisCommandOnly)))
+                        }
                     }
-                    .labelsHidden().fixedSize()
-                    Button("Allow") { decide(.grant(grantFor)) }
+                    if let command = request.runCommand {
+                        Toggle("Only for \(command.joined(separator: " "))", isOn: $thisCommandOnly)
+                            .toggleStyle(.checkbox).lineLimit(1).truncationMode(.middle)
+                    }
                 }
+                // Narrowest first: a grant that ends with the agent's session.
+                .onAppear { if request.sessionName != nil { grantFor = Self.untilQuit } }
                 .font(.callout)
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)

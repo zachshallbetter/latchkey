@@ -26,7 +26,9 @@ belongs in both places. Every page shares the same header, sidebar and footer; c
 
 - A domain, then canonical URLs, `og:url`, an Open Graph image and a sitemap.
 - The **Download** buttons point at this repository's latest GitHub release, which only works once releases are
-  public.
+  public, and the page says the app is signed and notarized: notarize the release first (`scripts/release.sh`).
+- The page says Apple silicon and Intel: try the release on an Intel Mac.
+- The page says keys sync to every Mac: try it on a second Mac.
 - Hosting, with deploys run on request rather than on every push.
 
 ## Previewing

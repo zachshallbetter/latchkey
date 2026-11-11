@@ -159,13 +159,19 @@ public struct Request: Codable, Sendable {
     public var only: [String]?       // push: only these item ids
     public var origin: String?       // "mcp" when an agent asks through `latchkey mcp`: shown in approvals, and
                                      // grants it asks for are limited (see Broker.grant)
+    public var session: Bool?        // grant: only while the caller's agent runs
+    public var commands: [[String]]? // grant: only for these commands (each a list of words)
+    public var uses: Int?            // grant: only this many requests
+    public var intended: [String]?   // check: the command the caller means to run, to test command-limited grants.
+                                     // Nothing is released by a check, so this claim decides nothing.
 
     public init(op: String, names: [String]? = nil, value: String? = nil, kind: ItemKind? = nil,
                 agentSafe: Bool? = nil, note: String? = nil,
                 items: [ImportItem]? = nil, replace: Bool? = nil, source: String? = nil,
                 folder: String? = nil, duration: Double? = nil, project: String? = nil, environment: String? = nil,
                 service: String? = nil, version: String? = nil, target: RemoteTarget? = nil, link: String? = nil,
-                only: [String]? = nil, origin: String? = nil) {
+                only: [String]? = nil, origin: String? = nil, session: Bool? = nil, commands: [[String]]? = nil,
+                uses: Int? = nil, intended: [String]? = nil) {
         self.op = op
         self.names = names
         self.value = value
@@ -185,6 +191,10 @@ public struct Request: Codable, Sendable {
         self.link = link
         self.only = only
         self.origin = origin
+        self.session = session
+        self.commands = commands
+        self.uses = uses
+        self.intended = intended
     }
 }
 

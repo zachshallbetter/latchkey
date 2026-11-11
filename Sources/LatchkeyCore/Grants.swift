@@ -16,9 +16,17 @@ public struct Grant: Codable, Identifiable, Hashable, Sendable {
     /// The git repository (its common `.git` directory) the folder belongs to, if any. Commands run from any of
     /// that repository's worktrees are covered too, wherever the worktree lives.
     public var repo: String?
+    /// Only for programs started under this process (an agent), and only while it runs.
+    public var session: GrantSession?
+    /// Only for these commands, started by Latchkey's own `latchkey run`. An entry covers a command that is the
+    /// same words or starts with them: "npm test" covers "npm test -- --watch=false".
+    public var commands: [[String]]?
+    /// How many more requests it covers; nil for no limit.
+    public var usesLeft: Int?
 
     public init(id: String = Grant.newID(), names: [String], folder: String, expires: Date,
-                created: Date = Date(), createdBy: String, repo: String? = nil) {
+                created: Date = Date(), createdBy: String, repo: String? = nil, session: GrantSession? = nil,
+                commands: [[String]]? = nil, usesLeft: Int? = nil) {
         self.id = id
         self.names = names.sorted()
         self.folder = Grant.normalize(folder)
@@ -26,6 +34,32 @@ public struct Grant: Codable, Identifiable, Hashable, Sendable {
         self.created = created
         self.createdBy = createdBy
         self.repo = repo
+        self.session = session
+        self.commands = commands
+        self.usesLeft = usesLeft
+    }
+
+    /// Whether it covers `name` for this caller now: the folder and time, then any session, command and use limits.
+    /// `command` is what the caller is about to run, when known.
+    public func allows(_ name: String, cwd: String, ancestors: [ProcessStamp], command: [String]?, now: Date = Date()) -> Bool {
+        guard covers(name, cwd: cwd, now: now) else { return false }
+        if let usesLeft, usesLeft <= 0 { return false }
+        if let session {
+            guard session.process.isRunning, ancestors.contains(session.process) else { return false }
+        }
+        if let commands {
+            guard let command, commands.contains(where: { command.starts(with: $0) }) else { return false }
+        }
+        return true
+    }
+
+    /// The limits beyond folder and time, as words: "only npm test, until claude quits, 1 use left".
+    public var limits: String {
+        var parts: [String] = []
+        if let commands { parts.append("only " + commands.map { $0.joined(separator: " ") }.joined(separator: " or ")) }
+        if let session { parts.append("until \(session.name) quits") }
+        if let usesLeft { parts.append("\(usesLeft) use\(usesLeft == 1 ? "" : "s") left") }
+        return parts.joined(separator: ", ")
     }
 
     public static func newID() -> String {
@@ -57,6 +91,18 @@ public struct Grant: Codable, Identifiable, Hashable, Sendable {
         if c == folder || c.hasPrefix(folder == "/" ? "/" : folder + "/") { return true }
         if let repo, Repo.commonDir(for: c) == repo { return true }
         return false
+    }
+}
+
+/// The process a session grant lasts as long as.
+public struct GrantSession: Codable, Hashable, Sendable {
+    public var process: ProcessStamp
+    /// Its name, for showing: "claude".
+    public var name: String
+
+    public init(process: ProcessStamp, name: String) {
+        self.process = process
+        self.name = name
     }
 }
 
@@ -119,21 +165,37 @@ public final class GrantStore: @unchecked Sendable {
 
     public func all(now: Date = Date()) -> [Grant] {
         lock.withLock {
-            let live = cache.filter { $0.expires > now }
+            let live = cache.filter { g in
+                g.expires > now && (g.usesLeft ?? 1) > 0 && (g.session.map { $0.process.isRunning } ?? true)
+            }
             if live.count != cache.count { cache = live; persist() }
             return live.sorted { $0.expires < $1.expires }
         }
     }
 
-    /// The grant that lets `cwd` read `name` right now, if any.
-    public func covering(_ name: String, cwd: String, now: Date = Date()) -> Grant? {
-        all(now: now).first { $0.covers(name, cwd: cwd, now: now) }
+    /// The grant that lets this caller read `name` right now, if any.
+    public func covering(_ name: String, cwd: String, ancestors: [ProcessStamp] = [], command: [String]? = nil,
+                         now: Date = Date()) -> Grant? {
+        all(now: now).first { $0.allows(name, cwd: cwd, ancestors: ancestors, command: command, now: now) }
+    }
+
+    /// Counts one use against each of these grants; a grant with no uses left ends.
+    public func used(_ ids: [String]) {
+        lock.withLock {
+            var changed = false
+            for i in cache.indices where ids.contains(cache[i].id) {
+                if let n = cache[i].usesLeft { cache[i].usesLeft = n - 1; changed = true }
+            }
+            if changed { cache.removeAll { ($0.usesLeft ?? 1) <= 0 }; persist() }
+        }
     }
 
     @discardableResult
-    public func add(names: [String], folder: String, duration: TimeInterval, createdBy: String, now: Date = Date()) -> Grant {
+    public func add(names: [String], folder: String, duration: TimeInterval, createdBy: String, now: Date = Date(),
+                    session: GrantSession? = nil, commands: [[String]]? = nil, uses: Int? = nil) -> Grant {
         let g = Grant(names: names, folder: folder, expires: now.addingTimeInterval(min(duration, Self.longest)),
-                      created: now, createdBy: createdBy, repo: Repo.commonDir(for: folder))
+                      created: now, createdBy: createdBy, repo: Repo.commonDir(for: folder), session: session,
+                      commands: commands, usesLeft: uses)
         lock.withLock {
             cache.append(g)
             persist()

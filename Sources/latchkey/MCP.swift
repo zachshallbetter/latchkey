@@ -156,6 +156,8 @@ final class MCPServer: @unchecked Sendable {
         var cli = ["check", "--json"] + (try sourceArguments(args))
         let ids = Self.strings(args["ids"])
         if !ids.isEmpty { cli.append(ids.joined(separator: ",")) }
+        let command = Self.strings(args["command"])
+        if !command.isEmpty { cli += ["--"] + command }
         let result = try latchkey(cli, in: try folder(args), timeout: 60, id: nil)
         guard result.code == 0 || result.code == 66, let data = result.stdout.text.data(using: .utf8),
               var detail = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
@@ -199,7 +201,7 @@ final class MCPServer: @unchecked Sendable {
         guard !ids.isEmpty else { throw RunError.usage("ids is required: item IDs or project/environment/* patterns") }
         let duration = args["duration"] as? String ?? "1h"
         guard GrantStore.parseDuration(duration) != nil else { throw RunError.usage("duration is like 30m, 2h or 1d") }
-        let result = try latchkey(["grant", ids.joined(separator: ","), "--for", duration, "--json"], in: try folder(args),
+        let result = try latchkey(["grant", ids.joined(separator: ","), "--for", duration, "--session", "--json"], in: try folder(args),
                                   timeout: Self.longestTimeout, id: nil)
         guard result.code == 0, let data = result.stdout.text.data(using: .utf8),
               let g = try? Wire.decoder().decode(Grant.self, from: data) else { throw Self.failure(result) }
@@ -398,6 +400,8 @@ final class MCPServer: @unchecked Sendable {
             "description": "What latchkey_run with the same options would get without asking (agent-safe, granted, recently approved), what would ask the owner, and what's missing. Asks nothing and releases nothing.",
             "inputSchema": ["type": "object", "properties": sourceProperties.merging([
                 "ids": ["type": "array", "items": ["type": "string"], "description": "More item IDs to check."],
+                "command": ["type": "array", "items": ["type": "string"],
+                            "description": "The command you mean to run, to count grants limited to it."],
             ]) { a, _ in a }],
             "annotations": ["readOnlyHint": true, "openWorldHint": false],
         ],
@@ -416,7 +420,7 @@ final class MCPServer: @unchecked Sendable {
         [
             "name": "latchkey_request_grant",
             "title": "Ask for a grant",
-            "description": "Ask the owner to let commands in this folder (and its repository's worktrees) read these items without asking, for a while. The owner sees the request marked as coming from an agent and decides. Production items and whole projects can't be requested; at most 1 day. Ask once; don't repeat a refused request.",
+            "description": "Ask the owner to let commands in this folder (and its repository's worktrees) read these items without asking, until your session ends or the time is up. The owner sees the request marked as coming from an agent and decides. Production items and whole projects can't be requested; at most 1 day. Ask once; don't repeat a refused request.",
             "inputSchema": ["type": "object", "required": ["ids"], "properties": [
                 "ids": ["type": "array", "items": ["type": "string"], "minItems": 1,
                         "description": "Item IDs or project/environment/* patterns, such as [\"shop/development/*\"]."],

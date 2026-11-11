@@ -51,7 +51,7 @@ final class BrokerGrantTests: XCTestCase {
     }
 
     func testApprovalCanCreateAGrantThatLaterReadsUse() throws {
-        let b = try broker(.grant(3600))
+        let b = try broker(.grant(GrantChoice(duration: 3600)))
         let r = b.handle(Request(op: "get", names: ["DB"]), peer: peer)
         XCTAssertEqual(r.values, ["DB": "db-value-123"])
         XCTAssertEqual(b.grants.all().count, 1)
@@ -70,6 +70,72 @@ final class BrokerGrantTests: XCTestCase {
     }
 
     func at(_ cwd: String) -> PeerInfo { PeerInfo(pid: 1, path: peer.path, cwd: cwd, chain: peer.chain) }
+
+    /// This test process stands in for a running agent: a session grant needs a live process to tie to.
+    var me: ProcessStamp { ProcessStamp(pid: getpid(), started: PeerInfo.started(getpid())!) }
+    var agentPeer: PeerInfo { PeerInfo(pid: 1, path: peer.path, cwd: "/tmp/site", chain: ["zsh", "claude"], ancestors: [ProcessStamp(pid: 2, started: 1), me]) }
+
+    func tool(_ args: [String], cwd: String = "/tmp/site", ancestors: [ProcessStamp] = []) -> PeerInfo {
+        PeerInfo(pid: 1, path: "/Users/x/.local/bin/latchkey", cwd: cwd, chain: ["zsh", "claude"], arguments: args,
+                 isLatchkeyTool: true, ancestors: ancestors)
+    }
+
+    func testRunCommandIsReadOnlyFromTheSignedTool() {
+        XCTAssertEqual(tool(["lk", "run", "--env", "shop/development", "--no-masking", "--", "npm", "test"]).runCommand, ["npm", "test"])
+        XCTAssertEqual(tool(["latchkey", "run", "--env-file", ".env", "npm", "run", "dev"]).runCommand, ["npm", "run", "dev"])
+        XCTAssertNil(tool(["latchkey", "get", "X"]).runCommand)
+        var other = tool(["latchkey", "run", "--", "npm", "test"])
+        other.isLatchkeyTool = false
+        XCTAssertNil(other.runCommand, "another program's command line can't be trusted")
+        XCTAssertEqual(agentPeer.sessionProcess?.name, "claude")
+        XCTAssertNil(PeerInfo(pid: 1, path: "", cwd: "", chain: ["zsh", "lk"], ancestors: [me, me]).sessionProcess)
+    }
+
+    func testSessionCommandAndOnceLimits() throws {
+        // Grants are approved; reads never are, so anything released came from a grant.
+        let store = MemoryStore()
+        try store.save(name: "DB", value: "db-value-123", kind: .password, agentSafe: false, note: "")
+        try store.save(name: "API", value: "api-value-456", kind: .token, agentSafe: false, note: "")
+        let b = Broker(store: store, approver: GrantsOnlyApprover(), readApprovalWindow: 0, logURL: nil)
+        // Until the agent quits: covers programs under it, not elsewhere.
+        let session = b.handle(Request(op: "grant", names: ["DB"], folder: "/tmp/site", session: true), peer: agentPeer)
+        XCTAssertTrue(session.ok, session.error ?? "")
+        XCTAssertEqual(session.grants?.first?.session?.name, "claude")
+        XCTAssertEqual(b.handle(Request(op: "get", names: ["DB"]), peer: tool(["lk", "run", "--", "x"], ancestors: [me])).values, ["DB": "db-value-123"])
+        XCTAssertEqual(b.handle(Request(op: "get", names: ["DB"]), peer: tool(["lk", "run", "--", "x"])).denied, ["DB"], "not under the agent")
+        // A session that has ended covers nothing, and the grant drops out.
+        let gone = Grant(names: ["API"], folder: "/tmp/site", expires: Date().addingTimeInterval(3600), createdBy: "t",
+                         session: GrantSession(process: ProcessStamp(pid: getpid(), started: 1), name: "old"))
+        XCTAssertFalse(gone.allows("API", cwd: "/tmp/site", ancestors: [ProcessStamp(pid: getpid(), started: 1)], command: nil))
+        _ = b.handle(Request(op: "revoke", names: ["all"]), peer: peer)
+
+        // One command: only a signed `latchkey run` of it.
+        XCTAssertTrue(b.handle(Request(op: "grant", names: ["API"], folder: "/tmp/site", commands: [["npm", "test"]]), peer: peer).ok)
+        XCTAssertEqual(b.handle(Request(op: "get", names: ["API"]), peer: tool(["lk", "run", "--", "npm", "test", "--ci"])).values, ["API": "api-value-456"])
+        XCTAssertEqual(b.handle(Request(op: "get", names: ["API"]), peer: tool(["lk", "run", "--", "npm", "run", "dev"])).denied, ["API"])
+        XCTAssertEqual(b.handle(Request(op: "get", names: ["API"]), peer: tool(["lk", "get", "API"])).denied, ["API"])
+        XCTAssertEqual(b.handle(Request(op: "check", names: ["API"], intended: ["npm", "test"]), peer: peer).granted, ["API"])
+        _ = b.handle(Request(op: "revoke", names: ["all"]), peer: peer)
+
+        // Once: one request, then it's gone.
+        XCTAssertTrue(b.handle(Request(op: "grant", names: ["DB", "API"], folder: "/tmp/site", uses: 1), peer: peer).ok)
+        XCTAssertEqual(b.handle(Request(op: "get", names: ["DB", "API"]), peer: peer).values?.count, 2)
+        XCTAssertEqual(b.handle(Request(op: "get", names: ["DB"]), peer: peer).denied, ["DB"])
+        XCTAssertTrue(b.grants.all().isEmpty)
+    }
+
+    func testApprovalCanGrantForTheSessionOrTheCommand() throws {
+        let store = MemoryStore()
+        try store.save(name: "DB", value: "db-value-123", kind: .password, agentSafe: false, note: "")
+        let b = Broker(store: store, approver: FixedApprover(.grant(GrantChoice(duration: 3600, untilAgentQuits: true, thisCommandOnly: true))),
+                       readApprovalWindow: 0, logURL: nil)
+        let caller = tool(["lk", "run", "--", "npm", "test"], ancestors: [ProcessStamp(pid: 2, started: 1), me])
+        XCTAssertEqual(b.handle(Request(op: "get", names: ["DB"]), peer: caller).values, ["DB": "db-value-123"])
+        let g = try XCTUnwrap(b.grants.all().first)
+        XCTAssertEqual(g.session?.name, "claude")
+        XCTAssertEqual(g.commands, [["npm", "test"]])
+        XCTAssertEqual(g.limits, "only npm test, until claude quits")
+    }
 
     func testGrantAheadOfTimeAndRevoke() throws {
         let b = try broker(.once)
@@ -123,7 +189,7 @@ final class BrokerGrantTests: XCTestCase {
         }
         let b = Broker(store: store, approver: FixedApprover(.once), readApprovalWindow: 0, logURL: nil)
         func ask(_ names: [String], folder: String = "/tmp/site", duration: Double = 3600) -> Response {
-            b.handle(Request(op: "grant", names: names, folder: folder, duration: duration, origin: "mcp"), peer: peer)
+            b.handle(Request(op: "grant", names: names, folder: folder, duration: duration, origin: "mcp", session: true), peer: agentPeer)
         }
         XCTAssertFalse(ask(["shop/production/DB"]).ok)
         XCTAssertFalse(ask(["shop/vercel.production/DB"]).ok)
@@ -132,6 +198,8 @@ final class BrokerGrantTests: XCTestCase {
         XCTAssertFalse(ask(["shop/development/DB"], folder: "/tmp/elsewhere").ok, "only the agent's own folder")
         XCTAssertFalse(b.handle(Request(op: "grant", names: ["shop/development/DB"], folder: "/tmp/elsewhere", origin: "mcp"), peer: peer).ok,
                        "claiming another folder doesn't make it the agent's own")
+        XCTAssertFalse(b.handle(Request(op: "grant", names: ["shop/development/DB"], folder: "/tmp/site", origin: "mcp"), peer: peer).ok,
+                       "an agent's grant lasts only for its session")
         let r = ask(["shop/development/*", "SHARED"], duration: 3 * 86400)
         XCTAssertTrue(r.ok, r.error ?? "")
         let g = try XCTUnwrap(r.grants?.first)
@@ -195,4 +263,10 @@ final class RecordingApprover: Approver, @unchecked Sendable {
     var requests: [ApprovalRequest] = []
     var method: String { "test" }
     func approve(_ request: ApprovalRequest) -> ApprovalDecision { requests.append(request); return .once }
+}
+
+/// Allows grants and refuses everything else.
+struct GrantsOnlyApprover: Approver {
+    var method: String { "test" }
+    func approve(_ request: ApprovalRequest) -> ApprovalDecision { request.action == .grant ? .once : .deny }
 }

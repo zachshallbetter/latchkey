@@ -103,9 +103,20 @@ See [Importing](import.md) for how projects and environments are chosen, and how
 
 | Command | |
 |---|---|
-| `latchkey grant IDS [--folder DIR] [--for TIME]` | Let commands run from DIR (default: here), the folders inside it and that repository's worktrees read these items without asking. TIME is like `30m`, `2h`, `1d`; default 1 hour, at most 7 days. IDS can include `project/*` and `project/environment/*`. Asks once. |
-| `latchkey grants` | Grants in effect, with time left. |
+| `latchkey grant IDS [--folder DIR] [--for TIME] [--session] [--command CMD]... [--once]` | Let commands run from DIR (default: here), the folders inside it and that repository's worktrees read these items without asking. TIME is like `30m`, `2h`, `1d`; default 1 hour, at most 7 days. IDS can include `project/*` and `project/environment/*`. Asks once. |
+| `latchkey grants` | Grants in effect, with time left and any limits. |
 | `latchkey revoke ID` or `all` | End a grant, or all of them. Doesn't ask. |
+
+Narrow a grant further with any of:
+
+- `--session`: it ends when the agent you run `latchkey grant` under quits (the nearest program that isn't a shell,
+  such as `claude`), and covers only programs started under it.
+- `--command CMD`: only `latchkey run` of that command. `--command "npm test"` covers `npm test -- --ci`, not
+  `npm run dev`. Repeat it for several commands. Only Latchkey's own signed tool can use it, since the app reads the
+  command from its command line.
+- `--once`: it ends after one request.
+
+The approval panel offers the same: **until claude quits** in the list, and **Only for …** for the command being run.
 
 ## Remote locations
 

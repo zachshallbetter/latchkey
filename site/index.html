@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Latchkey: secrets for your Mac and your coding agents</title>
-  <meta name="description" content="Stop keeping secrets in .env files. Let coding agents use your keys without holding them. Keep every key in one place, on every Mac, with its history.">
+  <meta name="description" content="Stop keeping secrets in .env files. Let coding agents use only the keys you allow. Keep every key in one place, on every Mac, with its history.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Latchkey">
   <meta property="og:title" content="Latchkey: secrets for your Mac and your coding agents">
-  <meta property="og:description" content="No more .env files. Agents use your keys without holding them. Every key in one place, on every Mac.">
+  <meta property="og:description" content="No secrets in .env files. Agents use only the keys you allow. Every key in one place, on every Mac.">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
@@ -122,7 +122,7 @@
       <div>
         <p class="eyebrow">For macOS</p>
         <h1>Secrets for your Mac and your coding agents</h1>
-        <p class="lede">Stop keeping secrets in <code>.env</code> files. Let your agents use your keys without holding them. Keep every key in one place, on every Mac, with its history.</p>
+        <p class="lede">Stop keeping secrets in <code>.env</code> files. Let your agents use only the keys you allow. Keep every key in one place, on every Mac, with its history.</p>
         <div class="cta">
           <a class="button primary" href="#download">Download for Mac</a>
           <a class="button secondary" href="#how">How it works</a>
@@ -155,9 +155,9 @@
     </div>
 
     <ul class="pillars" aria-label="What Latchkey does">
-      <li><h3>No more <code>.env</code> files</h3><p>Commands get their keys as they start: <code>lk run --env shop/development -- npm test</code>. A file, if you keep one, holds only <code>latchkey://</code> references.</p></li>
-      <li><h3>Agents use your keys, not hold them</h3><p>You decide which keys, in which folder, for how long. Everything else asks you first, and every use is logged.</p></li>
-      <li><h3>Every key in one place</h3><p>On every Mac you use, through iCloud Keychain, with the last 10 values of each and 30 days to undo a delete.</p></li>
+      <li><h3>No secrets in <code>.env</code> files</h3><p>Commands run through <code>lk run</code> get their keys as they start, with or without a file: <code>lk run --env shop/development -- npm test</code>. A file, if you keep one, holds only <code>latchkey://</code> references.</p></li>
+      <li><h3>Agents use only the keys you allow</h3><p>You choose which keys, where, and for how long: a folder for an hour, one command, or one agent session. Everything else asks you first, and every key Latchkey hands out is logged.</p></li>
+      <li><h3>Every key in one place</h3><p>On each Mac signed in to your Apple Account, through iCloud Keychain, with the last 10 values of each and 30 days to undo a delete.</p></li>
     </ul>
 
     <section aria-labelledby="files">
@@ -224,11 +224,11 @@ Never run `latchkey get`. If latchkey exits with 77
       <h2 id="features-title">A home for every key you use</h2>
       <div class="grid">
         <div class="feature"><h3>Projects and environments</h3><p><code>shop/development</code>, <code>shop/vercel.preview</code>, or shared. Group, filter and act on a whole project at once.</p></div>
-        <div class="feature"><h3>On every Mac</h3><p>Values live in iCloud Keychain, end-to-end encrypted, on every Mac signed in to your Apple Account.</p></div>
+        <div class="feature"><h3>On every Mac</h3><p>Values live in iCloud Keychain, end-to-end encrypted, on each Mac signed in to your Apple Account with Latchkey installed.</p></div>
         <div class="feature"><h3>History</h3><p>The last 10 values of every item, and deleted items for 30 days. Restore with one approval.</p></div>
         <div class="feature"><h3>Push to where it runs</h3><p>Link an environment to Vercel, GitHub Actions, Railway or Fly and push with their own tools. Production asks twice.</p></div>
         <div class="feature"><h3>Import a hundred files</h3><p><code>latchkey import --batch</code> places every value from every project with one approval, and dry-runs first.</p></div>
-        <div class="feature"><h3>A log without values</h3><p>Every read, change and refusal, with the program, folder and command. Never a value.</p></div>
+        <div class="feature"><h3>A log without values</h3><p>Every key handed out, change and refusal, with the program, folder and command, chained so edits show. Never a value.</p></div>
       </div>
     </section>
 

@@ -124,7 +124,7 @@ public final class Broker: @unchecked Sendable {
         var granted: [String] = []
         var covering: [Grant] = []
         for name in present where !infos[name]!.agentSafe {
-            guard let g = grants.covering(name, cwd: cwd) else { continue }
+            guard let g = grants.covering(name, cwd: cwd, ancestors: peer.ancestors, command: req.intended ?? peer.runCommand) else { continue }
             granted.append(name)
             if !covering.contains(g) { covering.append(g) }
         }
@@ -145,7 +145,9 @@ public final class Broker: @unchecked Sendable {
         let cwd = peer.cwd
         let needApproval = present.filter { !(infos[$0]!.agentSafe) }
         var byGrant: [Grant: [String]] = [:]
-        for name in needApproval { if let g = grants.covering(name, cwd: cwd) { byGrant[g, default: []].append(name) } }
+        for name in needApproval {
+            if let g = grants.covering(name, cwd: cwd, ancestors: peer.ancestors, command: peer.runCommand) { byGrant[g, default: []].append(name) }
+        }
         let granted = byGrant.values.flatMap { $0 }
         for (g, names) in byGrant.sorted(by: { $0.key.id < $1.key.id }) {
             log("get", names.sorted(), "allowed (grant \(g.id))", peer, req)
@@ -165,13 +167,17 @@ public final class Broker: @unchecked Sendable {
                 case .once:
                     memory.remember(key, for: readApprovalWindow)
                     log("get", toAsk, "approved", peer, req)
-                case .grant(let duration):
+                case .grant(let choice):
                     memory.remember(key, for: readApprovalWindow)
                     if cwd.isEmpty {
                         log("get", toAsk, "approved", peer, req)
                     } else {
-                        let g = grants.add(names: toAsk, folder: cwd, duration: duration, createdBy: Self.who(peer))
-                        log("get", toAsk, "approved (grant \(g.id) for \(GrantStore.describe(duration)))", peer, req)
+                        let session = choice.untilAgentQuits ? peer.sessionProcess.map { GrantSession(process: $0.stamp, name: $0.name) } : nil
+                        let commands = choice.thisCommandOnly ? peer.runCommand.map { [$0] } : nil
+                        let g = grants.add(names: toAsk, folder: cwd, duration: choice.duration, createdBy: Self.who(peer),
+                                           session: session, commands: commands)
+                        let limits = g.limits.isEmpty ? "" : ", \(g.limits)"
+                        log("get", toAsk, "approved (grant \(g.id) for \(GrantStore.describe(choice.duration))\(limits))", peer, req)
                     }
                 }
             }
@@ -181,6 +187,7 @@ public final class Broker: @unchecked Sendable {
         if !autoReleased.isEmpty { log("get", autoReleased, "allowed (agent-safe)", peer, req) }
 
         let values = denied.isEmpty ? try store.values(released) : [:]
+        if denied.isEmpty, !byGrant.isEmpty { grants.used(byGrant.keys.map(\.id)) }
         return Response(ok: true, values: values,
                         masked: released.filter { infos[$0]!.kind.isSecret },
                         denied: denied.isEmpty ? nil : denied,
@@ -330,15 +337,32 @@ public final class Broker: @unchecked Sendable {
                 return Response(ok: false, error: "an agent can only ask for a grant on the folder it runs in")
             }
             duration = min(duration, Self.longestAgentGrant)
+            guard req.session == true else {
+                return Response(ok: false, error: "a grant an agent asks for lasts only for its session; ask with session")
+            }
+        }
+        var session: GrantSession?
+        if req.session == true {
+            guard let p = peer.sessionProcess else {
+                return Response(ok: false, error: "no agent process to tie the grant to: run it from the agent's session, or leave out --session")
+            }
+            session = GrantSession(process: p.stamp, name: p.name)
+        }
+        if let uses = req.uses, uses < 1 { return Response(ok: false, error: "uses must be 1 or more") }
+        if let commands = req.commands, commands.isEmpty || commands.contains(where: \.isEmpty) {
+            return Response(ok: false, error: "each command needs at least one word")
         }
         let worktrees = Repo.commonDir(for: folder) != nil ? " (and its worktrees)" : ""
-        let reason = "let programs in \(Self.tilde(folder))\(worktrees) read \(Self.count(names)) without asking for \(GrantStore.describe(duration)), asked by \(Self.who(peer))"
+        let preview = Grant(names: names, folder: folder, expires: Date(), createdBy: "", session: session, commands: req.commands, usesLeft: req.uses)
+        let limits = preview.limits.isEmpty ? "" : " (\(preview.limits))"
+        let reason = "let programs in \(Self.tilde(folder))\(worktrees) read \(Self.count(names)) without asking for \(GrantStore.describe(duration))\(limits), asked by \(Self.who(peer))"
         guard ask(.grant, names, peer, req, reason, duration: duration, folder: folder).allowed else {
             log("grant", names, "denied", peer, req)
             return Response(ok: false, error: "the grant was not approved")
         }
-        let g = grants.add(names: names, folder: folder, duration: duration, createdBy: Self.who(peer))
-        log("grant", names, "approved (grant \(g.id) for \(GrantStore.describe(duration)))", peer, req)
+        let g = grants.add(names: names, folder: folder, duration: duration, createdBy: Self.who(peer),
+                           session: session, commands: req.commands, uses: req.uses)
+        log("grant", names, "approved (grant \(g.id) for \(GrantStore.describe(duration))\(limits))", peer, req)
         return Response(ok: true, grants: [g])
     }
 
@@ -616,6 +640,8 @@ public final class Broker: @unchecked Sendable {
                                       folder: place.isEmpty ? "" : Grant.normalize(place),
                                       command: peer.commandLine.isEmpty ? nil : peer.commandLine, duration: duration, reason: reason)
         request.fromApp = peer.pid == getpid()
+        request.sessionName = peer.sessionProcess?.name
+        request.runCommand = peer.runCommand
         request.program = request.fromApp || peer.isLatchkeyTool || peer.path.isEmpty ? nil : peer.path
         request.byAgent = req.origin == "mcp"
         return request

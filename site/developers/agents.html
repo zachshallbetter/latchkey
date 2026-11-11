@@ -61,8 +61,10 @@ write values in .env files. If latchkey exits with 77 (refused) or 66
 <p>On 77 and 66 the message names the items and, for 77, the exact <code>latchkey grant</code> command that would allow them, for the person to run.</p>
 
 <h2 id="unattended">Leaving an agent working</h2>
-<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey grant &#x27;shop/development/*&#x27; --folder ~/Projects/shop --for 2h</code></pre></figure>
-<p>The agent&rsquo;s reads go through without asking until the grant ends, and each one is in the app&rsquo;s Activity. End it early from <strong>Grants</strong> in the app or with <code>latchkey revoke ID</code>.</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey grant &#x27;shop/development/*&#x27; --session --for 4h                  # ends when the agent quits
+latchkey grant &#x27;shop/development/*&#x27; --command &quot;npm test&quot; --for 2h       # only this command
+latchkey grant &#x27;shop/development/*&#x27; --folder ~/Projects/shop --for 2h   # the folder, for a time</code></pre></figure>
+<p>Run them inside the agent&rsquo;s session (in Claude Code, start the line with <code>!</code>) so <code>--session</code> ties to the agent. The agent&rsquo;s reads go through without asking until the grant ends, and each one is in the app&rsquo;s Activity. End it early from <strong>Grants</strong> in the app or with <code>latchkey revoke ID</code>.</p>
 
 <h2 id="mcp">Latchkey&rsquo;s MCP server</h2>
 <p><code>latchkey mcp</code> gives agents Latchkey&rsquo;s tools over MCP: for clients without a shell, like Claude Desktop, and for structured refusals instead of exit codes. <strong>It never returns a value.</strong></p>
@@ -76,7 +78,7 @@ write values in .env files. If latchkey exits with 77 (refused) or 66
 <ul>
 <li><strong>Output</strong> is always masked, and only the last 64 KB of each stream is returned, with a flag when it was cut. Standard input is empty.</li>
 <li><strong>Commands stop</strong> after <code>timeout_seconds</code>: 600 by default, at most 3600. Use it for tests, builds and scripts; run dev servers in a shell with <code>latchkey run</code>. A cancelled request stops its command.</li>
-<li><strong>Grants an agent asks for</strong> cover only the folder it runs in (and that repository&rsquo;s worktrees), last at most a day, and can&rsquo;t include production environments or a whole project. Grant those yourself with <code>latchkey grant</code>.</li>
+<li><strong>Grants an agent asks for</strong> cover only the folder it runs in (and that repository&rsquo;s worktrees), end when the agent quits or after a day at most, and can&rsquo;t include production environments or a whole project. Grant those yourself with <code>latchkey grant</code>.</li>
 <li><strong>Approval panels</strong> for requests through the MCP server say they come from an agent.</li>
 <li><strong>Not offered:</strong> reading values, changing or deleting items, earlier values, remote locations and pushes.</li>
 </ul>

@@ -27,6 +27,10 @@ public struct ApprovalRequest: Sendable {
     public var program: String?
     /// Asked from the Latchkey window itself (the same process), not over the socket.
     public var fromApp = false
+    /// The agent a grant made here could last as long as ("claude"), if the caller runs under one.
+    public var sessionName: String?
+    /// What a signed `latchkey run` is starting, which a grant made here can be limited to.
+    public var runCommand: [String]?
 
     public init(action: Action, names: [String], chain: [String], folder: String, command: String? = nil,
                 duration: TimeInterval? = nil, reason: String) {
@@ -46,10 +50,23 @@ public struct ApprovalRequest: Sendable {
 public enum ApprovalDecision: Sendable, Equatable {
     case deny
     case once
-    /// Allow now, and keep allowing these names from this folder for this long.
-    case grant(TimeInterval)
+    /// Allow now, and keep allowing these names from this folder, within these limits.
+    case grant(GrantChoice)
 
     public var allowed: Bool { self != .deny }
+}
+
+/// A grant made from an approval: for how long, and whether only while the agent runs or only for this command.
+public struct GrantChoice: Sendable, Equatable {
+    public var duration: TimeInterval
+    public var untilAgentQuits: Bool
+    public var thisCommandOnly: Bool
+
+    public init(duration: TimeInterval, untilAgentQuits: Bool = false, thisCommandOnly: Bool = false) {
+        self.duration = duration
+        self.untilAgentQuits = untilAgentQuits
+        self.thisCommandOnly = thisCommandOnly
+    }
 }
 
 /// Asks the person at the Mac to allow something.

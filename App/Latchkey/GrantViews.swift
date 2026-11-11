@@ -45,6 +45,7 @@ struct GrantRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(Broker.tilde(grant.folder)).font(.callout.monospaced().weight(.medium)).lineLimit(1).truncationMode(.head)
                 Text(grant.names.joined(separator: ", ")).font(.callout).lineLimit(2)
+                if !grant.limits.isEmpty { Text(grant.limits.prefix(1).capitalized + grant.limits.dropFirst()).font(.caption).foregroundStyle(.secondary) }
                 TimelineView(.periodic(from: .now, by: 30)) { _ in
                     Text("Ends \(grant.expires.formatted(.relative(presentation: .named))) · from \(grant.createdBy)")
                         .font(.caption).foregroundStyle(.secondary).lineLimit(1)

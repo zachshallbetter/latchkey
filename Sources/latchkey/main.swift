@@ -15,9 +15,10 @@ Files refer to them as latchkey://ID.
       environment's files use. --file NAME=ID (or NAME=latchkey-file://ID in an env file) gives COMMAND the
       path of a temporary file holding the value, readable only by you and deleted when COMMAND exits.
       Secret values printed by COMMAND are concealed unless --no-masking is given.
-  latchkey check [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [ID,...] [--json]
+  latchkey check [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [ID,...] [--json] [-- COMMAND...]
       What `latchkey run` with the same options would get without asking (agent-safe, granted, recently
-      approved), what would ask, and what's missing. Asks nothing and releases nothing.
+      approved), what would ask, and what's missing. Asks nothing and releases nothing. Give the COMMAND to
+      count grants limited to it.
   latchkey mcp                    Serve Latchkey's tools to an agent over MCP (standard input and output).
   latchkey list [--project P] [--json]   IDs, kinds and whether agents may read them. Never values.
   latchkey get ID                 Print one value.
@@ -68,9 +69,12 @@ Files refer to them as latchkey://ID.
       Send the environment's values to its links with each service's own tool, signed in as you. Asks every
       time; production needs its own confirmation in the app. Nothing is deployed: Railway and Fly changes are
       staged until your next deploy.
-  latchkey grant ID[,ID...] [--folder DIR] [--for 2h]
+  latchkey grant ID[,ID...] [--folder DIR] [--for 2h] [--session] [--command CMD]... [--once]
       Let commands run from DIR (default: here) and the folders inside it read these items
       without asking, until the time is up (30m, 2h, 1d; at most 7d). Asks for approval once.
+      --session ends it when the agent you run this under quits, and covers only programs it starts.
+      --command limits it to `latchkey run` of that command ("npm test" covers "npm test -- --ci").
+      --once ends it after one use.
       PROJECT/* or PROJECT/ENV/* covers a whole project or environment, including items added later.
   latchkey grants                 Grants that are in effect.
   latchkey revoke ID|all
@@ -285,9 +289,11 @@ func checkCommand(_ input: [String]) -> Never {
     var spec = RunSpec(cwd: currentDirectory())
     var ids: [String] = []
     var json = false
+    var intended: [String]?
     var rest = input
     while !rest.isEmpty {
         let a = rest.removeFirst()
+        if a == "--" { intended = rest; break }
         switch a {
         case "--env-file":
             guard !rest.isEmpty else { fail("--env-file takes a path", code: 64) }
@@ -313,7 +319,7 @@ func checkCommand(_ input: [String]) -> Never {
         names = Array(Set(referencedIDs(planned) + ids)).sorted()
     } catch { failRun(error) }
     guard !names.isEmpty else { fail("nothing to check: give IDs, --env-file, --env or --file", code: 64) }
-    let r = send(Request(op: "check", names: names))
+    let r = send(Request(op: "check", names: names, intended: intended))
     if json {
         let report = CheckReport(r)
         let enc = Wire.encoder()
@@ -574,7 +580,8 @@ func relative(_ d: Date) -> String {
 func printGrants(_ grants: [Grant]) {
     guard !grants.isEmpty else { print("No grants in effect."); return }
     for g in grants {
-        print("\(g.id)  \(Broker.tilde(g.folder))  \(g.names.joined(separator: ", "))  (\(relative(g.expires)) left)")
+        let limits = g.limits.isEmpty ? "" : ", \(g.limits)"
+        print("\(g.id)  \(Broker.tilde(g.folder))  \(g.names.joined(separator: ", "))  (\(relative(g.expires)) left\(limits))")
     }
 }
 
@@ -583,11 +590,21 @@ func grantCommand(_ input: [String]) -> Never {
     var folder: String?
     var duration: TimeInterval = 3600
     var json = false
+    var session = false
+    var commands: [[String]] = []
+    var uses: Int?
     var rest = input
     while !rest.isEmpty {
         let a = rest.removeFirst()
         switch a {
         case "--json": json = true
+        case "--session": session = true
+        case "--once": uses = 1
+        case "--command":
+            guard !rest.isEmpty else { fail("--command takes a command, such as \"npm test\"", code: 64) }
+            let words = rest.removeFirst().split(separator: " ").map(String.init)
+            guard !words.isEmpty else { fail("--command takes a command, such as \"npm test\"", code: 64) }
+            commands.append(words)
         case "--folder":
             guard !rest.isEmpty else { fail("--folder takes a path", code: 64) }
             // The broker sees where commands really run (symbolic links resolved), so grant that folder.
@@ -603,11 +620,14 @@ func grantCommand(_ input: [String]) -> Never {
         }
     }
     guard !names.isEmpty, names.allSatisfy({ Wire.isValidName($0) || Grant.isPattern($0) }) else {
-        fail("usage: latchkey grant ID[,ID...] [--folder DIR] [--for 2h]   (or PROJECT/* or PROJECT/ENV/*)", code: 64)
+        fail("usage: latchkey grant ID[,ID...] [--folder DIR] [--for 2h] [--session] [--command CMD]... [--once]   (or PROJECT/* or PROJECT/ENV/*)", code: 64)
     }
     if duration > GrantStore.longest { fail("the longest grant is 7 days", code: 64) }
     let r: Response
-    do { r = try call(Request(op: "grant", names: names, folder: folder ?? currentDirectory(), duration: duration)) } catch { failRun(error) }
+    do {
+        r = try call(Request(op: "grant", names: names, folder: folder ?? currentDirectory(), duration: duration,
+                             session: session ? true : nil, commands: commands.isEmpty ? nil : commands, uses: uses))
+    } catch { failRun(error) }
     if let m = r.missing, !m.isEmpty { failMissing(m) }
     guard r.ok else { fail(r.error ?? "the app refused the request") }
     if json, let g = r.grants?.first {
@@ -617,7 +637,7 @@ func grantCommand(_ input: [String]) -> Never {
         exit(0)
     }
     for g in r.grants ?? [] {
-        print("granted \(g.id): \(g.names.joined(separator: ", ")) readable from \(Broker.tilde(g.folder)) for \(GrantStore.describe(duration))")
+        print("granted \(g.id): \(g.names.joined(separator: ", ")) readable from \(Broker.tilde(g.folder)) for \(GrantStore.describe(duration))\(g.limits.isEmpty ? "" : ", \(g.limits)")")
     }
     exit(0)
 }
