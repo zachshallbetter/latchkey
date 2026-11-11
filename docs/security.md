@@ -60,7 +60,10 @@ command gets which value. This page says what it protects against, how, and wher
 - **Exporting values** (`latchkey export --values`) asks every time, naming the file, and nothing stands in for that
   approval. The file is written beside its destination, readable only by you, and renamed into place, so an existing
   file isn't touched until the new one is complete; a symbolic link at the destination is refused. The access log
-  records the items and the file, never the values. Agents through `latchkey mcp` can't export values.
+  records the items and the file, never the values. Agents through `latchkey mcp` can't export values. Inside a Git
+  checkout the file must be ignored and untracked, checked before anything is asked.
+- **Copied values** go to this Mac's clipboard only, not to your other devices, are marked so clipboard managers skip
+  them, and are cleared after 60 seconds.
 - **Project links** match a checkout to a project by its Git remotes. A match only names the project; it never
   releases a value or widens a grant, so pointing a repository's `origin` at another project's remote gains nothing
   without your approval. A match through a remote other than `origin` is flagged.

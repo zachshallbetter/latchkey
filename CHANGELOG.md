@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Fixes
+- Copied values stay on this Mac: Universal Clipboard no longer hands them to your other devices.
+- `lk push` and `lk remote status` cover the whole environment record: shared items and plain settings go too, and
+  unconfirmed variables are held back and listed. The app shows push state for a pushed shared item.
+- `lk export --values` refuses a file Git tracks or doesn't ignore, and warns about folders that sync to a cloud
+  service.
+
 ### Approvals
 - One prompt at a time. A change asks with the macOS Touch ID sheet alone ("Latchkey is trying to add
   shop/development/DB, asked by Claude in ~/Projects/shop"); its Details… button opens the panel with everything.

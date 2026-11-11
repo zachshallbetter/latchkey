@@ -142,7 +142,9 @@ standard output or FILE.
   it's never half-written.
 - `--values` writes the values themselves, in plain text. It needs `--out`, asks every time with the file named (no
   grant, agent-safe setting or earlier approval stands in), writes the file readable only by you, and the access
-  log records which items went to which file, never the values. Agents can't use it.
+  log records which items went to which file, never the values. Agents can't use it. Inside a Git checkout the file
+  must be ignored and not tracked, or nothing is asked or written; a file in a folder that syncs to iCloud Drive,
+  Dropbox, Google Drive or OneDrive gets a warning, since the values would leave the Mac.
 - Unconfirmed variables and references to missing items are noted on standard error.
 
 ### `latchkey project [DIR]`, `project link [NAME] [DIR] [--remote R]`, `project unlink NAME [DIR]`, `project list`

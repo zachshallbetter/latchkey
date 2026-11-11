@@ -165,6 +165,49 @@ func migrateCommand(dryRun: Bool) -> Never {
 
 // MARK: - export
 
+/// Runs git quietly; its exit status, or 127 if it couldn't start.
+func gitStatus(_ args: [String]) -> Int32 {
+    let p = Process()
+    p.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+    p.arguments = args
+    p.standardOutput = FileHandle.nullDevice
+    p.standardError = FileHandle.nullDevice
+    do { try p.run() } catch { return 127 }
+    p.waitUntilExit()
+    return p.terminationStatus
+}
+
+/// Why plain text at `path` could end up in Git: the file is tracked, or not ignored, in the checkout it's in. Nil outside
+/// a checkout, or when Git ignores it and doesn't track it.
+func gitProblem(_ path: String) -> String? {
+    let folder = URL(fileURLWithPath: path).deletingLastPathComponent().path
+    guard Repo.commonDir(for: folder) != nil else { return nil }
+    let shown = Broker.tilde(path)
+    if gitStatus(["-C", folder, "ls-files", "--error-unmatch", "--", path]) == 0 {
+        return "\(shown) is tracked by Git, so the values would be committed. Write them somewhere Git ignores."
+    }
+    switch gitStatus(["-C", folder, "check-ignore", "-q", "--", path]) {
+    case 0: return nil
+    case 1: return "\(shown) isn't ignored by Git, so `git add` would commit the values. Add it to .gitignore first, or write somewhere else."
+    default: return "couldn't ask Git whether \(shown) is ignored, so nothing was written."
+    }
+}
+
+/// The cloud service a folder syncs to, if it's in iCloud Drive (including Desktop and Documents) or a File Provider
+/// folder such as Dropbox, Google Drive or OneDrive.
+func cloudSync(_ path: String) -> String? {
+    let folder = URL(fileURLWithPath: path).deletingLastPathComponent()
+    if folder.path.contains("/Library/Mobile Documents/") || (try? folder.resourceValues(forKeys: [.isUbiquitousItemKey]))?.isUbiquitousItem == true {
+        return "iCloud Drive"
+    }
+    if let r = folder.path.range(of: "/Library/CloudStorage/") {
+        let service = folder.path[r.upperBound...].split(separator: "/").first.map(String.init) ?? "a cloud service"
+        return service.split(separator: "-").first.map(String.init) ?? service
+    }
+    if folder.path.hasPrefix(NSHomeDirectory() + "/Dropbox") { return "Dropbox" }
+    return nil
+}
+
 func exportCommand(_ input: [String]) -> Never {
     var scope: String?
     var out: String?
@@ -224,6 +267,9 @@ func exportCommand(_ input: [String]) -> Never {
 
     var released: [String: String] = [:]
     if values && !credentials.isEmpty {
+        // Plain text must not reach Git; checked before anything is asked.
+        if let problem = gitProblem(path) { fail(problem, code: 73) }
+        if let service = cloudSync(path) { note("\(Broker.tilde(path)) is in a folder that syncs to \(service): the values will leave this Mac") }
         let r: Response
         do { r = try call(Request(op: "export", names: credentials, project: scope, destination: path)) } catch { failRun(error) }
         if let m = r.missing, !m.isEmpty { failMissing(m) }

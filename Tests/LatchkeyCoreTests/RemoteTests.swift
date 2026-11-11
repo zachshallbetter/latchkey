@@ -74,6 +74,39 @@ final class RemoteBrokerTests: XCTestCase {
         b.handle(Request(op: "link", names: [scope], target: target), peer: peer).links?.first
     }
 
+    func testWithARecordPushSendsSharedItemsAndPlainSettingsButHoldsUnconfirmedOnes() throws {
+        let (b, runner, store, _) = try make()
+        try store.save(name: "OPENAI_API_KEY", value: "sk-shared", kind: .token, agentSafe: false, note: "")
+        try store.save(name: "STRIPE_KEY", value: "sk-stripe", kind: .token, agentSafe: false, note: "")
+        try b.records.save(EnvironmentRecord(scope: "acp/vercel.preview", variables: [
+            "DB": .credential("acp/vercel.preview/DB"), "OPENAI_API_KEY": .credential("OPENAI_API_KEY"),
+            "PORT": .literal("3000"), "STRIPE_KEY": .credential("STRIPE_KEY"),
+        ], inferred: ["STRIPE_KEY"], legacyChecked: true))
+        let l = try XCTUnwrap(link(b, RemoteTarget(service: .vercel, project: "acp", environment: "preview")))
+        let r = b.handle(Request(op: "push", names: ["acp/vercel.preview"]), peer: peer)
+        let sent = runner.ran.filter { $0.args.first == "env" }
+        XCTAssertEqual(Set(sent.map { $0.args[2] }), ["DB", "OPENAI_API_KEY", "PORT"], "HOST isn't in the checked record; STRIPE_KEY is unconfirmed")
+        XCTAssertEqual(sent.first { $0.args[2] == "OPENAI_API_KEY" }?.stdin, "sk-shared")
+        XCTAssertEqual(sent.first { $0.args[2] == "PORT" }?.args.contains("--no-sensitive"), true, "a plain setting isn't secret")
+        XCTAssertFalse(r.ok, "the held variable is reported")
+        XCTAssertEqual(r.pushResults?.first { !$0.ok }?.item, "STRIPE_KEY")
+        let saved = try XCTUnwrap(b.remotes.all().first { $0.id == l.id })
+        XCTAssertNotNil(saved.pushed["OPENAI_API_KEY"])
+        XCTAssertTrue(saved.tracks("OPENAI_API_KEY"), "a pushed shared item shows its state on this link")
+
+        runner.listOutput = #"{"envs":[{"key":"DB"}]}"#
+        let s = try XCTUnwrap(b.handle(Request(op: "remote-status", names: ["acp/vercel.preview"]), peer: peer).remoteStatus?.first)
+        XCTAssertEqual(s.missing, ["OPENAI_API_KEY", "PORT", "STRIPE_KEY"])
+    }
+
+    func testBeforeMigrationPushStillSendsTheEnvironmentsOwnItems() throws {
+        let (b, runner, _, _) = try make()
+        try b.records.save(EnvironmentRecord(scope: "acp/vercel.preview", variables: ["PORT": .literal("3000")]))
+        _ = try XCTUnwrap(link(b, RemoteTarget(service: .vercel, project: "acp", environment: "preview")))
+        XCTAssertTrue(b.handle(Request(op: "push", names: ["acp/vercel.preview"]), peer: peer).ok)
+        XCTAssertEqual(Set(runner.ran.filter { $0.args.first == "env" }.map { $0.args[2] }), ["DB", "HOST", "PORT"])
+    }
+
     func testPushSendsTheEnvironmentOnStdinAndRecordsIt() throws {
         let (b, runner, _, approver) = try make()
         let l = try XCTUnwrap(link(b, RemoteTarget(service: .vercel, project: "acp", environment: "preview")))
