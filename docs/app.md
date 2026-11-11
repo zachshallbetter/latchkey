@@ -89,4 +89,5 @@ Click the key: search your items, copy a value, open an item in the window, open
 
 - **Storage**: where values are kept, and **Move to iCloud Keychain** for items saved before the app was signed.
 - **Approval**: how you approve (Touch ID, Apple Watch, password), and how long a read approval is remembered.
-- **General**: **Open Latchkey at login**, and the activity log in Finder.
+- **General**: **Open Latchkey at login**, **Install Command Line Tool** (release builds), and the activity log in
+  Finder. **Latchkey › Install Command Line Tool…** in the menu bar does the same.

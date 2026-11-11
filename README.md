@@ -51,6 +51,7 @@ Requires macOS 15 or later. See [Getting started](docs/getting-started.md) to in
 | [Apple Passwords and passkeys](docs/apple-passwords-and-passkeys.md) | How Latchkey relates to the Passwords app |
 | [Troubleshooting](docs/troubleshooting.md) | Common problems and fixes |
 | [Development](docs/development.md) | Building, testing and how it fits together |
+| [Releasing](docs/releasing.md) | Developer ID signing, notarization and the disk image |
 | [Changelog](CHANGELOG.md) | What changed in each release |
 
 ## Logo

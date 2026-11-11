@@ -8,6 +8,22 @@
 - To build from source: Xcode 16 or later, [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install
   xcodegen`), and an Apple Account signed in to Xcode.
 
+## Install a release
+
+1. Open `Latchkey-VERSION.dmg` and drag **Latchkey** to **Applications**.
+2. Open Latchkey from Applications.
+3. Choose **Latchkey › Install Command Line Tool…** (also in Settings). It links `~/.local/bin/latchkey` to the copy
+   inside the app, so it updates when the app does. Make sure `~/.local/bin` is on your `PATH`.
+4. Check it:
+
+   ```bash
+   latchkey status
+   ```
+
+   You should see `storage: iCloud Keychain (synced to your Macs)`.
+
+Install it the same way on each Mac signed in to your Apple Account; items sync between them.
+
 ## Install from source
 
 Latchkey keeps values in iCloud Keychain, which macOS only opens to apps signed with a developer team. So the build

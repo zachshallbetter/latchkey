@@ -46,3 +46,7 @@ The first release.
 - Window with sidebar, tree, detail and bulk actions; menu bar panel; settings; open at login.
 - A light and dark app icon.
 - One copy runs at a time.
+
+### Distribution
+- Developer ID-signed and notarized, in a disk image, with the command-line tool inside the app
+  (**Latchkey › Install Command Line Tool…**).

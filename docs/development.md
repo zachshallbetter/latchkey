@@ -11,7 +11,8 @@ Tests/LatchkeyCoreTests/   unit tests
 App/project.yml            the app's XcodeGen project (the .xcodeproj is generated, not committed)
 App/Latchkey/              the SwiftUI app
 App/Branding/key.svg       the logo source (Font Awesome Pro, commercial license)
-scripts/install.sh         build and install the app and CLI
+scripts/install.sh         build and install the app and CLI (development)
+scripts/release.sh         Developer ID build, notarized, in a disk image (see docs/releasing.md)
 docs/                      user and developer documentation
 ```
 

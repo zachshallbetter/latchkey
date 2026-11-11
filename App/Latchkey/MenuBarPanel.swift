@@ -106,6 +106,13 @@ struct SettingsView: View {
                     atLogin = model.opensAtLogin
                 }))
                 Text("The command-line tool only works while Latchkey is running.").font(.caption).foregroundStyle(.secondary)
+                if model.bundledTool != nil {
+                    LabeledContent("Command-line tool") {
+                        Button("Install") { model.installCommandLineTool() }
+                    }
+                    Text("Links ~/.local/bin/latchkey to the copy inside Latchkey, so it updates with the app.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 if let loginError { Text(loginError).font(.caption).foregroundStyle(.red) }
                 LabeledContent("Access log") {
                     Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([Paths.accessLog]) }

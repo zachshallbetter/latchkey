@@ -32,6 +32,9 @@ struct LatchkeyApp: App {
         // Open the window on every launch, even if it was closed when Latchkey last quit.
         .defaultLaunchBehavior(.presented)
         .commands {
+            CommandGroup(after: .appInfo) {
+                Button("Install Command Line Tool…") { model.installCommandLineTool() }
+            }
             CommandGroup(replacing: .newItem) {
                 Button("New Item…") { model.showingAdd = true }.keyboardShortcut("n")
                 Button("Import .env File…") { model.chooseImportFile() }.keyboardShortcut("i", modifiers: [.command, .shift])
@@ -295,6 +298,42 @@ final class AppModel {
     func files(for ids: [String]) -> [String] {
         var seen = Set<String>()
         return items.filter { ids.contains($0.name) }.flatMap { $0.usedIn ?? [] }.filter { seen.insert($0).inserted }
+    }
+
+    // MARK: command-line tool
+
+    /// The tool shipped inside the app (release builds); nil in development builds, where scripts/install.sh
+    /// copies it instead.
+    var bundledTool: URL? {
+        let url = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/latchkey")
+        return FileManager.default.isExecutableFile(atPath: url.path) ? url : nil
+    }
+
+    static var toolLink: URL { URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".local/bin/latchkey") }
+
+    /// Links ~/.local/bin/latchkey to the tool inside the app, so updating the app updates the tool. Replaces an
+    /// older link, never a file someone put there.
+    func installCommandLineTool() {
+        guard let tool = bundledTool else {
+            notice = "This copy of Latchkey doesn't include the command-line tool; scripts/install.sh installs it."
+            return
+        }
+        let link = Self.toolLink, fm = FileManager.default
+        do {
+            try fm.createDirectory(at: link.deletingLastPathComponent(), withIntermediateDirectories: true)
+            if let dest = try? fm.destinationOfSymbolicLink(atPath: link.path) {
+                if dest == tool.path { notice = "The command-line tool is already installed at ~/.local/bin/latchkey."; return }
+                try fm.removeItem(at: link)
+            } else if fm.fileExists(atPath: link.path) {
+                notice = "~/.local/bin/latchkey already exists and isn't a link to Latchkey; remove it, then try again."
+                return
+            }
+            try fm.createSymbolicLink(at: link, withDestinationURL: tool)
+            let onPath = (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":").contains { $0 == link.deletingLastPathComponent().path }
+            notice = "Installed ~/.local/bin/latchkey." + (onPath ? "" : " Add ~/.local/bin to your PATH to use it.")
+        } catch {
+            notice = "Couldn't install the command-line tool: \(error.localizedDescription)"
+        }
     }
 
     // MARK: remote locations
