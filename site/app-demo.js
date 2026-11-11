@@ -1,7 +1,7 @@
 // A working copy of the Latchkey window with example data: the sidebar's filters and counts, projects and
 // environments that open and close, an item's detail, Activity and Grants. What the visitor does in the approval
-// scene above (index.html) arrives here as lk:activity and lk:grant events. Revealing a value or changing a setting
-// asks for Touch ID, as the app does.
+// scene on the home page arrives here as lk:activity and lk:grant events; elsewhere it starts from the example
+// data. Revealing a value or changing a setting asks for Touch ID, as the app does.
 (function () {
   var root = document.getElementById("appwin");
   if (!root) return;
@@ -188,8 +188,13 @@
     if (focusKey) { var el = root.querySelector(focusKey); if (el) el.focus({ preventScroll: true }); }
   }
 
+  // The Touch ID sheet's icon: a fingerprint with Latchkey's mark, as macOS draws it for the app.
+  var FINGERPRINT = '<svg viewBox="0 0 48 48" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">' +
+    '<path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/>' +
+    '<path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg>' +
+    '<img src="' + (document.querySelector('link[rel="icon"]') || { getAttribute: function () { return "logo.svg"; } }).getAttribute("href") + '" alt="">';
   root.innerHTML = '<div class="chrome"><i></i><i></i><i></i><span>Latchkey</span></div><div class="body"></div>' +
-    '<div class="touch" hidden role="dialog" aria-label="Touch ID"><div class="touch-icon">' + document.querySelector("#touch .touch-icon").innerHTML +
+    '<div class="touch" hidden role="dialog" aria-label="Touch ID"><div class="touch-icon">' + FINGERPRINT +
     '</div><p class="touch-text"></p><p class="touch-sub">Touch ID or enter your password to continue with Latchkey.</p>' +
     '<button type="button" class="touch-btn" data-t="pw">Use Password…</button><button type="button" class="touch-btn" data-t="deny">Deny</button></div>';
   render();

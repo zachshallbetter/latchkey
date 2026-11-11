@@ -367,3 +367,121 @@ figure.code + .more { margin-top: 12px; }
   nav.top ul a { min-height: 36px; padding: 0 8px; font-size: 14px; white-space: nowrap; }
   nav.top ul li:has(.button), nav.top ul li:has(a[href$="#how"]) { display: none; }
 }
+
+/* The system's Touch ID sheet, with Latchkey's own words. */
+.touch { position: absolute; z-index: 4; left: 50%; top: 60px; transform: translateX(-50%); width: min(300px, 92%); padding: 18px;
+         border-radius: 16px; background: rgba(40, 44, 52, .98); border: 1px solid #3a414b; box-shadow: 0 20px 50px rgba(0, 0, 0, .55);
+         color: #f1f3f6; text-align: left; }
+.touch-icon { position: relative; width: 56px; height: 56px; border-radius: 50%; background: #e9ebef; color: #9aa1ab; display: grid; place-items: center; margin-bottom: 10px; }
+.touch-icon svg { width: 34px; height: 34px; }
+.touch-icon img { position: absolute; right: -8px; bottom: -4px; width: 16px; height: 17px; padding: 4px; border-radius: 7px; background: #f6f7f9; box-sizing: content-box; }
+.touch.reading .touch-icon { color: #ff3b30; animation: read 1.2s ease-in-out infinite; }
+.touch.ok .touch-icon { color: #34c759; }
+@keyframes read { 50% { color: #ff8a80; } }
+.touch-text { margin: 0 0 6px; font-weight: 700; font-size: 13.5px; line-height: 1.35; }
+.touch-sub { margin: 0 0 12px; font-size: 13px; color: #c9ced6; }
+.touch-btn { display: block; width: 100%; margin-top: 8px; padding: 7px; border-radius: 9px; border: 0; background: #4a505a; color: #fff; font: 600 13px var(--sans); cursor: pointer; }
+.touch-btn:hover { background: #575e69; }
+@media (prefers-reduced-motion: reduce) { .touch.reading .touch-icon { animation: none; } }
+
+/* The Latchkey window (app-demo.js): three panes like the app, at the full width of the page. */
+.appwrap { width: 100%; margin: 0; }
+.appwin { position: relative; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); overflow: hidden;
+          font-size: 13.5px; color: var(--ink); }
+.appwin .chrome { display: flex; align-items: center; gap: 7px; height: 36px; padding: 0 12px; border-bottom: 1px solid var(--line); background: var(--bg-2); }
+.appwin .chrome i { width: 11px; height: 11px; border-radius: 50%; background: #ff5f57; display: block; }
+.appwin .chrome i:nth-child(2) { background: #febc2e; } .appwin .chrome i:nth-child(3) { background: #28c840; }
+.appwin .chrome span { margin-left: 8px; font-weight: 600; color: var(--muted); }
+.appwin .body { display: grid; grid-template-columns: 210px 290px 1fr; height: 560px; }
+.appwin .side, .appwin .list, .appwin .detail { overflow-y: auto; padding: 12px; min-width: 0; scrollbar-width: none; }
+.appwin .side::-webkit-scrollbar, .appwin .list::-webkit-scrollbar, .appwin .detail::-webkit-scrollbar { display: none; }
+.appwin .side { background: var(--bg-2); border-right: 1px solid var(--line); }
+.appwin .list { border-right: 1px solid var(--line); }
+.appwin .list.wide { grid-column: span 2; border-right: 0; }
+.appwin button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; text-align: left; }
+.appwin .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.appwin .tile { position: relative; padding: 8px 9px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); font-weight: 650; font-size: 12.5px; line-height: 1.2; min-height: 54px; display: flex; align-items: flex-end; }
+.appwin .tile .tn { position: absolute; top: 6px; right: 9px; font-size: 13px; }
+.appwin .tile[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.appwin .sh { margin: 12px 4px 4px; font-size: 11.5px; font-weight: 650; color: var(--muted); }
+.appwin .side ul { list-style: none; margin: 0; padding: 0; }
+.appwin .side li button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 6px; border-radius: 7px; }
+.appwin .side li button span:not(.ki) { flex: 1; }
+.appwin .side li button em { font-style: normal; color: var(--muted); }
+.appwin .side li button[aria-pressed="true"], .appwin .side li button:hover { background: var(--surface); }
+.appwin .sync { margin: 16px 0 0; padding: 10px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+.appwin .sync b { display: block; color: var(--ink); font-size: 13px; }
+.appwin .lt { margin: 0 4px 10px; font-weight: 700; font-size: 15px; }
+.appwin .lt small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
+.appwin .grp { display: flex; align-items: center; gap: 7px; width: 100%; padding: 7px 4px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.appwin .grp b { font-weight: 650; }
+.appwin .grp em { font-style: normal; color: var(--muted); margin-right: auto; }
+.appwin .grp.sub { padding-left: 18px; }
+.appwin .chev { width: 8px; height: 8px; border-right: 1.6px solid var(--muted); border-bottom: 1.6px solid var(--muted); transform: rotate(-45deg); margin-right: 2px; transition: transform .15s; }
+.appwin .grp[aria-expanded="true"] .chev { transform: rotate(45deg); }
+.appwin .place { color: var(--muted); font-size: 12px; }
+.appwin .env { padding: 1px 7px; border-radius: 6px; font-size: 11.5px; font-weight: 600; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--t-act); }
+.appwin .env-preview { background: color-mix(in srgb, var(--t-flag) 18%, transparent); color: var(--t-flag); }
+.appwin .env-production { background: rgba(225, 70, 60, .14); color: #a8291f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .appwin .env-production { color: #ff8a80; } }
+:root[data-theme="dark"] .appwin .env-production { color: #ff8a80; }
+.appwin .item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 8px 7px 30px; border-radius: 8px; }
+.appwin .item span { min-width: 0; }
+.appwin .item b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.appwin .item small { color: var(--muted); font-size: 12px; }
+.appwin .item[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.appwin .item[aria-pressed="true"] small { color: inherit; opacity: .85; }
+.appwin .item:not([aria-pressed="true"]):hover { background: var(--bg-2); }
+.appwin .ki { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; flex: none; color: #fff; }
+.appwin .ki svg { width: 14px; height: 14px; fill: currentColor; }
+.appwin .ki-token { background: #1f7cf0; } .appwin .ki-password { background: #f2994a; } .appwin .ki-key { background: #c94fd8; } .appwin .ki-value { background: #8a929c; }
+.appwin .ki-proj, .appwin .ki-svc, .appwin .ki-grant, .appwin .ki-del, .appwin .ki-shared { width: 18px; height: 18px; border-radius: 5px; background: var(--line); }
+.appwin .ki-grant { background: #2bb3c0; } .appwin .ki-proj { background: #6b7cf5; }
+.appwin .side .ki:not(.ki-proj):not(.ki-svc):not(.ki-grant):not(.ki-del) { width: 20px; height: 20px; border-radius: 6px; }
+.appwin .side .ki svg { width: 11px; height: 11px; }
+.appwin .ki.big { width: 52px; height: 52px; border-radius: 13px; }
+.appwin .ki.big svg { width: 26px; height: 26px; }
+.appwin .card { padding: 10px 12px; border-radius: 10px; background: var(--bg-2); margin-bottom: 10px; }
+.appwin .card.head { display: flex; gap: 12px; align-items: center; }
+.appwin .dn { display: block; font-size: 18px; font-weight: 700; }
+.appwin .kv { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.appwin .kv:last-child { border-bottom: 0; }
+.appwin .kv > span { flex: 1; font-weight: 550; }
+.appwin .kv small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+.appwin .kv em { font-style: normal; color: var(--muted); }
+.appwin .kv code { font-size: 12px; overflow-wrap: anywhere; background: none; border: 0; }
+.appwin .ib { padding: 3px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); font-size: 12px; font-weight: 600; }
+.appwin .switch { width: 38px; height: 22px; border-radius: 11px; background: var(--line); position: relative; flex: none; }
+.appwin .switch i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.appwin .switch[aria-checked="true"] { background: #34c759; }
+.appwin .switch[aria-checked="true"] i { left: 18px; }
+.appwin .dh { margin: 14px 2px 6px; font-weight: 700; }
+.appwin .fn { margin: -4px 4px 10px; font-size: 12px; color: var(--muted); }
+.appwin .muted { margin: 0; color: var(--muted); }
+.appwin .empty { color: var(--muted); padding: 8px 4px; }
+.appwin .entry { display: flex; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--line); }
+.appwin .entry div { flex: 1; min-width: 0; }
+.appwin .entry b { display: block; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.appwin .entry span { display: block; color: var(--muted); font-size: 12px; }
+.appwin .entry .mono { font-family: var(--mono); }
+.appwin .entry time { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.appwin .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex: none; background: #34c759; }
+.appwin .dot.no { background: #ff3b30; }
+.appwin .grantrow { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-bottom: 1px solid var(--line); }
+.appwin .grantrow div { flex: 1; }
+.appwin .grantrow b { display: block; font-family: var(--mono); font-size: 13px; }
+.appwin .grantrow span { display: block; color: var(--muted); font-size: 12px; }
+.appwin .pill { padding: 5px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; }
+.appwin button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.appwin .touch { top: 90px; }
+
+@media (max-width: 860px) {
+  .appwin .body { grid-template-columns: 1fr; height: auto; }
+  .appwin .side { border-right: 0; border-bottom: 1px solid var(--line); max-height: none; }
+  .appwin .side ul, .appwin .side .sh, .appwin .sync { display: none; }
+  .appwin .tiles { grid-template-columns: repeat(4, 1fr); margin: 0; }
+  .appwin .list { border-right: 0; border-bottom: 1px solid var(--line); max-height: 380px; }
+  .appwin .list.wide { grid-column: auto; }
+  .appwin .detail { max-height: 520px; }
+}
+@media (prefers-reduced-motion: reduce) { .appwin .chev, .appwin .switch i { transition: none; } }

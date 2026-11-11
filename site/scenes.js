@@ -319,7 +319,7 @@
   // ---------------------------------------------------------------------------------------------------------------
   // Latchkey for Safari: a new key on the page where it was made, saved to a project's environment.
   SCENES.safari = {
-    reset: function (s) { s.hide("#saf-save"); s.hide("#saf-touch"); s.on("#saf-touch", "ok", false); s.hide("#saf-done"); s.point(420, 250, 1); },
+    reset: function (s) { s.hide("#saf-save"); s.hide("#saf-touch"); s.on("#saf-touch", "ok", false); s.hide("#saf-done"); s.point(420, 240, 1); },
     play: async function (s) {
       await s.wait(700);
       await s.pointAt("#saf-btn", 0, 3);
@@ -335,7 +335,7 @@
       await s.wait(500);
       s.hide("#saf-touch");
       s.show("#saf-done");
-      await s.point(420, 250, 700);
+      await s.point(420, 240, 700);
     }
   };
 
