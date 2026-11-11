@@ -31,6 +31,8 @@ struct PreparedRun {
     var environment: [String: String]
     var secretValues: [String]
     var tempDir: URL?
+    /// Keys held back for `--proxy`: the command has placeholders instead.
+    var proxies: [ProxyRoute] = []
 
     func cleanUp() { if let tempDir { try? FileManager.default.removeItem(at: tempDir) } }
 }
@@ -70,9 +72,15 @@ func referencedIDs(_ env: [String: String]) -> [String] {
 
 /// Asks for every value `env` refers to and fills them in. Missing or refused items throw; nothing is filled in
 /// unless everything was released.
-func prepareRun(_ spec: RunSpec, env planned: [String: String], masking: Bool,
+func prepareRun(_ spec: RunSpec, env planned: [String: String], masking: Bool, proxy: Bool = false,
                 call: (Request) throws -> Response) throws -> PreparedRun {
     var env = planned
+    // Variables that are exactly one reference, for --proxy to hold back.
+    var wholeReferences: [String: String] = [:]
+    for (k, v) in env where v.hasPrefix(References.scheme) {
+        let id = String(v.dropFirst(References.scheme.count))
+        if Wire.isValidName(id) { wholeReferences[k] = id }
+    }
     let fileRefs = References.fileReferences(in: env)
     let names = referencedIDs(env)
     guard !names.isEmpty else { return PreparedRun(environment: env, secretValues: [], tempDir: nil) }
@@ -102,7 +110,8 @@ func prepareRun(_ spec: RunSpec, env planned: [String: String], masking: Bool,
     }
     let masked = Set(r.masked ?? names)
     let secrets = masking ? values.filter { masked.contains($0.key) }.map(\.value) : []
-    return PreparedRun(environment: env, secretValues: secrets, tempDir: tempDir)
+    let proxies = proxy ? holdBackProxiedKeys(&env, values: values, references: wholeReferences) : []
+    return PreparedRun(environment: env, secretValues: secrets, tempDir: tempDir, proxies: proxies)
 }
 
 /// Reads `pipe` to its end on a background queue, hiding `secrets`, and hands each masked chunk to `sink`.

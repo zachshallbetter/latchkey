@@ -180,7 +180,7 @@ final class MCPServer: @unchecked Sendable {
         let command = Self.strings(args["command"])
         guard !command.isEmpty else { throw RunError.usage("command is required: an array such as [\"npm\", \"test\"]") }
         let timeout = min(max(args["timeout_seconds"] as? Double ?? Self.defaultTimeout, 1), Self.longestTimeout)
-        let cli = ["run"] + (try sourceArguments(args)) + ["--"] + command
+        let cli = ["run"] + (args["proxy"] as? Bool == true ? ["--proxy"] : []) + (try sourceArguments(args)) + ["--"] + command
         let result = try latchkey(cli, in: try folder(args), timeout: timeout, id: id)
         // latchkey's own refusals end the run before the command starts, with a latchkey: line on standard error.
         if [64, 66, 69, 77].contains(result.code), result.stderr.text.hasPrefix("latchkey: ") { throw Self.failure(result) }
@@ -412,6 +412,8 @@ final class MCPServer: @unchecked Sendable {
             "inputSchema": ["type": "object", "required": ["command"], "properties": sourceProperties.merging([
                 "command": ["type": "array", "items": ["type": "string"], "minItems": 1,
                             "description": "The program and its arguments, such as [\"npm\", \"test\"]. Use [\"sh\", \"-c\", \"...\"] for pipes."],
+                "proxy": ["type": "boolean",
+                          "description": "Keep OPENAI_API_KEY and ANTHROPIC_API_KEY out of the command: it gets a placeholder and a local base URL, and Latchkey adds the real key on requests to the provider. For programs using the OpenAI or Anthropic SDKs."],
                 "timeout_seconds": ["type": "number", "minimum": 1, "maximum": longestTimeout,
                                     "description": "Stop the command after this long. Default 600, at most 3600."],
             ]) { a, _ in a }],

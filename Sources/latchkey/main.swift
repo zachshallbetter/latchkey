@@ -9,12 +9,14 @@ latchkey: read secrets from the Latchkey app without keeping them in files.
 Items are shared (ID = NAME) or belong to a project's environment (ID = project/environment/NAME).
 Files refer to them as latchkey://ID.
 
-  latchkey run [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [--no-masking] -- COMMAND [ARGS...]
+  latchkey run [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [--no-masking] [--proxy] -- COMMAND [ARGS...]
       Start COMMAND with every latchkey://ID in its environment replaced by the real value.
       --env loads an environment's items without any file (each as its NAME), plus the shared items that
       environment's files use. --file NAME=ID (or NAME=latchkey-file://ID in an env file) gives COMMAND the
       path of a temporary file holding the value, readable only by you and deleted when COMMAND exits.
       Secret values printed by COMMAND are concealed unless --no-masking is given.
+      --proxy keeps OPENAI_API_KEY and ANTHROPIC_API_KEY out of COMMAND: it gets a placeholder and a local
+      OPENAI_BASE_URL / ANTHROPIC_BASE_URL, and latchkey puts the real key on requests to the provider only.
   latchkey check [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [ID,...] [--json] [-- COMMAND...]
       What `latchkey run` with the same options would get without asking (agent-safe, granted, recently
       approved), what would ask, and what's missing. Asks nothing and releases nothing. Give the COMMAND to
@@ -218,6 +220,7 @@ func runCommand(_ input: [String]) -> Never {
     var scopes: [String] = []
     var fileArgs: [(name: String, id: String)] = []
     var masking = true
+    var proxy = false
     var rest = input
     var cmd: [String] = []
     while !rest.isEmpty {
@@ -237,6 +240,7 @@ func runCommand(_ input: [String]) -> Never {
             let a = rest.removeFirst(), i = a.firstIndex(of: "=")!
             fileArgs.append((String(a[..<i]), String(a[a.index(after: i)...])))
         case "--no-masking": masking = false
+        case "--proxy": proxy = true
         default:
             if a.hasPrefix("--env-file=") { envFiles.append(String(a.dropFirst(11))) }
             else if a.hasPrefix("-") { fail("unknown option \(a)", code: 64) }
@@ -249,12 +253,28 @@ func runCommand(_ input: [String]) -> Never {
     let prepared: PreparedRun
     do {
         let planned = try plannedEnvironment(spec, base: ProcessInfo.processInfo.environment, call: call)
-        prepared = try prepareRun(spec, env: planned, masking: masking, call: call)
+        prepared = try prepareRun(spec, env: planned, masking: masking, proxy: proxy, call: call)
     } catch { failRun(error) }
-    let env = prepared.environment, secretValues = prepared.secretValues, tempDir = prepared.tempDir
+    var env = prepared.environment
+    let secretValues = prepared.secretValues, tempDir = prepared.tempDir
+    var proxies: [KeyProxy] = []
+    if proxy && prepared.proxies.isEmpty {
+        FileHandle.standardError.write(Data("latchkey: --proxy: no OPENAI_API_KEY or ANTHROPIC_API_KEY reference to hold back (or its base URL is already set)\n".utf8))
+    }
+    for route in prepared.proxies {
+        do {
+            let p = try KeyProxy(route: route)
+            let port = try p.start()
+            env[route.provider.baseVariable] = "http://127.0.0.1:\(port)\(route.provider.basePath)"
+            proxies.append(p)
+        } catch {
+            prepared.cleanUp()
+            fail("couldn't start the key proxy for \(route.provider.name): \(error)")
+        }
+    }
 
     // Exec in place when there's nothing to mask and nothing to clean up afterwards.
-    if secretValues.isEmpty && tempDir == nil {
+    if secretValues.isEmpty && tempDir == nil && proxies.isEmpty {
         for (k, v) in env { setenv(k, v, 1) }
         var argv: [UnsafeMutablePointer<CChar>?] = cmd.map { strdup($0) }
         argv.append(nil)
@@ -288,6 +308,7 @@ func runCommand(_ input: [String]) -> Never {
     process.waitUntilExit()
     group.wait()
     prepared.cleanUp()
+    proxies.forEach { $0.stop() }
     if process.terminationReason == .uncaughtSignal { exit(128 + process.terminationStatus) }
     exit(process.terminationStatus)
 }

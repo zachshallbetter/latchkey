@@ -36,6 +36,9 @@ command gets which value. This page says what it protects against, how, and wher
   shows context first; a panel nobody answers is a denial after 90 seconds.
 - **Grants** are kept in a keychain item only Latchkey can read or change, on this Mac only, and last at most 7 days.
   No file holds them, so no other program can write itself one.
+- **The key proxy** (`latchkey run --proxy`) keeps OpenAI and Anthropic keys in the signed `latchkey` process, which
+  other programs can't read. The command gets a random placeholder; the proxy listens on 127.0.0.1 only, refuses
+  requests without that run's placeholder, and sends the real key only to the provider's own host.
 - **Temporary key files** live in a new folder only you can open, are only readable by you, and are deleted when the
   command exits.
 - **Remote pushes** pass values to each service's tool on standard input, never as arguments, so they don't appear

@@ -18,6 +18,7 @@ Starts COMMAND with every `latchkey://ID` in its environment replaced by the ite
 | `--env PROJECT/ENV` | Set each item in the environment as its name, plus the shared items that environment's files use (as recorded on import). Repeatable. |
 | `--file NAME=ID` | Set NAME to the path of a temporary file holding the value. `NAME=latchkey-file://ID` in an env file does the same. The file is readable only by you and deleted when COMMAND exits. |
 | `--no-masking` | Don't hide values in COMMAND's output, and start it directly. |
+| `--proxy` | Keep `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` out of COMMAND entirely (see below). |
 
 Items that aren't agent-safe or covered by a grant ask for approval first. Values of secret kinds that are 6
 characters or longer are replaced with `<concealed by latchkey>` in COMMAND's output, including values split across
@@ -35,6 +36,21 @@ item is missing, otherwise 0.
 
 Serves Latchkey's tools to an agent over MCP, on standard input and output. See
 [Latchkey's MCP server](agents.md#latchkeys-mcp-server).
+
+### Keys that never reach the command (`--proxy`)
+
+With `--proxy`, a variable that is exactly a reference to an OpenAI or Anthropic key gets a placeholder instead, and
+`OPENAI_BASE_URL` or `ANTHROPIC_BASE_URL` points at a port on this Mac that `latchkey run` listens on. Requests there
+that carry the placeholder go to `api.openai.com` or `api.anthropic.com` with the real key in its place; anything
+else is refused. The real key stays in `latchkey run`, so COMMAND can use it but can't read, print or send it
+anywhere else.
+
+```bash
+latchkey run --proxy --env shop/development -- npm test
+```
+
+It works with programs that use the OpenAI or Anthropic SDKs (or read those base URL variables). If a base URL
+variable is already set, that provider's key is passed through as usual.
 
 ### `latchkey get ID`
 
