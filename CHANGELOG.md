@@ -17,6 +17,14 @@ The first release.
 - The command-line tool starts the app when it isn't running.
 
 ### Agents
+- Grants can end when the agent quits (`--session`), cover only one command (`--command`), or one use (`--once`);
+  the approval panel offers "until claude quits" and "Only for this command".
+- `latchkey run --proxy`: OpenAI and Anthropic keys never reach the command; it gets a placeholder and a local base
+  URL, and the real key goes only to the provider.
+- `latchkey run --aws-session` / `--aws-role`: short-lived AWS credentials from STS instead of the long-lived key.
+- `latchkey touched` and `latchkey rotate`: see what a session was given, and replace it, with history kept and
+  linked environments pushed.
+- Use Latchkey from another Mac over SSH (`LATCHKEY_SOCKET`); every forwarded request asks.
 - `latchkey mcp`: an MCP server with status, list, check, run and request-grant tools. It never returns a value;
   output is masked and capped, and grants an agent asks for are limited to its folder, a day, and non-production
   environments.
@@ -28,6 +36,9 @@ The first release.
 - Grants live in a keychain item only Latchkey can change, not in a file.
 - The command-line tool checks the app's signature before sending anything.
 - Development installs no longer carry the debugging entitlement.
+- The access log is chained with HMAC; `latchkey log --verify` finds changed, removed or added entries. Likely
+  secrets in command lines are redacted.
+- Approving "Allow from this folder" from a caller whose folder is `/` no longer grants every folder.
 
 ### Approvals and grants
 - An approval panel with the program chain, folder and command, then Touch ID, Apple Watch or your password.
@@ -43,6 +54,7 @@ The first release.
 - Move items between projects and environments, with references updated in their files.
 
 ### Importing
+- `latchkey import --scan ~/Projects` finds and imports every project's env files at once.
 - `latchkey import` for one file or many (`--batch`), with one approval, `--rewrite`, `--share-identical`,
   `--agent-safe-pattern`, and expiring Vercel and Turbo tokens skipped by default.
 - Projects named after the repository's main checkout; environments from the file name.
@@ -62,4 +74,5 @@ The first release.
 
 ### Distribution
 - Developer ID-signed and notarized, in a disk image, with the command-line tool inside the app
-  (**Latchkey › Install Command Line Tool…**).
+  (**Latchkey › Install Command Line Tool…**, which also adds `lk`).
+- A Homebrew cask, written by the release script.
