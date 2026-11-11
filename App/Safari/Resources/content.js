@@ -59,8 +59,14 @@
   // Where a key's button goes: the first copy you can see. A page may hold others (a hidden copy for its copy button).
   function anchorOf(d) {
     d.elements = (d.elements || [d.element]).filter(function (e) { return document.contains(e); });
-    for (var i = 0; i < d.elements.length; i++) if (visible(d.elements[i])) { d.element = d.elements[i]; return d.element; }
-    return null;
+    var best = null, area = Infinity;
+    d.elements.forEach(function (e) {
+      if (!visible(e)) return;
+      var r = e.getBoundingClientRect(), a = r.width * r.height;
+      if (a < area) { best = e; area = a; }
+    });
+    if (best) d.element = best;
+    return best;
   }
   function live(d) {
     var el = d.element;
@@ -91,7 +97,7 @@
       var seen = byValue.get(r.value);
       if (seen) {
         seen.elements = seen.elements || [seen.element];
-        if (seen.elements.indexOf(el) < 0 && seen.elements.length < 6) seen.elements.push(el);
+        if (seen.elements.indexOf(el) < 0 && seen.elements.length < 12) seen.elements.push(el);
         return;
       }
       var d = { id: nextID++, result: r, element: el, elements: [el] };
@@ -160,7 +166,9 @@
     "background:#0a63d1;color:#fff;font:600 12px/1.2 -apple-system,sans-serif;box-shadow:0 4px 14px rgba(10,99,209,.35)}" +
     ".pill:hover{filter:brightness(1.08)}.pill:focus-visible{outline:2px solid #fff;outline-offset:-4px}" +
     ".pill svg{width:16px;height:13px;fill:#fff}" +
-    ".b{font:13px/1.45 -apple-system,sans-serif;width:340px;padding:14px;border-radius:12px;background:#fff;color:#12161c;" +
+    "@keyframes lkin{from{opacity:0;transform:translateY(-6px) scale(.97)}}" +
+    "@media (prefers-reduced-motion:reduce){.b{animation:none!important}}" +
+    ".b{animation:lkin .16s ease-out;transform-origin:top right;font:13px/1.45 -apple-system,sans-serif;width:340px;padding:14px;border-radius:12px;background:#fff;color:#12161c;" +
     "border:1px solid #dde2e9;box-shadow:0 12px 32px rgba(16,24,40,.22)}" +
     "@media (prefers-color-scheme:dark){.b{background:#1c2128;color:#e8ecf1;border-color:#2f3640}.m{color:#a3adb9!important}input,select{background:#13181e!important;color:inherit!important;border-color:#2f3640!important}}" +
     "b.t{display:block;font-size:14px;margin-bottom:2px}.m{color:#5a6472;margin:0 0 10px}code{font:12px ui-monospace,Menlo,monospace}" +
@@ -177,7 +185,7 @@
     document.documentElement.appendChild(h);
     return h;
   }
-  function place(h, el, below) {
+  function place(h, el, below, alignRight) {
     var r = el.getBoundingClientRect();
     if (!below && (!visible(el) || r.bottom < 0 || r.top > window.innerHeight)) { h.style.display = "none"; return; }
     if (below && !visible(el)) {   // a panel whose key isn't on screen: bottom-right corner
@@ -186,7 +194,7 @@
     }
     h.style.display = "";
     var w = h.offsetWidth || 160, height = h.offsetHeight || 28;
-    var left = Math.min(window.innerWidth - w - 8, Math.max(8, below ? r.left : r.right - w));
+    var left = Math.min(window.innerWidth - w - 8, Math.max(8, below && !alignRight ? r.left : r.right - w));
     var top = below ? r.bottom + 6 : r.top - height - 6;
     if (top < 8) top = r.bottom + 6;
     if (top + height > window.innerHeight - 8) top = Math.max(8, r.top - height - 6);
@@ -213,7 +221,7 @@
       if (a) place(h, a, false); else h.style.display = "none";
     });
     offer();
-    if (panelHost && panelHost._anchor) place(panelHost, panelHost._anchor, true);
+    if (panelHost && panelHost._anchor) place(panelHost, panelHost._anchor, true, panelHost._fromPill);
   }
   // A key a page says it shows only once (a "your new key" dialog) gets the save panel without a click. Saving still
   // takes your press and Touch ID. Once per key, and never over a panel you have open.
@@ -243,7 +251,10 @@
     if (panelHost) panelHost.remove();
     var r = d.result;
     var h = host(2147483647);
-    h._anchor = anchor || anchorOf(d) || d.element;
+    if (r.confidence === "high" && d.id) showPill(d);
+    var pill = pills.get(d.id);
+    h._fromPill = !!pill && pill.style.display !== "none";
+    h._anchor = h._fromPill ? pill : anchor || anchorOf(d) || d.element;
     var root = h.attachShadow({ mode: "closed" });
     var label = r.type + (r.environment ? " · " + (r.environment === "production" ? "live" : "test") : "");
     root.innerHTML = "<style>" + STYLE + "</style>" +
@@ -315,8 +326,8 @@
       }).catch(function () { status.textContent = UNREACHABLE; save.disabled = false; });
     });
     panelHost = h;
-    place(h, h._anchor, true);
-    setTimeout(function () { (offeredByPage ? save : name).focus(); place(h, h._anchor, true); }, 0);
+    place(h, h._anchor, true, h._fromPill);
+    setTimeout(function () { (offeredByPage ? save : name).focus(); place(h, h._anchor, true, h._fromPill); }, 0);
   }
 
   window.addEventListener("pagehide", function () {

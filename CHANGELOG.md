@@ -99,7 +99,7 @@ The first release.
 - After a save, the extension shows the reference to use; its toolbar button says whether it can reach Latchkey.
 - The Save to Latchkey button sits beside the copy of a key you can see, not a hidden copy kept for the page's copy
   button, and Save says so when it can't reach the app instead of waiting.
-- When a page says it shows a new key only once, the save panel opens beside it without a click; saving still takes
+- When a page says it shows a new key only once, the save panel opens from its button without a click; saving still takes
   your press and Touch ID.
 
 ### Approvals
