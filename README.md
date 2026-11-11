@@ -13,14 +13,14 @@ command starts. Agents get only the items marked agent-safe; everything else nee
 | Keychain storage: iCloud Keychain when signed, login keychain otherwise | Built |
 | Broker: agent-safe policy, approval panel then Touch ID / Apple Watch / password, grants, access log | Built |
 | Projects, environments and services: item IDs `project/environment/NAME`, import placement, moving items, project-wide grants | Built |
-| `latchkey` command-line tool: `run`, `list`, `get`, `set`, `rm`, `import`, `mv`, `grant`, `grants`, `revoke`, `status`; starts the app if needed | Built |
+| `latchkey` command-line tool: `run`, `list`, `get`, `set`, `rm`, `update`, `import`, `mv`, `grant`, `grants`, `revoke`, `status`; starts the app if needed | Built |
 | `latchkey-broker`: the broker without a window, for development | Built |
 | App: window with sidebar, item list and detail; reveal and copy behind Touch ID; .env import sheet; activity log; menu bar panel; settings; open at login. Hosts the broker | Built; needs a team set to sync |
 | Key-file delivery, expiry reminders | Not built |
 | Browser extension or AutoFill provider | Not built |
 | SSH agent (Secure Enclave keys) | Not built |
 
-Tests: 39 (`swift test`; add `LATCHKEY_KEYCHAIN_TESTS=1` to include a real keychain round trip).
+Tests: 41 (`swift test`; add `LATCHKEY_KEYCHAIN_TESTS=1` to include a real keychain round trip).
 
 See [docs/apple-passwords-and-passkeys.md](docs/apple-passwords-and-passkeys.md) for how this uses iCloud Keychain
 and LocalAuthentication, why items don't appear in the Passwords app, and where passkeys fit.
@@ -77,12 +77,19 @@ can't drift from the references. Service and "used in" travel with the item in i
     latchkey list --project acp
     latchkey mv --from-file ~/Projects/acp/.env.local --to acp/development   # move shared items a file refers to
     latchkey grant 'acp/production/*' --folder ~/Projects/acp --for 2h
+    latchkey update 'acp/*' --agent-safe no                                  # many items, one approval
+    latchkey rm 'old-project/*'
 
 ## Using the app
 
 - **Sidebar:** All, Agent-Safe, Ask First and Activity, a count per kind, then **Projects** (with a filter once there
   are many), **Shared** and **Services**.
-- **Project view:** items grouped by environment.
+- **Lists:** views that span projects (All, Agent-Safe, a kind or a service) are grouped by project, with each
+  item's environment as a badge; a project's own view is grouped by environment.
+- **Several items:** select with ⌘-click or ⇧-click. The detail pane and the right-click menu then act on all of
+  them with one approval: require approval or let agents read, set kind or service, move, grant access, delete.
+- **A whole project:** right-click it in the sidebar to select all its items, change agent access, grant access to
+  the project (including items added later), move or rename it, or delete it.
 - **Detail:** reveal (hides again after 30 seconds) and copy (the clipboard clears after 60 seconds) ask for
   Touch ID unless the item is agent-safe. Kind, agent-safe, note, change value and delete are there too, along
   with the item's recent activity.
