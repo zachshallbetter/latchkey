@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.1.0 (2026-11-11)
+
+The first release.
 
 ### Environments on every Mac
 - Each environment has a synced record of its variables: items (shared items too) or plain settings such as
@@ -22,10 +24,6 @@
 - The Touch ID sheet says only what's asked ("Latchkey is trying to add shop/development/DB for claude"); the
   approval panel above it still shows the caller, folder and command.
 - After an import, the next-steps sheet offers a prompt to copy into an agent's instructions.
-
-## 0.1.0 (unreleased)
-
-The first release.
 
 ### App Store groundwork
 - An isolated experimental sandbox build and preflight checks, following the Apple SDK patterns used in Peel.
@@ -147,7 +145,11 @@ The first release.
 - Things you start yourself, in the window or in Safari, ask for Touch ID alone.
 - After an import or a new item, Latchkey shows the reference and the `lk run` command to use next.
 
-### Distribution (release tooling; no public release yet)
+### Distribution
 - Developer ID-signed and notarized, in a disk image, with the command-line tool inside the app
   (**Latchkey › Install Command Line Tool…**, which also adds `lk`).
 - A Homebrew cask, written by the release script.
+
+### Docs
+- Nine credential use cases (`docs/cases`) and a design proposal for Authority Manifest and delegated staging
+  deploys (`docs/authority-manifest-integration.md`). Neither describes shipped behavior.
