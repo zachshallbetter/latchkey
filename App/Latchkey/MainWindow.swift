@@ -52,13 +52,15 @@ struct MainWindow: View {
             Group {
                 if model.filter == .activity {
                     ActivityList(model: model)
+                } else if model.filter == .grants {
+                    GrantList(model: model)
                 } else {
                     ItemList(model: model)
                 }
             }
             .navigationSplitViewColumnWidth(min: 280, ideal: 330)
         } detail: {
-            if model.filter != .activity, let item = model.item(model.selection) {
+            if model.filter != .activity, model.filter != .grants, let item = model.item(model.selection) {
                 ItemDetail(model: model, item: item).id(item.name)
             } else {
                 EmptyDetail(model: model)
@@ -68,6 +70,7 @@ struct MainWindow: View {
         .safeAreaInset(edge: .bottom, spacing: 0) { NoticeBar(model: model) }
         .sheet(isPresented: $model.showingAdd) { AddItemSheet(model: model) }
         .sheet(item: $model.importDraft) { ImportSheet(model: model, draft: $0) }
+        .sheet(isPresented: $model.showingNewGrant) { NewGrantSheet(model: model) }
         .dropDestination(for: URL.self) { urls, _ in
             guard let url = urls.first else { return false }
             model.beginImport(url)
@@ -105,6 +108,10 @@ struct Sidebar: View {
                     ForEach(ItemKind.allCases, id: \.self) { k in
                         SidebarRow(model: model, filter: .kind(k), kind: k)
                     }
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Access").font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.leading, 8)
+                    SidebarRow(model: model, filter: .grants, symbol: "hourglass", tint: .teal)
                 }
                 Spacer(minLength: 0)
                 StorageBadge(model: model)
@@ -151,13 +158,20 @@ struct Tile: View {
 struct SidebarRow: View {
     let model: AppModel
     let filter: SidebarFilter
-    let kind: ItemKind
+    var kind: ItemKind? = nil
+    var symbol: String? = nil
+    var tint: Color = .gray
 
     var body: some View {
         let on = model.filter == filter
         Button { model.filter = filter } label: {
             HStack(spacing: 8) {
-                KindIcon(kind: kind, size: 20)
+                if let kind {
+                    KindIcon(kind: kind, size: 20)
+                } else {
+                    RoundedRectangle(cornerRadius: 5, style: .continuous).fill(tint.gradient).frame(width: 20, height: 20)
+                        .overlay(Image(systemName: symbol ?? "circle").font(.system(size: 10, weight: .semibold)).foregroundStyle(.white))
+                }
                 Text(filter.title)
                 Spacer()
                 Text("\(model.count(filter))").foregroundStyle(.secondary).monospacedDigit()
@@ -342,6 +356,9 @@ struct EmptyDetail: View {
         if model.filter == .activity {
             ContentUnavailableView("Activity", systemImage: "clock.arrow.circlepath",
                                    description: Text("Who read or changed what, from where. Values are never logged."))
+        } else if model.filter == .grants {
+            ContentUnavailableView("Grants", systemImage: "hourglass",
+                                   description: Text("A grant lets commands run from one folder read some items without asking, until it ends. Make one before you step away from an agent, or choose “Allow from this folder” on an approval."))
         } else {
             ContentUnavailableView {
                 Label { Text("No Item Selected") } icon: { LogoMark() }

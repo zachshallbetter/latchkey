@@ -1,5 +1,6 @@
 #if DEBUG
 import AppKit
+import LatchkeyCore
 import SwiftUI
 
 /// Debug builds only. `Latchkey --snapshot out.png [--select NAME] [--filter activity]` opens the main window,
@@ -20,6 +21,14 @@ enum Snapshot {
         guard let path = arg("--snapshot") else { return }
         if let name = arg("--select") { model.selection = name }
         if arg("--filter") == "activity" { model.filter = .activity }
+        if arg("--filter") == "grants" { model.filter = .grants }
+        if arg("--part") == "approval" {
+            let sample = ApprovalRequest(action: .read, names: ["DATABASE_URL", "STRIPE_KEY"], chain: ["zsh", "claude", "Terminal"],
+                                         folder: NSHomeDirectory() + "/Projects/site", command: "npm test -- --watch=false",
+                                         reason: "release DATABASE_URL, STRIPE_KEY")
+            drawOffscreen(ApprovalView(request: sample) { _ in }, to: path)
+            return
+        }
         if let f = arg("--import") { model.beginImport(URL(fileURLWithPath: f)) }
         if arg("--part") == "sidebar" {
             drawOffscreen(Sidebar(model: model).frame(width: 260, height: 640), to: path)

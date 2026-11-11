@@ -75,6 +75,14 @@ struct SettingsView: View {
         Form {
             Section("Storage") {
                 LabeledContent("Where values live", value: model.store.location)
+                if model.synced && !model.legacyItems.isEmpty {
+                    LabeledContent {
+                        Button("Move to iCloud Keychain") { Task { await model.moveLegacyItems() } }
+                    } label: {
+                        Text("\(model.legacyItems.count) item\(model.legacyItems.count == 1 ? "" : "s") still in this Mac's login keychain")
+                        Text("Saved before this copy was signed. macOS may ask for your login password once per item while they move.")
+                    }
+                }
                 if !model.synced {
                     Text("To sync through iCloud Keychain, sign in to Xcode with your Apple Account, set DEVELOPMENT_TEAM in App/project.yml, and run scripts/install.sh again. Every Mac needs a copy signed by the same team.")
                         .font(.caption).foregroundStyle(.secondary)
@@ -106,6 +114,9 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .frame(width: 520)
-        .onAppear { atLogin = model.opensAtLogin }
+        .onAppear {
+            atLogin = model.opensAtLogin
+            model.checkLegacy()
+        }
     }
 }

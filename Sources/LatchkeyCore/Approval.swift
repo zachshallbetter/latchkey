@@ -1,12 +1,54 @@
 import Foundation
 import LocalAuthentication
 
+/// What the broker is asking the person at the Mac to allow.
+public struct ApprovalRequest: Sendable {
+    public enum Action: String, Sendable {
+        case read, add, change, delete, importItems, grant
+    }
+    public var action: Action
+    public var names: [String]
+    /// The asking program and its parents, nearest first ("zsh", "claude").
+    public var chain: [String]
+    /// Absolute folder the request came from; empty for the app itself.
+    public var folder: String
+    public var command: String?
+    /// For a grant made ahead of time: how long it lasts.
+    public var duration: TimeInterval?
+    /// Completes the system sentence "<App> is trying to …".
+    public var reason: String
+
+    public init(action: Action, names: [String], chain: [String], folder: String, command: String? = nil,
+                duration: TimeInterval? = nil, reason: String) {
+        self.action = action
+        self.names = names
+        self.chain = chain
+        self.folder = folder
+        self.command = command
+        self.duration = duration
+        self.reason = reason
+    }
+
+    /// Reads from a folder can be turned into a grant from the approval itself.
+    public var canGrant: Bool { action == .read && !folder.isEmpty }
+    /// Requests made in the Latchkey window: the person is already there, so Touch ID alone is enough.
+    public var fromApp: Bool { chain.first == Broker.appCaller }
+}
+
+public enum ApprovalDecision: Sendable, Equatable {
+    case deny
+    case once
+    /// Allow now, and keep allowing these names from this folder for this long.
+    case grant(TimeInterval)
+
+    public var allowed: Bool { self != .deny }
+}
+
 /// Asks the person at the Mac to allow something.
 public protocol Approver: Sendable {
     /// How approval happens, for `latchkey status`.
     var method: String { get }
-    /// `reason` completes the system sentence "<App> is trying to …".
-    func approve(_ reason: String) -> Bool
+    func approve(_ request: ApprovalRequest) -> ApprovalDecision
 }
 
 /// The system authentication sheet: Touch ID, a paired Apple Watch, or the account password, in that
@@ -35,7 +77,12 @@ public final class SystemApprover: Approver, @unchecked Sendable {
         return parts.joined(separator: ", ")
     }
 
-    public func approve(_ reason: String) -> Bool {
+    public func approve(_ request: ApprovalRequest) -> ApprovalDecision {
+        confirm(request.reason) ? .once : .deny
+    }
+
+    /// Touch ID / Watch / password with this reason. True if the person passed it.
+    public func confirm(_ reason: String) -> Bool {
         let ctx = LAContext()
         ctx.localizedCancelTitle = "Deny"
         var err: NSError?
@@ -54,12 +101,13 @@ public final class SystemApprover: Approver, @unchecked Sendable {
     }
 }
 
-/// Approves or denies everything without asking. Tests only.
+/// Gives the same answer to everything without asking. Tests only.
 public struct FixedApprover: Approver {
-    public let answer: Bool
-    public init(_ answer: Bool) { self.answer = answer }
-    public var method: String { answer ? "always allow (test)" : "always deny (test)" }
-    public func approve(_ reason: String) -> Bool { answer }
+    public let answer: ApprovalDecision
+    public init(_ allow: Bool) { answer = allow ? .once : .deny }
+    public init(_ decision: ApprovalDecision) { answer = decision }
+    public var method: String { "fixed (test)" }
+    public func approve(_ request: ApprovalRequest) -> ApprovalDecision { answer }
 }
 
 /// Remembers recent read approvals so a test loop does not prompt on every run. Changes are never remembered.

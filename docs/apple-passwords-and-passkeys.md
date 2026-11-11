@@ -39,10 +39,18 @@ Every Mac must run a build signed by the **same team**. The access group include
 
 ## Setting up a new Mac
 
-1. In Xcode, go to Settings > Accounts and sign in with your Apple Account. Note the team ID.
-2. `cd App && xcodegen`, then set `DEVELOPMENT_TEAM` in `project.yml` (or in Xcode under Signing & Capabilities).
-3. Build and run the Latchkey scheme. The menu bar shows "iCloud Keychain" once signing is right.
+1. In Xcode, go to Settings > Accounts and sign in with your Apple Account.
+2. Open `App/Latchkey.xcodeproj`, select the Latchkey target, go to Signing & Capabilities, and choose your team.
+   This makes Xcode create your Apple Development certificate. Copy the team ID it shows into `DEVELOPMENT_TEAM`
+   in `App/project.yml` (the project file is regenerated from it).
+3. Run `scripts/install.sh`. It signs with your team and installs. The window's sidebar and Settings say
+   "iCloud Keychain" once it worked.
 4. Make sure iCloud Keychain is on: System Settings > [your name] > iCloud > Passwords & Keychain.
-5. Items saved from any Mac running the signed app appear on the others.
+5. If the unsigned copy saved items, open Settings and choose **Move to iCloud Keychain**. macOS may ask for your
+   login password once per item while they move.
+6. On each other Mac, sign in to Xcode with the same Apple Account and run `scripts/install.sh`. A development
+   profile only covers Macs registered to it, and building on a Mac registers it.
 
-Items saved while only the unsigned development broker was running are in the login keychain and don't sync. Add them again through the signed app.
+A free personal team is enough for your own Macs, though its development profiles expire after a while and
+need a rebuild to renew. A paid Developer Program membership adds a Developer ID build that runs on any Mac and
+can be notarized to share.

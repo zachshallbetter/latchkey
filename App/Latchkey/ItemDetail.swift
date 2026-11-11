@@ -76,6 +76,23 @@ struct ItemDetail: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
 
+            let itemGrants = model.grants(for: item.name)
+            if !itemGrants.isEmpty {
+                Section("Readable Without Asking") {
+                    ForEach(itemGrants) { g in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(Broker.tilde(g.folder)).font(.callout.monospaced())
+                                Text("Until \(g.expires.formatted(date: .omitted, time: .shortened)) · from \(g.createdBy)")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Button("Revoke") { act { await model.revoke(g.id) } }
+                        }
+                    }
+                }
+            }
+
             Section("Recent Activity") {
                 let entries = model.activity(for: item.name)
                 if entries.isEmpty {

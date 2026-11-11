@@ -1,3 +1,4 @@
+import AppKit
 import Darwin
 import Foundation
 import LatchkeyCore
@@ -18,6 +19,11 @@ latchkey: read secrets from the Latchkey app without keeping them in files.
       Add every KEY=VALUE in a .env file with one approval. Prints names, never values.
       --rewrite replaces each imported value in FILE with latchkey://KEY.
       Existing items are left alone unless --replace is given.
+  latchkey grant NAME[,NAME...] [--folder DIR] [--for 2h]
+      Let commands run from DIR (default: here) and the folders inside it read these items
+      without asking, until the time is up (30m, 2h, 1d; at most 7d). Asks for approval once.
+  latchkey grants                 Grants that are in effect.
+  latchkey revoke ID|all
   latchkey status
 
 Items not marked agent-safe need your approval (Touch ID, Apple Watch or your Mac password).
@@ -29,15 +35,60 @@ func fail(_ message: String, code: Int32 = 1) -> Never {
     exit(code)
 }
 
+func appAnswers(within seconds: Double) -> Bool {
+    let deadline = Date().addingTimeInterval(seconds)
+    repeat {
+        if let fd = try? UnixSocket.connect(Paths.socket) { close(fd); return true }
+        usleep(150_000)
+    } while Date() < deadline
+    return false
+}
+
+/// Starts Latchkey hidden and waits for it to answer. False if it isn't installed or doesn't answer.
+/// Launching is the last resort: a launch request that lands while the app is already starting ends that
+/// launch, so first give a starting copy a moment, and never launch while one is listed as running.
+func launchApp() -> Bool {
+    if ProcessInfo.processInfo.environment["LATCHKEY_NO_LAUNCH"] == "1" { return false }
+    let bundleID = "io.latchkey.Latchkey"
+    if appAnswers(within: 1.5) { return true }
+    if !NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty {
+        return appAnswers(within: 10)
+    }
+    guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else { return false }
+    FileHandle.standardError.write(Data("latchkey: starting the Latchkey app…\n".utf8))
+    let config = NSWorkspace.OpenConfiguration()
+    config.activates = false
+    config.hides = true
+    config.addsToRecentItems = false
+    let done = DispatchSemaphore(value: 0)
+    NSWorkspace.shared.openApplication(at: url, configuration: config) { _, _ in done.signal() }
+    _ = done.wait(timeout: .now() + 10)
+    return appAnswers(within: 10)
+}
+
 func send(_ request: Request) -> Response {
-    do {
-        let r = try BrokerClient.send(request)
-        if !r.ok { fail(r.error ?? "the app refused the request") }
-        return r
-    } catch let e as SocketError {
-        fail("cannot reach the Latchkey app (\(e)). Open Latchkey and try again.", code: 69)
-    } catch {
-        fail("\(error)")
+    var launched = false
+    var retries = 0
+    while true {
+        do {
+            let r = try BrokerClient.send(request)
+            if !r.ok { fail(r.error ?? "the app refused the request") }
+            return r
+        } catch let e as SocketError {
+            if case .sys(let what, _) = e, what == "connect", !launched, launchApp() {
+                launched = true
+                continue
+            }
+            // A copy that is just starting or just quitting can drop the connection; give it a moment.
+            if case .closed = e, retries < 3 {
+                retries += 1
+                usleep(500_000)
+                continue
+            }
+            fail("cannot reach the Latchkey app (\(e)). Open Latchkey and try again.", code: 69)
+        } catch {
+            fail("\(error)")
+        }
     }
 }
 
@@ -243,6 +294,53 @@ func importCommand(_ input: [String]) -> Never {
     exit(0)
 }
 
+// MARK: - grants
+
+func relative(_ d: Date) -> String {
+    let left = d.timeIntervalSinceNow
+    return left < 90 ? "under 2 minutes" : GrantStore.describe(left)
+}
+
+func printGrants(_ grants: [Grant]) {
+    guard !grants.isEmpty else { print("No grants in effect."); return }
+    for g in grants {
+        print("\(g.id)  \(Broker.tilde(g.folder))  \(g.names.joined(separator: ", "))  (\(relative(g.expires)) left)")
+    }
+}
+
+func grantCommand(_ input: [String]) -> Never {
+    var names: [String] = []
+    var folder: String?
+    var duration: TimeInterval = 3600
+    var rest = input
+    while !rest.isEmpty {
+        let a = rest.removeFirst()
+        switch a {
+        case "--folder":
+            guard !rest.isEmpty else { fail("--folder takes a path", code: 64) }
+            folder = URL(fileURLWithPath: rest.removeFirst()).standardizedFileURL.path
+        case "--for":
+            guard !rest.isEmpty, let d = GrantStore.parseDuration(rest.removeFirst()) else {
+                fail("--for takes a time such as 30m, 2h or 1d", code: 64)
+            }
+            duration = d
+        default:
+            if a.hasPrefix("-") { fail("unknown option \(a)", code: 64) }
+            names += a.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        }
+    }
+    guard !names.isEmpty, names.allSatisfy(Wire.isValidName) else {
+        fail("usage: latchkey grant NAME[,NAME...] [--folder DIR] [--for 2h]", code: 64)
+    }
+    if duration > GrantStore.longest { fail("the longest grant is 7 days", code: 64) }
+    let r = send(Request(op: "grant", names: names, cwd: currentDirectory(), folder: folder ?? currentDirectory(), duration: duration))
+    if let m = r.missing, !m.isEmpty { fail("no item named: \(m.joined(separator: ", "))", code: 66) }
+    for g in r.grants ?? [] {
+        print("granted \(g.id): \(g.names.joined(separator: ", ")) readable from \(Broker.tilde(g.folder)) for \(GrantStore.describe(duration))")
+    }
+    exit(0)
+}
+
 // MARK: - commands
 
 var args = Array(CommandLine.arguments.dropFirst())
@@ -325,6 +423,18 @@ case "run":
 
 case "import":
     importCommand(args)
+
+case "grant":
+    grantCommand(args)
+
+case "grants":
+    printGrants(send(Request(op: "grants")).grants ?? [])
+
+case "revoke":
+    guard let id = args.first else { fail("usage: latchkey revoke ID|all", code: 64) }
+    let r = send(Request(op: "revoke", names: [id]))
+    if let m = r.missing, !m.isEmpty { fail("no grant \(id)", code: 66) }
+    print("revoked \(r.info?["revoked"] ?? "0") grant(s)")
 
 default:
     fail("unknown command \(command). Try `latchkey help`.", code: 64)

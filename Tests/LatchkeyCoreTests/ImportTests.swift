@@ -7,7 +7,7 @@ final class CountingApprover: Approver, @unchecked Sendable {
     let answer: Bool
     init(_ answer: Bool) { self.answer = answer }
     var method: String { "test" }
-    func approve(_ reason: String) -> Bool { reasons.append(reason); return answer }
+    func approve(_ request: ApprovalRequest) -> ApprovalDecision { reasons.append(request.reason); return answer ? .once : .deny }
 }
 
 final class ImportTests: XCTestCase {

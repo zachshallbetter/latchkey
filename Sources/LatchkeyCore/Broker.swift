@@ -4,7 +4,11 @@ import Foundation
 /// Answers CLI requests: decides what may be read, asks for approval, writes the access log.
 /// The app hosts one; `latchkey-broker` hosts one without a window during development.
 public final class Broker: @unchecked Sendable {
+    /// How requests from the Latchkey window identify themselves.
+    public static let appCaller = "the Latchkey app"
+
     public let store: SecretStore
+    public let grants: GrantStore
     public let approver: Approver
     /// How long a read approval covers the same names from the same place. 0 asks every time.
     public var readApprovalWindow: TimeInterval
@@ -15,9 +19,11 @@ public final class Broker: @unchecked Sendable {
     /// One request at a time, so approval sheets never stack.
     private let serial = NSLock()
 
+    /// Without a log (tests), grants are kept in memory too unless a store is passed.
     public init(store: SecretStore, approver: Approver, readApprovalWindow: TimeInterval = 120,
-                logURL: URL? = Paths.accessLog) {
+                logURL: URL? = Paths.accessLog, grants: GrantStore? = nil) {
         self.store = store
+        self.grants = grants ?? GrantStore(url: logURL == nil ? nil : Paths.grants)
         self.approver = approver
         self.readApprovalWindow = readApprovalWindow
         self.logURL = logURL
@@ -36,6 +42,9 @@ public final class Broker: @unchecked Sendable {
             case "set": return try set(req, peer: peer)
             case "rm": return try remove(req, peer: peer)
             case "import": return try importItems(req, peer: peer)
+            case "grants": return Response(ok: true, grants: grants.all())
+            case "grant": return try grant(req, peer: peer)
+            case "revoke": return revoke(req, peer: peer)
             default: return Response(ok: false, error: "unknown op \(req.op)")
             }
         } catch {
@@ -49,6 +58,7 @@ public final class Broker: @unchecked Sendable {
             "storage": store.location,
             "approval": approver.method,
             "items": count,
+            "grants": String(grants.all().count),
             "socket": Paths.socket,
         ])
     }
@@ -59,19 +69,34 @@ public final class Broker: @unchecked Sendable {
         let infos = Dictionary(uniqueKeysWithValues: try store.list().map { ($0.name, $0) })
         let missing = names.filter { infos[$0] == nil }
         let present = names.filter { infos[$0] != nil }
+        let cwd = req.cwd ?? peer.cwd
         let needApproval = present.filter { !(infos[$0]!.agentSafe) }
+        let granted = needApproval.filter { grants.covering($0, cwd: cwd) != nil }
+        if !granted.isEmpty { log("get", granted, "allowed (grant)", peer, req) }
+        let toAsk = needApproval.filter { !granted.contains($0) }
 
         var denied: [String] = []
-        if !needApproval.isEmpty {
-            let key = ApprovalMemory.key(needApproval, peer)
+        if !toAsk.isEmpty {
+            let key = ApprovalMemory.key(toAsk, peer)
             if memory.covers(key) {
-                log("get", needApproval, "allowed (remembered)", peer, req)
-            } else if approver.approve("release \(needApproval.joined(separator: ", ")) to \(Self.describe(peer, req))") {
-                memory.remember(key, for: readApprovalWindow)
-                log("get", needApproval, "approved", peer, req)
+                log("get", toAsk, "allowed (remembered)", peer, req)
             } else {
-                denied = needApproval
-                log("get", needApproval, "denied", peer, req)
+                switch ask(.read, toAsk, peer, req, "release \(toAsk.joined(separator: ", ")) to \(Self.describe(peer, req))") {
+                case .deny:
+                    denied = toAsk
+                    log("get", toAsk, "denied", peer, req)
+                case .once:
+                    memory.remember(key, for: readApprovalWindow)
+                    log("get", toAsk, "approved", peer, req)
+                case .grant(let duration):
+                    memory.remember(key, for: readApprovalWindow)
+                    if cwd.isEmpty {
+                        log("get", toAsk, "approved", peer, req)
+                    } else {
+                        let g = grants.add(names: toAsk, folder: cwd, duration: duration, createdBy: Self.who(peer))
+                        log("get", toAsk, "approved (grant \(g.id) for \(GrantStore.describe(duration)))", peer, req)
+                    }
+                }
             }
         }
         let released = present.filter { !denied.contains($0) }
@@ -88,8 +113,9 @@ public final class Broker: @unchecked Sendable {
     func set(_ req: Request, peer: PeerInfo) throws -> Response {
         guard let name = req.names?.first, req.names?.count == 1 else { return Response(ok: false, error: "set takes one name") }
         guard Wire.isValidName(name) else { throw StoreError.badName(name) }
-        let verb = (try store.info(name)) == nil ? "add" : "change"
-        guard approver.approve("\(verb) \(name), asked by \(Self.describe(peer, req))") else {
+        let isNew = (try store.info(name)) == nil
+        let verb = isNew ? "add" : "change"
+        guard ask(isNew ? .add : .change, [name], peer, req, "\(verb) \(name), asked by \(Self.describe(peer, req))").allowed else {
             log("set", [name], "denied", peer, req)
             return Response(ok: false, error: "change to \(name) was not approved")
         }
@@ -101,7 +127,7 @@ public final class Broker: @unchecked Sendable {
     func remove(_ req: Request, peer: PeerInfo) throws -> Response {
         guard let name = req.names?.first, req.names?.count == 1 else { return Response(ok: false, error: "rm takes one name") }
         guard (try store.info(name)) != nil else { return Response(ok: true, missing: [name]) }
-        guard approver.approve("delete \(name), asked by \(Self.describe(peer, req))") else {
+        guard ask(.delete, [name], peer, req, "delete \(name), asked by \(Self.describe(peer, req))").allowed else {
             log("rm", [name], "denied", peer, req)
             return Response(ok: false, error: "removal of \(name) was not approved")
         }
@@ -132,7 +158,7 @@ public final class Broker: @unchecked Sendable {
         if !toReplace.isEmpty { what.append("overwrite \(Self.count(toReplace))") }
         var from = ""
         if let src = req.source, !src.isEmpty { from = " from \(Self.tilde(src))" }
-        guard approver.approve("\(what.joined(separator: " and "))\(from), asked by \(Self.describe(peer, req))") else {
+        guard ask(.importItems, writing, peer, req, "\(what.joined(separator: " and "))\(from), asked by \(Self.describe(peer, req))").allowed else {
             log("import", writing, "denied", peer, req)
             return Response(ok: false, error: "import was not approved")
         }
@@ -152,6 +178,53 @@ public final class Broker: @unchecked Sendable {
         return Response(ok: true, added: toAdd, replaced: toReplace, skipped: skipped)
     }
 
+    /// A grant made ahead of time, e.g. before leaving an agent to work.
+    func grant(_ req: Request, peer: PeerInfo) throws -> Response {
+        let names = Array(Set(req.names ?? [])).sorted()
+        guard !names.isEmpty else { return Response(ok: false, error: "no names given") }
+        let existing = Set(try store.list().map(\.name))
+        let missing = names.filter { !existing.contains($0) }
+        guard missing.isEmpty else { return Response(ok: false, missing: missing) }
+        let folder = Grant.normalize(req.folder ?? req.cwd ?? peer.cwd)
+        guard !folder.isEmpty, folder != "/" else { return Response(ok: false, error: "a grant needs a folder other than /") }
+        let duration = min(req.duration ?? 3600, GrantStore.longest)
+        guard duration > 0 else { return Response(ok: false, error: "the duration must be positive") }
+        var r = req
+        r.cwd = folder
+        let reason = "let programs in \(Self.tilde(folder)) read \(Self.count(names)) without asking for \(GrantStore.describe(duration)), asked by \(Self.who(peer))"
+        guard ask(.grant, names, peer, r, reason, duration: duration).allowed else {
+            log("grant", names, "denied", peer, r)
+            return Response(ok: false, error: "the grant was not approved")
+        }
+        let g = grants.add(names: names, folder: folder, duration: duration, createdBy: Self.who(peer))
+        log("grant", names, "approved (grant \(g.id) for \(GrantStore.describe(duration)))", peer, r)
+        return Response(ok: true, grants: [g])
+    }
+
+    /// Taking access away never needs approval.
+    func revoke(_ req: Request, peer: PeerInfo) -> Response {
+        guard let id = req.names?.first else { return Response(ok: false, error: "revoke takes a grant id or all") }
+        let gone = grants.all().filter { id == "all" || $0.id == id }
+        let n = grants.revoke(id)
+        guard n > 0 else { return Response(ok: true, missing: [id]) }
+        log("revoke", Array(Set(gone.flatMap(\.names))).sorted(), "revoked \(n) grant\(n == 1 ? "" : "s")", peer, req)
+        return Response(ok: true, info: ["revoked": String(n)])
+    }
+
+    private func ask(_ action: ApprovalRequest.Action, _ names: [String], _ peer: PeerInfo, _ req: Request,
+                     _ reason: String, duration: TimeInterval? = nil) -> ApprovalDecision {
+        let folder = req.cwd ?? peer.cwd
+        return approver.approve(ApprovalRequest(action: action, names: names, chain: peer.chain,
+                                                folder: folder.isEmpty ? "" : Grant.normalize(folder),
+                                                command: req.command, duration: duration, reason: reason))
+    }
+
+    /// "zsh › claude" or "the Latchkey app".
+    static func who(_ peer: PeerInfo) -> String {
+        let w = peer.chain.prefix(3).joined(separator: " › ")
+        return w.isEmpty ? "a process" : w
+    }
+
     /// "3 items (A, B, C)", shortened past a handful so the system sheet stays readable.
     static func count(_ names: [String]) -> String {
         let shown = names.count > 6 ? names.prefix(5).joined(separator: ", ") + ", …" : names.joined(separator: ", ")
@@ -163,7 +236,7 @@ public final class Broker: @unchecked Sendable {
         return path.hasPrefix(home) ? "~" + path.dropFirst(home.count) : path
     }
 
-    /// "claude › zsh in ~/Projects/site (running npm test)"
+    /// "zsh › claude in ~/Projects/site (running npm test)"
     static func describe(_ peer: PeerInfo, _ req: Request) -> String {
         let who = peer.chain.prefix(3).joined(separator: " › ")
         let cwd = tilde(req.cwd ?? peer.cwd)
@@ -217,6 +290,9 @@ public final class Broker: @unchecked Sendable {
 
     /// Listens until the process exits. Accepts only connections from this user.
     public func serve(socketPath: String = Paths.socket) throws -> Never {
+        // A client that hangs up before reading its reply (a "is it up yet?" probe, a Ctrl-C) must cost one
+        // failed write, not the whole process: by default writing to a closed socket raises SIGPIPE, which kills it.
+        signal(SIGPIPE, SIG_IGN)
         try Paths.ensureSupportDir()
         if let fd = try? UnixSocket.connect(socketPath) {
             close(fd)

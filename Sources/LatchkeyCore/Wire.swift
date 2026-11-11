@@ -67,10 +67,13 @@ public struct Request: Codable, Sendable {
     public var items: [ImportItem]?  // import
     public var replace: Bool?        // import: overwrite items that already exist
     public var source: String?       // import: the file the items came from, for the approval and the log
+    public var folder: String?       // grant: the folder it covers (defaults to cwd)
+    public var duration: Double?     // grant: seconds
 
     public init(op: String, names: [String]? = nil, value: String? = nil, kind: ItemKind? = nil,
                 agentSafe: Bool? = nil, note: String? = nil, cwd: String? = nil, command: String? = nil,
-                items: [ImportItem]? = nil, replace: Bool? = nil, source: String? = nil) {
+                items: [ImportItem]? = nil, replace: Bool? = nil, source: String? = nil,
+                folder: String? = nil, duration: Double? = nil) {
         self.op = op
         self.names = names
         self.value = value
@@ -82,6 +85,8 @@ public struct Request: Codable, Sendable {
         self.items = items
         self.replace = replace
         self.source = source
+        self.folder = folder
+        self.duration = duration
     }
 }
 
@@ -100,11 +105,12 @@ public struct Response: Codable, Sendable {
     public var added: [String]?
     public var replaced: [String]?
     public var skipped: [String]?
+    public var grants: [Grant]?
 
     public init(ok: Bool, error: String? = nil, secrets: [SecretInfo]? = nil, values: [String: String]? = nil,
                 masked: [String]? = nil, denied: [String]? = nil, missing: [String]? = nil,
                 info: [String: String]? = nil, added: [String]? = nil, replaced: [String]? = nil,
-                skipped: [String]? = nil) {
+                skipped: [String]? = nil, grants: [Grant]? = nil) {
         self.ok = ok
         self.error = error
         self.secrets = secrets
@@ -116,6 +122,7 @@ public struct Response: Codable, Sendable {
         self.added = added
         self.replaced = replaced
         self.skipped = skipped
+        self.grants = grants
     }
 }
 
@@ -149,6 +156,7 @@ public enum Paths {
     }
     public static var socket: String { supportDir.appendingPathComponent("broker.sock").path }
     public static var accessLog: URL { supportDir.appendingPathComponent("access.jsonl") }
+    public static var grants: URL { supportDir.appendingPathComponent("grants.json") }
 
     public static func ensureSupportDir() throws {
         try FileManager.default.createDirectory(at: supportDir, withIntermediateDirectories: true,

@@ -8,11 +8,15 @@ set -euo pipefail
 cd "${0:A:h}/.."
 
 BIN_DIR="${LATCHKEY_BIN_DIR:-$HOME/.local/bin}"
+# On machines with a shared build register, builds wait for a slot there. Only the builds: the register
+# cleans up what runs under it, which would take the freshly opened app with it.
+REG="$HOME/Projects/_worktrees/.register/reg"
+build() { if [[ -x "$REG" ]]; then "$REG" build --label latchkey -- "$@"; else "$@"; fi }
 DERIVED=build/DerivedData
 TEAM=$(sed -n 's/^ *DEVELOPMENT_TEAM: *"\{0,1\}\([A-Z0-9]*\)"\{0,1\} *$/\1/p' App/project.yml | head -1)
 
 echo "==> Building the command-line tool"
-swift build -c release --product latchkey
+build swift build -c release --product latchkey
 
 echo "==> Building the app"
 command -v xcodegen >/dev/null || { echo "xcodegen is required: brew install xcodegen" >&2; exit 1; }
@@ -25,14 +29,21 @@ else
   # The keychain-access-groups entitlement needs a real team; an ad hoc app that claims it will not launch.
   SIGN=(CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual CODE_SIGN_ENTITLEMENTS= DEVELOPMENT_TEAM=)
 fi
-xcodebuild -quiet -project App/Latchkey.xcodeproj -scheme Latchkey -configuration Release \
+build xcodebuild -quiet -project App/Latchkey.xcodeproj -scheme Latchkey -configuration Release \
   -derivedDataPath "$DERIVED" "${SIGN[@]}" build
 
 echo "==> Installing"
+if pgrep -f '/latchkey-broker$' >/dev/null; then
+  echo "latchkey-broker is running and answers on the same socket; stop it, then run this again." >&2
+  exit 1
+fi
 osascript -e 'tell application id "io.latchkey.Latchkey" to quit' >/dev/null 2>&1 || true
-pkill -x Latchkey 2>/dev/null || true
-pkill -f '/latchkey-broker$' 2>/dev/null || true
-sleep 1
+# Wait for the old copy to be gone, or `open` below just wakes the one that is quitting.
+for _ in {1..20}; do pgrep -x Latchkey >/dev/null || break; sleep 0.5; done
+if pgrep -x Latchkey >/dev/null; then
+  echo "Latchkey didn't quit (an approval may be waiting); quit it, then run this again." >&2
+  exit 1
+fi
 rm -rf /Applications/Latchkey.app
 ditto "$DERIVED/Build/Products/Release/Latchkey.app" /Applications/Latchkey.app
 mkdir -p "$BIN_DIR"

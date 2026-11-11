@@ -16,6 +16,10 @@
   --next: #0e7a5c;
   --next-soft: #ddf3ea;
   --code-bg: #eaf0ef;
+  --mark-bg: linear-gradient(180deg, #fcfcfd, #e4e8ee);
+  --mark-key: #007aff;
+  --built: #4b5d74;
+  --built-soft: #e7ecf3;
   --display: "Space Grotesk", "Avenir Next", system-ui, sans-serif;
   --body: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -23,13 +27,13 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0f1615; --surface: #152020; --fg: #e4eceb; --muted: #93a5a2; --line: #26332f;
-    --accent: #6cc3d8; --accent-soft: #173238; --next: #5fd3a8; --next-soft: #15322a; --code-bg: #1c2928;
+    --accent: #6cc3d8; --accent-soft: #173238; --next: #5fd3a8; --next-soft: #15322a; --code-bg: #1c2928; --mark-bg: linear-gradient(180deg, #2d2f35, #101114); --mark-key: #409cff; --built: #a9b8cc; --built-soft: #1f2a36;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0f1615; --surface: #152020; --fg: #e4eceb; --muted: #93a5a2; --line: #26332f;
-  --accent: #6cc3d8; --accent-soft: #173238; --next: #5fd3a8; --next-soft: #15322a; --code-bg: #1c2928;
+  --accent: #6cc3d8; --accent-soft: #173238; --next: #5fd3a8; --next-soft: #15322a; --code-bg: #1c2928; --mark-bg: linear-gradient(180deg, #2d2f35, #101114); --mark-key: #409cff; --built: #a9b8cc; --built-soft: #1f2a36;
   color-scheme: dark;
 }
 
@@ -52,9 +56,10 @@ a { color: var(--accent); }
 
 header { display: grid; gap: 14px; }
 .brand { display: flex; align-items: center; gap: 12px; }
+/* Matches the app icon: a light tile with a blue key, or a near-black tile with a lighter blue key. */
 .mark { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; flex: none;
-  background: linear-gradient(150deg, #1a9e8f, #214a9e); }
-.mark svg { width: 24px; height: 24px; fill: #ffffff; }
+  background: var(--mark-bg); box-shadow: inset 0 0 0 1px var(--line); }
+.mark svg { width: 24px; height: 24px; fill: var(--mark-key); }
 header .lede { max-width: 65ch; color: var(--muted); font-size: 1.05rem; }
 .principle { max-width: 65ch; }
 .principle strong { font-family: var(--display); margin-right: 6px; }
@@ -94,6 +99,8 @@ header .lede { max-width: 65ch; color: var(--muted); font-size: 1.05rem; }
 .who { display: flex; gap: 6px; align-items: flex-start; }
 .pill { font: 500 0.72rem/1 var(--body); padding: 5px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
 .pill.next { background: var(--next-soft); color: var(--next); border-color: transparent; font-weight: 600; }
+.pill.built { background: var(--built-soft); color: var(--built); border-color: transparent; font-weight: 600; }
+.item.is-built .size { background: var(--built-soft); color: var(--built); }
 .item.is-next .size { background: var(--next-soft); color: var(--next); }
 
 @media (max-width: 620px) {
@@ -123,8 +130,8 @@ footer { color: var(--muted); font-size: 0.85rem; display: grid; gap: 4px; }
   <section class="status" aria-label="Where it stands">
     <div><span class="k">Built</span><span class="v">CLI: run, get, set, rm, list, import, status</span></div>
     <div><span class="k">Built</span><span class="v">Mac app: window, import sheet, menu bar, settings</span></div>
-    <div><span class="k">Built</span><span class="v">Approval by Touch ID, Apple Watch or password; access log</span></div>
-    <div><span class="k">Blocked</span><span class="v warn">iCloud sync: the app isn't signed with a team yet</span></div>
+    <div><span class="k">Built</span><span class="v">Approval panel, then Touch ID, Apple Watch or password; grants; access log</span></div>
+    <div><span class="k">Blocked</span><span class="v warn">iCloud sync: Xcode is signed in; the project still needs your team chosen</span></div>
   </section>
 
   <div class="controls">
@@ -152,7 +159,7 @@ footer { color: var(--muted); font-size: 0.85rem; display: grid; gap: 4px; }
   </section>
 
   <footer>
-    <p>Sizes are rough estimates for one person working with Claude. "Next up" marks the recommended first batch: it fixes what got in the way during the first real session (an agent stalled while nobody was at the Mac to approve).</p>
+    <p>Sizes are rough estimates. "Built" marks what's done; "Next up" marks the recommended next batch.</p>
   </footer>
 </div>
 
@@ -162,18 +169,35 @@ const tiers = [
     { t: "Sign the app with your team", s: "S", who: ["you"], next: true,
       gap: "<b>Gap:</b> unsigned builds can't use iCloud Keychain, so nothing syncs, and every reinstall makes macOS ask for your login password per item.",
       plan: "<b>Plan:</b> sign in to Xcode with your Apple Account and set <code>DEVELOPMENT_TEAM</code>. A personal team should cover your own Macs; a paid Developer ID and notarization only matter for sharing builds." },
-    { t: "CLI starts the app when it isn't running", s: "S", who: ["you", "agents"], next: true,
+    { t: "CLI starts the app when it isn't running", s: "S", who: ["you", "agents"], built: true,
       gap: "<b>Gap:</b> if the app is closed, every <code>latchkey</code> command fails with “cannot reach the app”.",
       plan: "<b>Plan:</b> when the socket is missing, launch Latchkey in the background, wait for it to answer, then carry on." },
-    { t: "Time-limited grants", s: "M", who: ["agents"], next: true,
+    { t: "Time-limited grants", s: "M", who: ["agents"], built: true,
       gap: "<b>Gap:</b> when you step away, approval prompts time out and agents stall.",
       plan: "<b>Plan:</b> grants such as “agents in <code>~/Projects/site</code> may read these 4 items for 2 hours”, created from the window or from an approval. Each grant appears in Activity and can be revoked." },
-    { t: "“Allow for this project” on the approval", s: "M", who: ["you", "agents"], next: true,
+    { t: "“Allow for this project” on the approval", s: "M", who: ["you", "agents"], built: true,
       gap: "<b>Gap:</b> the system sheet can only say yes or no, with one line of context.",
       plan: "<b>Plan:</b> a Latchkey panel before Touch ID shows who is asking, from which folder and for which command, with Deny, Allow once, and Allow here for 1 hour / today." },
     { t: "Verify callers by code signature", s: "M", who: ["agents"],
       gap: "<b>Gap:</b> the caller chain is process names, which any program can fake, and callers are identified by PID, which can be reused.",
       plan: "<b>Plan:</b> identify the caller by its audit token instead of its PID, and check the signing team of each process in the chain (Claude, Cursor, Terminal), so rules can trust a real identity." },
+  ]},
+  { id: "origin", eyebrow: "Tier 1b", title: "Where secrets come from and where they go", note: "Know what each key is for, notice when one leaks, and get to the right place to replace it.", items: [
+    { t: "Origin and rotation details", s: "M", who: ["you", "agents"], next: true,
+      gap: "<b>Gap:</b> an item is a name and a value. When one leaks, nothing says which service issued it or where to make a new one.",
+      plan: "<b>Plan:</b> record what the Passwords app records for a login, adapted to keys: the service, account or project, the console URL where it's managed, who made it and when, when it was last rotated, and which projects use it. <code>import</code> and the app fill these in where they can (for example from a key's prefix: <code>sk_live_</code> is Stripe, <code>ghp_</code> is GitHub)." },
+    { t: "Leak alerts", s: "L", who: ["you"], next: true,
+      gap: "<b>Gap:</b> if a key is pushed to a public repo or pasted somewhere, you find out from the provider, if at all.",
+      plan: "<b>Plan:</b> read GitHub secret-scanning alerts for your repos through <code>gh</code>, scan your own repos and history locally (fingerprints only, values never leave the Mac), and match what's found against your items. A match marks the item compromised, notifies you, and shows where it was found." },
+    { t: "Compromised: replace it in one place", s: "M", who: ["you"],
+      gap: "<b>Gap:</b> replacing a leaked key means remembering the console, the new value, and every project and service that used it.",
+      plan: "<b>Plan:</b> a Replace flow per item: open the console URL to make a new key, paste it once, see each project, CI secret and hosted environment that needs it, and mark the old one revoked. Activity keeps the history." },
+    { t: "Projects and environments", s: "M", who: ["you", "agents"],
+      gap: "<b>Gap:</b> one flat list doesn't capture that a project has development, staging and production values.",
+      plan: "<b>Plan:</b> per-project profiles (<code>latchkey://site/prod/DATABASE_URL</code> or a profile flag on <code>run</code>), so the same name can hold different values per environment." },
+    { t: "Remote machines and services", s: "L", who: ["you", "agents"],
+      gap: "<b>Gap:</b> values are needed on servers, in CI and in hosted environments, and today they're copied by hand.",
+      plan: "<b>Plan:</b> forward the Latchkey socket over SSH so a command on a server asks your Mac (and you approve there), and push values to GitHub Actions, Vercel or Fly with one command that records where each item went, so Replace can update them." },
   ]},
   { id: "agents", eyebrow: "Tier 2", title: "Built for agents", note: "Where Latchkey can be clearly better than a .env file or a password manager.", items: [
     { t: "Use a value without holding it", s: "M", who: ["agents"],
@@ -252,10 +276,10 @@ mount.innerHTML = tiers.map(tier => `
     </div>
     <ul class="items">
       ${tier.items.map(i => `
-        <li class="item${i.next ? " is-next" : ""}" data-who="${i.who.join(" ")}" data-next="${i.next ? 1 : 0}">
+        <li class="item${i.next ? " is-next" : ""}${i.built ? " is-built" : ""}" data-who="${i.who.join(" ")}" data-next="${i.next ? 1 : 0}">
           <span class="size" title="${{S: "Hours", M: "A day or two", L: "A week or more"}[i.s]}">${i.s}</span>
           <div class="body">
-            <div class="title-row"><h3>${i.t}</h3>${i.next ? '<span class="pill next">Next up</span>' : ""}</div>
+            <div class="title-row"><h3>${i.t}</h3>${i.next ? '<span class="pill next">Next up</span>' : ""}${i.built ? '<span class="pill built">Built</span>' : ""}</div>
             <p class="gap">${i.gap}</p>
             <p class="plan">${i.plan}</p>
           </div>
