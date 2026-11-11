@@ -357,6 +357,31 @@
   };
 
   // ---------------------------------------------------------------------------------------------------------------
+  // Security: a committed reference shows only a name; a script that asks Latchkey directly, not through the signed
+  // lk tool, gets the panel with its warning, and is denied.
+  SCENES.direct = {
+    reset: function (s) { s.clear(s.$("#dir-tty")); s.prompt(s.$("#dir-tty")); s.hide("#dir-panel"); s.hide("#dir-note"); s.point(480, 300, 1); },
+    play: async function (s) {
+      var tty = s.$("#dir-tty");
+      s.clear(tty);
+      await s.wait(500);
+      await s.type(tty, "git show HEAD:.env.local");
+      await s.lines(tty, ["DATABASE_URL=latchkey://shop/development/DATABASE_URL", "STRIPE_KEY=latchkey://shop/development/STRIPE_KEY"]);
+      s.show("#dir-note");
+      await s.wait(1800);
+      s.hide("#dir-note");
+      await s.type(tty, "node scripts/sync.js");
+      s.show("#dir-panel");
+      await s.wait(1600);
+      await s.pointAt("#dir-deny", 0, 4, 700);
+      await s.click(s.$("#dir-deny"));
+      s.hide("#dir-panel");
+      await s.point(480, 300, 600);
+      await s.lines(tty, ['<span class="err">refused: shop/development/STRIPE_KEY (not agent-safe, not approved, no grant)</span>']);
+    }
+  };
+
+  // ---------------------------------------------------------------------------------------------------------------
   function attach(wrap) {
     var script = SCENES[wrap.dataset.scene];
     if (!script) return;

@@ -289,6 +289,8 @@ dl.pages dd { margin: 2px 0 0; color: var(--muted); }
 .sheet-head .mark img { width: 20px; height: 20px; }
 .sheet-head h4 { margin: 0; }
 .sheet-head small { color: var(--muted); }
+/* A caption under a scene or window, at its width. */
+.wide-cap { margin: 12px 0 0; color: var(--muted); }
 /* A note beside a scene's window, for what isn't on screen (a grant covering a run, say). */
 .tagnote { position: absolute; z-index: 22; padding: 4px 10px; border-radius: 999px; background: #34c759; color: #06210f; font: 600 11px/1.4 var(--sans);
            box-shadow: 0 6px 16px rgba(0, 0, 0, .25); transition: opacity .25s ease, transform .25s ease; }
@@ -298,6 +300,10 @@ dl.pages dd { margin: 2px 0 0; color: var(--muted); }
 .more:hover { text-decoration: underline; }
 .more::after { content: " →"; }
 figure.code + .more { margin-top: 12px; }
+
+/* A warning in a drawn panel, as the app shows it: orange, with the reason. */
+.sheet .warn { display: flex; gap: 6px; margin: -2px 0 10px; color: #e8890c; font-weight: 600; font-size: 11.5px; line-height: 1.35; }
+.sheet .warn::before { content: "\26A0"; }
 
 /* An iCloud hop between two Macs. */
 .sync-arc { position: absolute; z-index: 10; height: 2px; background: repeating-linear-gradient(90deg, var(--accent) 0 6px, transparent 6px 11px); opacity: .25; transition: opacity .3s; }
