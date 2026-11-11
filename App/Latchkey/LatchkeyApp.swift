@@ -6,6 +6,14 @@ import SwiftUI
 @main
 struct LatchkeyApp: App {
     init() {
+        if CommandLine.arguments.contains("--broker-transport-self-test") {
+            #if DEBUG && LATCHKEY_APP_STORE
+            SandboxSelfTest.serveFixtureAndExit()
+            #else
+            FileHandle.standardError.write(Data("Transport probes require a development-signed sandbox Debug build.\n".utf8))
+            exit(64)
+            #endif
+        }
         if CommandLine.arguments.contains("--sandbox-self-test") {
             #if DEBUG && LATCHKEY_APP_STORE
             SandboxSelfTest.runAndExit()
@@ -195,7 +203,14 @@ final class AppModel {
                     + (r.skipped + r.failed.keys.sorted()).joined(separator: ", ")
             }
         }
+        #if LATCHKEY_APP_STORE
+        let brokerPath = (Bundle.main.object(forInfoDictionaryKey: "LatchkeyAppGroup") as? String)
+            .flatMap { FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: $0) }
+            .map { BrokerEndpoint.appStorePath(container: $0) } ?? ""
+        broker = Broker(store: store, approver: PanelApprover(), socketPath: brokerPath)
+        #else
         broker = Broker(store: store, approver: PanelApprover())
+        #endif
         #if LATCHKEY_APP_STORE
         do {
             let access = try SecurityScopedAccess(saved: UserDefaults.standard.data(forKey: Self.fileAccessKey)) {
@@ -228,7 +243,14 @@ final class AppModel {
         }
         let broker = broker
         Thread.detachNewThread { [weak self] in
-            do { try broker.serve() } catch {
+            do {
+                #if LATCHKEY_APP_STORE
+                guard !broker.socketPath.isEmpty else { throw CocoaError(.fileReadNoPermission) }
+                try broker.serve(gate: .commandLineTool)
+                #else
+                try broker.serve()
+                #endif
+            } catch {
                 let text = "\(error)"
                 Task { @MainActor in self?.problem = text }
             }

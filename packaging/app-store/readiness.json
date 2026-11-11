@@ -51,5 +51,12 @@
       "docs/evidence/app-store/2026-11-11-component-probes.json"
     ],
     "covers": "Container writes, sandbox denial, self IPC/code identity, system child only; not full feature acceptance."
+  },
+  "cliTransportProbe": {
+    "status": "passed",
+    "evidence": [
+      "docs/evidence/app-store/2026-11-11-cli-transport.json"
+    ],
+    "covers": "Fixture-only signed terminal CLI to sandbox broker: mutual identity, shell/Node/npm, logs, masking, key files, signals, command/folder grants and revocation. Full runtime gates remain pending."
   }
 }

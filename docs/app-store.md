@@ -18,7 +18,7 @@ export-compliance answer, or claims that its tests passed as evidence about Latc
 | Selected files and project folders | AppKit `NSOpenPanel`; Foundation security-scoped bookmarks | Store experiment implemented, with balanced scope ownership and local persistence |
 | Coordinated replacement of env files | Foundation `NSFileCoordinator`, then checked atomic replacement | Implemented; changed-file and permission checks remain in force |
 | Internal helper work | Evaluate an embedded `NSXPCConnection` service or sandbox-inheriting helper | Not implemented; a helper must retain the parent's restrictions, not escape them |
-| External CLI / MCP connection | Authenticated local transport; Security audit-token code identity | Redesign and signed end-to-end proof required |
+| External CLI / MCP connection | App Group UNIX socket; Security audit-token dynamic code identity | Signed terminal CLI probes pass; packaging, MCP and full acceptance remain pending |
 | Network / service APIs | Foundation `URLSession`; Network framework where a listener is needed | Existing proxy/STS code; native remote push redesign still required |
 | Login/background service | ServiceManagement `SMAppService`, with explicit user consent | Current login setting exists; a broker service design needs separate validation |
 | Optional paid features | StoreKit only if pricing later requires it | No purchase flow is being added or assumed |
@@ -100,11 +100,53 @@ name fixed the fixture. Preserve that limit in the final transport design.
 The built-bundle preflight currently reports the Safari bundle's missing privacy manifest, which belongs to the
 extension integration. Every full-functionality gate in readiness.json remains pending.
 
+## Terminal execution and broker transport
+
+The sandboxed app serves credentials; a separately signed terminal CLI executes developer commands in its existing
+terminal context. This is an explicit two-product integration under evaluation, not a sandbox escape or proof that
+an unrestricted CLI can be embedded in the store bundle. The store app does not install, download or launch an
+unsandboxed helper. Both the direct download and App Store preparation remain supported distribution paths.
+Final CLI distribution and App Review acceptance remain release gates; an App Store user must not be promised
+full functionality until that boundary has been reviewed and the complete workflow verified.
+
+The experiment listens on `cli.sock` in its App Group and requires the CLI's exact signing identifier and the same
+Apple-issued signing team. It does not open the old private-container socket as a fallback. The Safari listener
+retains its separate identity and operation restrictions. The CLI authenticates the app before writing any request
+bytes. `LATCHKEY_BROKER=auto|direct|app-store` selects a channel; automatic store selection verifies the installed
+app's signature before trusting its distribution metadata. `LATCHKEY_LOCAL_SOCKET` overrides only the local path,
+with authentication retained. It cannot be combined with the explicit SSH-forwarding `LATCHKEY_SOCKET` setting.
+Store forwarding is deliberately unavailable until an authenticated forwarding boundary is designed; the direct
+broker's existing SSH behavior is preserved.
+
+Security.framework must use `kSecGuestAttributeDynamicCode` with the kernel's audit token. Its default disk-based
+peer lookup fails with EPERM when the sandbox cannot read an external terminal CLI executable. The dynamic
+representation fixes that access requirement without replacing signature validation with a claimed path or PID.
+Caller cwd, argv and ancestry still come from kernel APIs. Process start times bracket PID-based context reads;
+unavailable or unstable context cannot qualify for a grant. No new caller-supplied context fields are trusted.
+`latchkey log` now requests entries from the selected broker instead of reading the CLI's local Application Support
+path, which would show the wrong log for the sandbox container or an SSH-forwarded broker. Entry limits are bounded.
+The run-command parser recognizes AWS option values and `--env-file=...`; unknown options cannot masquerade as a
+command for a restricted grant.
+
+Run the fixture suite against an already development-signed Debug app and independently signed same-team CLI:
+
+```bash
+python3 scripts/test-appstore-cli.py --app /path/to/Latchkey.app --cli /path/to/signed/latchkey --report /private/tmp/latchkey-cli-report.json
+```
+
+The script requires installed Node/npm, uses a random App Group socket and in-memory store, never opens the real
+vault, and cleans up the fixture broker. It tests mutual authentication, refusal of unsigned callers, zero request
+bytes to an impostor server, shell/Node/npm execution, masking on both streams, exit status, key-file cleanup,
+command/folder grant matching, revocation and SIGTERM forwarding. On 2026-11-11 all 14 signed transport probes passed. The recorded
+[transport report](evidence/app-store/2026-11-11-cli-transport.json) is component evidence; it does not clear the
+full CLI/identity or execution/proxy/AWS gates. Actual MCP, session/PID-reuse adversarial tests, live proxy and STS,
+SSH, real approval UI and vault, packaging and TestFlight remain pending.
+
 ## Full-functionality blockers and acceptance tests
 
 | Area | Required redesign / proof before submission |
 | --- | --- |
-| Broker location and CLI discovery | A stable endpoint in an allowed container, with no assumption that `NSHomeDirectory()` is the user's real home. An old direct build and the store build must not silently answer different sockets for the same vault. |
+| Broker location and CLI discovery | Dedicated App Group endpoint and explicit channel selection implemented. Verify registered-app discovery, long home paths, stale endpoints, direct/store transitions and final CLI distribution on a clean Mac. |
 | Caller identity and grants | Measure what a signed sandbox process can inspect. If context is supplied by the signed CLI, bind it to its kernel-authenticated connection and process identity. Never trust caller-supplied folder/command fields from arbitrary clients. Unknown context must not qualify for a grant. Test forgery, replay, PID reuse and SSH forwarding. |
 | Command execution and MCP | Prove the real terminal/agent entry point can run Node/npm, shells and representative developer tools with only the intended keys and file permissions. Preserve signals, exit codes, masking, temporary files, proxy isolation and short-lived AWS credentials. An inherited helper is not evidence of unrestricted execution. |
 | Remote pushes | Current `ProcessRunner` discovers Homebrew/mise tools and their sign-ins outside the app container. Plan native provider APIs and authentication, or establish a reviewable supported boundary; do not secretly delegate around the sandbox. Test all four providers and production confirmation. |

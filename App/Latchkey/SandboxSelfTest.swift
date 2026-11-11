@@ -83,6 +83,28 @@ enum SandboxSelfTest {
         exit(passed ? 0 : 1)
     }
 
+    /// A separate-process fixture for the real terminal CLI. Never initialize AppModel or a Keychain store.
+    /// A random, short App Group path prevents collision with the production broker or Safari listener.
+    static func serveFixtureAndExit() -> Never {
+        guard sandboxEntitlement(), let id = ProcessInfo.processInfo.environment["LATCHKEY_PROBE_ID"],
+              id.count == 8, id.allSatisfy({ $0.isHexDigit }),
+              let folder = ProcessInfo.processInfo.environment["LATCHKEY_PROBE_FOLDER"], folder.hasPrefix("/"),
+              let group = Bundle.main.object(forInfoDictionaryKey: "LatchkeyAppGroup") as? String,
+              let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group) else { exit(64) }
+        let path = container.appendingPathComponent(".c" + id).path
+        guard !FileManager.default.fileExists(atPath: path) else { exit(73) }
+        do {
+            let store = MemoryStore()
+            try store.save(name: "FIXTURE_KEY", value: "fixture-secret-transport-12345", kind: .token, agentSafe: true, note: "")
+            try store.save(name: "FIXTURE_FILE", value: "fixture-private-key-67890", kind: .key, agentSafe: true, note: "")
+            try store.save(name: "GRANTED_KEY", value: "fixture-granted-24680", kind: .token, agentSafe: false, note: "")
+            let broker = Broker(store: store, approver: FixedApprover(false), logURL: nil, allowsPush: false, socketPath: path)
+            broker.grants.add(names: ["GRANTED_KEY"], folder: folder, duration: 300, createdBy: "transport fixture",
+                              commands: [["/usr/bin/true"]])
+            try broker.serve(gate: .commandLineTool)
+        } catch { exit(1) }
+    }
+
     private static func sandboxEntitlement() -> Bool {
         var code: SecCode?, staticCode: SecStaticCode?, info: CFDictionary?
         guard SecCodeCopySelf([], &code) == errSecSuccess, let code,

@@ -36,9 +36,9 @@ public enum UnixSocket {
     }
 
     public static func connect(_ path: String) throws -> Int32 {
+        var addr = try address(path)
         let fd = socket(AF_UNIX, SOCK_STREAM, 0)
         guard fd >= 0 else { throw SocketError.sys("socket", errno) }
-        var addr = try address(path)
         let len = socklen_t(MemoryLayout<sockaddr_un>.size)
         let r = withUnsafePointer(to: &addr) {
             $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { Darwin.connect(fd, $0, len) }
@@ -53,9 +53,9 @@ public enum UnixSocket {
 
     /// Binds and listens. The socket file is owner-only.
     public static func listen(_ path: String) throws -> Int32 {
+        var addr = try address(path)
         let fd = socket(AF_UNIX, SOCK_STREAM, 0)
         guard fd >= 0 else { throw SocketError.sys("socket", errno) }
-        var addr = try address(path)
         unlink(path)
         let old = umask(0o177)
         let len = socklen_t(MemoryLayout<sockaddr_un>.size)
@@ -107,6 +107,7 @@ public enum UnixSocket {
                 return acc
             }
             if let nl = buf[0..<n].firstIndex(of: 0x0A) {
+                guard acc.count + nl <= maxLine else { throw SocketError.tooLarge }
                 acc.append(contentsOf: buf[0..<nl])
                 return acc
             }
@@ -116,20 +117,32 @@ public enum UnixSocket {
     }
 }
 
-/// The CLI side: one request, one response.
+/// The CLI side: one request, one response. Authenticate before sending even the operation or item names.
 public enum BrokerClient {
-    /// Sends `request` once the other end has proved to be the Latchkey app signed by this tool's own team, so a
-    /// program that took the socket while the app wasn't running never sees a request (or a value being saved).
-    /// An unsigned tool (a development build) can't vouch for anyone and skips the check.
-    /// A forwarded socket (LATCHKEY_SOCKET) can't be checked: its other end is ssh, and the app is on another Mac.
-    public static func send(_ request: Request, socketPath: String = Paths.clientSocket) throws -> Response {
-        let fd = try UnixSocket.connect(socketPath)
+    public static func send(_ request: Request) throws -> Response {
+        let endpoint = try BrokerEndpoint.select(environment: ProcessInfo.processInfo.environment,
+            team: CodeIdentity.ownTeam, installedAppIsStore: false,
+            home: FileManager.default.homeDirectoryForCurrentUser, directPath: Paths.socket)
+        return try send(request, endpoint: endpoint)
+    }
+
+    /// Explicit local paths always retain local authentication, regardless of LATCHKEY_SOCKET in the environment.
+    public static func send(_ request: Request, socketPath: String) throws -> Response {
+        try send(request, endpoint: .local(path: socketPath, team: CodeIdentity.ownTeam))
+    }
+
+    public static func send(_ request: Request, endpoint: BrokerEndpoint) throws -> Response {
+        let fd = try UnixSocket.connect(endpoint.path)
         defer { close(fd) }
-        if Paths.forwardedSocket == nil, let team = CodeIdentity.ownTeam, !CodeIdentity.peer(fd, is: CodeIdentity.appIdentifier, team: team) {
+        var noSignal: Int32 = 1
+        setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &noSignal, socklen_t(MemoryLayout<Int32>.size))
+        if case .sameTeamApplication(let team) = endpoint.authentication,
+           !CodeIdentity.peer(fd, is: CodeIdentity.appIdentifier, team: team) {
             throw SocketError.notLatchkey(PeerInfo.path(of: PeerInfo.pid(of: fd)))
         }
-        try UnixSocket.writeLine(fd, try Wire.encoder().encode(request))
-        let line = try UnixSocket.readLine(fd)
-        return try Wire.decoder().decode(Response.self, from: line)
+        let data = try Wire.encoder().encode(request)
+        guard data.count <= UnixSocket.maxLine else { throw SocketError.tooLarge }
+        try UnixSocket.writeLine(fd, data)
+        return try Wire.decoder().decode(Response.self, from: UnixSocket.readLine(fd))
     }
 }

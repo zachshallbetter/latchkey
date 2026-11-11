@@ -269,3 +269,22 @@ Where values are kept, how you approve, how many items and grants, and the socke
 
 On 66 and 77, Latchkey prints the item IDs and what to do, including the `latchkey grant` command that would allow
 the refused items.
+
+## Choosing the broker
+
+The direct download and experimental App Store build use the same terminal CLI. Commands execute in that CLI's
+terminal context; the app supplies approved credentials and never launches those commands on the CLI's behalf.
+The store integration currently requires a separately signed CLI; its final distribution and review are pending.
+
+`LATCHKEY_BROKER=auto` (the default) uses the registered Latchkey app's distribution metadata. Store metadata must
+come from an app whose signature matches the CLI's developer team and application ID. `direct` explicitly selects
+the existing Application Support socket; `app-store` selects the dedicated `cli.sock` in Latchkey's App Group.
+There is no fallback to another broker after a connection or authentication failure.
+
+`LATCHKEY_LOCAL_SOCKET=/absolute/path` overrides a **local** endpoint for development and diagnostics while retaining
+its signature checks. It cannot be combined with `LATCHKEY_SOCKET`, which explicitly selects SSH forwarding.
+Forwarding to the App Store endpoint is not yet supported: its listener admits only the same-team signed CLI,
+not an SSH process. Existing forwarding to the direct broker remains available with `LATCHKEY_BROKER=direct`.
+
+`latchkey log` reads the selected broker's log through this connection, including when the broker uses a sandbox
+container or is forwarded over SSH. It requires an updated broker. `--limit` accepts 0 through 1000 entries.

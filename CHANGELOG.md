@@ -28,6 +28,10 @@ The first release.
   seconds while a window is open. Before, an open window kept showing an item deleted on another Mac.
 
 ### App Store groundwork
+- The store experiment has a dedicated, mutually authenticated CLI endpoint. Commands continue to run in the
+  terminal CLI; channel selection never falls back to another broker. Dynamic Security.framework identity checks
+  avoid needing sandbox access to the external CLI executable. Signed execution probes cover Node/npm, masking,
+  temporary files, signals and grants; final CLI packaging, SSH and full submission gates remain pending.
 - An isolated experimental sandbox build and preflight checks, following the Apple SDK patterns used in Peel.
 - Persistent security-scoped file access with Settings removal, parent-folder consent for atomic env rewrites,
   and Foundation document coordination.

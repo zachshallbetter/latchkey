@@ -7,6 +7,8 @@ public final class Broker: @unchecked Sendable {
     /// How requests from the Latchkey window identify themselves.
     public static let appCaller = "the Latchkey app"
 
+    /// The primary endpoint this broker advertises, independent of any extension listener.
+    public let socketPath: String
     public let store: SecretStore
     public let grants: GrantStore
     /// Earlier values: kept when a value is replaced or an item deleted, pruned to `Versions.keep` per item and
@@ -33,7 +35,8 @@ public final class Broker: @unchecked Sendable {
     public init(store: SecretStore, approver: Approver,
                 logURL: URL? = Paths.accessLog, grants: GrantStore? = nil, versions: VersionStore? = nil,
                 remotes: RemoteStore? = nil, runner: RemoteRunner = ProcessRunner(), allowsPush: Bool = true,
-                logKeys: LogKeyStore? = nil, records: EnvironmentStore? = nil) {
+                logKeys: LogKeyStore? = nil, records: EnvironmentStore? = nil, socketPath: String = Paths.socket) {
+        self.socketPath = socketPath
         self.store = store
         if let records {
             self.records = records
@@ -87,6 +90,10 @@ public final class Broker: @unchecked Sendable {
             case "list": return Response(ok: true, secrets: try store.list())
             case "check": return try check(req, peer: peer)
             case "verify-log": return verifyLog()
+            case "log":
+                let limit = req.logLimit ?? 20
+                guard (0...1000).contains(limit) else { return Response(ok: false, error: "log limit must be between 0 and 1000") }
+                return Response(ok: true, logEntries: logURL.map { Self.readLog(limit: limit, from: $0) } ?? [])
             case "get": return try get(req, peer: peer)
             case "set": return try set(req, peer: peer)
             case "fill": return try fill(req, peer: peer)
@@ -136,7 +143,7 @@ public final class Broker: @unchecked Sendable {
             "approval": approver.method,
             "items": count,
             "grants": String(grants.all().count),
-            "socket": Paths.socket,
+            "socket": socketPath,
         ])
     }
 
@@ -1092,6 +1099,13 @@ public final class Broker: @unchecked Sendable {
     public struct Gate: Sendable {
         public var identifier: String
         public var ops: Set<String>
+        /// This endpoint has the complete CLI API, but admits only our signed terminal client. It does not
+        /// accept a client's claimed cwd, argv or ancestry in place of the kernel-derived PeerInfo.
+        public static let commandLineTool = Gate(identifier: CodeIdentity.toolIdentifier, ops: [
+            "status", "list", "check", "verify-log", "log", "get", "set", "rm", "import", "grants", "grant", "revoke",
+            "move", "update", "history", "deleted", "version", "restore", "forget", "links", "link", "unlink", "remote-status", "push",
+            "environments", "environment-add", "environment-set", "environment-remove", "export", "projects", "project-link", "project-unlink"
+        ])
         public static let safariExtension = Gate(identifier: CodeIdentity.safariExtensionIdentifier, ops: ["status", "list", "set", "fill"])
     }
 
@@ -1101,7 +1115,8 @@ public final class Broker: @unchecked Sendable {
         return handle(req, peer: peer)
     }
 
-    public func serve(socketPath: String = Paths.socket, gate: Gate? = nil) throws -> Never {
+    public func serve(socketPath requestedPath: String? = nil, gate: Gate? = nil) throws -> Never {
+        let socketPath = requestedPath ?? self.socketPath
         // A client that hangs up before reading its reply (a "is it up yet?" probe, a Ctrl-C) must cost one
         // failed write, not the whole process: by default writing to a closed socket raises SIGPIPE, which kills it.
         signal(SIGPIPE, SIG_IGN)
@@ -1117,11 +1132,14 @@ public final class Broker: @unchecked Sendable {
             if fd < 0 { continue }
             var uid: uid_t = 0, gid: gid_t = 0
             guard getpeereid(fd, &uid, &gid) == 0, uid == getuid() else { close(fd); continue }
-            var peer = PeerInfo.of(socket: fd)
             if let gate {
                 guard let team = CodeIdentity.ownTeam, CodeIdentity.peer(fd, is: gate.identifier, team: team) else { close(fd); continue }
-                peer.isSafariExtension = gate.identifier == CodeIdentity.safariExtensionIdentifier
             }
+            var peer = PeerInfo.of(socket: fd)
+            // The second audit-token validation brackets PID-based context collection. If it failed or
+            // the process disappeared/reused its PID, the CLI-only listener must not handle the request.
+            if gate?.identifier == CodeIdentity.toolIdentifier, !peer.isLatchkeyTool { close(fd); continue }
+            peer.isSafariExtension = gate?.identifier == CodeIdentity.safariExtensionIdentifier
             let caller = peer
             DispatchQueue.global().async { [self] in
                 defer { close(fd) }
