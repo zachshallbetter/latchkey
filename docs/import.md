@@ -28,7 +28,9 @@ latchkey import .env.local --rewrite
   `export`, indentation and line endings on untouched lines are kept, as are file permissions. Replaced assignments
   lose their inline comments. A quoted multiline value is replaced in full.
 
-The whole import asks for approval once. Quoted multiline values are supported; double quotes decode `\n`,
+Import also records the file's variables in its environment's record (see [Environments](cli.md#environments)):
+each imported key, and lines that already hold a `latchkey://` reference. A record that doesn't exist yet starts with
+the environment's items. The whole import asks for approval once. Quoted multiline values are supported; double quotes decode `\n`,
 `\r`, `\t`, `\"` and `\\`, while single quotes keep escapes literally. Values are literal: no shell
 interpolation or command substitution runs. Malformed syntax refuses the entire plan before values are saved.
 If a file changes while approval is pending, its saved values remain in Latchkey, but rewriting stops so your

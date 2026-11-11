@@ -40,7 +40,10 @@ struct PreparedRun {
 }
 
 /// `base` with env files, environments and key files applied: references still in place, nothing asked yet.
-func plannedEnvironment(_ spec: RunSpec, base: [String: String], call: (Request) throws -> Response) throws -> [String: String] {
+/// An environment with a record loads the record's variables. Until `env migrate` has checked it, what the older
+/// path-based lookup finds is added too, so nothing that worked before stops working; `notes` says what differs.
+func plannedEnvironment(_ spec: RunSpec, base: [String: String], call: (Request) throws -> Response,
+                        notes: (String) -> Void = { FileHandle.standardError.write(Data(("latchkey: " + $0 + "\n").utf8)) }) throws -> [String: String] {
     var env = base
     for path in spec.envFiles {
         let full = URL(fileURLWithPath: path, relativeTo: URL(fileURLWithPath: spec.cwd, isDirectory: true)).path
@@ -51,15 +54,29 @@ func plannedEnvironment(_ spec: RunSpec, base: [String: String], call: (Request)
         let listed = try call(Request(op: "list"))
         guard listed.ok else { throw RunError.failed(listed.error ?? "the app refused the request") }
         let all = listed.secrets ?? []
+        let recorded = try call(Request(op: "environments", names: spec.scopes))
+        guard recorded.ok else { throw RunError.failed(recorded.error ?? "the app refused the request") }
+        // As before records: the environment's own items always, shared items only where nothing set the name.
+        func loadLegacy(_ found: [String: String]) {
+            for (name, id) in found where !(ItemID(id)?.isShared ?? true) || env[name] == nil { env[name] = References.scheme + id }
+        }
         for scope in spec.scopes {
-            let inScope = all.filter { $0.name.hasPrefix(scope + "/") }
-            if inScope.isEmpty { throw RunError.missing(["\(scope)/*"]) }
-            for item in inScope { env[item.ref.name] = References.scheme + item.name }
-            // Shared items this environment's files use (recorded on import), unless something already set them.
-            let folders = Set(inScope.flatMap { $0.usedIn ?? [] }.map { Repo.mainCheckout(for: $0) ?? URL(fileURLWithPath: $0).deletingLastPathComponent().path })
-            for item in all where item.ref.isShared && env[item.name] == nil {
-                let used = (item.usedIn ?? []).contains { path in folders.contains { path.hasPrefix($0 + "/") } }
-                if used { env[item.name] = References.scheme + item.name }
+            let legacy = EnvironmentRecords.legacy(scope: scope, items: all)
+            guard let record = recorded.environments?.first(where: { $0.scope == scope }) else {
+                if legacy.isEmpty { throw RunError.missing(["\(scope)/*"]) }
+                loadLegacy(legacy)
+                notes("\(scope) has no environment record yet; `lk env migrate` makes one so it works the same on every Mac")
+                continue
+            }
+            if record.variables.isEmpty && legacy.isEmpty { throw RunError.missing(["\(scope)/*"]) }
+            for (name, entry) in record.variables { env[name] = entry.envValue }
+            let extra = legacy.filter { record.variables[$0.key] == nil }
+            if extra.isEmpty { continue }
+            if record.legacyChecked {
+                notes("not loaded, not in \(scope)'s record: \(extra.keys.sorted().joined(separator: ", ")) (add with lk env set \(scope) NAME=ID)")
+            } else {
+                loadLegacy(extra)
+                notes("loaded from old file locations, not yet in \(scope)'s record: \(extra.keys.sorted().joined(separator: ", ")); run `lk env migrate`")
             }
         }
     }

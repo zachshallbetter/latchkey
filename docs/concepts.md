@@ -38,6 +38,17 @@ the form `latchkey-file://ID` is different: the command gets the path of a tempo
 - A **service** is who issued a value: Neon, Stripe, GitHub. It's a label, not part of the ID, so changing it never
   breaks a reference. Import fills it in where it can tell.
 
+## Environment records
+
+An environment's **record** says which variables it has: each one points at an item, shared or the environment's
+own, or holds a plain, non-secret setting such as `PORT=3000`. It syncs with your items, so `latchkey run --env` and
+`latchkey export` give the same variables on every Mac, wherever the checkout is. The files an item was imported from
+are kept as history, not used to decide what an environment has.
+
+A **project link** remembers which Git remote a project's checkouts use, so a fresh clone on another Mac can find its
+project (`latchkey project`) and write its env file (`latchkey export`). Finding a project grants nothing: values
+still need agent-safe, a grant or your approval.
+
 ## Kinds
 
 | Kind | For | Shown in command output |

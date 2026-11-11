@@ -19,8 +19,10 @@ without asking.
    - **Grants**, for a folder and a time: `latchkey grant 'shop/development/*' --folder ~/Projects/shop --for 2h`.
    - Everything else asks you, with the agent's process chain, folder and command shown.
 
-Fresh git worktrees don't have your `.env` (it's gitignored). `latchkey run --env PROJECT/ENV` loads an environment's
-items directly, and a grant for a repository's folder covers its worktrees.
+Fresh git worktrees and clones don't have your `.env` (it's gitignored). `latchkey project` says which project the
+checkout is; `latchkey export PROJECT/ENV --out .env.local` writes an env file of references from the environment's
+record, with no values in it; `latchkey run --env PROJECT/ENV` loads the environment without any file. A grant for a
+repository's folder covers its worktrees.
 
 ## Skills and plugins
 
@@ -144,6 +146,8 @@ claude mcp add latchkey -- ~/.local/bin/latchkey mcp
 | `latchkey_check` | What a run would get without asking, what would ask, what's missing | No |
 | `latchkey_run` | Runs a command with references filled in, in a given folder, from env files, environments or key files. Returns the exit code and the output, masked | When an item isn't agent-safe or granted |
 | `latchkey_request_grant` | Asks you for a grant on items in the agent's folder | Always |
+| `latchkey_project` | Which project the folder's checkout is, from its Git remotes, and its environments | No |
+| `latchkey_export_references` | Writes an environment's env file of references and plain settings, never values; an existing file only with `replace` | No |
 
 - **Output** is always masked, and only the last 64 KB of each stream is returned. Standard input is empty.
 - **Commands stop** after 10 minutes by default, at most 60. Use it for tests, builds and scripts; run dev servers in
@@ -151,7 +155,8 @@ claude mcp add latchkey -- ~/.local/bin/latchkey mcp
 - **Grants an agent asks for** cover only the folder it runs in (and that repository's worktrees), end when the
   agent quits or after a day at most, and can't include production environments or a whole project. Grant those yourself with `latchkey grant`.
 - **Approval panels** for requests through the MCP server say they come from an agent.
-- Not offered: reading values, changing or deleting items, history values, remote locations and pushes.
+- Not offered: reading values, exporting values, changing or deleting items or records, history values, remote
+  locations and pushes.
 
 ## Other MCP servers
 

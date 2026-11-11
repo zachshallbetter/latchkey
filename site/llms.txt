@@ -15,8 +15,10 @@
 - Never run `latchkey get`, never print the environment, never write values into .env files.
 - Exit 77 means refused and 66 means missing: stop and ask the person; don't retry.
 - `latchkey check` (or the MCP tool latchkey_check) shows what a run would get without asking.
-- MCP: `latchkey mcp` serves latchkey_status, latchkey_list, latchkey_check, latchkey_run and
-  latchkey_request_grant. It has no direct secret-read tool; child output masks exact values, but transformed secrets can leak.
+- In a fresh clone or worktree: `latchkey project`, then `latchkey export <project>/<environment> --out .env.local`
+  writes references from the environment's record (never values).
+- MCP: `latchkey mcp` serves latchkey_status, latchkey_list, latchkey_check, latchkey_run,
+  latchkey_request_grant, latchkey_project and latchkey_export_references. It has no direct secret-read tool; child output masks exact values, but transformed secrets can leak.
 
 ## Docs
 

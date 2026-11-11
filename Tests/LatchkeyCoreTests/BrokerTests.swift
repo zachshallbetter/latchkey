@@ -49,6 +49,16 @@ final class BrokerTests: XCTestCase {
         XCTAssertEqual(allow.handle(Request(op: "rm", names: ["DB_PASS"]), peer: peer).missing, ["DB_PASS"])
     }
 
+    func testTheTouchIDLineSaysWhatNotWho() {
+        var r = ApprovalRequest(action: .add, names: ["shop/development/DB"], chain: ["zsh", "claude"], folder: "/tmp/shop",
+                                reason: "add shop/development/DB, asked by zsh › claude in /tmp/shop (running latchkey set shop/development/DB)")
+        XCTAssertEqual(r.touchIDReason, "add shop/development/DB")
+        r.sessionName = "claude"
+        XCTAssertEqual(r.touchIDReason, "add shop/development/DB for claude")
+        let fill = ApprovalRequest(action: .read, names: ["A"], chain: [], folder: "", reason: "fill A into a field on vercel.com")
+        XCTAssertEqual(fill.touchIDReason, "fill A into a field on vercel.com", "a reason without a caller is kept whole")
+    }
+
     func testDescribeUsesTheKernelsViewNotTheRequest() {
         let caller = PeerInfo(pid: 7, path: "/Users/x/.local/bin/latchkey", cwd: NSHomeDirectory() + "/site", chain: ["zsh", "claude"],
                               arguments: ["/Users/x/.local/bin/latchkey", "run", "--", "npm", "test"])

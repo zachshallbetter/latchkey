@@ -85,6 +85,90 @@ public enum EnvFile {
         }
     }
 
+    public enum ExportError: Error, LocalizedError {
+        case symbolicLink(String)
+        case notAFile(String)
+        case exists(String)
+        case noFolder(String)
+        case write(String, Int32)
+
+        public var errorDescription: String? {
+            switch self {
+            case .symbolicLink(let p): return "\(p) is a symbolic link; write to the file itself"
+            case .notAFile(let p): return "\(p) isn't a regular file"
+            case .exists(let p): return "\(p) already exists"
+            case .noFolder(let p): return "no folder \(p)"
+            case .write(let p, let e): return "couldn't write \(p): \(String(cString: strerror(e)))"
+            }
+        }
+    }
+
+    /// A value as this parser reads it back: bare when that's unambiguous, else double-quoted with `\`, `"`, newlines,
+    /// carriage returns and tabs escaped.
+    public static func quoted(_ value: String) -> String {
+        let bare = value.unicodeScalars.allSatisfy { c in
+            (c >= "A" && c <= "Z") || (c >= "a" && c <= "z") || (c >= "0" && c <= "9") || "_-./:@%+,=".unicodeScalars.contains(c)
+        }
+        if bare { return value }
+        var out = "\""
+        for c in value {
+            switch c {
+            case "\\": out += "\\\\"
+            case "\"": out += "\\\""
+            case "\n": out += "\\n"
+            case "\r": out += "\\r"
+            case "\t": out += "\\t"
+            default: out.append(c)
+            }
+        }
+        return out + "\""
+    }
+
+    /// The file at `path` lstat'd: nil if there's nothing there. A symbolic link or anything but a regular file is
+    /// refused, so a write can never land somewhere the path doesn't name.
+    public static func existingFile(_ path: String) throws -> stat? {
+        var st = stat()
+        if lstat(path, &st) != 0 { return nil }
+        if (st.st_mode & S_IFMT) == S_IFLNK { throw ExportError.symbolicLink(path) }
+        guard (st.st_mode & S_IFMT) == S_IFREG else { throw ExportError.notAFile(path) }
+        return st
+    }
+
+    /// Writes `text` to `path` in one step: a new owner-only file beside it is written, synced and given `mode`, then
+    /// renamed into place. Without `replace`, an existing file is left alone; with it, the old file stays whole until
+    /// the rename. Nothing at `path` is opened, truncated or followed.
+    public static func writeAtomically(_ text: String, to path: String, mode: mode_t, replace: Bool) throws {
+        let url = URL(fileURLWithPath: path)
+        let folder = url.deletingLastPathComponent().path
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: folder, isDirectory: &isDir), isDir.boolValue else { throw ExportError.noFolder(folder) }
+        if try existingFile(path) != nil, !replace { throw ExportError.exists(path) }
+        let temp = folder + "/.latchkey-" + UUID().uuidString
+        let fd = open(temp, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, 0o600)
+        guard fd >= 0 else { throw ExportError.write(path, errno) }
+        defer { unlink(temp) }
+        let data = Data(text.utf8)
+        let ok = data.withUnsafeBytes { buf -> Bool in
+            var off = 0
+            while off < buf.count {
+                let n = Darwin.write(fd, buf.baseAddress! + off, buf.count - off)
+                if n <= 0 { return false }
+                off += n
+            }
+            return fsync(fd) == 0 && fchmod(fd, mode) == 0
+        }
+        let err = errno
+        close(fd)
+        guard ok else { throw ExportError.write(path, err) }
+        // Checked again right before the rename: a link put there meanwhile is refused, not replaced.
+        if try existingFile(path) != nil, !replace { throw ExportError.exists(path) }
+        let flags: UInt32 = replace ? 0 : UInt32(RENAME_EXCL)
+        guard renamex_np(temp, path, flags) == 0 else {
+            let e = errno
+            throw e == EEXIST ? ExportError.exists(path) : ExportError.write(path, e)
+        }
+    }
+
     private struct Line {
         var content: String
         var ending: String

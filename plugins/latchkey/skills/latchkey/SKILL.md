@@ -46,6 +46,18 @@ Latchkey adds the real key only to requests to the provider. It works when the c
 For AWS, `lk run --aws-session` (or `--aws-role ARN`) gives the command 15-minute credentials instead of the
 long-lived key.
 
+## In a fresh clone or worktree
+
+The gitignored env file isn't there. Find the project and write one of references from Latchkey's record:
+
+```bash
+lk project                                        # which project this checkout is, and its environments
+lk export shop/development --out .env.local       # references and plain settings, never values
+```
+
+Never use `lk export --values`: it writes secrets to disk and is refused for agents anyway. If `lk export` says there's
+no record, `lk run --env shop/development -- …` still works; tell the person `lk env migrate` makes the record.
+
 ## Setting up a project's env file
 
 When a project needs an `.env` from `.env.example`, copy it and set each secret to a reference. Shared keys use a bare
@@ -83,8 +95,9 @@ either unless the person brought it up.
 ## MCP
 
 If the `latchkey` MCP server is connected (`lk mcp`), its tools do the same without a shell: `latchkey_check`,
-`latchkey_run` (output masked, last 64 KB), `latchkey_list`, `latchkey_status` and `latchkey_request_grant`. They
-never return a value.
+`latchkey_run` (output masked, last 64 KB), `latchkey_list`, `latchkey_status`, `latchkey_request_grant`,
+`latchkey_project` and `latchkey_export_references` (an env file of references for a fresh checkout). They never
+return a value.
 
 ## Exit codes
 
