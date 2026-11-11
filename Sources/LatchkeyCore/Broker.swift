@@ -657,6 +657,12 @@ public final class Broker: @unchecked Sendable {
         request.sessionName = peer.sessionProcess?.name
         request.runCommand = peer.runCommand
         request.program = request.fromApp || peer.isLatchkeyTool || peer.path.isEmpty ? nil : peer.path
+        if peer.isSafariExtension {
+            request.fromSafari = true
+            request.page = req.page
+            request.program = nil
+            request.folder = ""
+        }
         if peer.isSSHForward {
             request.overSSH = true
             request.remote = req.remote
@@ -727,6 +733,7 @@ public final class Broker: @unchecked Sendable {
 
     /// "zsh › claude in ~/Projects/site (running npm test)"
     static func describe(_ peer: PeerInfo, _ req: Request) -> String {
+        if peer.isSafariExtension { return "Latchkey's Safari extension" + (req.page.map { " on " + $0 } ?? "") }
         let who = peer.chain.prefix(3).joined(separator: " › ")
         let cwd = shortFolder(peer.cwd)
         var s = (who.isEmpty ? "a process" : who) + (cwd.isEmpty ? "" : " in \(cwd)")
@@ -756,7 +763,8 @@ public final class Broker: @unchecked Sendable {
         guard let url = logURL else { return }
         var entry = LogEntry(time: Date(), op: op, names: names, decision: decision,
                              chain: peer.chain, cwd: peer.cwd, command: peer.redactedCommandLine.isEmpty ? nil : peer.redactedCommandLine,
-                             program: peer.isLatchkeyTool || peer.pid == getpid() || peer.path.isEmpty ? nil : peer.path)
+                             program: peer.isSafariExtension ? "Latchkey's Safari extension" + (req.page.map { " on " + $0 } ?? "")
+                                 : peer.isLatchkeyTool || peer.pid == getpid() || peer.path.isEmpty ? nil : peer.path)
         var head: LogHead?
         if let keys = logKeys, let key = keys.key() {
             let last = keys.head()
@@ -805,7 +813,21 @@ public final class Broker: @unchecked Sendable {
     }
 
     /// Listens until the process exits. Accepts only connections from this user.
-    public func serve(socketPath: String = Paths.socket) throws -> Never {
+    /// Who may use a socket, and for what: the Safari extension's socket admits only Latchkey's signed extension, and
+    /// only to see item names and save a value (which asks, like any change).
+    public struct Gate: Sendable {
+        public var identifier: String
+        public var ops: Set<String>
+        public static let safariExtension = Gate(identifier: CodeIdentity.safariExtensionIdentifier, ops: ["status", "list", "set"])
+    }
+
+    /// `handle`, limited to what a gate allows.
+    public func handle(_ req: Request, peer: PeerInfo, gate: Gate?) -> Response {
+        if let gate, !gate.ops.contains(req.op) { return Response(ok: false, error: "\(req.op) isn't available here") }
+        return handle(req, peer: peer)
+    }
+
+    public func serve(socketPath: String = Paths.socket, gate: Gate? = nil) throws -> Never {
         // A client that hangs up before reading its reply (a "is it up yet?" probe, a Ctrl-C) must cost one
         // failed write, not the whole process: by default writing to a closed socket raises SIGPIPE, which kills it.
         signal(SIGPIPE, SIG_IGN)
@@ -821,7 +843,12 @@ public final class Broker: @unchecked Sendable {
             if fd < 0 { continue }
             var uid: uid_t = 0, gid: gid_t = 0
             guard getpeereid(fd, &uid, &gid) == 0, uid == getuid() else { close(fd); continue }
-            let peer = PeerInfo.of(socket: fd)
+            var peer = PeerInfo.of(socket: fd)
+            if let gate {
+                guard let team = CodeIdentity.ownTeam, CodeIdentity.peer(fd, is: gate.identifier, team: team) else { close(fd); continue }
+                peer.isSafariExtension = gate.identifier == CodeIdentity.safariExtensionIdentifier
+            }
+            let caller = peer
             DispatchQueue.global().async { [self] in
                 defer { close(fd) }
                 var nosig: Int32 = 1
@@ -830,7 +857,7 @@ public final class Broker: @unchecked Sendable {
                 do {
                     let line = try UnixSocket.readLine(fd)
                     let req = try Wire.decoder().decode(Request.self, from: line)
-                    response = handle(req, peer: peer)
+                    response = handle(req, peer: caller, gate: gate)
                 } catch {
                     response = Response(ok: false, error: "bad request: \(error)")
                 }

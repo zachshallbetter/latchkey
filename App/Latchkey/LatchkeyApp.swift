@@ -199,6 +199,13 @@ final class AppModel {
                 Task { @MainActor in self?.problem = text }
             }
         }
+        // The Safari extension's own socket, in the App Group container it can reach from its sandbox. Only the signed
+        // extension may connect, and only to list item names and save a value (Broker.Gate.safariExtension).
+        if let group = Bundle.main.object(forInfoDictionaryKey: "LatchkeyAppGroup") as? String,
+           let path = Paths.extensionSocket(group: group) {
+            try? FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+            Thread.detachNewThread { try? broker.serve(socketPath: path, gate: .safariExtension) }
+        }
     }
 
     var synced: Bool { if case .iCloud = store.mode { true } else { false } }

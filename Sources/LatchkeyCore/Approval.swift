@@ -34,6 +34,9 @@ public struct ApprovalRequest: Sendable {
     /// From another computer through an SSH forward, and what the tool there says about itself (unverified).
     public var overSSH = false
     public var remote: RemoteClaim?
+    /// From Latchkey's Safari extension, and the site the value was found on (as Safari reported it).
+    public var fromSafari = false
+    public var page: String?
 
     public init(action: Action, names: [String], chain: [String], folder: String, command: String? = nil,
                 duration: TimeInterval? = nil, reason: String) {

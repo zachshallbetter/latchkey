@@ -91,3 +91,19 @@ Click the key: search your items, copy a value, open an item in the window, open
 - **Approval**: how you approve (Touch ID, Apple Watch, password), and how long a read approval is remembered.
 - **General**: **Open Latchkey at login**, **Install Command Line Tool** (release builds; links `latchkey` and `lk`), and the activity log in
   Finder. **Latchkey › Install Command Line Tool…** in the menu bar does the same.
+
+## Latchkey for Safari
+
+Latchkey comes with a Safari extension that saves a new API key from the page where you made it. On the key pages of
+Stripe, OpenAI, Anthropic and GitHub, when a key is shown in full (as services do once, right after you create it),
+a small panel offers to save it: choose where it goes (shared, or a project's environment) and its name, then press
+**Save to Latchkey**. The app asks you to approve, showing the page's site, and the item's note says where it came
+from. Saving over an existing item keeps the old value in its history.
+
+Turn it on in Safari › Settings › Extensions, and allow it on those sites when Safari asks. If Latchkey isn't listed
+there with a development build, turn on Safari › Settings › Advanced › **Show features for web developers**, then
+Develop › **Allow Unsigned Extensions**; a notarized release doesn't need this.
+
+The extension can't read any value, not even an agent-safe one. It reaches the app through its own socket, which
+admits only Latchkey's signed extension and only for listing item names and saving a value.
+

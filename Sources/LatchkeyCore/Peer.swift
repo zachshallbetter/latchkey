@@ -16,6 +16,8 @@ public struct PeerInfo: Codable, Sendable, Hashable {
     /// The caller's ancestors, nearest first, matching `chain`, each with its start time so a reused process ID
     /// doesn't pass for the original.
     public var ancestors: [ProcessStamp]
+    /// True when the caller is Latchkey's own Safari extension, checked by signature on the extension's socket.
+    public var isSafariExtension = false
 
     public init(pid: Int32, path: String, cwd: String, chain: [String], arguments: [String] = [], isLatchkeyTool: Bool = false,
                 ancestors: [ProcessStamp] = []) {

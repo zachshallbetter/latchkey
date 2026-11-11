@@ -10,6 +10,7 @@ Sources/latchkey-broker/   the broker without a window, for development
 Tests/LatchkeyCoreTests/   unit tests
 App/project.yml            the app's XcodeGen project (the .xcodeproj is generated, not committed)
 App/Latchkey/              the SwiftUI app
+App/Safari/                Latchkey for Safari: the native handler and the extension's manifest and scripts
 App/Branding/logo.svg      the logo source: a key with a tag
 scripts/install.sh         build and install the app and CLI (development)
 scripts/release.sh         Developer ID build, notarized, in a disk image (see docs/releasing.md)

@@ -72,6 +72,10 @@ The first release.
 - A light and dark app icon.
 - One copy runs at a time.
 
+### Safari
+- Latchkey for Safari: on Stripe, OpenAI, Anthropic and GitHub key pages, offers to save a newly shown key, with your
+  approval. It can't read values.
+
 ### Distribution
 - Developer ID-signed and notarized, in a disk image, with the command-line tool inside the app
   (**Latchkey › Install Command Line Tool…**, which also adds `lk`).

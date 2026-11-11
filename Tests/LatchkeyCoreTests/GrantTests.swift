@@ -154,6 +154,30 @@ final class BrokerGrantTests: XCTestCase {
         XCTAssertEqual(b.handle(Request(op: "check", names: ["DB"]), peer: ssh).needsApproval, ["DB"])
     }
 
+    func testTheSafariExtensionCanOnlyListAndSave() throws {
+        let recorder = RecordingApprover()
+        let store = MemoryStore()
+        try store.save(name: "DB", value: "db-value-123", kind: .password, agentSafe: true, note: "")
+        let b = Broker(store: store, approver: recorder, readApprovalWindow: 0, logURL: nil)
+        var ext = PeerInfo(pid: 1, path: "/Applications/Latchkey.app/Contents/PlugIns/LatchkeySafari.appex/Contents/MacOS/LatchkeySafari", cwd: "/", chain: [])
+        ext.isSafariExtension = true
+        let gate = Broker.Gate.safariExtension
+        // Even an agent-safe value can't be read through the extension's socket.
+        XCTAssertFalse(b.handle(Request(op: "get", names: ["DB"]), peer: ext, gate: gate).ok)
+        XCTAssertFalse(b.handle(Request(op: "grant", names: ["DB"], folder: "/tmp"), peer: ext, gate: gate).ok)
+        XCTAssertFalse(b.handle(Request(op: "rm", names: ["DB"]), peer: ext, gate: gate).ok)
+        XCTAssertEqual(b.handle(Request(op: "list"), peer: ext, gate: gate).secrets?.map(\.name), ["DB"])
+        let saved = b.handle(Request(op: "set", names: ["shop/production/STRIPE_KEY"], value: "sk_test_example", kind: .token,
+                                     service: "Stripe", page: "https://dashboard.stripe.com"), peer: ext, gate: gate)
+        XCTAssertTrue(saved.ok, saved.error ?? "")
+        let asked = try XCTUnwrap(recorder.requests.last)
+        XCTAssertTrue(asked.fromSafari)
+        XCTAssertEqual(asked.page, "https://dashboard.stripe.com")
+        XCTAssertNil(asked.program, "named as the extension, not by its path")
+        XCTAssertFalse(asked.canGrant)
+        XCTAssertTrue(asked.reason.contains("Latchkey's Safari extension on https://dashboard.stripe.com"), asked.reason)
+    }
+
     func testApprovalCanGrantForTheSessionOrTheCommand() throws {
         let store = MemoryStore()
         try store.save(name: "DB", value: "db-value-123", kind: .password, agentSafe: false, note: "")

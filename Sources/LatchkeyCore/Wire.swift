@@ -166,6 +166,8 @@ public struct Request: Codable, Sendable {
                                      // Nothing is released by a check, so this claim decides nothing.
     public var remote: RemoteClaim?  // a request forwarded over SSH: what the tool on the other computer says it is
                                      // doing. Shown as unverified; it decides nothing.
+    public var page: String?         // from the Safari extension: the site the value was found on, as Safari reported
+                                     // it to the extension. Shown in the approval; it decides nothing.
 
     public init(op: String, names: [String]? = nil, value: String? = nil, kind: ItemKind? = nil,
                 agentSafe: Bool? = nil, note: String? = nil,
@@ -173,7 +175,7 @@ public struct Request: Codable, Sendable {
                 folder: String? = nil, duration: Double? = nil, project: String? = nil, environment: String? = nil,
                 service: String? = nil, version: String? = nil, target: RemoteTarget? = nil, link: String? = nil,
                 only: [String]? = nil, origin: String? = nil, session: Bool? = nil, commands: [[String]]? = nil,
-                uses: Int? = nil, intended: [String]? = nil, remote: RemoteClaim? = nil) {
+                uses: Int? = nil, intended: [String]? = nil, remote: RemoteClaim? = nil, page: String? = nil) {
         self.op = op
         self.names = names
         self.value = value
@@ -198,6 +200,7 @@ public struct Request: Codable, Sendable {
         self.uses = uses
         self.intended = intended
         self.remote = remote
+        self.page = page
     }
 }
 
@@ -308,6 +311,13 @@ public enum Paths {
         ProcessInfo.processInfo.environment["LATCHKEY_SOCKET"].flatMap { $0.isEmpty ? nil : $0 }
     }
     public static var accessLog: URL { supportDir.appendingPathComponent("access.jsonl") }
+
+    /// The socket for Latchkey's Safari extension, in the App Group container the app and the sandboxed extension
+    /// share. Nil when this process isn't entitled to the group (an unsigned build).
+    public static func extensionSocket(group: String) -> String? {
+        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group)?
+            .appendingPathComponent("extension.sock").path
+    }
 
     public static func ensureSupportDir() throws {
         try FileManager.default.createDirectory(at: supportDir, withIntermediateDirectories: true,

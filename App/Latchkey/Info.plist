@@ -26,6 +26,8 @@
 	<true/>
 	<key>LatchkeyAccessGroup</key>
 	<string>$(AppIdentifierPrefix)io.snackstud.latchkey</string>
+	<key>LatchkeyAppGroup</key>
+	<string>$(TeamIdentifierPrefix)io.snackstud.latchkey</string>
 	<key>LatchkeyPreviousAccessGroup</key>
 	<string>$(AppIdentifierPrefix)io.latchkey.shared</string>
 	<key>NSHumanReadableCopyright</key>

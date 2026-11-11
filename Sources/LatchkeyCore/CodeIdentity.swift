@@ -8,6 +8,7 @@ public enum CodeIdentity {
     /// The app's bundle ID and the identifier the command-line tool is signed with.
     public static let appIdentifier = "io.snackstud.latchkey"
     public static let toolIdentifier = "io.snackstud.latchkey.cli"
+    public static let safariExtensionIdentifier = "io.snackstud.latchkey.safari"
 
     /// The team that signed this process, or nil for an unsigned or ad hoc build, which can't vouch for anyone.
     public static let ownTeam: String? = {

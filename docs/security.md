@@ -41,6 +41,10 @@ command gets which value. This page says what it protects against, how, and wher
   requests without that run's placeholder, and sends the real key only to the provider's own host.
 - **Short-lived AWS credentials** (`--aws-session`, `--aws-role`) are minted by STS with the long-lived key, which
   stays in `latchkey run`; the command gets credentials that expire in 15 minutes by default.
+- **The Safari extension** is sandboxed and reaches the app through its own socket in the App Group container
+  both share. The app admits only Latchkey's signed extension there (checked by code signature), and only to list
+  item names and save a value, which asks like any change. It can't read a value. The page's site it reports is
+  shown in the approval as Safari reported it.
 - **Temporary key files** live in a new folder only you can open, are only readable by you, and are deleted when the
   command exits.
 - **Remote pushes** pass values to each service's tool on standard input, never as arguments, so they don't appear
