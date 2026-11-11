@@ -1,5 +1,5 @@
 # Generate the Xcode project with:  cd App && xcodegen
-# Set DEVELOPMENT_TEAM (Xcode > Settings > Accounts) before building: iCloud Keychain needs a signed app.
+# DEVELOPMENT_TEAM signs the app; iCloud Keychain needs a signed app. Every Mac must use the same team.
 name: Latchkey
 options:
   bundleIdPrefix: io.latchkey
@@ -10,7 +10,7 @@ packages:
     path: ..
 settings:
   base:
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: "PKH7G93GGD"
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.0"
