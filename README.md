@@ -19,11 +19,12 @@ command starts. Agents get only the items marked agent-safe; everything else nee
 | `latchkey-broker`: the broker without a window, for development | Built |
 | App: window with sidebar, item list and detail; reveal and copy behind Touch ID; .env import sheet; activity log; menu bar panel; settings; open at login. Hosts the broker | Built; needs a team set to sync |
 | Key-file delivery (`--file`, `latchkey-file://`) | Built |
+| Coordinator grants through ACP: trust, capability redemption, limits, validity check | Built in Latchkey; ACP side specified in [docs/acp-grants.md](docs/acp-grants.md) |
 | Expiry reminders | Not built |
 | Browser extension or AutoFill provider | Not built |
 | SSH agent (Secure Enclave keys) | Not built |
 
-Tests: 59 (`swift test`; add `LATCHKEY_KEYCHAIN_TESTS=1` to include a real keychain round trip).
+Tests: 64 (`swift test`; add `LATCHKEY_KEYCHAIN_TESTS=1` to include a real keychain round trip).
 
 See [docs/apple-passwords-and-passkeys.md](docs/apple-passwords-and-passkeys.md) for how this uses iCloud Keychain
 and LocalAuthentication, why items don't appear in the Passwords app, and where passkeys fit.
@@ -60,6 +61,20 @@ Grants are kept on this Mac only (`~/Library/Application Support/Latchkey/grants
 and show up in Activity when they're made, used and revoked. A grant for a repository's folder also covers its
 git worktrees, wherever they live (`~/Projects/_worktrees/site/fix-login` is covered by a grant for
 `~/Projects/site`).
+
+### Grants from ACP
+
+For the owner's own tooling only, and off unless set up on a Mac (nothing about it appears in the app until then).
+A coordinator agent can get read access for its sub-agents through ACP (acp-gateway) instead of the owner
+approving each one, within limits the owner sets once: development and preview by default, at most 2 hours,
+never production, read-only.
+
+    latchkey acp trust https://acp.example --key-id lk-1 --public-key <base64> --gateway-token-item ACP_GATEWAY_TOKEN
+    latchkey grant --capability "$TOKEN"     # run by the sub-agent, inside the repository
+    latchkey acp untrust                     # ends every ACP grant
+
+The contract with ACP, and every check Latchkey makes, is in [docs/acp-grants.md](docs/acp-grants.md). ACP
+grants are labelled in the window, and each read through one records the agent, ticket and coordinator.
 
 ## Running commands
 

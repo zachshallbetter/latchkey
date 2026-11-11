@@ -26,6 +26,10 @@ struct GrantList: View {
             ToolbarItemGroup {
                 Button { model.grantRequest = GrantRequest() } label: { Label("New Grant", systemImage: "plus") }
                     .help("Let one folder read some items without asking, for a while")
+                if model.grants.contains(where: { $0.issuer == "acp" }) {
+                    Button { Task { await model.revoke("acp") } } label: { Label("Revoke ACP Grants", systemImage: "person.2.slash") }
+                        .help("End every grant ACP arranged for an agent")
+                }
                 if !model.grants.isEmpty {
                     Button { Task { await model.revoke("all") } } label: { Label("Revoke All", systemImage: "xmark.circle") }
                         .help("End every grant now")
@@ -43,7 +47,14 @@ struct GrantRow: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "hourglass").foregroundStyle(.teal).frame(width: 18)
             VStack(alignment: .leading, spacing: 3) {
-                Text(Broker.tilde(grant.folder)).font(.callout.monospaced().weight(.medium)).lineLimit(1).truncationMode(.head)
+                HStack(spacing: 6) {
+                    Text(Broker.tilde(grant.folder)).font(.callout.monospaced().weight(.medium)).lineLimit(1).truncationMode(.head)
+                    if grant.issuer == "acp" {
+                        Text("ACP").font(.caption2.weight(.bold)).foregroundStyle(.purple)
+                            .padding(.horizontal, 5).padding(.vertical, 1).background(Capsule().fill(.purple.opacity(0.15)))
+                            .help("Arranged through ACP for \(grant.agent ?? "an agent") by \(grant.coordinator ?? "a coordinator"), ticket \(grant.ticket ?? "?")")
+                    }
+                }
                 Text(grant.names.joined(separator: ", ")).font(.callout).lineLimit(2)
                 TimelineView(.periodic(from: .now, by: 30)) { _ in
                     Text("Ends \(grant.expires.formatted(.relative(presentation: .named))) · from \(grant.createdBy)")

@@ -134,6 +134,7 @@ public struct Request: Codable, Sendable {
     public var op: String            // status | list | get | set | rm | import | grants | grant | revoke | move | update
                                      // | history | deleted | version | restore | forget
                                      // | links | link | unlink | remote-status | push
+                                     // | acp-status | acp-trust | acp-untrust | acp-redeem
     public var names: [String]?
     public var value: String?
     public var kind: ItemKind?
@@ -153,13 +154,15 @@ public struct Request: Codable, Sendable {
     public var target: RemoteTarget? // link: where the environment's values go
     public var link: String?         // push: only this link
     public var only: [String]?       // push: only these item ids
+    public var acpTrust: Acp.Trust?  // acp-trust: the deployment, key and limits to accept
+    public var capability: String?   // acp-redeem: a capability ACP issued
 
     public init(op: String, names: [String]? = nil, value: String? = nil, kind: ItemKind? = nil,
                 agentSafe: Bool? = nil, note: String? = nil, cwd: String? = nil, command: String? = nil,
                 items: [ImportItem]? = nil, replace: Bool? = nil, source: String? = nil,
                 folder: String? = nil, duration: Double? = nil, project: String? = nil, environment: String? = nil,
                 service: String? = nil, version: String? = nil, target: RemoteTarget? = nil, link: String? = nil,
-                only: [String]? = nil) {
+                only: [String]? = nil, acpTrust: Acp.Trust? = nil, capability: String? = nil) {
         self.op = op
         self.names = names
         self.value = value
@@ -180,6 +183,8 @@ public struct Request: Codable, Sendable {
         self.target = target
         self.link = link
         self.only = only
+        self.acpTrust = acpTrust
+        self.capability = capability
     }
 }
 
@@ -206,13 +211,14 @@ public struct Response: Codable, Sendable {
     public var links: [RemoteLink]?
     public var remoteStatus: [RemoteStatus]?
     public var pushResults: [PushResult]?
+    public var acpTrust: Acp.Trust?
 
     public init(ok: Bool, error: String? = nil, secrets: [SecretInfo]? = nil, values: [String: String]? = nil,
                 masked: [String]? = nil, denied: [String]? = nil, missing: [String]? = nil,
                 info: [String: String]? = nil, added: [String]? = nil, replaced: [String]? = nil,
                 skipped: [String]? = nil, grants: [Grant]? = nil, moved: [String: String]? = nil,
                 versions: [Version]? = nil, links: [RemoteLink]? = nil, remoteStatus: [RemoteStatus]? = nil,
-                pushResults: [PushResult]? = nil) {
+                pushResults: [PushResult]? = nil, acpTrust: Acp.Trust? = nil) {
         self.ok = ok
         self.error = error
         self.secrets = secrets
@@ -230,6 +236,7 @@ public struct Response: Codable, Sendable {
         self.links = links
         self.remoteStatus = remoteStatus
         self.pushResults = pushResults
+        self.acpTrust = acpTrust
     }
 }
 

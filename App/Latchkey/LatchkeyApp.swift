@@ -141,6 +141,7 @@ final class AppModel {
     var grantRequest: GrantRequest?
     var remoteRequest: RemoteRequest?
     var links: [RemoteLink] = []
+    var acpTrust: Acp.Trust?
     /// Each item's worst state across the links covering it; absent when nothing covers it.
     var remoteStates: [String: RemoteState] = [:]
     var deleteRequest: DeleteRequest?
@@ -196,6 +197,7 @@ final class AppModel {
         grants = broker.grants.all()
         deleted = (try? broker.versions.deleted(existing: Set(items.map(\.name)))) ?? []
         links = (try? broker.remotes.all()) ?? []
+        acpTrust = broker.acpTrust?.load()
         remoteStates = computeRemoteStates()
         let names = Set(items.map(\.name))
         if !selection.isSubset(of: names) { selection = selection.intersection(names) }
@@ -295,6 +297,11 @@ final class AppModel {
     func files(for ids: [String]) -> [String] {
         var seen = Set<String>()
         return items.filter { ids.contains($0.name) }.flatMap { $0.usedIn ?? [] }.filter { seen.insert($0).inserted }
+    }
+
+    func untrustAcp() async {
+        let r = await send(Request(op: "acp-untrust"))
+        notice = "ACP is no longer trusted; ended \(r.info?["revoked"] ?? "0") ACP grant(s)."
     }
 
     // MARK: remote locations

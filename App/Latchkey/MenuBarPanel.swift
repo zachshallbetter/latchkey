@@ -88,6 +88,15 @@ struct SettingsView: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
+            // ACP is the owner's own tooling, set up from the command line; nothing about it shows until it's trusted.
+            if let t = model.acpTrust {
+                Section("ACP") {
+                    LabeledContent("Trusted", value: "\(t.url) · key \(t.keyID)")
+                    LabeledContent("Agents may get", value: "read-only, \(t.environments.joined(separator: ", ")), up to \(GrantStore.describe(t.maxDuration))")
+                    Button("Stop Trusting ACP", role: .destructive) { Task { await model.untrustAcp() } }
+                    Text("Ends every grant ACP arranged and refuses new ones.").font(.caption).foregroundStyle(.secondary)
+                }
+            }
             Section("Approval") {
                 LabeledContent("Method", value: model.broker.approver.method)
                 Picker("Remember a read approval for", selection: $model.approvalWindow) {
