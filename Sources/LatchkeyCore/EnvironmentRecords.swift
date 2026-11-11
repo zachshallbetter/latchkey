@@ -238,6 +238,7 @@ public enum ProjectMatching {
 public protocol EnvironmentStore: AnyObject, Sendable {
     func environments() throws -> [EnvironmentRecord]
     func save(_ record: EnvironmentRecord) throws
+    func removeEnvironment(_ scope: String) throws
     func projects() throws -> [ProjectRecord]
     func save(_ project: ProjectRecord) throws
     func removeProject(_ id: String) throws
@@ -256,6 +257,11 @@ public final class KeychainEnvironmentStore: EnvironmentStore, @unchecked Sendab
 
     public func save(_ record: EnvironmentRecord) throws {
         try put(record, account: record.scope, service: Self.environmentService, label: "Latchkey environment: \(record.scope)")
+    }
+
+    public func removeEnvironment(_ scope: String) throws {
+        let status = SecItemDelete(items.query(scope, service: Self.environmentService) as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else { throw StoreError.keychain("delete environment", status) }
     }
 
     public func projects() throws -> [ProjectRecord] {
@@ -313,6 +319,7 @@ public final class MemoryEnvironmentStore: EnvironmentStore, @unchecked Sendable
     public init() {}
     public func environments() throws -> [EnvironmentRecord] { lock.withLock { envs.values.sorted { $0.scope < $1.scope } } }
     public func save(_ record: EnvironmentRecord) throws { lock.withLock { envs[record.scope] = record } }
+    public func removeEnvironment(_ scope: String) throws { _ = lock.withLock { envs.removeValue(forKey: scope) } }
     public func projects() throws -> [ProjectRecord] { lock.withLock { projs.values.sorted { $0.name < $1.name } } }
     public func save(_ project: ProjectRecord) throws { lock.withLock { projs[project.id] = project } }
     public func removeProject(_ id: String) throws { _ = lock.withLock { projs.removeValue(forKey: id) } }

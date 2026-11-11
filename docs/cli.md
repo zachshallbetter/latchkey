@@ -127,6 +127,11 @@ Change one record with one approval. `NAME=latchkey://ID` points a variable at a
 `NAME=VALUE` is a plain setting. A plain setting that looks secret (by its name or value) is refused: save it as an
 item and point the variable at it. `env confirm` with no names confirms everything unconfirmed.
 
+### `latchkey env rm PROJECT/ENV`
+
+Forgets an environment's record, with one approval. Its items stay, and `run --env` goes back to finding them by ID
+until a record is made again.
+
 ### `latchkey export PROJECT/ENV [--out FILE] [--replace] [--values]`
 
 Writes the environment's env file from its record: `latchkey://` references and plain settings, sorted by name, to
@@ -145,7 +150,7 @@ standard output or FILE.
 Which project a checkout is, from its Git remotes (read from git's config, normalized to `host/owner/repo`, never
 with credentials). `project` shows the matching project and its environments, and the `export` command to run.
 `link` remembers the checkout's `origin` (or `--remote R`, or its only remote) as project NAME, by default the folder's
-name; it asks. A remote belongs to one project. Import names items after a linked project when the checkout's origin
+name; it asks. A remote belongs to one project; unlinking a project's last remote forgets the project. Import names items after a linked project when the checkout's origin
 matches exactly one, so a clone under another folder name keeps its project. A match only names the project: it
 never releases a value or widens a grant. A match through a remote other than `origin`, as a fork has, is flagged
 and never taken as the project.

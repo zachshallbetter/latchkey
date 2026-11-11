@@ -53,6 +53,7 @@ Files refer to them as latchkey://ID.
       imports matching names as plain values agents may read (they ship to browsers anyway).
   latchkey env [list] | env show PROJECT/ENV [--json] | env migrate [--dry-run]
   latchkey env set PROJECT/ENV NAME=latchkey://ID|NAME=VALUE... | env unset PROJECT/ENV NAME... | env confirm PROJECT/ENV [NAME...]
+  latchkey env rm PROJECT/ENV     Forget an environment's record (its items stay).
       An environment's record: which variables it has, each an item (shared items too) or a plain setting such as
       PORT=3000. Records sync with your items, so `run --env` and `export` work the same on every Mac, wherever the
       checkout is. import, set and mv keep them up to date. `env migrate` makes or completes them from your items and

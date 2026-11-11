@@ -114,6 +114,7 @@ public final class Broker: @unchecked Sendable {
                 return Response(ok: true, environments: try records.environments().filter { scopes.isEmpty || scopes.contains($0.scope) })
             case "environment-add": return try addToEnvironments(req, peer: peer)
             case "environment-set": return try setEnvironment(req, peer: peer)
+            case "environment-remove": return try removeEnvironment(req, peer: peer)
             case "export": return try export(req, peer: peer)
             case "projects": return Response(ok: true, projects: try records.projects())
             case "project-link": return try linkProject(req, peer: peer)
@@ -618,6 +619,21 @@ public final class Broker: @unchecked Sendable {
         return Response(ok: true, environments: [record])
     }
 
+    /// `env rm`: forgets an environment's record. Its items stay; `run --env` goes back to finding them by ID.
+    func removeEnvironment(_ req: Request, peer: PeerInfo) throws -> Response {
+        guard let scope = req.names?.first, req.names?.count == 1, RemoteLink.isValidScope(scope) else {
+            return Response(ok: false, error: "give one environment, such as shop/development")
+        }
+        guard try records.environments().contains(where: { $0.scope == scope }) else { return Response(ok: true, missing: [scope]) }
+        guard ask(.delete, [scope], peer, req, "forget the record of \(scope) (its items stay), asked by \(Self.describe(peer, req))").allowed else {
+            log("environment-remove", [scope], "denied", peer, req)
+            return Response(ok: false, error: "removing the record of \(scope) was not approved")
+        }
+        try records.removeEnvironment(scope)
+        log("environment-remove", [scope], "approved", peer, req)
+        return Response(ok: true)
+    }
+
     /// Values for `lk export --values`, which writes them to a file in plain text. Always asks, naming the file: no
     /// grant, agent-safe setting or earlier approval stands in, because the values leave Latchkey for good. The file
     /// is the caller's claim, shown as such; an agent through `latchkey mcp` can't ask at all.
@@ -679,7 +695,8 @@ public final class Broker: @unchecked Sendable {
             return Response(ok: false, error: "unlinking \(name) was not approved")
         }
         project.origins.removeAll { origins.contains($0) }
-        try records.save(project)
+        // With no remotes left there's nothing to recognize it by.
+        if project.origins.isEmpty { try records.removeProject(project.id) } else { try records.save(project) }
         log("project-unlink", [name], "approved (\(removing.joined(separator: ", ")))", peer, req)
         return Response(ok: true, projects: [project])
     }

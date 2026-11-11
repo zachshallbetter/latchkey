@@ -7,7 +7,7 @@
   `PORT=3000`. `latchkey run --env` reads it, so a shared item still loads when the checkout is somewhere else, as on
   another Mac. Until `latchkey env migrate` has checked an environment, the older path-based lookup still fills gaps,
   and says so.
-- `latchkey env` lists, shows, sets, unsets and confirms records; `env migrate` makes them from your items and the
+- `latchkey env` lists, shows, sets, unsets, confirms and removes records; `env migrate` makes them from your items and the
   files they came from. It only adds, marks what it found through file locations as unconfirmed, and reports
   conflicts, missing items, missing files and plain values that may be secret.
 - Import, `set` and `mv` keep records current.

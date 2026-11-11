@@ -261,6 +261,18 @@ final class EnvironmentRecordTests: XCTestCase {
         XCTAssertEqual(try records.projects().first?.id, id, "the project keeps its id as remotes change")
         XCTAssertTrue(b.handle(Request(op: "project-unlink", project: "shop", origins: ["github.com/acme/shop"]), peer: peer).ok)
         XCTAssertEqual(try records.projects().first?.origins, ["github.com/acme/shop-renamed"])
+        XCTAssertTrue(b.handle(Request(op: "project-unlink", project: "shop", origins: ["github.com/acme/shop-renamed"]), peer: peer).ok)
+        XCTAssertEqual(try records.projects(), [], "with no remotes left the project is forgotten")
+    }
+
+    func testARecordCanBeForgottenAndItsItemsStay() throws {
+        let (b, store, records) = try makeBroker()
+        try store.save(name: "shop/development/A", value: "a", kind: .token, agentSafe: false, note: "")
+        try records.save(EnvironmentRecord(scope: "shop/development", variables: ["A": .credential("shop/development/A")]))
+        XCTAssertEqual(b.handle(Request(op: "environment-remove", names: ["shop/staging"]), peer: peer).missing, ["shop/staging"])
+        XCTAssertTrue(b.handle(Request(op: "environment-remove", names: ["shop/development"]), peer: peer).ok)
+        XCTAssertEqual(try records.environments(), [])
+        XCTAssertNotNil(try store.info("shop/development/A"))
     }
 
     // MARK: writing files

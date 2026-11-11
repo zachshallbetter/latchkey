@@ -110,8 +110,14 @@ func envCommand(_ input: [String]) -> Never {
     case "migrate":
         migrateCommand(dryRun: args.contains("--dry-run"))
 
+    case "rm":
+        let scope = scopeArg()
+        let r = send(Request(op: "environment-remove", names: [scope]))
+        print(r.missing?.isEmpty == false ? "\(scope) has no record" : "forgot the record of \(scope); its items stay")
+        exit(0)
+
     default:
-        fail("unknown: latchkey env \(sub). Try list, show, set, unset, confirm or migrate.", code: 64)
+        fail("unknown: latchkey env \(sub). Try list, show, set, unset, confirm, migrate or rm.", code: 64)
     }
 }
 

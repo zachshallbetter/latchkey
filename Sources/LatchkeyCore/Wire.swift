@@ -144,7 +144,7 @@ public struct Request: Codable, Sendable {
     public var op: String            // status | list | check | get | set | rm | import | grants | grant | revoke | move | update
                                      // | history | deleted | version | restore | forget
                                      // | links | link | unlink | remote-status | push
-                                     // | environments | environment-add | environment-set | export
+                                     // | environments | environment-add | environment-set | environment-remove | export
                                      // | projects | project-link | project-unlink
     public var names: [String]?
     public var value: String?
