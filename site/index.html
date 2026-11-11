@@ -32,13 +32,20 @@
     .home #how .feature:first-of-type { margin-top: 32px; }
     .home #rotate { margin-top: 72px; }
     .intro { font-size: 19px; color: var(--muted); }
-    .lede { font-size: 20px; color: var(--muted); max-width: 62ch; }
-    .hero { padding-top: 56px; }
-    .hero h1 { max-width: 20ch; }
+    .lede { font-size: 19px; color: var(--muted); max-width: 62ch; }
+    /* Hero: the pitch beside the scene on wide screens, so both fit the first screen; stacked below 1000px. */
+    .hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 32px 56px; align-items: center; padding-top: 48px; }
+    .hero h1 { font-size: clamp(36px, 4.4vw, 54px); max-width: 16ch; }
+    .hero-art { min-width: 0; }
+    #flow-env pre { font-size: 10.5px; }
+    @media (max-width: 1000px) {
+      .hero { grid-template-columns: minmax(0, 1fr); }
+      .hero h1 { max-width: 20ch; }
+      .hero-art { max-width: 720px; }
+    }
     .facts-row { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 18px 0 0; padding: 0; }
     .facts-row li { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 13.5px; color: var(--muted); }
-    .hero-scene { max-width: 880px; margin: 40px auto 0; }
-    .hero .scene-cap { max-width: 880px; margin-left: auto; margin-right: auto; }
+
     .scene-cap { max-width: 70ch; margin-top: 12px; }
     .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
     .tool { display: block; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); text-decoration: none; }
@@ -313,6 +320,7 @@
 
   <main id="main" class="wrap home">
     <section class="hero" aria-labelledby="title">
+      <div class="hero-copy">
       <p class="eyebrow">Development credentials on your Mac</p>
       <h1 id="title">Stop copying secrets between your projects, Macs and agents.</h1>
       <p class="lede">Latchkey keeps API keys, database URLs and key files in Apple Keychain. Import the env files you already have, keep stable <code>latchkey://</code> references in their place, and let the commands and agents you authorize use the values without anyone copying them around.</p>
@@ -324,7 +332,9 @@
       <ul class="facts-row" aria-label="At a glance">
         <li>macOS 15 or later</li><li>iCloud Keychain</li><li>CLI and MCP</li><li>No account or server</li>
       </ul>
+      </div>
 
+      <div class="hero-art">
       <div class="scene-wrap hero-scene" data-scene="flow" style="--w:600;--h:340" aria-hidden="true">
         <div class="canvas" id="flow">
           <div class="mw ed" id="flow-env" style="left:12px;top:16px;width:400px;height:142px">
@@ -339,11 +349,12 @@
             <div class="mw-bar"><i></i><i></i><i></i><span>Terminal — ~/Projects/shop</span></div>
 <pre id="flow-tty"><span class="l"><span class="p">~/Projects/shop $</span> lk run --env-file .env.local -- npm run dev</span><span class="l"><span class="d">&gt; shop@1.0.0 dev</span></span><span class="l"><span class="d">&gt; next dev</span></span><span class="l"></span><span class="l">  ▲ Next.js</span><span class="l">  - Local:   http://localhost:3000</span><span class="l">  <span class="ok">✓ Ready</span></span></pre>
           </div>
-          <span class="chip ref">shop/development/DATABASE_URL</span><span class="chip ref">shop/development/STRIPE_KEY</span><span class="chip ref">OPENAI_API_KEY</span>
+          <span class="chip ref">DATABASE_URL</span><span class="chip ref">STRIPE_KEY</span><span class="chip ref">OPENAI_API_KEY</span>
           <span class="chip val">••••••••</span><span class="chip val">••••••••</span><span class="chip val">••••••••</span>
         </div>
       </div>
       <p class="fine scene-cap">The file keeps references. <code>lk run</code> asks Latchkey for the values, you approve on your Mac (or a grant you made covers it), and the command starts with them in its environment. A value it prints shows up as <code>&lt;concealed by latchkey&gt;</code>.</p>
+      </div>
     </section>
 
     <section id="how" aria-labelledby="how-title">

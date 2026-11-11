@@ -108,7 +108,7 @@
       label.textContent = "Reading references";
       for (var i = 0; i < lines.length; i++) {
         s.on(lines[i], "hl");
-        s.fly(chips[i], [64 + i * 12, 52 + i * 19], [432, 92 + i * 3], 700);
+        s.fly(chips[i], [64 + i * 12, 52 + i * 19], [446, 76 + i * 22], 700);
         await s.wait(240);
       }
       await s.wait(700);
@@ -117,7 +117,7 @@
       await s.wait(1500);
       st.className = "state done"; label.textContent = "Released to npm run dev";
       await s.wait(500);
-      for (var j = 0; j < vals.length; j++) { s.fly(vals[j], [440, 96], [80 + j * 96, 286], 760); await s.wait(140); }
+      for (var j = 0; j < vals.length; j++) { s.fly(vals[j], [470, 98], [80 + j * 96, 286], 760); await s.wait(140); }
       await s.wait(800);
       vals.forEach(s.land);
       lines.forEach(function (l) { s.on(l, "hl", false); });
