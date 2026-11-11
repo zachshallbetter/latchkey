@@ -10,8 +10,8 @@
   --accent: #0a63d1;
   --accent-ink: #ffffff;
   --accent-soft: #e4effc;
-  --ok: #1f7a4a;
-  --warn: #a35a00;
+  --ok: #176a3f;
+  --warn: #8c4c00;
   --code-bg: #f1f4f8;
   --code-fig: #e7ecf2;
   --code-ink: #1d2733;
@@ -22,7 +22,8 @@
   --t-val: #1d6b43;
   --t-dim: #5a6472;
   /* Behind a scene's windows: a little lighter than the page in dark mode, a little deeper in light. */
-  --scene-wash: #e3e8ef;
+  --scene-wash: #d9e1eb;
+  --card-shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 6px 16px rgba(16, 24, 40, .04);
   --tty-bg: #0f1318;
   --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   --display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
@@ -36,7 +37,7 @@
     --code-bg: #10151b; --code-fig: #19202a; --code-ink: #dbe3ec;
     --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 16px 40px rgba(0, 0, 0, .45);
     --t-act: #6cb2ff; --t-flag: #c9a2ff; --t-val: #7fd6a4; --t-dim: #98a2b0;
-    --scene-wash: #26303c; --tty-bg: #12171e;
+    --scene-wash: #26303c; --tty-bg: #12171e; --card-shadow: none;
     color-scheme: dark;
   }
 }
@@ -46,7 +47,7 @@
   --code-bg: #10151b; --code-fig: #19202a; --code-ink: #dbe3ec;
   --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 16px 40px rgba(0, 0, 0, .45);
   --t-act: #6cb2ff; --t-flag: #c9a2ff; --t-val: #7fd6a4; --t-dim: #98a2b0;
-  --scene-wash: #26303c; --tty-bg: #12171e;
+  --scene-wash: #26303c; --tty-bg: #12171e; --card-shadow: none;
   color-scheme: dark;
 }
 
@@ -337,7 +338,7 @@ figure.code + .more { margin-top: 12px; }
 .mw.web .page h5 { margin: 0 0 4px; font: 700 15px/1.2 var(--display); }
 .mw.web .page p { margin: 0 0 10px; color: var(--muted); font-size: 12px; }
 .mw.web .keybox { position: relative; display: flex; align-items: center; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg-2); font: 500 11.5px/1.3 var(--mono); }
-.mw.web .save { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 999px; background: #1f7cf0; color: #fff; font: 600 10.5px/1.4 var(--sans); transition: opacity .3s; }
+.mw.web .save { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 999px; background: #0a63d1; color: #fff; font: 600 10.5px/1.4 var(--sans); transition: opacity .3s; }
 .mw.web .save svg { width: 9px; height: 11px; fill: #fff; }
 
 /* The Latchkey window drawn inside a scene, after the app's own layout: a sidebar of filter tiles and projects,
@@ -529,7 +530,7 @@ figure.code + .more { margin-top: 12px; }
 .card-grid.g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .card-grid.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .card-grid.g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.card { display: flex; flex-direction: column; gap: 6px; min-width: 0; margin: 0; padding: var(--card-pad); border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); color: var(--ink); }
+.card { display: flex; flex-direction: column; gap: 6px; min-width: 0; margin: 0; padding: var(--card-pad); border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); color: var(--ink); box-shadow: var(--card-shadow); }
 .card > b, .card > h3 { margin: 0; font: 650 17.5px/1.3 var(--display); letter-spacing: -0.01em; }
 .card > span, .card > p { margin: 0; color: var(--muted); font-size: 15.5px; }
 .card .step, .card > span.step { margin-bottom: 6px; color: var(--accent-ink); font-size: 14px; }
@@ -541,7 +542,7 @@ a.card > b::after { content: " →"; color: var(--accent); }
 @media (max-width: 760px) { .card-grid.g2, .card-grid.g3, .card-grid.g4 { grid-template-columns: minmax(0, 1fr); } }
 
 /* A band: a wide panel holding copy beside an example. */
-.band { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 32px 56px; align-items: center; padding: 36px; border: 1px solid var(--line); border-radius: var(--band-radius); background: var(--surface); }
+.band { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 32px 56px; align-items: center; padding: 36px; border: 1px solid var(--line); border-radius: var(--band-radius); background: var(--surface); box-shadow: var(--card-shadow); }
 .band h2 { margin: 0 0 12px; }
 .band-copy > p:not(.eyebrow) { color: var(--muted); }
 .band-art { margin: 0; min-width: 0; }
@@ -559,3 +560,6 @@ a.card > b::after { content: " →"; color: var(--accent); }
 /* A calm note, for status that isn't a warning (the development preview, say). */
 .note-card { display: flex; gap: 12px; align-items: flex-start; padding: 16px 18px; border-radius: 14px; background: var(--bg-2); border: 1px solid var(--line); color: var(--muted); font-size: 15.5px; }
 .note-card .avail { flex: none; }
+
+/* Linked sections land below the sticky header. */
+main [id] { scroll-margin-top: 84px; }

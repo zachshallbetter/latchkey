@@ -26,7 +26,7 @@
     .promise > span { font-size: 22px; color: var(--ok); line-height: 1.2; }
     .promise span { color: var(--muted); }
     .plans { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 48px; }
-    .plan { display: flex; flex-direction: column; padding: var(--card-pad); border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); min-width: 0; }
+    .plan { display: flex; flex-direction: column; padding: var(--card-pad); border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); min-width: 0;  box-shadow: var(--card-shadow);}
     .plan.feature-plan { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
     .plan .tier { font: 650 12.5px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
     .plan h2 { margin: 10px 0 2px; font-size: 22px; }
@@ -39,7 +39,7 @@
     .plan .cta { margin-top: auto; display: grid; gap: 8px; }
     .plan .cta .fine { margin: 0; font-size: 13px; }
     .button[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
-    .grid-table { border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); padding: 4px 6px; }
+    .grid-table { border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); padding: 4px 6px;  box-shadow: var(--card-shadow);}
     .grid-table table { width: 100%; border-collapse: collapse; font-size: 15px; }
     .grid-table th, .grid-table td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: center; }
     .grid-table th:first-child, .grid-table td:first-child { text-align: left; }
