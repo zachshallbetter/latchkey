@@ -142,6 +142,8 @@ struct ImportDraft: Identifiable {
 final class AppModel {
     let store: KeychainStore
     let broker: Broker
+    /// Looks again while a window is open, for changes made on your other Macs.
+    @ObservationIgnored private var syncTimer: Timer?
     var items: [SecretInfo] = []
     var log: [Broker.LogEntry] = []
     var grants: [Grant] = []
@@ -213,6 +215,17 @@ final class AppModel {
         }
         #endif
         broker.onChange = { [weak self] in Task { @MainActor in self?.refresh() } }
+        // Changes made on your other Macs arrive through iCloud Keychain without any notice to the app, so look again
+        // whenever Latchkey comes to the front, and every 30 seconds while one of its windows is open.
+        NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.refresh() }
+        }
+        syncTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard NSApp.windows.contains(where: { $0.isVisible && !($0 is NSPanel) }) else { return }
+                self?.refresh()
+            }
+        }
         let broker = broker
         Thread.detachNewThread { [weak self] in
             do { try broker.serve() } catch {
@@ -236,7 +249,8 @@ final class AppModel {
         if Snapshot.usesSample { return }   // keep the example data; never load real items into a sample drawing
         #endif
         do {
-            items = try store.list()
+            let listed = try store.list()
+            if listed != items { items = listed }   // unchanged: leave the list (and what's being edited) alone
             problem = problem?.hasPrefix("keychain") == true ? nil : problem
         } catch { problem = "\(error)" }
         log = Broker.readLog(limit: 300).reversed()
