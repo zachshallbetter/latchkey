@@ -39,6 +39,8 @@ targets:
     info:
       path: Latchkey/Info.plist
       properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleDisplayName: Latchkey
         LSApplicationCategoryType: public.app-category.developer-tools
         # One Latchkey at a time: two would compete for the broker socket and the approval panel.
@@ -75,6 +77,8 @@ targets:
     info:
       path: Safari/Info.plist
       properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleDisplayName: Latchkey
         NSHumanReadableCopyright: ""
         LatchkeyAppGroup: $(TeamIdentifierPrefix)io.snackstud.latchkey
