@@ -23,9 +23,10 @@ public struct Version: Codable, Identifiable, Hashable, Sendable {
     public var note: String
     public var service: String?
     public var usedIn: [String]?
+    public var fillSites: [String]?
 
     public init(id: String, item: String, savedAt: Date, reason: Reason, by: String, kind: ItemKind, agentSafe: Bool,
-                note: String, service: String?, usedIn: [String]?) {
+                note: String, service: String?, usedIn: [String]?, fillSites: [String]? = nil) {
         self.id = id
         self.item = item
         self.savedAt = savedAt
@@ -36,6 +37,7 @@ public struct Version: Codable, Identifiable, Hashable, Sendable {
         self.note = note
         self.service = service
         self.usedIn = usedIn
+        self.fillSites = fillSites
     }
 
     static func makeID(item: String, at date: Date) -> String {
@@ -62,7 +64,8 @@ extension VersionStore {
             at = at.addingTimeInterval(0.001)
         }
         let v = Version(id: Version.makeID(item: info.name, at: at), item: info.name, savedAt: at, reason: reason, by: by,
-                        kind: info.kind, agentSafe: info.agentSafe, note: info.note, service: info.service, usedIn: info.usedIn)
+                        kind: info.kind, agentSafe: info.agentSafe, note: info.note, service: info.service, usedIn: info.usedIn,
+                        fillSites: info.fillSites)
         try add(v, value: value)
         return v
     }

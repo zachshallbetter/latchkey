@@ -26,14 +26,20 @@ public protocol SecretStore: AnyObject, Sendable {
     func values(_ names: [String]) throws -> [String: String]
     /// Creates or updates. A nil `value` keeps the stored value (and fails if there is none).
     /// Nil metadata keeps what is stored, or the default for a new item. `usedIn` paths are added to the
-    /// item's list, never replace it. An empty `service` clears it.
+    /// item's list, never replace it. An empty `service` clears it; so does an empty `fillSites`.
     func save(name: String, value: String?, kind: ItemKind?, agentSafe: Bool?, note: String?, usedIn: [String]?,
-              service: String?) throws
+              service: String?, fillSites: [String]?) throws
     /// True if something was removed.
     func remove(_ name: String) throws -> Bool
 }
 
 extension SecretStore {
+    /// Keeps the item's fill sites.
+    public func save(name: String, value: String?, kind: ItemKind?, agentSafe: Bool?, note: String?, usedIn: [String]?,
+                     service: String?) throws {
+        try save(name: name, value: value, kind: kind, agentSafe: agentSafe, note: note, usedIn: usedIn, service: service, fillSites: nil)
+    }
+
     public func save(name: String, value: String?, kind: ItemKind?, agentSafe: Bool?, note: String?) throws {
         try save(name: name, value: value, kind: kind, agentSafe: agentSafe, note: note, usedIn: nil, service: nil)
     }
@@ -95,6 +101,7 @@ public final class KeychainStore: SecretStore, @unchecked Sendable {
         var agentSafe: Bool
         var usedIn: [String]?
         var service: String?
+        var fillSites: [String]?
     }
 
     func query(_ name: String? = nil, service: String = KeychainStore.service) -> [String: Any] {
@@ -129,7 +136,8 @@ public final class KeychainStore: SecretStore, @unchecked Sendable {
                               note: row[kSecAttrComment as String] as? String ?? "",
                               updatedAt: row[kSecAttrModificationDate as String] as? Date ?? .distantPast,
                               usedIn: meta?.usedIn,
-                              service: meta?.service)
+                              service: meta?.service,
+                              fillSites: meta?.fillSites)
         }.sorted { $0.name < $1.name }
     }
 
@@ -149,14 +157,15 @@ public final class KeychainStore: SecretStore, @unchecked Sendable {
     }
 
     public func save(name: String, value: String?, kind: ItemKind?, agentSafe: Bool?, note: String?, usedIn: [String]?,
-                     service: String?) throws {
+                     service: String?, fillSites: [String]?) throws {
         guard Wire.isValidName(name) else { throw StoreError.badName(name) }
         let existing = try list().first { $0.name == name }
         if existing == nil && value == nil { throw StoreError.notFound(name) }
         let paths = StoreSupport.merge(existing?.usedIn, usedIn)
         let meta = Meta(kind: kind ?? existing?.kind ?? .token, agentSafe: agentSafe ?? existing?.agentSafe ?? false,
                         usedIn: paths.isEmpty ? nil : paths,
-                        service: StoreSupport.service(service, existing?.service))
+                        service: StoreSupport.service(service, existing?.service),
+                        fillSites: StoreSupport.fillSites(fillSites, existing?.fillSites))
         var attrs: [String: Any] = [
             kSecAttrGeneric as String: try JSONEncoder().encode(meta),
             kSecAttrComment as String: note ?? existing?.note ?? "",
@@ -209,7 +218,7 @@ public final class MemoryStore: SecretStore, @unchecked Sendable {
     }
 
     public func save(name: String, value: String?, kind: ItemKind?, agentSafe: Bool?, note: String?, usedIn: [String]?,
-                     service: String?) throws {
+                     service: String?, fillSites: [String]?) throws {
         guard Wire.isValidName(name) else { throw StoreError.badName(name) }
         try lock.withLock {
             let old = items[name]
@@ -219,7 +228,8 @@ public final class MemoryStore: SecretStore, @unchecked Sendable {
                                   agentSafe: agentSafe ?? old?.info.agentSafe ?? false,
                                   note: note ?? old?.info.note ?? "", updatedAt: Date(),
                                   usedIn: paths.isEmpty ? nil : paths,
-                                  service: StoreSupport.service(service, old?.info.service))
+                                  service: StoreSupport.service(service, old?.info.service),
+                                  fillSites: StoreSupport.fillSites(fillSites, old?.info.fillSites))
             items[name] = (info, v)
         }
     }
@@ -230,6 +240,12 @@ public final class MemoryStore: SecretStore, @unchecked Sendable {
 }
 
 enum StoreSupport {
+    /// Nil keeps the stored sites; an empty list clears them (back to the default).
+    static func fillSites(_ new: [String]?, _ old: [String]?) -> [String]? {
+        guard let new else { return old }
+        return new.isEmpty ? nil : new
+    }
+
     /// Nil keeps the stored service; an empty string clears it.
     static func service(_ new: String?, _ old: String?) -> String? {
         guard let new else { return old }

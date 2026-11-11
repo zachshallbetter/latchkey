@@ -499,6 +499,11 @@ final class AppModel {
 
     func grants(for name: String) -> [Grant] { grants.filter { $0.names.contains { Grant.entry($0, matches: name) } } }
 
+    /// The only sites Latchkey for Safari may fill this item on; an empty list goes back to the default.
+    func setFillSites(_ name: String, _ sites: [String]) async -> String? {
+        await run(Request(op: "update", names: [name], fillSites: sites))
+    }
+
     func setService(_ name: String, _ service: String) async -> String? {
         await run(Request(op: "set", names: [name], service: service))
     }

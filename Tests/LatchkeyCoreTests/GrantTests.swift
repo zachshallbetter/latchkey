@@ -227,6 +227,47 @@ final class BrokerGrantTests: XCTestCase {
         XCTAssertNil(denied.values)
     }
 
+    func testAnItemsOwnFillSitesReplaceTheDefault() throws {
+        XCTAssertEqual(try Services.fillSites([" https://App.Netlify.com/teams ", "vercel.com", "vercel.com", "*.example.org", ""]).get(),
+                       ["app.netlify.com", "example.org", "vercel.com"])
+        for bad in ["localhost", "vercel.com:8443", "user@vercel.com", "not a site", "-x.com", "http://"] {
+            XCTAssertThrowsError(try Services.fillSites([bad]).get(), bad)
+        }
+        XCTAssertThrowsError(try Services.fillSites((0..<21).map { "s\($0).example.com" }).get())
+
+        let recorder = RecordingApprover()
+        let store = MemoryStore()
+        try store.save(name: "STRIPE_KEY", value: "stripe-value-123", kind: .token, agentSafe: false, note: "", usedIn: nil, service: "Stripe")
+        let b = Broker(store: store, approver: recorder, logURL: nil)
+        var ext = PeerInfo(pid: 1, path: "/x", cwd: "/", chain: [])
+        ext.isSafariExtension = true
+        let gate = Broker.Gate.safariExtension
+        func fills(_ page: String) -> Bool { b.handle(Request(op: "fill", names: ["STRIPE_KEY"], page: page), peer: ext, gate: gate).ok }
+
+        XCTAssertTrue(fills("https://vercel.com"), "default: a deployment platform")
+        // Its own list: only those sites and their subdomains, not the defaults.
+        let set = b.handle(Request(op: "update", names: ["STRIPE_KEY"], fillSites: ["Example.org"]), peer: tool(["lk", "update"]))
+        XCTAssertTrue(set.ok, set.error ?? "")
+        XCTAssertEqual(try store.info("STRIPE_KEY")?.fillSites, ["example.org"])
+        XCTAssertTrue(recorder.requests.last?.reason.contains("let Safari fill only on example.org") ?? false)
+        XCTAssertTrue(fills("https://example.org"))
+        XCTAssertTrue(fills("https://app.example.org"))
+        XCTAssertFalse(fills("https://vercel.com"))
+        XCTAssertFalse(fills("https://dashboard.stripe.com"))
+        XCTAssertFalse(fills("http://example.org"))
+        // Other changes keep the list; moving keeps it; an empty list goes back to the default.
+        _ = b.handle(Request(op: "update", names: ["STRIPE_KEY"], note: "n"), peer: tool(["lk", "update"]))
+        XCTAssertEqual(try store.info("STRIPE_KEY")?.fillSites, ["example.org"])
+        XCTAssertFalse(b.handle(Request(op: "update", names: ["STRIPE_KEY"], fillSites: ["not a site"]), peer: tool(["lk", "update"])).ok)
+        XCTAssertTrue(b.handle(Request(op: "move", names: ["STRIPE_KEY"], project: "shop", environment: "production"), peer: tool(["lk", "move"])).ok)
+        XCTAssertEqual(try store.info("shop/production/STRIPE_KEY")?.fillSites, ["example.org"])
+        _ = b.handle(Request(op: "update", names: ["shop/production/STRIPE_KEY"], fillSites: []), peer: tool(["lk", "update"]))
+        XCTAssertNil(try store.info("shop/production/STRIPE_KEY")?.fillSites)
+        XCTAssertTrue(b.handle(Request(op: "fill", names: ["shop/production/STRIPE_KEY"], page: "https://vercel.com"), peer: ext, gate: gate).ok)
+        // The extension can't change where an item may be filled.
+        XCTAssertFalse(b.handle(Request(op: "update", names: ["shop/production/STRIPE_KEY"], fillSites: ["evil.example"]), peer: ext, gate: gate).ok)
+    }
+
     func testApprovalCanGrantForTheSessionOrTheCommand() throws {
         let store = MemoryStore()
         try store.save(name: "DB", value: "db-value-123", kind: .password, agentSafe: false, note: "")

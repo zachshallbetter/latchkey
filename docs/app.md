@@ -124,8 +124,10 @@ makes a plain (unmasked) item.
   that may be filled on this site, most like the field first; choose one and approve with Touch ID, and the value goes
   into that field. An item may be filled only on its service's own site (a Stripe key on stripe.com) and on the sites
   where deployments keep environment variables and secrets: Vercel, GitHub, Railway, Fly, Netlify, Render, Cloudflare,
-  Supabase, Heroku, and the AWS and Google Cloud consoles. The app decides this, over https only, and asks every time;
-  no grant or agent-safe setting stands in. Fill never reaches a frame inside the page.
+  Supabase, Heroku, and the AWS and Google Cloud consoles. To choose instead, set **Fill in Safari on** in the item's
+  details (host names separated by commas, each covering its subdomains): the item is then filled only on those
+  sites. Leave it empty for the default. The app decides this, over https only, and asks every time; no grant or
+  agent-safe setting stands in. Fill never reaches a frame inside the page.
 
 The app asks you to approve, showing the page's site, and the item's note says where it came from. Saving over an
 existing item keeps the old value in its history. After a save, the panel shows the reference to use, ready to copy.

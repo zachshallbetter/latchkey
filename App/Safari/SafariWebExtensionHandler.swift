@@ -56,7 +56,7 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         case "fillable":
             // Items the app would let this page have: names, services and kinds, never values. The app checks again on fill.
             guard let page, let r = send(Request(op: "list")), r.ok else { return unreachable() }
-            let items = (r.secrets ?? []).filter { Services.mayFill(origin: page, service: $0.service) }
+            let items = (r.secrets ?? []).filter { Services.mayFill(origin: page, item: $0) }
             return ["ok": true, "host": Services.fillHost(page) ?? "",
                     "items": items.map { ["id": $0.name, "service": $0.service ?? "", "kind": $0.kind.rawValue] }]
 

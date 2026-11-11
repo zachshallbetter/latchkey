@@ -7,6 +7,7 @@ struct ItemDetail: View {
     let item: SecretInfo
     @State private var noteDraft = ""
     @State private var serviceDraft = ""
+    @State private var fillSitesDraft = ""
     @State private var versions: [Version] = []
     @State private var confirmingForget = false
     @State private var changingValue = false
@@ -94,6 +95,10 @@ struct ItemDetail: View {
                 }
                 TextField("Note", text: $noteDraft, prompt: Text("What it's for, where it came from"))
                     .onSubmit { saveNote() }
+                TextField("Fill in Safari on", text: $fillSitesDraft,
+                          prompt: Text("Its service's site and deployment platforms"))
+                    .onSubmit { saveFillSites() }
+                    .help("Sites Latchkey for Safari may fill this item on, separated by commas, such as vercel.com. Each covers its subdomains. Leave empty for its service's own site and the deployment platforms (Vercel, GitHub, Railway, Fly and others).")
             } footer: {
                 Text(item.kind.isSecret ? "Masked in command output." : "Plain values are not masked in output.")
                     .font(.caption).foregroundStyle(.secondary)
@@ -222,8 +227,9 @@ struct ItemDetail: View {
         }
         .formStyle(.grouped)
         .disabled(working)
-        .onAppear { noteDraft = item.note; serviceDraft = item.service ?? "" }
+        .onAppear { noteDraft = item.note; serviceDraft = item.service ?? ""; fillSitesDraft = (item.fillSites ?? []).joined(separator: ", ") }
         .onChange(of: item.service) { _, s in serviceDraft = s ?? "" }
+        .onChange(of: item.fillSites) { _, s in fillSitesDraft = (s ?? []).joined(separator: ", ") }
         .task(id: item.updatedAt) { versions = model.history(for: item.name) }
         .confirmationDialog("Forget the history of \(item.ref.name)?", isPresented: $confirmingForget) {
             Button("Forget \(versions.count) Earlier Value\(versions.count == 1 ? "" : "s")", role: .destructive) {
@@ -245,6 +251,17 @@ struct ItemDetail: View {
                 Text("It moves to Recently Deleted\(model.synced ? " on all your Macs" : "") and can be restored for \(Int(Versions.deletedFor / 86400)) days. Until then these files stop working: \(files.map(Broker.tilde).joined(separator: ", ")).")
             } else {
                 Text("It moves to Recently Deleted\(model.synced ? " on all your Macs" : "") and can be restored for \(Int(Versions.deletedFor / 86400)) days. Until then, files that refer to latchkey://\(item.name) stop working.")
+            }
+        }
+    }
+
+    private func saveFillSites() {
+        let sites = fillSitesDraft.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        guard sites != (item.fillSites ?? []) else { return }
+        act {
+            if let err = await model.setFillSites(item.name, sites) {
+                model.notice = err
+                fillSitesDraft = (item.fillSites ?? []).joined(separator: ", ")
             }
         }
     }

@@ -22,7 +22,7 @@ public enum StoreMigration {
                     continue
                 }
                 try new.save(name: info.name, value: value, kind: info.kind, agentSafe: info.agentSafe, note: info.note,
-                             usedIn: info.usedIn, service: info.service)
+                             usedIn: info.usedIn, service: info.service, fillSites: info.fillSites)
                 guard try new.values([info.name])[info.name] == value else {
                     result.failed[info.name] = "the copy didn't read back"
                     continue

@@ -82,9 +82,12 @@ the same as JSON. Never values.
 Adds or changes an item. The value is read from standard input, or prompted for (hidden) in a terminal. Kinds:
 `token`, `password`, `key`, `value`. Asks for approval. Replacing a value keeps the old one as a version.
 
-### `latchkey update IDS|PATTERN... [--agent-safe yes|no] [--kind KIND] [--service NAME] [--note TEXT]`
+### `latchkey update IDS|PATTERN... [--agent-safe yes|no] [--kind KIND] [--service NAME] [--note TEXT] [--fill-sites HOSTS]`
 
 Changes settings on many items with one approval. Values are untouched. `--service ""` clears the service.
+`--fill-sites vercel.com,app.netlify.com` sets the only sites Latchkey for Safari may fill the items on (each covers
+its subdomains; up to 20); `--fill-sites ""` goes back to the default, the item's service's own site and the
+deployment platforms.
 
 ### `latchkey rm IDS|PATTERN...`
 

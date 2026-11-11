@@ -30,6 +30,7 @@ Files refer to them as latchkey://ID.
   latchkey rm ID[,ID...]|PATTERN...
       Delete items with one approval. PATTERN is PROJECT/* or PROJECT/ENV/*.
   latchkey update ID[,ID...]|PATTERN... [--agent-safe yes|no] [--kind KIND] [--service NAME] [--note TEXT]
+                                          [--fill-sites HOST,HOST... | --fill-sites ""]
       Change settings on many items with one approval. Values are untouched.
   latchkey import FILE... [--batch LIST] [--scan DIR] [--project P] [--env E | --shared] [--share-identical]
                   [--rewrite] [--replace] [--dry-run] [--only KEY,...] [--kind KIND | --kind KEY=KIND]...
@@ -992,7 +993,7 @@ case "rm":
 
 case "update":
     var targets: [String] = []
-    var agentSafe: Bool?, kind: ItemKind?, service: String?, note: String?
+    var agentSafe: Bool?, kind: ItemKind?, service: String?, note: String?, fillSites: [String]?
     var rest = args
     while !rest.isEmpty {
         let a = rest.removeFirst()
@@ -1009,6 +1010,9 @@ case "update":
         case "--note":
             guard !rest.isEmpty else { fail("--note takes text", code: 64) }
             note = rest.removeFirst()
+        case "--fill-sites":
+            guard !rest.isEmpty else { fail("--fill-sites takes host names separated by commas (\"\" goes back to the default)", code: 64) }
+            fillSites = rest.removeFirst().split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         default:
             if a.hasPrefix("-") { fail("unknown option \(a)", code: 64) }
             targets.append(a)
@@ -1016,7 +1020,7 @@ case "update":
     }
     let ids = expandIDs(targets)
     let r = send(Request(op: "update", names: ids, kind: kind, agentSafe: agentSafe, note: note,
-                         service: service))
+                         service: service, fillSites: fillSites))
     if let m = r.missing, !m.isEmpty { fail("no item named \(m.joined(separator: ", "))", code: 66) }
     print("updated \(ids.count) item\(ids.count == 1 ? "" : "s")")
 

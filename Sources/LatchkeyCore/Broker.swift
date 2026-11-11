@@ -213,15 +213,17 @@ public final class Broker: @unchecked Sendable {
     }
 
     /// Latchkey for Safari filling one item into a field on the page you're on. Only that item, only on a site it may
-    /// go to (`Services.mayFill`, decided here, not by the extension), and only with your approval every time: no
+    /// go to (the item's own fill sites, else `Services.mayFill`'s default; decided here, not by the extension), and
+    /// only with your approval every time: no
     /// grant, recent approval or agent-safe setting stands in, because the value leaves Latchkey for a web page.
     func fill(_ req: Request, peer: PeerInfo) throws -> Response {
         guard peer.isSafariExtension else { return Response(ok: false, error: "fill is only for Latchkey for Safari") }
         guard let name = req.names?.first, req.names?.count == 1 else { return Response(ok: false, error: "fill takes one name") }
         guard let info = try store.info(name) else { return Response(ok: true, missing: [name]) }
-        guard let page = req.page, let host = Services.fillHost(page), Services.mayFill(origin: page, service: info.service) else {
+        guard let page = req.page, let host = Services.fillHost(page), Services.mayFill(origin: page, item: info) else {
             log("fill", [name], "refused (not a site it may be filled on: \(req.page ?? "no page"))", peer, req)
-            return Response(ok: false, error: "\(name) can't be filled on this site. Latchkey fills an item only on its service's own site and where deployments keep their environment variables.")
+            let allowed = info.fillSites.map { "only on \($0.joined(separator: ", "))" } ?? "only on its service's own site and where deployments keep their environment variables"
+            return Response(ok: false, error: "\(name) can't be filled on this site. It may be filled \(allowed); change that in Latchkey.")
         }
         guard ask(.read, [name], peer, req, "fill \(name) into a field on \(host)").allowed else {
             log("fill", [name], "denied", peer, req)
@@ -262,12 +264,19 @@ public final class Broker: @unchecked Sendable {
         return Response(ok: true)
     }
 
-    /// Changes agent-safe, kind, service or note on many items with one approval. Values are untouched.
+    /// Changes agent-safe, kind, service, note or fill sites on many items with one approval. Values are untouched.
     func update(_ req: Request, peer: PeerInfo) throws -> Response {
         let names = Array(Set(req.names ?? [])).sorted()
         guard !names.isEmpty else { return Response(ok: false, error: "no names given") }
-        guard req.agentSafe != nil || req.kind != nil || req.service != nil || req.note != nil else {
-            return Response(ok: false, error: "nothing to change: give agent-safe, kind, service or note")
+        guard req.agentSafe != nil || req.kind != nil || req.service != nil || req.note != nil || req.fillSites != nil else {
+            return Response(ok: false, error: "nothing to change: give agent-safe, kind, service, note or fill sites")
+        }
+        var sites: [String]?
+        if let given = req.fillSites {
+            switch Services.fillSites(given) {
+            case .success(let s): sites = s
+            case .failure(let e): return Response(ok: false, error: e.description)
+            }
         }
         let existing = Set(try store.list().map(\.name))
         let missing = names.filter { !existing.contains($0) }
@@ -277,6 +286,7 @@ public final class Broker: @unchecked Sendable {
         if let k = req.kind { changes.append("set the kind to \(k.label.lowercased()) for") }
         if let s = req.service { changes.append(s.isEmpty ? "clear the service of" : "set the service to \(s) for") }
         if req.note != nil { changes.append("change the note of") }
+        if let s = sites { changes.append(s.isEmpty ? "let Safari fill on the default sites" : "let Safari fill only on \(s.joined(separator: ", "))") }
         let reason = "\(changes.joined(separator: " and ")) \(names.count == 1 ? names[0] : Self.count(names)), asked by \(Self.who(peer))"
         guard ask(.change, names, peer, req, reason).allowed else {
             log("update", names, "denied", peer, req)
@@ -284,9 +294,9 @@ public final class Broker: @unchecked Sendable {
         }
         for name in names {
             try store.save(name: name, value: nil, kind: req.kind, agentSafe: req.agentSafe, note: req.note, usedIn: nil,
-                           service: req.service)
+                           service: req.service, fillSites: sites)
         }
-        log("update", names, "approved", peer, req)
+        log("update", names, sites.map { "approved (fill sites: \($0.isEmpty ? "default" : $0.joined(separator: ", ")))" } ?? "approved", peer, req)
         return Response(ok: true)
     }
 
@@ -424,7 +434,7 @@ public final class Broker: @unchecked Sendable {
             do {
                 guard let value = values[id] else { throw StoreError.notFound(id) }
                 try store.save(name: to, value: value, kind: info.kind, agentSafe: info.agentSafe, note: info.note,
-                               usedIn: info.usedIn, service: info.service ?? "")
+                               usedIn: info.usedIn, service: info.service ?? "", fillSites: info.fillSites ?? [])
                 _ = try store.remove(id)
                 try versions.rename(from: id, to: to)
                 done[id] = to
@@ -488,7 +498,7 @@ public final class Broker: @unchecked Sendable {
         }
         if exists { try keepCurrent(v.item, reason: .restored, by: Self.who(peer), unlessEqualTo: value) }
         try store.save(name: v.item, value: value, kind: v.kind, agentSafe: v.agentSafe, note: v.note, usedIn: v.usedIn,
-                       service: v.service ?? "")
+                       service: v.service ?? "", fillSites: v.fillSites ?? [])
         log("restore", [v.item], "approved (value from \(when))", peer, req)
         pruneVersions()
         return Response(ok: true)

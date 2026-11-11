@@ -113,7 +113,9 @@ The first release.
   attributes and listed in the toolbar panel.
 - Fill from Latchkey: a badge in a recognized field lists the items allowed on that site; choose one and approve with
   Touch ID to fill it. Items fill only on their service's own site and on deployment platforms, over https, in the
-  page itself (not frames), with approval every time. Certificates are offered as public items.
+  page itself (not frames), with approval every time.
+- Per-item fill sites: **Fill in Safari on** in an item's details, or `latchkey update --fill-sites`, limits an item to
+  the sites you list, in place of the default. The extension can't change it. Certificates are offered as public items.
 - When a page says it shows a new key only once, the save panel opens from its button without a click; saving still takes
   your press and Touch ID.
 

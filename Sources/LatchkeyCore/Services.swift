@@ -70,8 +70,16 @@ public enum Services {
         return host
     }
 
-    /// Whether Latchkey for Safari may fill an item from `service` into a page at `origin`: a deployment platform,
-    /// or the service's own site (the registrable part of its key page's host, such as stripe.com).
+    /// Whether Latchkey for Safari may fill this item into a page at `origin`. An item with its own fill sites goes
+    /// only to those (each covering its subdomains); otherwise to a deployment platform or its service's own site.
+    public static func mayFill(origin: String, item: SecretInfo) -> Bool {
+        guard let sites = item.fillSites, !sites.isEmpty else { return mayFill(origin: origin, service: item.service) }
+        guard let host = fillHost(origin) else { return false }
+        return sites.contains { host == $0 || host.hasSuffix("." + $0) }
+    }
+
+    /// The default: a deployment platform, or the service's own site (the registrable part of its key page's host,
+    /// such as stripe.com).
     public static func mayFill(origin: String, service: String?) -> Bool {
         guard let host = fillHost(origin) else { return false }
         func under(_ domain: String) -> Bool { host == domain || host.hasSuffix("." + domain) }
@@ -79,6 +87,30 @@ public enum Services {
         guard let service, let page = keyPages[service], let pageHost = URL(string: page)?.host?.lowercased() else { return false }
         let own = pageHost.split(separator: ".").suffix(2).joined(separator: ".")
         return under(own)
+    }
+
+    public struct FillSiteError: Error, CustomStringConvertible {
+        public var description: String
+    }
+
+    /// Fill sites as typed ("vercel.com", "https://app.netlify.com/teams"), as host names: lowercased, without scheme,
+    /// port or path, no repeats, sorted. At most 20. An empty list is valid: it means the default.
+    public static func fillSites(_ given: [String]) -> Result<[String], FillSiteError> {
+        var hosts: [String] = []
+        for raw in given {
+            var s = raw.trimmingCharacters(in: .whitespaces).lowercased()
+            if s.isEmpty { continue }
+            if let r = s.range(of: "://") { s = String(s[r.upperBound...]) }
+            s = String(s.prefix { $0 != "/" && $0 != "?" && $0 != "#" })
+            if s.hasPrefix("*.") { s.removeFirst(2) }
+            let label = "[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?"
+            guard s.range(of: "^\(label)(\\.\(label))+$", options: .regularExpression) != nil, !s.contains("@"), !s.contains(":") else {
+                return .failure(FillSiteError(description: "\(raw) isn't a site; give a host name such as vercel.com"))
+            }
+            if !hosts.contains(s) { hosts.append(s) }
+        }
+        guard hosts.count <= 20 else { return .failure(FillSiteError(description: "at most 20 fill sites per item")) }
+        return .success(hosts.sorted())
     }
 
     public static func guess(key: String, value: String) -> String? {

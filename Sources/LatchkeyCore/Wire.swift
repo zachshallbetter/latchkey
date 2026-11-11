@@ -97,10 +97,13 @@ public struct SecretInfo: Codable, Identifiable, Hashable, Sendable {
     public var usedIn: [String]?
     /// The service that issued it ("Stripe", "Neon"), set by hand or guessed on import.
     public var service: String?
+    /// The only sites Latchkey for Safari may fill it on (host names). Nil: its service's own site and the deployment
+    /// platforms (see `Services.mayFill`).
+    public var fillSites: [String]?
     public var id: String { name }
 
     public init(name: String, kind: ItemKind = .token, agentSafe: Bool, note: String, updatedAt: Date,
-                usedIn: [String]? = nil, service: String? = nil) {
+                usedIn: [String]? = nil, service: String? = nil, fillSites: [String]? = nil) {
         self.name = name
         self.kind = kind
         self.agentSafe = agentSafe
@@ -108,6 +111,7 @@ public struct SecretInfo: Codable, Identifiable, Hashable, Sendable {
         self.updatedAt = updatedAt
         self.usedIn = usedIn
         self.service = service
+        self.fillSites = fillSites
     }
 
     public var ref: ItemID { ItemID(name) ?? ItemID(name: name) }
@@ -167,7 +171,8 @@ public struct Request: Codable, Sendable {
     public var remote: RemoteClaim?  // a request forwarded over SSH: what the tool on the other computer says it is
                                      // doing. Shown as unverified; it decides nothing.
     public var page: String?         // from the Safari extension: the site the value was found on, as Safari reported
-                                     // it to the extension. Shown in the approval; it decides nothing.
+                                     // it to the extension. Shown in the approval; for fill, the site it may go to.
+    public var fillSites: [String]?  // update: the only sites an item may be filled on; [] goes back to the default
 
     public init(op: String, names: [String]? = nil, value: String? = nil, kind: ItemKind? = nil,
                 agentSafe: Bool? = nil, note: String? = nil,
@@ -175,7 +180,8 @@ public struct Request: Codable, Sendable {
                 folder: String? = nil, duration: Double? = nil, project: String? = nil, environment: String? = nil,
                 service: String? = nil, version: String? = nil, target: RemoteTarget? = nil, link: String? = nil,
                 only: [String]? = nil, origin: String? = nil, session: Bool? = nil, commands: [[String]]? = nil,
-                uses: Int? = nil, intended: [String]? = nil, remote: RemoteClaim? = nil, page: String? = nil) {
+                uses: Int? = nil, intended: [String]? = nil, remote: RemoteClaim? = nil, page: String? = nil,
+                fillSites: [String]? = nil) {
         self.op = op
         self.names = names
         self.value = value
@@ -201,6 +207,7 @@ public struct Request: Codable, Sendable {
         self.intended = intended
         self.remote = remote
         self.page = page
+        self.fillSites = fillSites
     }
 }
 
