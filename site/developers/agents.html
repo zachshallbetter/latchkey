@@ -36,7 +36,7 @@
       <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><a href="index.html">Developers</a></li><li><span aria-current="page">Agents and MCP</span></li></ol></nav>
       <h1>Agents and MCP</h1>
       <p class="lede">Coding agents need your keys to run tests and dev servers. With Latchkey they get them through <code>latchkey run</code>: the values reach the command, not the agent&rsquo;s files, and you decide what an agent may use without asking.</p>
-      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#pattern">The pattern</a></li><li><a href="#instructions">Instructions for agents</a></li><li><a href="#exit-codes">Exit codes to act on</a></li><li><a href="#unattended">Leaving an agent working</a></li><li><a href="#proxy">Keys an agent can use but never read</a></li><li><a href="#after">After an agent session</a></li><li><a href="#ssh">From another Mac over SSH</a></li><li><a href="#mcp">Latchkey&rsquo;s MCP server</a></li><li><a href="#other-mcp">Other MCP servers</a></li><li><a href="#key-files">Key files</a></li><li><a href="#limits">What Latchkey can&rsquo;t do for you</a></li></ul></nav>
+      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#pattern">The pattern</a></li><li><a href="#skills">Skills and plugins</a></li><li><a href="#instructions">Instructions for agents</a></li><li><a href="#exit-codes">Exit codes to act on</a></li><li><a href="#unattended">Leaving an agent working</a></li><li><a href="#proxy">Keys an agent can use but never read</a></li><li><a href="#after">After an agent session</a></li><li><a href="#ssh">From another Mac over SSH</a></li><li><a href="#mcp">Latchkey&rsquo;s MCP server</a></li><li><a href="#other-mcp">Other MCP servers</a></li><li><a href="#key-files">Key files</a></li><li><a href="#limits">What Latchkey can&rsquo;t do for you</a></li></ul></nav>
 
 <h2 id="pattern">The pattern</h2>
 <ol>
@@ -46,8 +46,18 @@
 </ol>
 <p>Fresh git worktrees don&rsquo;t have your <code>.env</code> (it&rsquo;s gitignored). <code>latchkey run --env PROJECT/ENV</code> loads an environment&rsquo;s items directly, and a grant for a repository&rsquo;s folder covers its worktrees.</p>
 
+<h2 id="skills">Skills and plugins</h2>
+<p>The Latchkey skill tells an agent to run commands through <code>lk run</code>, check before a slow run, never print or write a value, put references in env files, give you the <code>lk set</code> command for a missing key, suggest a session grant when you step away, and stop on 77 or 66.</p>
+<ul>
+<li>Claude Code: the plugin installs the skill and registers <code>lk mcp</code> as an MCP server. <code>~/.local/bin</code> must be on the <code>PATH</code> Claude Code starts with.</li>
+<li>Codex CLI, Gemini CLI, Cursor and other tools that read the Agent Skills format: copy the <code>plugins/latchkey/skills/latchkey</code> folder into the skills folder your tool reads, such as <code>.agents/skills/</code> for Codex.</li>
+<li>Claude Desktop and other MCP clients without a shell: add <code>lk mcp</code> as a local MCP server. Chat apps that only reach MCP servers on the internet can&rsquo;t use Latchkey, since its MCP server runs on your Mac.</li>
+</ul>
+<figure class="code"><figcaption><span>Claude Code</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">/plugin install latchkey --marketplace zachshallbetter/latchkey</code></pre></figure>
+<p>The marketplace install works once the repository is public; until then, add the plugin from a local checkout with <code>/plugin marketplace add /path/to/latchkey</code>.</p>
+
 <h2 id="instructions">Instructions for agents</h2>
-<p>Put this in <code>CLAUDE.md</code>, <code>AGENTS.md</code> or your agent&rsquo;s equivalent:</p>
+<p>Without the skill, put this in <code>CLAUDE.md</code>, <code>AGENTS.md</code> or your agent&rsquo;s equivalent:</p>
 <figure class="code"><figcaption><span>CLAUDE.md / AGENTS.md</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="markdown">Secrets are in Latchkey. Env files hold latchkey:// references, not values.
 Run anything that needs secrets as
 `latchkey run --env-file .env.local -- &lt;command&gt;` or

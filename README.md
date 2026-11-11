@@ -36,6 +36,18 @@ latchkey run --env-file .env.local -- npm run dev
 
 Requires macOS 15 or later. See [Getting started](docs/getting-started.md) to install.
 
+## For coding agents
+
+Latchkey ships a skill that teaches an agent to run commands through `lk` and never handle values, and an MCP
+server (`lk mcp`). In Claude Code, the plugin installs both:
+
+```
+/plugin install latchkey --marketplace zachshallbetter/latchkey
+```
+
+Codex CLI, Gemini CLI, Cursor and other tools that read Agent Skills can use the skill folder directly:
+`plugins/latchkey/skills/latchkey`. See [Using with agents](docs/agents.md#skills-and-plugins).
+
 ## Documentation
 
 | | |
