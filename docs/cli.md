@@ -15,7 +15,7 @@ Starts COMMAND with every `latchkey://ID` in its environment replaced by the ite
 | Option | |
 |---|---|
 | `--env-file FILE` | Load `KEY=VALUE` lines from FILE first. Repeatable. |
-| `--env PROJECT/ENV` | Set each item in the environment as its name, plus the shared items that environment's files use (as recorded on import). Repeatable. |
+| `--env PROJECT/ENV` | Set the environment's variables from its record (see [Environments](#environments)). Without a record, or before `env migrate` has run, it also loads what the older lookup finds: each item in the environment as its name, plus the shared items in the same checkout as its files (as recorded on import), and says so. Repeatable. |
 | `--file NAME=ID` | Set NAME to the path of a temporary file holding the value. `NAME=latchkey-file://ID` in an env file does the same. The file is readable only by you and deleted when COMMAND exits. |
 | `--no-masking` | Don't hide values in COMMAND's output, and start it directly. |
 | `--proxy` | Keep `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` out of COMMAND entirely (see below). |
@@ -100,6 +100,55 @@ Moves items into a project's environment, or back to shared, with one approval. 
 them. References are then updated in the files the items were imported from, in each `--file`, and in the
 `--from-file` file. `--from-file FILE` moves every shared item FILE refers to. If any target ID already exists,
 nothing moves.
+
+## Environments
+
+Each environment has a record: its variables, each pointing at an item (shared items too) or holding a plain setting
+such as `PORT=3000`. Records sync with your items, so an environment works the same on every Mac, wherever its
+checkout is. Import, `set` and `mv` keep them current; an item's `usedIn` paths are kept only as history.
+
+### `latchkey env [list]`, `latchkey env show PROJECT/ENV [--json]`
+
+Records, and one record's variables. Unconfirmed variables are marked.
+
+### `latchkey env migrate [--dry-run]`
+
+Makes or completes records from what Latchkey already knows: each environment's own items, the shared items the older
+lookup would load, and, from the files its items were imported from (when they're on this Mac), the references and
+plain settings those files hold. It only adds: a stored variable is never changed, and running it again is safe.
+What it found through file locations is unconfirmed until `env confirm`. It reports instead of choosing: two
+sources that disagree, a reference to an item that doesn't exist, a file that isn't on this Mac, and a plain value
+that may be secret. Only numbers up to six digits and `true`/`false` are recorded from files without asking you.
+One approval.
+
+### `latchkey env set PROJECT/ENV NAME=latchkey://ID|NAME=VALUE...`, `env unset PROJECT/ENV NAME...`, `env confirm PROJECT/ENV [NAME...]`
+
+Change one record with one approval. `NAME=latchkey://ID` points a variable at an item (it must exist);
+`NAME=VALUE` is a plain setting. A plain setting that looks secret (by its name or value) is refused: save it as an
+item and point the variable at it. `env confirm` with no names confirms everything unconfirmed.
+
+### `latchkey export PROJECT/ENV [--out FILE] [--replace] [--values]`
+
+Writes the environment's env file from its record: `latchkey://` references and plain settings, sorted by name, to
+standard output or FILE.
+
+- An existing FILE is left alone, and the variables that would change are named, unless `--replace`. A symbolic link
+  or anything but a regular file is refused. The file is written beside its destination and renamed into place, so
+  it's never half-written.
+- `--values` writes the values themselves, in plain text. It needs `--out`, asks every time with the file named (no
+  grant, agent-safe setting or earlier approval stands in), writes the file readable only by you, and the access
+  log records which items went to which file, never the values. Agents can't use it.
+- Unconfirmed variables and references to missing items are noted on standard error.
+
+### `latchkey project [DIR]`, `project link [NAME] [DIR] [--remote R]`, `project unlink NAME [DIR]`, `project list`
+
+Which project a checkout is, from its Git remotes (read from git's config, normalized to `host/owner/repo`, never
+with credentials). `project` shows the matching project and its environments, and the `export` command to run.
+`link` remembers the checkout's `origin` (or `--remote R`, or its only remote) as project NAME, by default the folder's
+name; it asks. A remote belongs to one project. Import names items after a linked project when the checkout's origin
+matches exactly one, so a clone under another folder name keeps its project. A match only names the project: it
+never releases a value or widens a grant. A match through a remote other than `origin`, as a fork has, is flagged
+and never taken as the project.
 
 ## Importing
 

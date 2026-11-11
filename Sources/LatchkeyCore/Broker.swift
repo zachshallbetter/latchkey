@@ -14,6 +14,9 @@ public final class Broker: @unchecked Sendable {
     public let versions: VersionStore
     /// Environments linked to Vercel, GitHub Actions, Railway or Fly.
     public let remotes: RemoteStore
+    /// Environment and project records: which variables each environment has, and which remotes each project's
+    /// checkouts use.
+    public let records: EnvironmentStore
     let runner: RemoteRunner
     /// Pushes run only in the app, where the approval panel can confirm production. The window-less broker refuses them.
     public let allowsPush: Bool
@@ -30,8 +33,15 @@ public final class Broker: @unchecked Sendable {
     public init(store: SecretStore, approver: Approver,
                 logURL: URL? = Paths.accessLog, grants: GrantStore? = nil, versions: VersionStore? = nil,
                 remotes: RemoteStore? = nil, runner: RemoteRunner = ProcessRunner(), allowsPush: Bool = true,
-                logKeys: LogKeyStore? = nil) {
+                logKeys: LogKeyStore? = nil, records: EnvironmentStore? = nil) {
         self.store = store
+        if let records {
+            self.records = records
+        } else if logURL != nil, let keychain = store as? KeychainStore {
+            self.records = KeychainEnvironmentStore(mode: keychain.mode)
+        } else {
+            self.records = MemoryEnvironmentStore()
+        }
         self.runner = runner
         self.allowsPush = allowsPush
         if let remotes {
@@ -99,6 +109,15 @@ public final class Broker: @unchecked Sendable {
             case "unlink": return try unlink(req, peer: peer)
             case "remote-status": return try remoteStatus(req)
             case "push": return try push(req, peer: peer)
+            case "environments":
+                let scopes = Set(req.names ?? [])
+                return Response(ok: true, environments: try records.environments().filter { scopes.isEmpty || scopes.contains($0.scope) })
+            case "environment-add": return try addToEnvironments(req, peer: peer)
+            case "environment-set": return try setEnvironment(req, peer: peer)
+            case "export": return try export(req, peer: peer)
+            case "projects": return Response(ok: true, projects: try records.projects())
+            case "project-link": return try linkProject(req, peer: peer)
+            case "project-unlink": return try unlinkProject(req, peer: peer)
             default: return Response(ok: false, error: "unknown op \(req.op)")
             }
         } catch {
@@ -207,6 +226,7 @@ public final class Broker: @unchecked Sendable {
         if !isNew, let value = req.value { try keepCurrent(name, reason: .changed, by: Self.who(peer), unlessEqualTo: value) }
         try store.save(name: name, value: req.value, kind: req.kind, agentSafe: req.agentSafe, note: req.note, usedIn: nil,
                        service: req.service)
+        if isNew { try addToOwnEnvironment([name]) }
         pruneVersions()
         log("set", [name], "approved", peer, req)
         return Response(ok: true)
@@ -308,20 +328,34 @@ public final class Broker: @unchecked Sendable {
             guard !item.value.isEmpty else { return Response(ok: false, error: "\(item.name) has an empty value") }
             byName[item.name] = item   // last one wins, as in a .env file
         }
-        guard !byName.isEmpty else { return Response(ok: false, error: "nothing to import") }
+        let given = req.environments ?? []
+        if let problem = Self.invalid(given) { return Response(ok: false, error: problem) }
+        guard !byName.isEmpty || !given.isEmpty else { return Response(ok: false, error: "nothing to import") }
         let existing = Set(try store.list().map(\.name))
         let names = byName.keys.sorted()
         let toAdd = names.filter { !existing.contains($0) }
         let toReplace = req.replace == true ? names.filter { existing.contains($0) } : []
         let skipped = req.replace == true ? [] : names.filter { existing.contains($0) }
         let writing = toAdd + toReplace
-        guard !writing.isEmpty else { return Response(ok: true, added: [], replaced: [], skipped: skipped) }
+        guard !writing.isEmpty else {
+            // Nothing new to save, but the files still say which variables their environments have.
+            if !given.isEmpty {
+                guard ask(.change, given.map(\.scope), peer, req, "record which variables \(Self.describeScopes(given)) has, asked by \(Self.describe(peer, req))").allowed else {
+                    log("import", [], "denied (environment records)", peer, req)
+                    return Response(ok: false, error: "recording the environment was not approved")
+                }
+                try applyImported(given)
+                log("import", given.map(\.scope), "approved (environment records only)", peer, req)
+            }
+            return Response(ok: true, added: [], replaced: [], skipped: skipped)
+        }
 
         var what: [String] = []
         if !toAdd.isEmpty { what.append("add \(Self.count(toAdd))") }
         if !toReplace.isEmpty { what.append("overwrite \(Self.count(toReplace))") }
         var from = ""
         if let src = req.source, !src.isEmpty { from = " from \(Self.tilde(src))" }
+        if !given.isEmpty { from += " and record which variables \(Self.describeScopes(given)) has" }
         guard ask(.importItems, writing, peer, req, "\(what.joined(separator: " and "))\(from), asked by \(Self.describe(peer, req))").allowed else {
             log("import", writing, "denied", peer, req)
             return Response(ok: false, error: "import was not approved")
@@ -340,7 +374,8 @@ public final class Broker: @unchecked Sendable {
                                 added: toAdd.filter(done.contains), replaced: toReplace.filter(done.contains), skipped: skipped)
             }
         }
-        log("import", writing, "approved", peer, req)
+        try applyImported(given)
+        log("import", writing, given.isEmpty ? "approved" : "approved (and recorded \(Self.describeScopes(given)))", peer, req)
         pruneVersions()
         return Response(ok: true, added: toAdd, replaced: toReplace, skipped: skipped)
     }
@@ -439,12 +474,214 @@ public final class Broker: @unchecked Sendable {
                 try versions.rename(from: id, to: to)
                 done[id] = to
             } catch {
+                try? recordMoves(done)
                 log("move", done.keys.sorted(), "approved (stopped at \(id))", peer, req)
                 return Response(ok: false, error: "moved \(done.count) of \(moving.count), then \(id) failed: \(error)", moved: done)
             }
         }
+        try recordMoves(done)
         log("move", moving, "approved (to \(place))", peer, req)
         return Response(ok: true, moved: done)
+    }
+
+    // MARK: environment records
+
+    static func describeScopes(_ records: [EnvironmentRecord]) -> String {
+        let scopes = Array(Set(records.map(\.scope))).sorted()
+        return scopes.count == 1 ? scopes[0] : "\(scopes.count) environments"
+    }
+
+    /// Nil when every record is well formed: a valid scope, variable names and item IDs, and plain values that are
+    /// plain (no references, at most 4 KB).
+    static func invalid(_ records: [EnvironmentRecord]) -> String? {
+        for r in records {
+            guard RemoteLink.isValidScope(r.scope) else { return "\(r.scope) is not a valid project and environment" }
+            for (name, entry) in r.variables {
+                guard EnvironmentRecord.isValidVariable(name) else { return "\(name) is not a valid variable name" }
+                switch entry {
+                case .credential(let id):
+                    guard Wire.isValidName(id) else { return "\(id) is not a valid item id" }
+                case .literal(let v):
+                    if v.contains(References.scheme) || v.contains(References.fileScheme) {
+                        return "\(name): a plain value can't hold a latchkey reference; point it at the item instead"
+                    }
+                    if v.utf8.count > 4096 { return "\(name): plain values are limited to 4 KB" }
+                    if !EnvironmentMigration.isPlainSetting(v) && EnvironmentRecord.mayBeSecret(name: name, value: v) {
+                        return "\(name) looks like a secret; save it as an item (lk set) and point the variable at it"
+                    }
+                }
+            }
+        }
+        return nil
+    }
+
+    /// After an import: each file's variables join its environment's record, for the items that now exist. Several
+    /// files for one environment apply in order, later ones winning, as when they're loaded.
+    private func applyImported(_ given: [EnvironmentRecord]) throws {
+        guard !given.isEmpty else { return }
+        let items = try store.list()
+        let ids = Set(items.map(\.name))
+        var byScope: [String: [String: EnvironmentEntry]] = [:]
+        var order: [String] = []
+        for r in given {
+            if byScope[r.scope] == nil { order.append(r.scope) }
+            for (name, entry) in r.variables where entry.item.map(ids.contains) ?? true { byScope[r.scope, default: [:]][name] = entry }
+        }
+        let stored = Dictionary(uniqueKeysWithValues: try records.environments().map { ($0.scope, $0) })
+        for scope in order {
+            guard let vars = byScope[scope], !vars.isEmpty else { continue }
+            try records.save(EnvironmentRecords.applying(vars, to: stored[scope], scope: scope, items: items))
+        }
+    }
+
+    /// New project items join their environment's record when it has one and the name is free. With no record yet,
+    /// the environment keeps working as before until one is made.
+    private func addToOwnEnvironment(_ ids: [String]) throws {
+        let stored = Dictionary(uniqueKeysWithValues: try records.environments().map { ($0.scope, $0) })
+        var changed: [String: EnvironmentRecord] = [:]
+        for id in ids {
+            guard let ref = ItemID(id), !ref.isShared else { continue }
+            let scope = "\(ref.project)/\(ref.environment)"
+            guard var r = changed[scope] ?? stored[scope], r.variables[ref.name] == nil else { continue }
+            r.set(ref.name, .credential(id))
+            r.updatedAt = Date()
+            changed[scope] = r
+        }
+        for r in changed.values { try records.save(r) }
+    }
+
+    /// Records follow moved items to their new IDs, as files do.
+    private func recordMoves(_ moved: [String: String]) throws {
+        guard !moved.isEmpty else { return }
+        for r in EnvironmentRecords.renaming(try records.environments(), moved) { try records.save(r) }
+        try addToOwnEnvironment(Array(moved.values))
+    }
+
+    /// `env migrate`: adds variables to records where they're missing, with one approval. Never changes a stored
+    /// variable, so it's safe to run again.
+    func addToEnvironments(_ req: Request, peer: PeerInfo) throws -> Response {
+        let given = req.environments ?? []
+        guard !given.isEmpty else { return Response(ok: false, error: "no environments given") }
+        if let problem = Self.invalid(given) { return Response(ok: false, error: problem) }
+        guard Set(given.map(\.scope)).count == given.count else { return Response(ok: false, error: "an environment is given twice") }
+        let stored = Dictionary(uniqueKeysWithValues: try records.environments().map { ($0.scope, $0) })
+        let planned = given.map { EnvironmentRecords.adding($0, to: stored[$0.scope]) }
+        let changed = planned.filter { $0.record != stored[$0.record.scope] }
+        guard !changed.isEmpty else { return Response(ok: true, environments: []) }
+        let count = changed.reduce(0) { $0 + $1.added.count }
+        let scopes = changed.map(\.record.scope)
+        let what = count == 0 ? "mark \(Self.describeScopes(changed.map(\.record))) as checked"
+            : "record \(count) variable\(count == 1 ? "" : "s") in \(Self.describeScopes(changed.map(\.record)))"
+        guard ask(.change, scopes, peer, req, "\(what), from your items and the files they came from, asked by \(Self.describe(peer, req))").allowed else {
+            log("environment-add", scopes, "denied", peer, req)
+            return Response(ok: false, error: "recording the environments was not approved")
+        }
+        for c in changed { try records.save(c.record) }
+        log("environment-add", scopes, "approved (\(count) variable\(count == 1 ? "" : "s"))", peer, req)
+        return Response(ok: true, environments: changed.map(\.record))
+    }
+
+    /// `env set`, `env unset`, `env confirm`: one environment, one approval.
+    func setEnvironment(_ req: Request, peer: PeerInfo) throws -> Response {
+        guard let scope = req.names?.first, req.names?.count == 1, RemoteLink.isValidScope(scope) else {
+            return Response(ok: false, error: "give one environment, such as shop/development")
+        }
+        if let r = req.environments?.first, r.scope != scope || req.environments!.count > 1 {
+            return Response(ok: false, error: "the variables given are for another environment")
+        }
+        let set = req.environments?.first?.variables ?? [:]
+        if let problem = Self.invalid([EnvironmentRecord(scope: scope, variables: set)]) { return Response(ok: false, error: problem) }
+        let unset = Array(Set(req.unset ?? [])).sorted(), confirm = Array(Set(req.confirm ?? [])).sorted()
+        guard !set.isEmpty || !unset.isEmpty || !confirm.isEmpty else { return Response(ok: false, error: "nothing to change") }
+        let items = try store.list()
+        let ids = Set(items.map(\.name))
+        let missing = set.values.compactMap(\.item).filter { !ids.contains($0) }
+        guard missing.isEmpty else { return Response(ok: false, missing: Array(Set(missing)).sorted()) }
+        var record = try records.environments().first { $0.scope == scope } ?? EnvironmentRecords.seeded(scope: scope, items: items, now: Date())
+        let unknown = (unset + confirm).filter { record.variables[$0] == nil && set[$0] == nil }
+        guard unknown.isEmpty else { return Response(ok: false, error: "\(scope) has no variable \(unknown.joined(separator: ", "))") }
+        var parts: [String] = []
+        if !set.isEmpty { parts.append("set \(set.keys.sorted().joined(separator: ", "))") }
+        if !unset.isEmpty { parts.append("remove \(unset.joined(separator: ", "))") }
+        if !confirm.isEmpty { parts.append("confirm \(confirm.joined(separator: ", "))") }
+        let reason = "\(parts.joined(separator: " and ")) in \(scope), asked by \(Self.describe(peer, req))"
+        guard ask(.change, [scope], peer, req, reason).allowed else {
+            log("environment-set", [scope], "denied", peer, req)
+            return Response(ok: false, error: "the change to \(scope) was not approved")
+        }
+        for (name, entry) in set { record.set(name, entry) }
+        for name in unset { record.unset(name) }
+        record.inferred.removeAll { confirm.contains($0) }
+        record.updatedAt = Date()
+        try records.save(record)
+        log("environment-set", [scope], "approved (\(parts.joined(separator: "; ")))", peer, req)
+        return Response(ok: true, environments: [record])
+    }
+
+    /// Values for `lk export --values`, which writes them to a file in plain text. Always asks, naming the file: no
+    /// grant, agent-safe setting or earlier approval stands in, because the values leave Latchkey for good. The file
+    /// is the caller's claim, shown as such; an agent through `latchkey mcp` can't ask at all.
+    func export(_ req: Request, peer: PeerInfo) throws -> Response {
+        guard req.origin != "mcp" else {
+            return Response(ok: false, error: "an agent can't export values in plain text; it can export references (lk export without --values)")
+        }
+        guard !peer.isSafariExtension else { return Response(ok: false, error: "export isn't available to Safari") }
+        let names = Array(Set(req.names ?? [])).sorted()
+        guard !names.isEmpty else { return Response(ok: false, error: "no names given") }
+        guard let dest = req.destination, dest.hasPrefix("/") else { return Response(ok: false, error: "export needs the full path of the file it writes") }
+        let existing = Set(try store.list().map(\.name))
+        let missing = names.filter { !existing.contains($0) }
+        guard missing.isEmpty else { return Response(ok: false, missing: missing) }
+        let scope = req.project.map { " from \($0)" } ?? ""
+        let place = peer.isSSHForward ? "\(dest) on another computer" : Self.tilde(dest)
+        guard ask(.read, names, peer, req, "write \(Self.count(names))\(scope) in plain text to \(place), asked by \(Self.describe(peer, req))").allowed else {
+            log("export", names, "denied (plain text to \(dest))", peer, req)
+            return Response(ok: false, error: "the export was not approved")
+        }
+        let values = try store.values(names)
+        log("export", names, "approved (plain text to \(dest))", peer, req)
+        return Response(ok: true, values: values)
+    }
+
+    /// Remembers remotes as a project's, so its checkouts elsewhere are recognized. A remote belongs to one project.
+    func linkProject(_ req: Request, peer: PeerInfo) throws -> Response {
+        guard let name = req.project, ItemID.isValidPart(name) else { return Response(ok: false, error: "give a project name") }
+        let origins = Array(Set(req.origins ?? [])).sorted()
+        guard !origins.isEmpty else { return Response(ok: false, error: "no remotes given") }
+        if let bad = origins.first(where: { GitRemotes.normalize($0) != $0 }) { return Response(ok: false, error: "\(bad) is not a normalized remote") }
+        let all = try records.projects()
+        if let other = all.first(where: { $0.name != name && !Set($0.origins).isDisjoint(with: origins) }) {
+            let shared = origins.filter(other.origins.contains)
+            return Response(ok: false, error: "\(shared.joined(separator: ", ")) belongs to project \(other.name); unlink it there first (lk project unlink \(other.name) \(shared[0]))")
+        }
+        var project = all.first { $0.name == name } ?? ProjectRecord(name: name, origins: [])
+        let new = origins.filter { !project.origins.contains($0) }
+        guard !new.isEmpty else { return Response(ok: true, projects: [project]) }
+        guard ask(.change, [name], peer, req, "remember \(new.joined(separator: ", ")) as project \(name), so its checkouts on your Macs are recognized, asked by \(Self.describe(peer, req))").allowed else {
+            log("project-link", [name], "denied", peer, req)
+            return Response(ok: false, error: "linking \(name) was not approved")
+        }
+        project.origins = Array(Set(project.origins + new)).sorted()
+        try records.save(project)
+        log("project-link", [name], "approved (\(new.joined(separator: ", ")))", peer, req)
+        return Response(ok: true, projects: [project])
+    }
+
+    func unlinkProject(_ req: Request, peer: PeerInfo) throws -> Response {
+        guard let name = req.project, var project = try records.projects().first(where: { $0.name == name }) else {
+            return Response(ok: false, error: "no project \(req.project ?? "") is linked")
+        }
+        let origins = Set(req.origins ?? [])
+        let removing = project.origins.filter(origins.contains)
+        guard !removing.isEmpty else { return Response(ok: false, error: "\(name) isn't linked to \(origins.sorted().joined(separator: ", "))") }
+        guard ask(.change, [name], peer, req, "forget \(removing.joined(separator: ", ")) as project \(name), asked by \(Self.describe(peer, req))").allowed else {
+            log("project-unlink", [name], "denied", peer, req)
+            return Response(ok: false, error: "unlinking \(name) was not approved")
+        }
+        project.origins.removeAll { origins.contains($0) }
+        try records.save(project)
+        log("project-unlink", [name], "approved (\(removing.joined(separator: ", ")))", peer, req)
+        return Response(ok: true, projects: [project])
     }
 
     // MARK: versions

@@ -73,16 +73,18 @@ public enum EnvImport {
 
     /// Plans an import of several files at once. Each file is placed in its own project and environment (from its
     /// repository and name) unless `project` or `environment` is given; `shared` makes every item shared.
+    /// `projectFor` names a file's project when its checkout is linked to one (see `ProjectMatching`).
     /// With `shareIdentical`, a name holding the same value in every file that has it becomes one shared item.
     public static func batch(_ files: [(url: URL, text: String)], project: String? = nil, environment: String? = nil,
                              shared allShared: Bool = false, shareIdentical: Bool = false,
                              defaultKind: ItemKind = .token, kinds: [String: ItemKind] = [:],
                              agentSafe: Set<String> = [], allAgentSafe: Bool = false,
-                             skip: [String] = defaultSkip, agentSafePatterns: [String] = []) throws -> BatchPlan {
+                             skip: [String] = defaultSkip, agentSafePatterns: [String] = [],
+                             projectFor: (URL) -> String? = { _ in nil }) throws -> BatchPlan {
         var filePlans: [FilePlan] = []
         var itemsByFile: [[String: ImportItem]] = []   // key → item, per file
         for f in files {
-            let proj = allShared ? "" : (project ?? self.project(forFile: f.url))
+            let proj = allShared ? "" : (project ?? projectFor(f.url) ?? self.project(forFile: f.url))
             let env = allShared ? "" : (environment ?? self.environment(forFile: f.url.lastPathComponent))
             let p = try plan(f.text, source: f.url.lastPathComponent, location: f.url.path, project: proj, environment: env,
                          defaultKind: defaultKind, kinds: kinds, agentSafe: agentSafe, allAgentSafe: allAgentSafe,

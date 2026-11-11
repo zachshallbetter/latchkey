@@ -144,6 +144,8 @@ public struct Request: Codable, Sendable {
     public var op: String            // status | list | check | get | set | rm | import | grants | grant | revoke | move | update
                                      // | history | deleted | version | restore | forget
                                      // | links | link | unlink | remote-status | push
+                                     // | environments | environment-add | environment-set | export
+                                     // | projects | project-link | project-unlink
     public var names: [String]?
     public var value: String?
     public var kind: ItemKind?
@@ -173,6 +175,12 @@ public struct Request: Codable, Sendable {
     public var page: String?         // from the Safari extension: the site the value was found on, as Safari reported
                                      // it to the extension. Shown in the approval; for fill, the site it may go to.
     public var fillSites: [String]?  // update: the only sites an item may be filled on; [] goes back to the default
+    public var environments: [EnvironmentRecord]? // import, environment-set: variables to set; environment-add:
+                                     // variables to add where missing
+    public var unset: [String]?      // environment-set: variables to remove
+    public var confirm: [String]?    // environment-set: inferred variables to confirm
+    public var destination: String?  // export: the file the values will be written to, as the caller says
+    public var origins: [String]?    // project-link, project-unlink: normalized remote URLs
 
     public init(op: String, names: [String]? = nil, value: String? = nil, kind: ItemKind? = nil,
                 agentSafe: Bool? = nil, note: String? = nil,
@@ -181,7 +189,8 @@ public struct Request: Codable, Sendable {
                 service: String? = nil, version: String? = nil, target: RemoteTarget? = nil, link: String? = nil,
                 only: [String]? = nil, origin: String? = nil, session: Bool? = nil, commands: [[String]]? = nil,
                 uses: Int? = nil, intended: [String]? = nil, remote: RemoteClaim? = nil, page: String? = nil,
-                fillSites: [String]? = nil) {
+                fillSites: [String]? = nil, environments: [EnvironmentRecord]? = nil, unset: [String]? = nil,
+                confirm: [String]? = nil, destination: String? = nil, origins: [String]? = nil) {
         self.op = op
         self.names = names
         self.value = value
@@ -208,6 +217,11 @@ public struct Request: Codable, Sendable {
         self.remote = remote
         self.page = page
         self.fillSites = fillSites
+        self.environments = environments
+        self.unset = unset
+        self.confirm = confirm
+        self.destination = destination
+        self.origins = origins
     }
 }
 
@@ -255,6 +269,8 @@ public struct Response: Codable, Sendable {
     /// Legacy field for older clients; new brokers never cache approvals or return it.
     public var remembered: [String]?
     public var needsApproval: [String]?
+    public var environments: [EnvironmentRecord]?
+    public var projects: [ProjectRecord]?
 
     public init(ok: Bool, error: String? = nil, secrets: [SecretInfo]? = nil, values: [String: String]? = nil,
                 masked: [String]? = nil, denied: [String]? = nil, missing: [String]? = nil,
@@ -262,7 +278,8 @@ public struct Response: Codable, Sendable {
                 skipped: [String]? = nil, grants: [Grant]? = nil, moved: [String: String]? = nil,
                 versions: [Version]? = nil, links: [RemoteLink]? = nil, remoteStatus: [RemoteStatus]? = nil,
                 pushResults: [PushResult]? = nil, agentSafe: [String]? = nil, granted: [String]? = nil,
-                remembered: [String]? = nil, needsApproval: [String]? = nil) {
+                remembered: [String]? = nil, needsApproval: [String]? = nil,
+                environments: [EnvironmentRecord]? = nil, projects: [ProjectRecord]? = nil) {
         self.ok = ok
         self.error = error
         self.secrets = secrets
@@ -284,6 +301,8 @@ public struct Response: Codable, Sendable {
         self.granted = granted
         self.remembered = remembered
         self.needsApproval = needsApproval
+        self.environments = environments
+        self.projects = projects
     }
 }
 

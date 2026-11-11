@@ -127,6 +127,8 @@ final class MCPServer: @unchecked Sendable {
             case "latchkey_check": return try check(args)
             case "latchkey_run": return try run(args, id: id)
             case "latchkey_request_grant": return try requestGrant(args)
+            case "latchkey_project": return try project(args)
+            case "latchkey_export_references": return try exportReferences(args)
             default: return .error(-32602, "unknown tool: \(name)")
             }
         } catch {
@@ -211,6 +213,26 @@ final class MCPServer: @unchecked Sendable {
         let left = GrantStore.describe(g.expires.timeIntervalSince(g.created))
         let summary = "Granted \(g.names.joined(separator: ", ")) to programs in \(Broker.tilde(g.folder))\(g.repo == nil ? "" : " and its worktrees") for \(left) (grant \(g.id))."
         return Self.toolResult(summary, ["grant": Self.json(g)])
+    }
+
+    /// Which project this folder's checkout is, from its Git remotes, and its environments.
+    private func project(_ args: [String: Any]) throws -> Outcome {
+        let result = try latchkey(["project"], in: try folder(args), timeout: 60, id: nil)
+        guard result.code == 0 else { throw Self.failure(result) }
+        return Self.toolResult(result.stdout.text, ["output": result.stdout.text])
+    }
+
+    /// Writes an environment's env file with latchkey:// references and plain settings only: never values.
+    private func exportReferences(_ args: [String: Any]) throws -> Outcome {
+        guard let scope = args["environment"] as? String, RemoteLink.isValidScope(scope) else {
+            throw RunError.usage("environment is required: PROJECT/ENV, such as shop/development")
+        }
+        let file = args["file"] as? String ?? ".env.local"
+        let cli = ["export", scope, "--out", file] + (args["replace"] as? Bool == true ? ["--replace"] : [])
+        let result = try latchkey(cli, in: try folder(args), timeout: 60, id: nil)
+        guard result.code == 0 else { throw Self.failure(result) }
+        let text = [result.stdout.text, result.stderr.text].filter { !$0.isEmpty }.joined(separator: "\n")
+        return Self.toolResult(text, ["output": text])
     }
 
     // MARK: running the latchkey tool for an agent
@@ -424,6 +446,25 @@ final class MCPServer: @unchecked Sendable {
                                     "description": "Stop the command after this long. Default 600, at most 3600."],
             ]) { a, _ in a }],
             "annotations": ["readOnlyHint": false, "destructiveHint": true, "openWorldHint": true],
+        ],
+        [
+            "name": "latchkey_project",
+            "title": "Which project is this",
+            "description": "Which Latchkey project this folder's Git checkout is, from its remotes, and that project's environments. A match only names the project; it releases nothing. A match through a remote other than origin (as a fork has) is flagged.",
+            "inputSchema": ["type": "object", "properties": ["cwd": cwdProperty]],
+            "annotations": ["readOnlyHint": true, "openWorldHint": false],
+        ],
+        [
+            "name": "latchkey_export_references",
+            "title": "Write an env file of references",
+            "description": "Write an environment's env file from its Latchkey record, for a fresh checkout or worktree: latchkey:// references and plain settings such as PORT, never secret values. Run commands with it through latchkey_run (env_files). An existing file is left alone unless replace is true.",
+            "inputSchema": ["type": "object", "required": ["environment"], "properties": [
+                "environment": ["type": "string", "description": "PROJECT/ENV, such as shop/development (see latchkey_project)."],
+                "file": ["type": "string", "description": "Where to write it, relative to cwd. Default .env.local."],
+                "replace": ["type": "boolean", "description": "Replace an existing file."],
+                "cwd": cwdProperty,
+            ]],
+            "annotations": ["readOnlyHint": false, "destructiveHint": false, "openWorldHint": false],
         ],
         [
             "name": "latchkey_request_grant",

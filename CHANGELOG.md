@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Environments on every Mac
+- Each environment has a synced record of its variables: items (shared items too) or plain settings such as
+  `PORT=3000`. `latchkey run --env` reads it, so a shared item still loads when the checkout is somewhere else, as on
+  another Mac. Until `latchkey env migrate` has checked an environment, the older path-based lookup still fills gaps,
+  and says so.
+- `latchkey env` lists, shows, sets, unsets and confirms records; `env migrate` makes them from your items and the
+  files they came from. It only adds, marks what it found through file locations as unconfirmed, and reports
+  conflicts, missing items, missing files and plain values that may be secret.
+- Import, `set` and `mv` keep records current.
+- `latchkey export PROJECT/ENV` writes an environment's env file of references. `--values` writes values in plain
+  text: it asks every time naming the file, writes it owner-only and whole, refuses symbolic links, and is logged
+  without the values.
+- `latchkey project` matches a checkout to its project by Git remote; `project link` remembers a project's remote.
+  Import names items after a linked project, so a clone under another folder name keeps its project.
+- MCP: `latchkey_project` and `latchkey_export_references`, which never return values.
+
 ## 0.1.0 (unreleased)
 
 The first release.

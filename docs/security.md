@@ -18,7 +18,8 @@ command gets which value. This page says what it protects against, how, and wher
 ## How it works
 
 - **Storage.** Values are generic-password items in the data-protection keychain, in an access group only the signed
-  Latchkey app can use, synced through iCloud Keychain. Versions and remote links are keychain items too. Synced
+  Latchkey app can use, synced through iCloud Keychain. Versions, remote links, environment records and project links are keychain items too; records
+  and links hold item IDs, remotes and plain settings, nothing secret (plain settings that look secret are refused). Synced
   items use the "after first unlock" protection class, so scheduled jobs can read agent-safe items while the screen
   is locked.
 - **One process holds values.** The command-line tool never touches the keychain. It asks the app over a Unix socket
@@ -54,6 +55,13 @@ command gets which value. This page says what it protects against, how, and wher
   when you press Save, and its toolbar panel gets a short preview, never the value. Password fields are not read. Fields that expect a key are recognized by their labels and attributes only.
   Detection covers the main page DOM, not embedded frames or shadow roots.
   Use Safari’s website permissions to choose which sites the extension may inspect.
+- **Exporting values** (`latchkey export --values`) asks every time, naming the file, and nothing stands in for that
+  approval. The file is written beside its destination, readable only by you, and renamed into place, so an existing
+  file isn't touched until the new one is complete; a symbolic link at the destination is refused. The access log
+  records the items and the file, never the values. Agents through `latchkey mcp` can't export values.
+- **Project links** match a checkout to a project by its Git remotes. A match only names the project; it never
+  releases a value or widens a grant, so pointing a repository's `origin` at another project's remote gains nothing
+  without your approval. A match through a remote other than `origin` is flagged.
 - **Temporary key files** live in a new folder only you can open, are only readable by you, and are deleted when the
   command exits. Different item IDs use different temporary files, even when their final names match.
 - **Remote pushes** pass values to each service's tool on standard input, never as arguments, so they don't appear
@@ -81,6 +89,8 @@ Be clear about these before you rely on Latchkey:
 - **A released value is out of Latchkey's hands.** Once a command has a value, it can write it to a file, send it
   over the network, or transform it. Masking only hides exact copies of values 6 characters or longer in what the
   command prints; it doesn't stop a command that tries to leak.
+- **An exported file is a plain copy.** After `latchkey export --values`, the file holds the values; delete it when
+  you're done, and keep it out of Git. The file named in the approval is the one the command says it will write.
 - **`latchkey get` prints the value.** Keep agents away from it (your agent instructions, or a hook that refuses it).
 - **The same Mac account.** Malware running as you could also ask for approvals until you click one, or read a
   temporary key file while the command runs. Latchkey raises the bar; it doesn't replace a clean machine.

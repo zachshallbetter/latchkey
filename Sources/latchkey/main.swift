@@ -51,6 +51,23 @@ Files refer to them as latchkey://ID.
       Skipped by default: VERCEL_OIDC_TOKEN, VERCEL_* and TURBO_* (vercel env pull writes them; they expire);
       --no-default-skip turns that off, --skip adds patterns. --agent-safe-pattern 'NEXT_PUBLIC_*,VITE_*'
       imports matching names as plain values agents may read (they ship to browsers anyway).
+  latchkey env [list] | env show PROJECT/ENV [--json] | env migrate [--dry-run]
+  latchkey env set PROJECT/ENV NAME=latchkey://ID|NAME=VALUE... | env unset PROJECT/ENV NAME... | env confirm PROJECT/ENV [NAME...]
+      An environment's record: which variables it has, each an item (shared items too) or a plain setting such as
+      PORT=3000. Records sync with your items, so `run --env` and `export` work the same on every Mac, wherever the
+      checkout is. import, set and mv keep them up to date. `env migrate` makes or completes them from your items and
+      the files they were imported from (when those are on this Mac); it only adds, and marks what it found through
+      old file locations as unconfirmed until `env confirm`. Plain settings that may be secret are refused.
+  latchkey export PROJECT/ENV [--out FILE] [--replace] [--values]
+      Write the environment's env file from its record: latchkey:// references and plain settings, to standard
+      output or FILE. An existing FILE is left alone (and the differences shown) unless --replace; a symbolic link
+      is refused. --values writes the values themselves, in plain text, readable only by you: it asks every time,
+      naming the file, and the access log records it (without the values). Agents can't use --values.
+  latchkey project [DIR] | project link [NAME] [DIR] [--remote R] | project unlink NAME [DIR] | project list
+      Which project a checkout is, from its Git remotes: so a fresh clone on another Mac finds its environments.
+      link remembers the checkout's origin (or --remote R) as project NAME (default: the folder's name); a remote
+      belongs to one project. A match only names the project: it never releases values or widens a grant, and a
+      match through a remote other than origin (as a fork has) is flagged.
   latchkey mv ID[,ID...] | --from-file FILE   --to PROJECT/ENV | --shared   [--file FILE]...
       Move items into a project's environment (or back to shared) with one approval, then point
       references at the new IDs in the files each item was imported from, in --file files, and
@@ -494,7 +511,8 @@ func importCommand(_ input: [String]) -> Never {
     do { text = try String(contentsOf: url, encoding: .utf8) }
     catch { fail("cannot read \(file): \(error.localizedDescription)", code: 66) }
 
-    let placeProject = shared ? "" : (project ?? EnvImport.project(forFile: url))
+    let linked = send(Request(op: "projects")).projects ?? []
+    let placeProject = shared ? "" : (project ?? linkedProject(for: url, linked) ?? EnvImport.project(forFile: url))
     let placeEnv = shared ? "" : (environment ?? EnvImport.environment(forFile: url.lastPathComponent))
     let plan: EnvImport.Plan
     do { plan = try EnvImport.plan(text, source: url.lastPathComponent, location: url.path, project: placeProject,
@@ -513,7 +531,9 @@ func importCommand(_ input: [String]) -> Never {
     }
     print(placeProject.isEmpty ? "into shared items" : "into project \(placeProject), environment \(placeEnv)")
     for (key, why) in ignored.sorted(by: { $0.key < $1.key }) { print("ignore   \(key)  (\(why))") }
-    guard !items.isEmpty else { print("Nothing to import."); exit(0) }
+    let record = EnvironmentRecords.fromFile(text, references: plan.references,
+                                             scope: placeProject.isEmpty ? fileScope(url, linked) : "\(placeProject)/\(placeEnv)")
+    guard !items.isEmpty || (record != nil && !dryRun) else { print("Nothing to import."); exit(0) }
 
     func describe(_ i: ImportItem) -> String {
         "\(i.name)  \(i.kind!.rawValue)\(i.agentSafe == true ? ", agent-safe" : "")"
@@ -530,7 +550,9 @@ func importCommand(_ input: [String]) -> Never {
     }
 
     let r = send(Request(op: "import",
-                         items: items.values.sorted { $0.name < $1.name }, replace: replace, source: url.path))
+                         items: items.values.sorted { $0.name < $1.name }, replace: replace, source: url.path,
+                         environments: record.map { [$0] }))
+    if let record { print("recorded \(record.scope): \(record.variables.keys.sorted().joined(separator: ", "))") }
     for n in r.added ?? [] { print("added    \(describe(items[n]!))") }
     for n in r.replaced ?? [] { print("replaced \(describe(items[n]!))") }
     for n in r.skipped ?? [] { print("skipped  \(n)  (exists; --replace to overwrite)") }
@@ -566,10 +588,11 @@ func batchImport(_ paths: [String], project: String?, environment: String?, shar
         do { files.append((url, try String(contentsOf: url, encoding: .utf8))) }
         catch { fail("cannot read \(p): \(error.localizedDescription)", code: 66) }
     }
+    let linked = send(Request(op: "projects")).projects ?? []
     let plan: EnvImport.BatchPlan
     do { plan = try EnvImport.batch(files, project: project, environment: environment, shared: shared, shareIdentical: shareIdentical,
                                defaultKind: defaultKind, kinds: kinds, agentSafe: agentSafe, allAgentSafe: allAgentSafe,
-                               skip: skip, agentSafePatterns: agentSafePatterns) }
+                               skip: skip, agentSafePatterns: agentSafePatterns, projectFor: { linkedProject(for: $0, linked) }) }
     catch { fail("cannot import: \(error.localizedDescription)", code: 66) }
     let existing = Set((send(Request(op: "list")).secrets ?? []).map(\.name))
 
@@ -601,14 +624,19 @@ func batchImport(_ paths: [String], project: String?, environment: String?, shar
     if publicCount > 0 { print("\(publicCount) agent-safe plain values from --agent-safe-pattern") }
 
     let toSend = replace ? plan.items : newItems
+    let records = plan.files.compactMap { f in
+        EnvironmentRecords.fromFile(f.text, references: f.references,
+                                    scope: f.project.isEmpty ? fileScope(f.url, linked) : "\(f.project)/\(f.environment)")
+    }
     if dryRun {
         print(rewrite ? "Nothing sent. Without --dry-run: one approval, then each file's imported values become latchkey:// references." : "Nothing sent.")
         exit(0)
     }
-    guard !toSend.isEmpty else { print("Nothing new to import."); exit(0) }
+    guard !toSend.isEmpty || !records.isEmpty else { print("Nothing new to import."); exit(0) }
 
     let r = send(Request(op: "import",
-                         items: toSend, replace: replace, source: "\(plan.files.count) files"))
+                         items: toSend, replace: replace, source: "\(plan.files.count) files", environments: records))
+    if !records.isEmpty { print("recorded \(Set(records.map(\.scope)).sorted().joined(separator: ", "))") }
     let saved = Set((r.added ?? []) + (r.replaced ?? []))
     print("imported \(r.added?.count ?? 0) new\((r.replaced?.count ?? 0) > 0 ? ", replaced \(r.replaced!.count)" : "")\((r.skipped?.count ?? 0) > 0 ? ", left \(r.skipped!.count) that already existed" : "")")
     guard rewrite else { exit(0) }
@@ -1070,6 +1098,15 @@ case "push":
 
 case "mv":
     moveCommand(args)
+
+case "env":
+    envCommand(args)
+
+case "export":
+    exportCommand(args)
+
+case "project":
+    projectCommand(args)
 
 case "history":
     guard let name = args.first, Wire.isValidName(name) else { fail("usage: latchkey history ID", code: 64) }
