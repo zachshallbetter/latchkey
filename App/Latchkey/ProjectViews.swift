@@ -56,7 +56,6 @@ struct GroupMenu: View {
 
     var body: some View {
         Button("Select All \(ids.count) Items") {
-            model.reveal(ids)
             model.selection = Set(ids)
         }
         Divider()

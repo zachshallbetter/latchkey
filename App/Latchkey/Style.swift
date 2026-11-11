@@ -184,14 +184,6 @@ struct NavRow: View {
     }
 }
 
-/// A small heading over a group of sidebar rows.
-struct SidebarHeading: View {
-    let title: String
-    var body: some View {
-        Text(title).font(.callout.weight(.medium)).foregroundStyle(.secondary).padding(.leading, 10).padding(.top, 6)
-    }
-}
-
 /// A small rounded label, such as a project name beside an environment badge.
 struct Chip: View {
     let text: String

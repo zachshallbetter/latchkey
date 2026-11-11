@@ -7,30 +7,29 @@ to be running for `latchkey run` to work (the tool starts it if it isn't). Only 
 
 ### Sidebar
 
-- **Overview**: counts to jump from (all credentials, no approval, ask first, grants), the four kinds, and recent
-  activity.
-- **Credentials** (every item), **Activity**, **Grants**, and **Recently Deleted** when something has been deleted.
-- **Services**: items by the service that issued them, and **Other Services** for items with none.
+Arranged the way 1Password arranges vaults and tags:
+
+- **All Items**, **Review** and **Activity**.
+- **Projects** (and **Shared**), like vaults: choose one to see only its items. Right-click for actions on all of
+  them.
+- **Services**, like tags: the services items name.
+- **Grants** and **Recently Deleted**.
+- Projects and Services fold away.
 - At the bottom, where values are kept: **iCloud Keychain** or **This Mac only**. Hover for what that means.
 
 ### The list
 
-The list's header names what's shown and how many, with a search field (⌘F), a filter button (one project,
-environment, kind, or access setting; active filters show as chips you can remove) and a **…** menu: New Item, Import
-and sort order. Projects and Shared are cards under their own headings, each of which folds away. Each item shows its type (token, API key, database,
-URL, password, key file, plain value) and service; long names are shortened in the middle, with the full ID on hover,
-and hovering a row shows a button that copies its `latchkey://` reference.
-
-Items are shown as a tree: project, then environment, then items. In a project's own view the tree starts at its
-environments; a project with one environment lists its items directly. Groups start closed; a closed project shows how many items it has and which environments, and a closed
-environment shows where its values live (**Local**, **Not linked**, or the services it's linked to). While you
-search, groups start open.
+The list's header names what's shown and how many, with a search field (⌘F), a filter button (a category such as
+token, API key or database; an environment; or access; active filters show as chips you can remove) and a **…** menu:
+New Item, Import and sort order. Items are listed by name, each with its project and environment, its type (token,
+API key, database, URL, password, key file, plain value) and service. Long names are shortened in the middle, with
+the full ID on hover, and hovering a row shows a button that copies its `latchkey://` reference.
 
 Badges on an item: a green shield for agent-safe, an orange arrow when its value changed since it was last pushed to a
 remote location, a crossed-out cloud when it hasn't been pushed there yet.
 
-Right-click a project or environment header to act on everything in it: select all, require approval or let agents
-read, grant access, move, delete, and (for an environment) **Remote Locations…**.
+Right-click a project in the sidebar to act on all its items: select all, require approval or let agents read, grant
+access, move, delete. An environment's **Remote Locations…** opens from the Remote card of any of its items.
 
 ### Selecting several items
 

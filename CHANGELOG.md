@@ -3,9 +3,11 @@
 ## Unreleased
 
 ### The window
-- A new layout: the sidebar has Overview, Credentials, Activity, Grants and services; the list has its own header,
-  search (⌘F), a filter for project, environment, kind and access, and project cards under folding headings; each
-  item shows its type; the detail pane is a set of cards with an **Edit** menu.
+- A new layout, arranged like 1Password: All Items, **Review** (what may need a look: values changed since a push,
+  values not pushed, grants about to end), Activity, then projects and services, then Grants and Recently Deleted.
+  The list is flat and alphabetical, each row with its project and environment, with search (⌘F) and a filter for
+  category, environment and access. The detail pane is a set of cards with an **Edit** menu. Activity and Recently
+  Deleted rows fit on one line.
 - **Edit Details…** changes kind, access, service, note and fill sites together, with one Touch ID.
 - The sheets share one header and footer.
 

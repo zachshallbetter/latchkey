@@ -81,8 +81,8 @@ enum SidebarFilter: Hashable {
 
     var title: String {
         switch self {
-        case .overview: return "Overview"
-        case .all: return "Credentials"
+        case .overview: return "Review"
+        case .all: return "All Items"
         case .agentSafe: return "No Approval"
         case .needsApproval: return "Ask First"
         case .activity: return "Activity"
@@ -183,7 +183,6 @@ final class AppModel {
     var nextSteps: NextSteps?
     var moveRequest: MoveRequest?
     /// Open groups in item lists: a project name, "project/environment", or "shared". Everything starts closed.
-    var expanded: Set<String> = []
     /// Values currently shown in the detail pane; each hides itself after a short while.
     var revealed: [String: String] = [:]
 
@@ -311,6 +310,19 @@ final class AppModel {
         Array(Set(items.compactMap(\.service))).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
     }
 
+    /// Categories present, in a fixed order, for the list's filter.
+    var categories: [String] {
+        let order = ["Token", "API Key", "Database", "URL", "Password", "Key File", "Plain Value"]
+        let present = Set(items.map { ItemType($0).label })
+        return order.filter(present.contains)
+    }
+
+    /// How many findings Review shows: values changed since a push, values not pushed yet, and grants about to end.
+    var reviewCount: Int {
+        items.filter { remoteStates[$0.name] == .outOfDate || remoteStates[$0.name] == .notPushed }.count
+            + grants.filter { $0.expires.timeIntervalSinceNow < 3600 }.count
+    }
+
     /// Every environment any item is in, in their usual order.
     var allEnvironments: [String] {
         Array(Set(items.filter { !$0.ref.isShared }.map(\.ref.environment))).sorted(by: Environments.order)
@@ -318,14 +330,15 @@ final class AppModel {
 
     /// Narrowing within the list, on top of what the sidebar shows: one environment, one kind, or by access.
     var environmentFilter: String?
-    var kindFilter: ItemKind?
+    /// A category as the list shows it: Token, API Key, Database, URL and so on.
+    var categoryFilter: String?
     /// True: only items agents may read; false: only items that ask first.
     var accessFilter: Bool?
-    var filtersActive: Bool { environmentFilter != nil || kindFilter != nil || accessFilter != nil }
+    var filtersActive: Bool { environmentFilter != nil || categoryFilter != nil || accessFilter != nil }
 
-    func clearFilters() { environmentFilter = nil; kindFilter = nil; accessFilter = nil }
+    func clearFilters() { environmentFilter = nil; categoryFilter = nil; accessFilter = nil }
 
-    /// List sections (Projects, Shared) the person has folded away.
+    /// Sidebar sections (Projects, Services) the person has folded away.
     var collapsedSections: Set<String> = []
 
     func environments(in project: String) -> [String] {
@@ -347,10 +360,15 @@ final class AppModel {
             .filter { q.isEmpty || $0.name.lowercased().contains(q) || $0.note.lowercased().contains(q)
                 || ($0.service ?? "").lowercased().contains(q) }
             .filter { i in environmentFilter.map { !i.ref.isShared && i.ref.environment == $0 } ?? true }
-            .filter { i in kindFilter.map { i.kind == $0 } ?? true }
+            .filter { i in categoryFilter.map { ItemType(i).label == $0 } ?? true }
             .filter { i in accessFilter.map { i.agentSafe == $0 } ?? true }
         switch sort {
-        case .name: return list.sorted { $0.ref < $1.ref }
+        case .name:
+            // Alphabetical by name, as a password manager lists items; the same name in several places by project, then environment.
+            return list.sorted { a, b in
+                let c = a.ref.name.localizedStandardCompare(b.ref.name)
+                return c != .orderedSame ? c == .orderedAscending : a.ref < b.ref
+            }
         case .updated: return list.sorted { $0.updatedAt > $1.updatedAt }
         }
     }
@@ -366,31 +384,6 @@ final class AppModel {
     func item(_ name: String?) -> SecretInfo? { items.first { $0.name == name } }
 
     /// Groups closed by hand during a search, where groups otherwise start open to show the matches.
-    var closedWhileSearching: Set<String> = []
-
-    var searching: Bool { !search.trimmingCharacters(in: .whitespaces).isEmpty }
-
-    /// Whether a list group is open. Groups start closed; while searching they start open. A click always wins.
-    func isOpen(_ key: String) -> Bool {
-        searching || filtersActive ? !closedWhileSearching.contains(key) : expanded.contains(key)
-    }
-
-    func toggle(_ key: String) {
-        if searching || filtersActive {
-            if closedWhileSearching.contains(key) { closedWhileSearching.remove(key) } else { closedWhileSearching.insert(key) }
-        } else {
-            if expanded.contains(key) { expanded.remove(key) } else { expanded.insert(key) }
-        }
-    }
-
-    /// Opens the groups that contain these items, so a selection made elsewhere is visible.
-    func reveal(_ ids: [String]) {
-        for id in ids {
-            guard let ref = ItemID(id) else { continue }
-            if ref.isShared { expanded.insert("shared") } else { expanded.formUnion([ref.project, "\(ref.project)/\(ref.environment)"]) }
-        }
-    }
-
     /// The one selected item, when exactly one is selected.
     var selectedItem: SecretInfo? { selection.count == 1 ? item(selection.first) : nil }
 
@@ -527,7 +520,6 @@ final class AppModel {
             notice = "Restored \(v.item) to its value from \(v.savedAt.formatted(date: .abbreviated, time: .shortened))."
             revealed[v.item] = nil
             selection = [v.item]
-            reveal([v.item])
             if filter == .deleted { filter = .all }
         }
     }
@@ -595,7 +587,6 @@ final class AppModel {
         if !failed.isEmpty { text += "; couldn't update \(failed.joined(separator: ", "))" }
         notice = text + "."
         selection = Set(selection.map { moved[$0] ?? $0 })
-        reveal(Array(selection))
         if !project.isEmpty { filter = .project(project) }
         return nil
     }

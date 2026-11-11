@@ -65,7 +65,6 @@ struct AddItemSheet: View {
                         if error == nil {
                             model.filter = .all
                             model.selection = [name]
-                            model.reveal([name])
                             dismiss()
                             let added = name
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {

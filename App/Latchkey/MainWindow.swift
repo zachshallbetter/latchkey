@@ -51,7 +51,7 @@ struct MainWindow: View {
         } content: {
             Group {
                 if model.filter == .overview {
-                    OverviewView(model: model)
+                    ReviewView(model: model)
                 } else if model.filter == .activity {
                     ActivityList(model: model)
                 } else if model.filter == .grants {
@@ -139,25 +139,32 @@ struct Sidebar: View {
                     .padding(.horizontal, 8).padding(.top, 2)
                     Divider().padding(.vertical, 12).padding(.horizontal, 8)
 
-                    nav(.overview, "square.grid.2x2")
                     nav(.all, "key", count: model.items.count)
+                    nav(.overview, "checkmark.shield", count: model.reviewCount > 0 ? model.reviewCount : nil)
                     nav(.activity, "waveform.path.ecg")
-                    nav(.grants, "checkmark.shield", count: model.grants.isEmpty ? nil : model.grants.count)
-                    if !model.deleted.isEmpty { nav(.deleted, "trash", count: model.deleted.count) }
 
                     if !model.items.isEmpty {
-                        Divider().padding(.vertical, 10).padding(.horizontal, 8)
-                        SidebarHeading(title: "Services")
-                        ForEach(model.services, id: \.self) { s in
-                            ServiceRow(name: s, count: model.count(.service(s)), selected: model.filter == .service(s)) { model.filter = .service(s) }
+                        SidebarSection(model: model, title: "Projects") {
+                            ForEach(model.projects, id: \.self) { p in
+                                NavRow(title: p, symbol: "folder", count: model.count(.project(p)), selected: model.filter == .project(p)) { model.filter = .project(p) }
+                                    .contextMenu { ProjectMenu(model: model, project: p) }
+                            }
+                            if model.items.contains(where: { $0.ref.isShared }) {
+                                NavRow(title: "Shared", symbol: "tray.full", count: model.count(.shared), selected: model.filter == .shared) { model.filter = .shared }
+                            }
                         }
-                        let others = model.count(.service(""))
-                        if others > 0 {
-                            NavRow(title: "Other Services", symbol: "ellipsis", count: others, selected: model.filter == .service("")) {
-                                model.filter = .service("")
+                        if !model.services.isEmpty {
+                            SidebarSection(model: model, title: "Services") {
+                                ForEach(model.services, id: \.self) { s in
+                                    ServiceRow(name: s, count: model.count(.service(s)), selected: model.filter == .service(s)) { model.filter = .service(s) }
+                                }
                             }
                         }
                     }
+
+                    Divider().padding(.vertical, 10).padding(.horizontal, 8)
+                    nav(.grants, "hourglass", count: model.grants.isEmpty ? nil : model.grants.count)
+                    nav(.deleted, "trash", count: model.deleted.isEmpty ? nil : model.deleted.count)
                 }
                 .padding(10)
             }
@@ -167,6 +174,34 @@ struct Sidebar: View {
 
     private func nav(_ filter: SidebarFilter, _ symbol: String, count: Int? = nil) -> some View {
         NavRow(title: filter.title, symbol: symbol, count: count, selected: model.filter == filter) { model.filter = filter }
+    }
+}
+
+/// A sidebar heading that folds its rows away.
+struct SidebarSection<Content: View>: View {
+    let model: AppModel
+    let title: String
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        let collapsed = model.collapsedSections.contains(title)
+        Button {
+            withAnimation(.snappy) {
+                if collapsed { model.collapsedSections.remove(title) } else { model.collapsedSections.insert(title) }
+            }
+        } label: {
+            HStack {
+                Text(title).font(.callout.weight(.medium)).foregroundStyle(.secondary)
+                Spacer()
+                Image(systemName: "chevron.down").font(.caption2.weight(.semibold)).foregroundStyle(.tertiary)
+                    .rotationEffect(.degrees(collapsed ? -90 : 0))
+            }
+            .padding(.horizontal, 10).padding(.top, 16).padding(.bottom, 4)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(title), \(collapsed ? "collapsed" : "expanded")")
+        if !collapsed { content() }
     }
 }
 
@@ -192,34 +227,6 @@ struct ServiceRow: View {
             .padding(.horizontal, 10).padding(.vertical, 7)
             .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(selected ? AnyShapeStyle(Color.accentColor.gradient) : AnyShapeStyle(.clear)))
             .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-struct Tile: View {
-    let model: AppModel
-    let filter: SidebarFilter
-    let symbol: String
-    let color: Color
-
-    var body: some View {
-        Button {
-            model.filter = filter
-        } label: {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .top) {
-                    IconTile(symbol: symbol, tint: color, size: 30)
-                    Spacer()
-                    Text("\(model.count(filter))").font(.title2.weight(.semibold).monospacedDigit())
-                }
-                Text(filter.title).font(.headline).lineLimit(1)
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.quaternary.opacity(0.35)))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(.separator.opacity(0.5)))
-            .contentShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)
     }
@@ -268,50 +275,16 @@ struct ItemList: View {
         .toolbar(removing: .title)
     }
 
+    /// Every item that matches, in one list, as 1Password lists them: each row says its project and environment
+    /// unless the view already does.
     @ViewBuilder
     private func itemList(_ list: [SecretInfo]) -> some View {
+        let inProject: Bool = { if case .project = model.filter { return true } else { return false } }()
         List(selection: $model.selection) {
-            if model.sort == .name {
-                // A tree, never a flat list of every key: project, then environment, then items, all closed
-                // until opened. In a project's own view the tree starts at its environments.
-                let inProject: Bool = { if case .project = model.filter { return true } else { return false } }()
-                let groups = ItemTree.build(list)
-                if inProject {
-                    ForEach(groups) { group in
-                        if group.environments.count == 1 {
-                            // One environment: its items directly; the header names the environment.
-                            ForEach(group.environments[0].items) { item in
-                                ItemRow(model: model, item: item, showsProject: false, remote: model.remoteStates[item.name]).tag(item.name)
-                            }
-                        } else {
-                            ForEach(group.environments) { env in
-                                EnvironmentGroup(model: model, project: group.project, env: env, indent: 0)
-                            }
-                        }
-                    }
-                } else {
-                    let projects = groups.filter { !$0.project.isEmpty }
-                    if !projects.isEmpty {
-                        ListSectionHeading(model: model, title: "Projects", symbol: "folder")
-                        if !model.collapsedSections.contains("Projects") { ForEach(projects) { projectGroup($0) } }
-                    }
-                    if let shared = groups.first(where: { $0.project.isEmpty }) {
-                        ListSectionHeading(model: model, title: "Shared", symbol: "tray.full")
-                        if !model.collapsedSections.contains("Shared") {
-                            let open = model.isOpen("shared")
-                            GroupCard(open: open, symbol: "tray.full", tiled: true, title: "Shared", count: shared.count) { model.toggle("shared") }
-                            if open {
-                                ForEach(shared.environments.flatMap(\.items)) { item in
-                                    ItemRow(model: model, item: item, showsProject: false).padding(.leading, 18).tag(item.name)
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                ForEach(list) { item in
-                    ItemRow(model: model, item: item).tag(item.name)
-                }
+            ForEach(list) { item in
+                ItemRow(model: model, item: item, showsProject: !inProject,
+                        showsEnvironment: model.environmentFilter == nil, remote: model.remoteStates[item.name])
+                    .tag(item.name)
             }
         }
         .listStyle(.plain)
@@ -320,32 +293,6 @@ struct ItemList: View {
             SelectionMenu(model: model, ids: ids.sorted())
         }
         .overlay { emptyOverlay(list) }
-    }
-
-    /// A project as a card that opens to its items (or, with several environments, to them).
-    @ViewBuilder
-    private func projectGroup(_ group: ItemTree.Project) -> some View {
-                        let open = model.isOpen(group.project)
-                        // One environment: its items sit right under the project, which shows the environment's badge.
-                        let only = group.environments.count == 1 ? group.environments[0] : nil
-                        GroupCard(open: open, symbol: "folder", title: group.project, count: group.count,
-                                  environments: group.environments.map(\.name)) { model.toggle(group.project) }
-                        .contextMenu {
-                            if let env = only {
-                                GroupMenu(model: model, title: "\(group.project)/\(env.name)", ids: env.items.map(\.name), pattern: "\(group.project)/\(env.name)/*")
-                            } else {
-                                ProjectMenu(model: model, project: group.project)
-                            }
-                        }
-                        if open, let env = only {
-                            ForEach(env.items) { item in
-                                ItemRow(model: model, item: item, showsProject: false, remote: model.remoteStates[item.name]).padding(.leading, 18).tag(item.name)
-                            }
-                        } else if open {
-                            ForEach(group.environments) { env in
-                                EnvironmentGroup(model: model, project: group.project, env: env, indent: 18)
-                            }
-                        }
     }
 
     @ViewBuilder
@@ -439,7 +386,7 @@ struct ListHeader: View {
             if model.filtersActive {
                 HStack(spacing: 6) {
                     if let e = model.environmentFilter { FilterChip(text: e) { model.environmentFilter = nil } }
-                    if let k = model.kindFilter { FilterChip(text: k.label + "s") { model.kindFilter = nil } }
+                    if let c = model.categoryFilter { FilterChip(text: c) { model.categoryFilter = nil } }
                     if let a = model.accessFilter { FilterChip(text: a ? "No approval" : "Ask first") { model.accessFilter = nil } }
                     Spacer()
                     Button("Clear") { model.clearFilters() }.buttonStyle(.link).font(.callout)
@@ -456,19 +403,13 @@ struct FilterMenu: View {
 
     var body: some View {
         Menu {
-            Picker("Project", selection: Binding(get: { () -> String? in
-                if case .project(let p) = model.filter { return p } else { return nil }
-            }, set: { model.filter = $0.map { .project($0) } ?? .all })) {
-                Text("All Projects").tag(String?.none)
-                ForEach(model.projects, id: \.self) { Text($0).tag(String?.some($0)) }
+            Picker("Category", selection: $model.categoryFilter) {
+                Text("All Categories").tag(String?.none)
+                ForEach(model.categories, id: \.self) { Text($0).tag(String?.some($0)) }
             }
             Picker("Environment", selection: $model.environmentFilter) {
                 Text("All Environments").tag(String?.none)
                 ForEach(model.allEnvironments, id: \.self) { Text($0).tag(String?.some($0)) }
-            }
-            Picker("Kind", selection: $model.kindFilter) {
-                Text("All Kinds").tag(ItemKind?.none)
-                ForEach(ItemKind.allCases, id: \.self) { Text($0.label + "s").tag(ItemKind?.some($0)) }
             }
             Picker("Access", selection: $model.accessFilter) {
                 Text("Any Access").tag(Bool?.none)
@@ -488,7 +429,7 @@ struct FilterMenu: View {
                 .contentShape(RoundedRectangle(cornerRadius: 10))
         }
         .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize().focusEffectDisabled()
-        .help("Filter by project, environment, kind or access")
+        .help("Filter by category, environment or access")
     }
 }
 
@@ -508,235 +449,139 @@ struct FilterChip: View {
     }
 }
 
-/// The Overview: counts to jump from, kinds, and what happened last.
-struct OverviewView: View {
+/// Review: what may need a look, the way 1Password's Watchtower lists what to fix. Each card leads to the items.
+struct ReviewView: View {
     let model: AppModel
 
     var body: some View {
+        let stale = model.items.filter { model.remoteStates[$0.name] == .outOfDate }
+        let unpushed = model.items.filter { model.remoteStates[$0.name] == .notPushed }
+        let open = model.items.filter(\.agentSafe)
+        let unnamed = model.items.filter { $0.service == nil }
+        let soon = model.grants.filter { $0.expires.timeIntervalSinceNow < 3600 }
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Overview").font(.title2.weight(.semibold))
-                    Text("\(model.items.count) credentials in \(model.projects.count) project\(model.projects.count == 1 ? "" : "s")")
-                        .font(.callout).foregroundStyle(.secondary)
-                }
-                Grid(horizontalSpacing: 10, verticalSpacing: 10) {
-                    GridRow {
-                        Tile(model: model, filter: .all, symbol: "key.fill", color: .blue)
-                        Tile(model: model, filter: .agentSafe, symbol: "person.badge.shield.checkmark.fill", color: .green)
-                    }
-                    GridRow {
-                        Tile(model: model, filter: .needsApproval, symbol: "hand.raised.fill", color: .red)
-                        Tile(model: model, filter: .grants, symbol: "checkmark.shield.fill", color: .teal)
-                    }
-                }
-                Text("Kinds").font(.headline)
-                Card {
-                    ForEach(Array(ItemKind.allCases.enumerated()), id: \.element) { i, k in
-                        Button { model.filter = .kind(k) } label: {
-                            CardRow(label: k.label + "s", last: i == ItemKind.allCases.count - 1) {
-                                Text("\(model.count(.kind(k)))").monospacedDigit().foregroundStyle(.secondary)
-                                Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
-                            }
-                            .contentShape(Rectangle())
+            VStack(alignment: .leading, spacing: 14) {
+                PageHeader(title: "Review", subtitle: model.reviewCount == 0 ? "Nothing needs a look" : "\(model.reviewCount) thing\(model.reviewCount == 1 ? "" : "s") to look at")
+                if model.reviewCount == 0 {
+                    Card {
+                        HStack(spacing: 12) {
+                            IconTile(symbol: "checkmark", tint: .green, size: 32)
+                            Text("Every pushed value is current, and nothing is waiting on you.").foregroundStyle(.secondary)
                         }
-                        .buttonStyle(.plain)
+                        .padding(.vertical, 12)
                     }
                 }
-                Text("Recent Activity").font(.headline)
-                Card {
-                    let recent = Array(model.log.prefix(6))
-                    if recent.isEmpty {
-                        Text("Nothing yet.").foregroundStyle(.secondary).padding(.vertical, 12)
-                    }
-                    ForEach(Array(recent.enumerated()), id: \.offset) { i, e in
-                        ActivityRow(entry: e).padding(.vertical, 8)
-                        if i < recent.count - 1 { Divider() }
-                    }
+                if !stale.isEmpty {
+                    ReviewCard(symbol: "arrow.triangle.2.circlepath", tint: .orange, title: "Changed since last push",
+                               detail: "These values changed in Latchkey after they were pushed. Push again so the services have them.",
+                               items: stale, model: model)
                 }
+                if !unpushed.isEmpty {
+                    ReviewCard(symbol: "icloud.slash", tint: .blue, title: "Not pushed yet",
+                               detail: "Their environment is linked to a service that doesn't have them yet.", items: unpushed, model: model)
+                }
+                if !soon.isEmpty {
+                    ReviewLink(symbol: "hourglass", tint: .teal, title: "Grants ending within the hour",
+                               detail: "Commands relying on them will start asking again.", count: soon.count) { model.filter = .grants }
+                }
+                Text("For reference").font(.headline).padding(.top, 6)
+                ReviewLink(symbol: "person.badge.shield.checkmark.fill", tint: .green, title: "Readable without approval",
+                           detail: "Any program in your Mac account can read these. Fine for values that aren't really secret.",
+                           count: open.count) { model.filter = .agentSafe }
+                ReviewLink(symbol: "server.rack", tint: .gray, title: "No service named",
+                           detail: "Naming the service adds a link to make a new key there, and lists the item under Services.",
+                           count: unnamed.count) { model.filter = .service("") }
+                ReviewLink(symbol: "hourglass", tint: .teal, title: "Grants in effect",
+                           detail: "Folders whose commands read items without asking, until each grant ends.",
+                           count: model.grants.count) { model.filter = .grants }
             }
             .padding(16)
         }
-        .navigationTitle("Overview")
+        .navigationTitle("Review")
+        .toolbar(removing: .title)
     }
 }
 
-/// Items arranged as projects → environments → items, in the list's order (shared items last).
-enum ItemTree {
-    struct Environment: Identifiable {
-        let name: String
-        var items: [SecretInfo]
-        var id: String { name }
-    }
-
-    struct Project: Identifiable {
-        let project: String
-        var environments: [Environment]
-        var id: String { project }
-        var count: Int { environments.reduce(0) { $0 + $1.items.count } }
-    }
-
-    static func build(_ items: [SecretInfo]) -> [Project] {
-        var out: [Project] = []
-        for item in items.sorted(by: { $0.ref < $1.ref }) {
-            let p = item.ref.project, e = item.ref.environment
-            if out.last?.project != p { out.append(Project(project: p, environments: [])) }
-            if out[out.count - 1].environments.last?.name != e {
-                out[out.count - 1].environments.append(Environment(name: e, items: []))
-            }
-            out[out.count - 1].environments[out[out.count - 1].environments.count - 1].items.append(item)
-        }
-        return out
-    }
-}
-
-/// A header row that opens and closes its group. Plain rows rather than a disclosure control, so opening a
-/// group from code (selecting an item elsewhere) and clicking behave the same, on screen and in snapshots.
-struct TreeHeader<Label: View>: View {
-    let open: Bool
-    let toggle: () -> Void
-    @ViewBuilder let label: () -> Label
-
-    var body: some View {
-        Button(action: toggle) {
-            HStack(spacing: 6) {
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                    .rotationEffect(.degrees(open ? 90 : 0))
-                    .frame(width: 12)
-                label()
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(open ? "Collapse" : "Expand")
-        // A group header opens and closes; it isn't an item, so it never takes the selection.
-        .selectionDisabled()
-    }
-}
-
-/// A collapsible environment inside a project, with the bulk actions for everything in it.
-struct EnvironmentGroup: View {
-    let model: AppModel
-    let project: String
-    let env: ItemTree.Environment
-    var indent: CGFloat = 18
-
-    var body: some View {
-        let key = "\(project)/\(env.name)"
-        let open = model.isOpen(key)
-        TreeHeader(open: open, toggle: { model.toggle(key) }) {
-            HStack(spacing: 6) {
-                EnvBadge(environment: env.name)
-                Text("\(env.items.count)").foregroundStyle(.secondary).monospacedDigit()
-                Spacer()
-                let safe = env.items.filter(\.agentSafe).count
-                if safe > 0 { Text("\(safe) agent-safe").font(.caption).foregroundStyle(.green) }
-                PlaceLabel(links: model.links(for: key), local: env.items.contains { !($0.usedIn ?? []).isEmpty })
-            }
-        }
-        .padding(.leading, indent)
-        .contextMenu {
-            GroupMenu(model: model, title: key, ids: env.items.map(\.name), pattern: "\(key)/*")
-        }
-        if open {
-            ForEach(env.items) { item in
-                ItemRow(model: model, item: item, showsProject: false, remote: model.remoteStates[item.name]).padding(.leading, indent + 18).tag(item.name)
-            }
-        }
-    }
-}
-
-/// A project (or Shared) as a card in the list: opens and closes its items. Not an item, so it never takes the selection.
-struct GroupCard: View {
-    let open: Bool
+/// A Review finding with the items it's about, each opening its detail.
+struct ReviewCard: View {
     let symbol: String
-    var tiled = false
+    let tint: Color
     let title: String
-    let count: Int
-    var environments: [String] = []
-    let toggle: () -> Void
-    @State private var hovering = false
+    let detail: String
+    let items: [SecretInfo]
+    let model: AppModel
 
     var body: some View {
-        Button(action: toggle) {
-            HStack(spacing: 10) {
-                Image(systemName: "chevron.right").font(.callout.weight(.semibold)).foregroundStyle(.secondary)
-                    .rotationEffect(.degrees(open ? 90 : 0)).frame(width: 10)
-                Group {
-                    if tiled {
-                        RoundedRectangle(cornerRadius: 7, style: .continuous).fill(.quaternary.opacity(0.6)).frame(width: 28, height: 28)
-                            .overlay(Image(systemName: symbol).font(.system(size: 13, weight: .medium)).foregroundStyle(.secondary))
-                    } else {
-                        Image(systemName: symbol).font(.system(size: 18, weight: .regular)).foregroundStyle(.indigo).frame(width: 28)
-                    }
+        Card {
+            HStack(alignment: .top, spacing: 12) {
+                IconTile(symbol: symbol, tint: tint, size: 32)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).font(.body.weight(.semibold))
+                    Text(detail).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
-                // The name comes first: in a narrow column the environment badges give way rather than cut it short.
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 6) {
-                        label.fixedSize()
-                        Spacer(minLength: 6)
-                        HStack(spacing: 4) {
-                            ForEach(environments.prefix(3), id: \.self) { EnvBadge(environment: $0, compact: true).fixedSize() }
-                            if environments.count > 3 { Text("+\(environments.count - 3)").font(.caption2).foregroundStyle(.secondary) }
-                        }
-                    }
-                    HStack { label; Spacer(minLength: 0) }
-                }
+                Spacer()
+                Text("\(items.count)").font(.title3.weight(.semibold).monospacedDigit())
             }
-            .padding(.horizontal, 10).padding(.vertical, 9)
-            .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(.quaternary.opacity(open || hovering ? 0.55 : 0.25)))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(.separator.opacity(0.6)))
+            .padding(.vertical, 12)
+            ForEach(items.prefix(6)) { item in
+                Divider()
+                Button {
+                    model.filter = .all
+                    model.selection = [item.name]
+                } label: {
+                    ItemRow(item: item).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            if items.count > 6 {
+                Divider()
+                Text("and \(items.count - 6) more").font(.callout).foregroundStyle(.secondary).padding(.vertical, 8)
+            }
+        }
+    }
+}
+
+/// A Review line that leads to a filtered list.
+struct ReviewLink: View {
+    let symbol: String
+    let tint: Color
+    let title: String
+    let detail: String
+    let count: Int
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(alignment: .top, spacing: 12) {
+                IconTile(symbol: symbol, tint: tint, size: 32)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).font(.body.weight(.semibold))
+                    Text(detail).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+                Text("\(count)").font(.title3.weight(.semibold).monospacedDigit()).foregroundStyle(.secondary)
+                Image(systemName: "chevron.right").font(.callout.weight(.semibold)).foregroundStyle(.tertiary).padding(.top, 4)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.quaternary.opacity(0.35)))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(.separator.opacity(0.5)))
             .contentShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)
-        .onHover { hovering = $0 }
-        .help(environments.isEmpty ? title : "\(title): \(environments.joined(separator: ", "))")
-        .accessibilityLabel("\(title), \(count) items, \(open ? "open" : "closed")")
-        .selectionDisabled()
-        .listRowSeparator(.hidden)
-        .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
     }
 }
 
-extension GroupCard {
-    var label: some View {
-        VStack(alignment: .leading, spacing: 1) {
-            Text(title).font(.body.weight(.semibold)).lineLimit(1).truncationMode(.middle)
-            Text("\(count) item\(count == 1 ? "" : "s")").font(.callout).foregroundStyle(.secondary)
-        }
-    }
-}
-
-/// A heading over a group of cards in the list.
-struct ListSectionHeading: View {
-    let model: AppModel
+/// A page's title and summary, for views without the item list's header.
+struct PageHeader: View {
     let title: String
-    let symbol: String
-
+    let subtitle: String
     var body: some View {
-        let collapsed = model.collapsedSections.contains(title)
-        Button {
-            withAnimation(.snappy) {
-                if collapsed { model.collapsedSections.remove(title) } else { model.collapsedSections.insert(title) }
-            }
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: symbol).foregroundStyle(.secondary)
-                Text(title).font(.body.weight(.medium))
-                Spacer()
-                Image(systemName: "chevron.down").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                    .rotationEffect(.degrees(collapsed ? -90 : 0))
-            }
-            .padding(.top, 10).padding(.bottom, 2).padding(.horizontal, 2)
-            .contentShape(Rectangle())
+        VStack(alignment: .leading, spacing: 1) {
+            Text(title).font(.title2.weight(.semibold))
+            Text(subtitle).font(.callout).foregroundStyle(.secondary)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(title), \(collapsed ? "collapsed" : "expanded")")
-        .selectionDisabled()
-        .listRowSeparator(.hidden)
-        .listRowInsets(EdgeInsets(top: 2, leading: 12, bottom: 0, trailing: 12))
+        .padding(.bottom, 2)
     }
 }
 
@@ -882,8 +727,14 @@ struct ActivityList: View {
 
     var body: some View {
         let entries = model.visibleLog
-        List(Array(entries.enumerated()), id: \.offset) { _, e in
-            ActivityRow(entry: e, showNames: true)
+        VStack(alignment: .leading, spacing: 0) {
+            PageHeader(title: "Activity", subtitle: "\(entries.count) entries · values are never logged")
+                .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 8)
+            List(Array(entries.enumerated()), id: \.offset) { _, e in
+                ActivityRow(entry: e, showNames: true).listRowSeparator(.hidden)
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
         }
         .overlay {
             if entries.isEmpty {
@@ -892,47 +743,95 @@ struct ActivityList: View {
             }
         }
         .navigationTitle("Activity")
-        .navigationSubtitle("\(entries.count) entries")
+        .toolbar(removing: .title)
     }
 }
 
+/// One access-log entry on one line: what happened to what, then who asked and when; the rest is in its tooltip.
 struct ActivityRow: View {
     let entry: Broker.LogEntry
     var showNames = true
 
     var icon: (String, Color) {
         let d = entry.decision
-        if d.hasPrefix("denied") { return ("xmark.octagon.fill", .red) }
+        if d.hasPrefix("denied") || d.hasPrefix("refused") { return ("xmark.circle.fill", .red) }
         if d.hasPrefix("approved") { return ("touchid", .blue) }
         return ("checkmark.circle.fill", .green)
     }
 
+    /// What happened, in a word or two, past tense.
     var verb: String {
         switch entry.op {
         case "get": return "Read"
         case "set": return "Saved"
         case "rm": return "Deleted"
         case "import": return "Imported"
-        default: return entry.op
+        case "update": return "Settings changed"
+        case "move": return "Moved"
+        case "grant": return "Granted"
+        case "revoke": return "Grant revoked"
+        case "restore": return "Restored"
+        case "forget": return "History forgotten"
+        case "version": return "Earlier value shown"
+        case "fill": return "Filled in Safari"
+        case "export": return "Exported"
+        case "push": return "Pushed"
+        case "link": return "Linked"
+        case "unlink": return "Unlinked"
+        case "environment-add", "environment-set", "environment-remove": return "Record changed"
+        case "project-link", "project-unlink": return "Remotes changed"
+        default: return entry.op.prefix(1).uppercased() + entry.op.dropFirst()
         }
     }
 
+    /// The one item or environment, shortened to its name, or how many.
+    private var subject: String {
+        guard let first = entry.names.first else { return "" }
+        if entry.names.count > 1 { return "\(entry.names.count) items" }
+        return ItemID(first)?.name ?? first
+    }
+
+    private var place: (project: String, environment: String)? {
+        guard entry.names.count == 1, let first = entry.names.first else { return nil }
+        let parts = first.split(separator: "/").map(String.init)
+        return parts.count >= 2 ? (parts[0], parts[1]) : nil
+    }
+
+    private var who: String {
+        if let p = entry.program { return p }
+        let shells: Set<String> = ["zsh", "bash", "sh", "fish", "login", "sudo", "env", "tmux", "screen", "sshd-session", "latchkey", "lk"]
+        let name = entry.chain.first { !shells.contains($0.lowercased()) } ?? entry.chain.first ?? ""
+        return name.prefix(1).uppercased() + name.dropFirst()
+    }
+
+    /// Approved, denied, allowed or refused; nothing for entries whose verb already says it (a revoke).
+    private var outcome: String {
+        let word = entry.decision.split(separator: " ").first.map(String.init) ?? entry.decision
+        guard ["approved", "denied", "allowed", "refused"].contains(word) else { return "" }
+        return word.prefix(1).uppercased() + word.dropFirst()
+    }
+
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(spacing: 10) {
             Image(systemName: icon.0).foregroundStyle(icon.1).frame(width: 18)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(showNames ? "\(verb) \(entry.names.joined(separator: ", "))" : verb)
-                    .font(.callout.weight(.medium)).lineLimit(2)
-                Text("\(entry.decision) · \(entry.chain.prefix(3).joined(separator: " › "))")
-                    .font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                if !entry.cwd.isEmpty {
-                    Text(Broker.tilde(entry.cwd)).font(.caption.monospaced()).foregroundStyle(.tertiary).lineLimit(1).truncationMode(.head)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text(showNames && !subject.isEmpty ? subject : verb).font(.callout.weight(.medium)).lineLimit(1).truncationMode(.middle)
+                    if showNames, let place {
+                        Chip(text: place.project).font(.caption)
+                        EnvBadge(environment: place.environment, compact: true).fixedSize()
+                    }
                 }
+                Text([showNames && !subject.isEmpty ? verb : nil, outcome, who].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
+                    .font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
-            Spacer()
-            Text(entry.time.formatted(.relative(presentation: .named))).font(.caption).foregroundStyle(.secondary)
+            Spacer(minLength: 6)
+            Text(entry.time.formatted(.relative(presentation: .named))).font(.caption).foregroundStyle(.secondary).fixedSize()
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 4)
+        .help([entry.names.joined(separator: ", "), entry.decision, entry.chain.joined(separator: " › "),
+               entry.cwd.isEmpty ? "" : Broker.tilde(entry.cwd), entry.command.map { "$ \($0)" } ?? ""]
+              .filter { !$0.isEmpty }.joined(separator: "\n"))
     }
 }
 
@@ -987,22 +886,40 @@ struct DeletedList: View {
     @State private var forgetting: Version?
 
     var body: some View {
-        List(model.deleted) { v in
-            HStack(spacing: 10) {
-                KindIcon(kind: v.kind, size: 28).opacity(0.6)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(v.item).font(.callout.monospaced()).lineLimit(1).truncationMode(.middle)
-                    let left = max(0, Int((Versions.deletedFor - Date().timeIntervalSince(v.savedAt)) / 86400))
-                    Text("Deleted \(v.savedAt.formatted(.relative(presentation: .named))) by \(v.by) · \(left) day\(left == 1 ? "" : "s") left")
-                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+        VStack(alignment: .leading, spacing: 0) {
+            PageHeader(title: "Recently Deleted",
+                       subtitle: "\(model.deleted.count) item\(model.deleted.count == 1 ? "" : "s") · kept for \(Int(Versions.deletedFor / 86400)) days")
+                .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 8)
+            List(model.deleted) { v in
+                let info = SecretInfo(name: v.item, kind: v.kind, agentSafe: false, note: "", updatedAt: v.savedAt)
+                let type = ItemType(info)
+                let left = max(0, Int((Versions.deletedFor - Date().timeIntervalSince(v.savedAt)) / 86400))
+                HStack(spacing: 12) {
+                    Image(systemName: type.symbol).font(.system(size: 17, weight: .medium)).foregroundStyle(type.tint.opacity(0.7)).frame(width: 24)
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack(spacing: 6) {
+                            Text(info.ref.name).font(.body.weight(.medium)).lineLimit(1).truncationMode(.middle)
+                            if !info.ref.isShared {
+                                Chip(text: info.ref.project).font(.caption)
+                                EnvBadge(environment: info.ref.environment, compact: true).fixedSize()
+                            }
+                        }
+                        Text("Deleted \(v.savedAt.formatted(.relative(presentation: .named))) · \(left) day\(left == 1 ? "" : "s") left")
+                            .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                    Spacer(minLength: 6)
+                    Button("Restore") { Task { await model.restore(v) } }.buttonStyle(.bordered)
                 }
-                Spacer()
-                Button("Restore") { Task { await model.restore(v) } }
+                .padding(.vertical, 4)
+                .listRowSeparator(.hidden)
+                .help("\(v.item)\nDeleted by \(v.by)")
+                .contextMenu {
+                    Button("Restore") { Task { await model.restore(v) } }
+                    Button("Forget for Good…", role: .destructive) { forgetting = v }
+                }
             }
-            .contextMenu {
-                Button("Restore") { Task { await model.restore(v) } }
-                Button("Forget for Good…", role: .destructive) { forgetting = v }
-            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
         }
         .overlay {
             if model.deleted.isEmpty {
@@ -1011,7 +928,7 @@ struct DeletedList: View {
             }
         }
         .navigationTitle("Recently Deleted")
-        .navigationSubtitle("\(model.deleted.count) item\(model.deleted.count == 1 ? "" : "s")")
+        .toolbar(removing: .title)
         .confirmationDialog("Forget \(forgetting?.item ?? "")?", isPresented: Binding(get: { forgetting != nil }, set: { if !$0 { forgetting = nil } }),
                             presenting: forgetting) { v in
             Button("Forget for Good", role: .destructive) { Task { await model.forgetHistory([v.item]) } }
