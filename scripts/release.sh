@@ -112,4 +112,16 @@ if (( NOTARIZE )); then
   spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG" 2>&1 | tail -1
 fi
 shasum -a 256 "$DMG" | tee "$DMG.sha256"
+
+# The Homebrew cask, once there's a public place to download from (LATCHKEY_RELEASES_REPO, as owner/name) and a
+# homepage (LATCHKEY_HOMEPAGE).
+if [[ -n "${LATCHKEY_RELEASES_REPO:-}" && -n "${LATCHKEY_HOMEPAGE:-}" ]]; then
+  step "Writing the Homebrew cask"
+  sed -e "s|@VERSION@|$VERSION|" -e "s|@SHA256@|$(cut -d' ' -f1 "$DMG.sha256")|" \
+      -e "s|@RELEASES_REPO@|$LATCHKEY_RELEASES_REPO|" -e "s|@HOMEPAGE@|$LATCHKEY_HOMEPAGE|" \
+      packaging/homebrew/latchkey.rb.template | grep -v '^#' > "$OUT/latchkey.rb"
+  print "    $OUT/latchkey.rb"
+else
+  print "    (no Homebrew cask: set LATCHKEY_RELEASES_REPO and LATCHKEY_HOMEPAGE to write one)"
+fi
 step "Done: $DMG"

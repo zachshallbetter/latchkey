@@ -32,7 +32,7 @@ Files refer to them as latchkey://ID.
       Delete items with one approval. PATTERN is PROJECT/* or PROJECT/ENV/*.
   latchkey update ID[,ID...]|PATTERN... [--agent-safe yes|no] [--kind KIND] [--service NAME] [--note TEXT]
       Change settings on many items with one approval. Values are untouched.
-  latchkey import FILE... [--batch LIST] [--project P] [--env E | --shared] [--share-identical]
+  latchkey import FILE... [--batch LIST] [--scan DIR] [--project P] [--env E | --shared] [--share-identical]
                   [--rewrite] [--replace] [--dry-run] [--only KEY,...] [--kind KIND | --kind KEY=KIND]...
                   [--agent-safe KEY,...|all] [--agent-safe-pattern PATTERN,...] [--skip PATTERN,...]
                   [--no-default-skip]
@@ -42,6 +42,8 @@ Files refer to them as latchkey://ID.
       imports them as shared items named after their keys.
       --rewrite replaces each imported value in FILE with its latchkey://ID.
       Existing items are left alone unless --replace is given.
+      --scan DIR finds every .env and .env.* under DIR (not examples or templates, not in node_modules, build or
+      .git folders) so all your projects come in at once; try it with --dry-run first.
       Several files (or --batch LIST, one path per line) are reviewed and approved together, each in its own
       project and environment. --share-identical makes a name that holds the same value in every file that
       has it one shared item, so rotating it is one change. Two files giving one ID different values is a
@@ -449,6 +451,13 @@ func importCommand(_ input: [String]) -> Never {
             }
             files += text.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }
                 .filter { !$0.isEmpty && !$0.hasPrefix("#") }
+        case "--scan":
+            guard !rest.isEmpty else { fail("--scan takes a folder, such as ~/Projects", code: 64) }
+            let root = URL(fileURLWithPath: (rest.removeFirst() as NSString).expandingTildeInPath)
+            let found = EnvScan.files(under: root)
+            if found.isEmpty { fail("no env files under \(Broker.tilde(root.path))", code: 66) }
+            FileHandle.standardError.write(Data("latchkey: found \(found.count) env file\(found.count == 1 ? "" : "s") under \(Broker.tilde(root.path))\n".utf8))
+            files += found
         case "--rewrite": rewrite = true
         case "--replace": replace = true
         case "--dry-run": dryRun = true

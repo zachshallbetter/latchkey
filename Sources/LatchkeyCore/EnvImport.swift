@@ -183,3 +183,41 @@ public enum EnvImport {
         return nil
     }
 }
+
+/// Finds env files to import under a folder: `.env` and `.env.*`, but not examples or templates, and not inside
+/// dependency, build or version-control folders. Doesn't follow symbolic links.
+public enum EnvScan {
+    static let skippedFolders: Set<String> = ["node_modules", ".git", ".build", "build", "dist", "out", "vendor", "Pods",
+                                              ".next", ".nuxt", ".svelte-kit", ".turbo", ".venv", "venv", "target",
+                                              "DerivedData", ".cache", "coverage", "Library"]
+    static let skippedSuffixes = [".example", ".sample", ".template", ".dist", ".defaults", ".schema"]
+    /// Backup copies, wherever the marker sits: `.env.bak`, `.env.publish.bak.20260720`, `.env.local.old`.
+    static let backupMarkers = [".bak", ".backup", ".old", ".orig", ".copy", ".save", ".swp"]
+
+    public static func isEnvFile(_ name: String) -> Bool {
+        guard name == ".env" || name.hasPrefix(".env.") else { return false }
+        let lower = name.lowercased()
+        if lower.hasSuffix("~") || backupMarkers.contains(where: { lower.hasSuffix($0) || lower.contains($0 + ".") }) { return false }
+        return !skippedSuffixes.contains { lower.hasSuffix($0) }
+    }
+
+    public static func files(under root: URL, depth: Int = 4) -> [String] {
+        var out: [String] = []
+        func walk(_ dir: URL, _ level: Int) {
+            guard level <= depth,
+                  let entries = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.isDirectoryKey, .isSymbolicLinkKey]) else { return }
+            for e in entries.sorted(by: { $0.path < $1.path }) {
+                let values = try? e.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+                if values?.isSymbolicLink == true { continue }
+                let name = e.lastPathComponent
+                if values?.isDirectory == true {
+                    if !skippedFolders.contains(name) && !(name.hasPrefix(".") && name != ".config") { walk(e, level + 1) }
+                } else if isEnvFile(name) {
+                    out.append(e.path)
+                }
+            }
+        }
+        walk(root, 0)
+        return out
+    }
+}

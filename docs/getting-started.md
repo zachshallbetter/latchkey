@@ -95,7 +95,8 @@ The dry run lists what would happen: the project (`shop`, from the repository's 
 (`development`, from the file name) and each item's ID, never the values. `--rewrite` imports with one approval,
 then replaces each value in the file with its `latchkey://` reference. The file is now safe to keep around.
 
-Have many projects? `latchkey import --batch` takes a list of files and imports them all with one approval. See
+Have many projects? `latchkey import --scan ~/Projects --dry-run` finds every env file and shows where each value
+would go; run it without `--dry-run` (and with `--rewrite`) to bring them all in with one approval. See
 [Importing](import.md).
 
 ## Uninstall

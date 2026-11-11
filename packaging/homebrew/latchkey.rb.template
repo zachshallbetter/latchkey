@@ -1,0 +1,23 @@
+# Homebrew cask for Latchkey. scripts/release.sh fills in the version, checksum, download repository and homepage
+# and writes the result to build/release/<version>/latchkey.rb, for a tap repository.
+cask "latchkey" do
+  version "@VERSION@"
+  sha256 "@SHA256@"
+
+  url "https://github.com/@RELEASES_REPO@/releases/download/v#{version}/Latchkey-#{version}.dmg"
+  name "Latchkey"
+  desc "Secrets for your Mac and your coding agents"
+  homepage "@HOMEPAGE@"
+
+  depends_on macos: ">= :sequoia"
+
+  app "Latchkey.app"
+  binary "#{appdir}/Latchkey.app/Contents/Helpers/latchkey"
+  binary "#{appdir}/Latchkey.app/Contents/Helpers/latchkey", target: "lk"
+
+  # Items stay in iCloud Keychain; remove them in the app first if you want them gone.
+  zap trash: [
+    "~/Library/Application Support/Latchkey",
+    "~/Library/Preferences/io.snackstud.latchkey.plist",
+  ]
+end

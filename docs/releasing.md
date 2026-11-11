@@ -38,6 +38,14 @@ signed, notarized and stapled disk image.
 4. Check the disk image on a Mac that has never had Latchkey: open it, drag Latchkey to Applications, open it, choose
    **Latchkey › Install Command Line Tool…**, and run `latchkey status`. Gatekeeper should open it without warnings.
 
+## Homebrew
+
+With `LATCHKEY_RELEASES_REPO` (a public repository, `owner/name`, whose releases hold the disk image as
+`Latchkey-VERSION.dmg` under the tag `vVERSION`) and `LATCHKEY_HOMEPAGE` set, the script also writes
+`build/release/VERSION/latchkey.rb` from `packaging/homebrew/latchkey.rb.template`: the app, `latchkey` and `lk` on the
+PATH, and a `zap` that removes Latchkey's folder and settings (not keychain items). Put it in a tap repository
+(`owner/homebrew-tap`, `Casks/latchkey.rb`); then `brew install --cask owner/tap/latchkey`.
+
 ## What the script checks
 
 - A Developer ID Application certificate for `DEVELOPMENT_TEAM` exists.

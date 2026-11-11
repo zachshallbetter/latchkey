@@ -104,6 +104,7 @@ nothing moves.
 | Option | |
 |---|---|
 | `--batch LIST` | Also import the files listed in LIST, one path per line (`#` comments allowed). |
+| `--scan DIR` | Also import every `.env` and `.env.*` under DIR, skipping examples, templates, backups, and dependency, build and `.git` folders. |
 | `--project P`, `--env E` | Place items here instead of what the repository and file name imply. |
 | `--shared` | Import as shared items named after their keys. |
 | `--share-identical` | With several files, make a name with the same value in every file one shared item. |

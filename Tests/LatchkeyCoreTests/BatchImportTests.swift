@@ -48,4 +48,21 @@ final class BatchImportTests: XCTestCase {
         XCTAssertTrue(plan.files[1].ignored["DB"]!.hasPrefix("conflict"))
         XCTAssertEqual(plan.items[0].usedIn, ["/r/acp/.env", "/r/acp/.env.local"], "the same value from two files is one item used in both")
     }
+
+    func testScanFindsEnvFilesAndSkipsTheRest() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("scan-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let fm = FileManager.default
+        for path in ["shop/.env.local", "shop/.env.example", "shop/apps/web/.env", "shop/node_modules/x/.env",
+                     "site/.env.production", "site/.git/.env", "site/build/.env", "deep/a/b/c/d/e/.env", "notes/env.txt",
+                     "site/.env.publish.bak.20260720", "site/.env.local.old", "site/.env~"] {
+            let url = root.appendingPathComponent(path)
+            try fm.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try Data("A=1\n".utf8).write(to: url)
+        }
+        try fm.createSymbolicLink(at: root.appendingPathComponent("linked"), withDestinationURL: root.appendingPathComponent("shop"))
+        let marker = root.lastPathComponent + "/"
+        let found = EnvScan.files(under: root).map { String($0[$0.range(of: marker)!.upperBound...]) }
+        XCTAssertEqual(found, ["shop/.env.local", "shop/apps/web/.env", "site/.env.production"])
+    }
 }

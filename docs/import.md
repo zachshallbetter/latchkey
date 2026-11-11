@@ -50,12 +50,18 @@ The whole import asks for approval once.
 ## Many files at once
 
 ```bash
-find ~/Projects -name '.env*' -not -name '.env.example' -not -path '*/node_modules/*' > envs.txt
-latchkey import --batch envs.txt --share-identical --agent-safe-pattern 'NEXT_PUBLIC_*,VITE_*' --dry-run
-latchkey import --batch envs.txt --share-identical --agent-safe-pattern 'NEXT_PUBLIC_*,VITE_*' --rewrite
+latchkey import --scan ~/Projects --share-identical --agent-safe-pattern 'NEXT_PUBLIC_*,VITE_*' --dry-run
+latchkey import --scan ~/Projects --share-identical --agent-safe-pattern 'NEXT_PUBLIC_*,VITE_*' --rewrite
 ```
 
-You can also list files directly: `latchkey import a/.env b/.env.local`.
+`--scan` finds every `.env` and `.env.*` under the folder, four levels deep, and skips examples and templates
+(`.env.example`, `.sample`, `.template`), backups (`.bak`, `.old`, `.orig`, even with a date after them), and
+`node_modules`, `.git`, build and other dependency folders. It doesn't follow symbolic links. Read the dry run first:
+folders inside one repository that use the same environment show up as conflicts, and nothing conflicting is
+imported; give those files their own `--project` in separate imports.
+
+To choose the files yourself, list them (`latchkey import a/.env b/.env.local`) or put them in a file, one per line,
+and pass `--batch envs.txt`.
 
 - Each file goes into its own project and environment.
 - The dry run shows, per file, where it goes and how many items, shared values, skips and conflicts; then the totals.

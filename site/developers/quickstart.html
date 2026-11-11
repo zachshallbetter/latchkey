@@ -51,7 +51,7 @@ latchkey import .env.local --dry-run</code></pre></figure>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey import .env.local --rewrite</code></pre></figure>
 <figure class="code"><figcaption><span>.env.local</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">DATABASE_URL=latchkey://shop/development/DATABASE_URL
 STRIPE_KEY=latchkey://shop/development/STRIPE_KEY</code></pre></figure>
-<p>Many projects at once: <code>latchkey import --batch files.txt</code>, one path per line, one approval. See the <a href="cli.html#import">import options</a>.</p>
+<p>Every project at once: <code>latchkey import --scan ~/Projects --dry-run</code>, then again without <code>--dry-run</code>. Or <code>latchkey import --batch files.txt</code>, one path per line. Either way, one approval. See the <a href="cli.html#import">import options</a>.</p>
 
 <h2 id="run">3. Run a command</h2>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey run --env-file .env.local -- npm run dev
