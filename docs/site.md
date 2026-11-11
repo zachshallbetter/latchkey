@@ -33,6 +33,23 @@ leave. With reduced motion they jump between steps; without scripts, static figu
 Links are relative and end in `.html`, so the folder works from any host or opened from disk. Fonts are the
 system's, so pages make no third-party requests.
 
+## Page rules
+
+Every page keeps to these; they're what the layout passes checked, page by page, at 1440 and 375 pixels wide, in
+light and dark:
+
+- One header (Features, How it works, Pricing, Security, Docs, Development preview) and one footer on every page.
+- No sideways scroll, and no visible scrollbars inside the page: code wraps between words, tables become one
+  labelled block per row on phones, and the app window hides its pane scrollbars.
+- A section opens with its heading and a wide example (a scene, the app window, a demo or a grid of cards) before
+  longer text; text-only topics put their heading beside the text.
+- Scenes float on the page's wash, use the app's own layouts, say they replay Latchkey's output with example data,
+  and have captions at their width.
+- "Read more" links are small and quiet (`.more`), and a card that goes somewhere is one link (`.card-link`, `.tool`),
+  not an underlined title.
+- Content reads without scripts, every image has alt text, each page has one `h1`, a title and a description, and
+  loading or playing a page logs no errors.
+
 ## Keeping it true
 
 The pages were audited against the Digital Presence Protocol (DPP 0.3.0, working draft): content is in the HTML
