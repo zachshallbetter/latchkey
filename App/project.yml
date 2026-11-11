@@ -32,11 +32,13 @@ targets:
     info:
       path: Latchkey/Info.plist
       properties:
-        LSUIElement: true
         CFBundleDisplayName: Latchkey
+        LSApplicationCategoryType: public.app-category.developer-tools
+        NSHumanReadableCopyright: ""
         LatchkeyAccessGroup: $(AppIdentifierPrefix)io.latchkey.shared
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.latchkey.Latchkey
         ENABLE_HARDENED_RUNTIME: YES
         CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

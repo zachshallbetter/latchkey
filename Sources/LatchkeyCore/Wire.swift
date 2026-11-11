@@ -37,9 +37,26 @@ public struct SecretInfo: Codable, Identifiable, Hashable, Sendable {
     }
 }
 
+/// One item in an `import` request.
+public struct ImportItem: Codable, Sendable, Hashable {
+    public var name: String
+    public var value: String
+    public var kind: ItemKind?
+    public var agentSafe: Bool?
+    public var note: String?
+
+    public init(name: String, value: String, kind: ItemKind? = nil, agentSafe: Bool? = nil, note: String? = nil) {
+        self.name = name
+        self.value = value
+        self.kind = kind
+        self.agentSafe = agentSafe
+        self.note = note
+    }
+}
+
 /// One line of JSON from the CLI to the broker.
 public struct Request: Codable, Sendable {
-    public var op: String            // status | list | get | set | rm
+    public var op: String            // status | list | get | set | rm | import
     public var names: [String]?
     public var value: String?
     public var kind: ItemKind?
@@ -47,9 +64,13 @@ public struct Request: Codable, Sendable {
     public var note: String?
     public var cwd: String?
     public var command: String?      // what `run` is about to start, for the log
+    public var items: [ImportItem]?  // import
+    public var replace: Bool?        // import: overwrite items that already exist
+    public var source: String?       // import: the file the items came from, for the approval and the log
 
     public init(op: String, names: [String]? = nil, value: String? = nil, kind: ItemKind? = nil,
-                agentSafe: Bool? = nil, note: String? = nil, cwd: String? = nil, command: String? = nil) {
+                agentSafe: Bool? = nil, note: String? = nil, cwd: String? = nil, command: String? = nil,
+                items: [ImportItem]? = nil, replace: Bool? = nil, source: String? = nil) {
         self.op = op
         self.names = names
         self.value = value
@@ -58,6 +79,9 @@ public struct Request: Codable, Sendable {
         self.note = note
         self.cwd = cwd
         self.command = command
+        self.items = items
+        self.replace = replace
+        self.source = source
     }
 }
 
@@ -72,10 +96,15 @@ public struct Response: Codable, Sendable {
     public var denied: [String]?
     public var missing: [String]?
     public var info: [String: String]?
+    /// import: what was created, overwritten, and left alone because it already existed.
+    public var added: [String]?
+    public var replaced: [String]?
+    public var skipped: [String]?
 
     public init(ok: Bool, error: String? = nil, secrets: [SecretInfo]? = nil, values: [String: String]? = nil,
                 masked: [String]? = nil, denied: [String]? = nil, missing: [String]? = nil,
-                info: [String: String]? = nil) {
+                info: [String: String]? = nil, added: [String]? = nil, replaced: [String]? = nil,
+                skipped: [String]? = nil) {
         self.ok = ok
         self.error = error
         self.secrets = secrets
@@ -84,6 +113,9 @@ public struct Response: Codable, Sendable {
         self.denied = denied
         self.missing = missing
         self.info = info
+        self.added = added
+        self.replaced = replaced
+        self.skipped = skipped
     }
 }
 

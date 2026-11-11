@@ -44,30 +44,54 @@ public enum References {
 /// A plain KEY=VALUE file: comments, blank lines, `export`, single and double quotes.
 public enum EnvFile {
     public static func parse(_ text: String) -> [(key: String, value: String)] {
-        var out: [(String, String)] = []
-        for raw in text.split(omittingEmptySubsequences: false, whereSeparator: { $0 == "\n" || $0 == "\r\n" }) {
-            var line = raw.trimmingCharacters(in: .whitespaces)
-            if line.isEmpty || line.hasPrefix("#") { continue }
-            if line.hasPrefix("export ") { line = String(line.dropFirst(7)).trimmingCharacters(in: .whitespaces) }
-            guard let eq = line.firstIndex(of: "=") else { continue }
-            let key = line[..<eq].trimmingCharacters(in: .whitespaces)
-            guard !key.isEmpty, key.allSatisfy({ $0.isLetter || $0.isNumber || $0 == "_" }) else { continue }
-            var value = line[line.index(after: eq)...].trimmingCharacters(in: .whitespaces)
-            if value.count >= 2, value.hasPrefix("\""), value.hasSuffix("\"") {
-                value = String(value.dropFirst().dropLast())
-                    .replacingOccurrences(of: "\\n", with: "\n")
-                    .replacingOccurrences(of: "\\\"", with: "\"")
-            } else if value.count >= 2, value.hasPrefix("'"), value.hasSuffix("'") {
-                value = String(value.dropFirst().dropLast())
-            } else if let hash = value.range(of: " #") {
-                value = value[..<hash.lowerBound].trimmingCharacters(in: .whitespaces)
-            }
-            out.append((key, value))
-        }
-        return out
+        lines(text).compactMap(parseLine)
     }
 
     public static func load(_ path: String) throws -> [(key: String, value: String)] {
         parse(try String(contentsOfFile: path, encoding: .utf8))
+    }
+
+    /// The same text with each KEY in `names` set to `latchkey://KEY`. Comments, order, blank lines, `export`,
+    /// indentation and line endings are kept; every other line is untouched.
+    public static func rewrite(_ text: String, toReferences names: Set<String>) -> String {
+        let out = lines(text).map { line -> String in
+            guard let (key, _) = parseLine(line), names.contains(key) else { return String(line) }
+            let indent = line.prefix { $0 == " " || $0 == "\t" }
+            let body = line.drop { $0 == " " || $0 == "\t" }
+            let export = body.hasPrefix("export ") ? "export " : ""
+            return "\(indent)\(export)\(key)=\(References.scheme)\(key)"
+        }
+        return out.joined(separator: text.contains("\r\n") ? "\r\n" : "\n")
+    }
+
+    /// Rewrites the file in place (atomically), keeping its permissions.
+    public static func rewriteFile(at url: URL, original text: String, toReferences names: Set<String>) throws {
+        let perms = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.posixPermissions]
+        try Data(rewrite(text, toReferences: names).utf8).write(to: url, options: .atomic)
+        if let perms { try? FileManager.default.setAttributes([.posixPermissions: perms], ofItemAtPath: url.path) }
+    }
+
+    private static func lines(_ text: String) -> [Substring] {
+        text.split(omittingEmptySubsequences: false, whereSeparator: { $0 == "\n" || $0 == "\r\n" })
+    }
+
+    static func parseLine(_ raw: Substring) -> (key: String, value: String)? {
+        var line = raw.trimmingCharacters(in: .whitespaces)
+        if line.isEmpty || line.hasPrefix("#") { return nil }
+        if line.hasPrefix("export ") { line = String(line.dropFirst(7)).trimmingCharacters(in: .whitespaces) }
+        guard let eq = line.firstIndex(of: "=") else { return nil }
+        let key = line[..<eq].trimmingCharacters(in: .whitespaces)
+        guard !key.isEmpty, key.allSatisfy({ $0.isLetter || $0.isNumber || $0 == "_" }) else { return nil }
+        var value = line[line.index(after: eq)...].trimmingCharacters(in: .whitespaces)
+        if value.count >= 2, value.hasPrefix("\""), value.hasSuffix("\"") {
+            value = String(value.dropFirst().dropLast())
+                .replacingOccurrences(of: "\\n", with: "\n")
+                .replacingOccurrences(of: "\\\"", with: "\"")
+        } else if value.count >= 2, value.hasPrefix("'"), value.hasSuffix("'") {
+            value = String(value.dropFirst().dropLast())
+        } else if let hash = value.range(of: " #") {
+            value = value[..<hash.lowerBound].trimmingCharacters(in: .whitespaces)
+        }
+        return (key, value)
     }
 }

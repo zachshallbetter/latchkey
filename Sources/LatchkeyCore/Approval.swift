@@ -14,7 +14,13 @@ public protocol Approver: Sendable {
 /// password in the Passwords app. A desktop Mac without a Touch ID keyboard still gets the Watch or the
 /// password.
 public final class SystemApprover: Approver, @unchecked Sendable {
-    public init() {}
+    /// An unanswered sheet is withdrawn and counts as a denial, so one forgotten prompt
+    /// cannot hold up every other request.
+    public var timeout: TimeInterval
+
+    public init(timeout: TimeInterval = 90) {
+        self.timeout = timeout
+    }
 
     public var method: String {
         let ctx = LAContext()
@@ -40,7 +46,10 @@ public final class SystemApprover: Approver, @unchecked Sendable {
             ok = success
             done.signal()
         }
-        done.wait()
+        if done.wait(timeout: .now() + timeout) == .timedOut {
+            ctx.invalidate()
+            done.wait()
+        }
         return ok
     }
 }

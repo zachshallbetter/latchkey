@@ -9,6 +9,8 @@ public final class Broker: @unchecked Sendable {
     /// How long a read approval covers the same names from the same place. 0 asks every time.
     public var readApprovalWindow: TimeInterval
     public let logURL: URL?
+    /// Called after every logged decision (reads, changes, denials), off the main thread.
+    public var onChange: (@Sendable () -> Void)?
     private let memory = ApprovalMemory()
     /// One request at a time, so approval sheets never stack.
     private let serial = NSLock()
@@ -33,6 +35,7 @@ public final class Broker: @unchecked Sendable {
             case "get": return try get(req, peer: peer)
             case "set": return try set(req, peer: peer)
             case "rm": return try remove(req, peer: peer)
+            case "import": return try importItems(req, peer: peer)
             default: return Response(ok: false, error: "unknown op \(req.op)")
             }
         } catch {
@@ -107,12 +110,63 @@ public final class Broker: @unchecked Sendable {
         return Response(ok: true)
     }
 
+    /// Many items, one approval. Existing items are skipped unless `replace` is set.
+    func importItems(_ req: Request, peer: PeerInfo) throws -> Response {
+        var byName: [String: ImportItem] = [:]
+        for item in req.items ?? [] {
+            guard Wire.isValidName(item.name) else { throw StoreError.badName(item.name) }
+            guard !item.value.isEmpty else { return Response(ok: false, error: "\(item.name) has an empty value") }
+            byName[item.name] = item   // last one wins, as in a .env file
+        }
+        guard !byName.isEmpty else { return Response(ok: false, error: "nothing to import") }
+        let existing = Set(try store.list().map(\.name))
+        let names = byName.keys.sorted()
+        let toAdd = names.filter { !existing.contains($0) }
+        let toReplace = req.replace == true ? names.filter { existing.contains($0) } : []
+        let skipped = req.replace == true ? [] : names.filter { existing.contains($0) }
+        let writing = toAdd + toReplace
+        guard !writing.isEmpty else { return Response(ok: true, added: [], replaced: [], skipped: skipped) }
+
+        var what: [String] = []
+        if !toAdd.isEmpty { what.append("add \(Self.count(toAdd))") }
+        if !toReplace.isEmpty { what.append("overwrite \(Self.count(toReplace))") }
+        var from = ""
+        if let src = req.source, !src.isEmpty { from = " from \(Self.tilde(src))" }
+        guard approver.approve("\(what.joined(separator: " and "))\(from), asked by \(Self.describe(peer, req))") else {
+            log("import", writing, "denied", peer, req)
+            return Response(ok: false, error: "import was not approved")
+        }
+        var done: [String] = []
+        for name in writing {
+            let i = byName[name]!
+            do {
+                try store.save(name: name, value: i.value, kind: i.kind, agentSafe: i.agentSafe, note: i.note)
+                done.append(name)
+            } catch {
+                log("import", done, "approved (stopped at \(name))", peer, req)
+                return Response(ok: false, error: "saved \(done.count) of \(writing.count), then \(name) failed: \(error)",
+                                added: toAdd.filter(done.contains), replaced: toReplace.filter(done.contains), skipped: skipped)
+            }
+        }
+        log("import", writing, "approved", peer, req)
+        return Response(ok: true, added: toAdd, replaced: toReplace, skipped: skipped)
+    }
+
+    /// "3 items (A, B, C)", shortened past a handful so the system sheet stays readable.
+    static func count(_ names: [String]) -> String {
+        let shown = names.count > 6 ? names.prefix(5).joined(separator: ", ") + ", …" : names.joined(separator: ", ")
+        return "\(names.count) item\(names.count == 1 ? "" : "s") (\(shown))"
+    }
+
+    public static func tilde(_ path: String) -> String {
+        let home = NSHomeDirectory()
+        return path.hasPrefix(home) ? "~" + path.dropFirst(home.count) : path
+    }
+
     /// "claude › zsh in ~/Projects/site (running npm test)"
     static func describe(_ peer: PeerInfo, _ req: Request) -> String {
         let who = peer.chain.prefix(3).joined(separator: " › ")
-        var cwd = req.cwd ?? peer.cwd
-        let home = NSHomeDirectory()
-        if cwd.hasPrefix(home) { cwd = "~" + cwd.dropFirst(home.count) }
+        let cwd = tilde(req.cwd ?? peer.cwd)
         var s = (who.isEmpty ? "a process" : who) + (cwd.isEmpty ? "" : " in \(cwd)")
         if let c = req.command, !c.isEmpty { s += " (running \(c.count > 60 ? String(c.prefix(57)) + "…" : c))" }
         return s
@@ -143,6 +197,7 @@ public final class Broker: @unchecked Sendable {
         } else {
             FileManager.default.createFile(atPath: url.path, contents: line, attributes: [.posixPermissions: 0o600])
         }
+        onChange?()
     }
 
     public static func readLog(limit: Int = 50, from url: URL = Paths.accessLog) -> [LogEntry] {

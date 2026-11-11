@@ -13,6 +13,11 @@ latchkey: read secrets from the Latchkey app without keeping them in files.
   latchkey set NAME [--kind token|password|key|value] [--agent-safe] [--note TEXT]
       Value is read from standard input, or prompted for when run in a terminal.
   latchkey rm NAME
+  latchkey import FILE [--rewrite] [--replace] [--dry-run] [--only NAME,...]
+                  [--kind KIND | --kind NAME=KIND]... [--agent-safe NAME,...|all]
+      Add every KEY=VALUE in a .env file with one approval. Prints names, never values.
+      --rewrite replaces each imported value in FILE with latchkey://KEY.
+      Existing items are left alone unless --replace is given.
   latchkey status
 
 Items not marked agent-safe need your approval (Touch ID, Apple Watch or your Mac password).
@@ -144,6 +149,100 @@ func runCommand(_ input: [String]) -> Never {
     exit(process.terminationStatus)
 }
 
+// MARK: - import
+
+func importCommand(_ input: [String]) -> Never {
+    var file: String?
+    var rewrite = false, replace = false, dryRun = false
+    var only: Set<String>?
+    var defaultKind = ItemKind.token
+    var kinds: [String: ItemKind] = [:]
+    var agentSafe: Set<String> = []
+    var allAgentSafe = false
+    var rest = input
+    func names(_ s: String) -> Set<String> { Set(s.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }) }
+    while !rest.isEmpty {
+        let a = rest.removeFirst()
+        switch a {
+        case "--rewrite": rewrite = true
+        case "--replace": replace = true
+        case "--dry-run": dryRun = true
+        case "--only":
+            guard !rest.isEmpty else { fail("--only takes NAME,NAME", code: 64) }
+            only = names(rest.removeFirst())
+        case "--agent-safe":
+            guard !rest.isEmpty else { fail("--agent-safe takes NAME,NAME or all", code: 64) }
+            let v = rest.removeFirst()
+            if v == "all" { allAgentSafe = true } else { agentSafe.formUnion(names(v)) }
+        case "--kind":
+            guard !rest.isEmpty else { fail("--kind takes KIND or NAME=KIND", code: 64) }
+            let v = rest.removeFirst()
+            if let eq = v.firstIndex(of: "=") {
+                guard let k = ItemKind(rawValue: String(v[v.index(after: eq)...])) else {
+                    fail("--kind takes token, password, key or value", code: 64)
+                }
+                kinds[String(v[..<eq])] = k
+            } else {
+                guard let k = ItemKind(rawValue: v) else { fail("--kind takes token, password, key or value", code: 64) }
+                defaultKind = k
+            }
+        default:
+            if a.hasPrefix("-") || file != nil { fail("usage: latchkey import FILE [options]   (see latchkey help)", code: 64) }
+            file = a
+        }
+    }
+    guard let file else { fail("usage: latchkey import FILE [options]   (see latchkey help)", code: 64) }
+    let url = URL(fileURLWithPath: file).standardizedFileURL
+    let text: String
+    do { text = try String(contentsOf: url, encoding: .utf8) }
+    catch { fail("cannot read \(file): \(error.localizedDescription)", code: 66) }
+
+    let plan = EnvImport.plan(text, source: url.lastPathComponent, only: only, defaultKind: defaultKind,
+                              kinds: kinds, agentSafe: agentSafe, allAgentSafe: allAgentSafe)
+    let items = Dictionary(uniqueKeysWithValues: plan.items.map { ($0.name, $0) })
+    let ignored = plan.ignored
+    if let only {
+        let unknown = only.subtracting(items.keys).subtracting(ignored.keys)
+        if !unknown.isEmpty { fail("not in \(file): \(unknown.sorted().joined(separator: ", "))", code: 66) }
+    }
+    for name in Set(kinds.keys).union(agentSafe) where items[name] == nil && ignored[name] == nil {
+        fail("\(name) is named in an option but is not in \(file)", code: 64)
+    }
+    for (name, why) in ignored.sorted(by: { $0.key < $1.key }) { print("ignore   \(name)  (\(why))") }
+    guard !items.isEmpty else { print("Nothing to import."); exit(0) }
+
+    func describe(_ i: ImportItem) -> String {
+        "\(i.name)  \(i.kind!.rawValue)\(i.agentSafe == true ? ", agent-safe" : "")"
+    }
+
+    if dryRun {
+        let existing = Set((send(Request(op: "list")).secrets ?? []).map(\.name))
+        for i in items.values.sorted(by: { $0.name < $1.name }) {
+            let action = !existing.contains(i.name) ? "add     " : (replace ? "replace " : "skip    ")
+            print("\(action) \(describe(i))\(action == "skip    " ? "  (exists; --replace to overwrite)" : "")")
+        }
+        if rewrite { print("(would rewrite \(file) for the items added or replaced)") }
+        exit(0)
+    }
+
+    let r = send(Request(op: "import", cwd: currentDirectory(), command: "latchkey import \(file)",
+                         items: items.values.sorted { $0.name < $1.name }, replace: replace, source: url.path))
+    for n in r.added ?? [] { print("added    \(describe(items[n]!))") }
+    for n in r.replaced ?? [] { print("replaced \(describe(items[n]!))") }
+    for n in r.skipped ?? [] { print("skipped  \(n)  (exists; --replace to overwrite)") }
+
+    let saved = Set((r.added ?? []) + (r.replaced ?? []))
+    if rewrite && !saved.isEmpty {
+        do {
+            try EnvFile.rewriteFile(at: url, original: text, toReferences: saved)
+            print("rewrote \(file): \(saved.count) value\(saved.count == 1 ? "" : "s") now latchkey://NAME")
+        } catch {
+            fail("items were saved, but \(file) could not be rewritten: \(error.localizedDescription)", code: 73)
+        }
+    }
+    exit(0)
+}
+
 // MARK: - commands
 
 var args = Array(CommandLine.arguments.dropFirst())
@@ -223,6 +322,9 @@ case "rm":
 
 case "run":
     runCommand(args)
+
+case "import":
+    importCommand(args)
 
 default:
     fail("unknown command \(command). Try `latchkey help`.", code: 64)
