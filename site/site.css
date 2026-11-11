@@ -66,7 +66,7 @@ header.site { position: sticky; top: 0; z-index: 5; background: color-mix(in srg
 nav.top { display: flex; align-items: center; gap: 16px; min-height: 60px; }
 .brand { display: inline-flex; align-items: center; gap: 9px; color: var(--ink); text-decoration: none; font: 700 19px/1 var(--display); letter-spacing: -0.01em; margin-right: auto; }
 /* The mark on its own, in the header. The tile below is for drawings of the app icon (the approval panel). */
-.brand .logo { width: 34px; height: 28px; display: block; }
+.brand .logo { width: 27px; height: 28px; display: block; }
 /* The app icon as macOS draws it: the mark on a light or dark tile. */
 .mark { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; flex: none; background: linear-gradient(180deg, #fdfdfe, #e3e8ef); box-shadow: inset 0 0 0 1px rgba(16, 24, 40, .08); }
 .mark img { width: 19px; height: 19px; }
