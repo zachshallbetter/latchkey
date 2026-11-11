@@ -385,6 +385,8 @@ struct TreeHeader<Label: View>: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(open ? "Collapse" : "Expand")
+        // A group header opens and closes; it isn't an item, so it never takes the selection.
+        .selectionDisabled()
     }
 }
 
@@ -405,6 +407,7 @@ struct EnvironmentGroup: View {
                 Spacer()
                 let safe = env.items.filter(\.agentSafe).count
                 if safe > 0 { Text("\(safe) agent-safe").font(.caption).foregroundStyle(.green) }
+                PlaceLabel(links: model.links(for: key), local: env.items.contains { !($0.usedIn ?? []).isEmpty })
             }
         }
         .padding(.leading, indent)
@@ -710,6 +713,28 @@ struct DeletedList: View {
             Button("Forget for Good", role: .destructive) { Task { await model.forgetHistory([v.item]) } }
         } message: { _ in
             Text("Its value and every earlier value are deleted and can't be brought back.")
+        }
+    }
+}
+
+/// Where an environment's values live: the services it's linked to, or "Local" when it's only used from files on
+/// this Mac, so a header answers "is this what Vercel has?" without opening anything.
+struct PlaceLabel: View {
+    let links: [RemoteLink]
+    let local: Bool
+
+    var body: some View {
+        let services = Array(Set(links.map(\.target.service))).sorted { $0.rawValue < $1.rawValue }
+        if !services.isEmpty {
+            Label(services.map { $0.label.replacingOccurrences(of: " Actions", with: "") }.joined(separator: ", "), systemImage: "icloud")
+                .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                .help("Linked: \(links.map(\.target.label).joined(separator: "; "))")
+        } else if local {
+            Label("Local", systemImage: "laptopcomputer")
+                .font(.caption).foregroundStyle(.secondary)
+                .help("Used from files on this Mac; not linked to Vercel, GitHub Actions, Railway or Fly")
+        } else {
+            Text("Not linked").font(.caption).foregroundStyle(.tertiary)
         }
     }
 }
