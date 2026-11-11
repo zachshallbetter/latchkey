@@ -302,6 +302,7 @@ struct ItemList: View {
                 ItemRow(model: model, item: item, showsProject: !inProject,
                         showsEnvironment: model.environmentFilter == nil, remote: model.remoteStates[item.name])
                     .tag(item.name)
+                    .listRowSeparator(.visible)
             }
         }
         .listStyle(.plain)
@@ -331,7 +332,7 @@ struct ItemList: View {
     }
 }
 
-/// The list's top: what's shown and how many, its menu, and the search field (⌘F).
+/// The list's top: what's shown and how many, the New Item button, and the search field (⌘F).
 struct ListHeader: View {
     @Bindable var model: AppModel
     let count: Int
@@ -344,9 +345,9 @@ struct ListHeader: View {
             let envs = model.environments(in: p)
             parts.append(envs.count == 1 ? envs[0] : "\(envs.count) environments")
         case .all where model.search.isEmpty:
-            let projects = model.projects.count, shared = model.count(.shared)
+            let projects = model.projects.count, services = model.services.count
             parts.append("\(projects) project\(projects == 1 ? "" : "s")")
-            if shared > 0 { parts.append("\(shared) shared") }
+            if services > 0 { parts.append("\(services) service\(services == 1 ? "" : "s")") }
         default:
             break
         }
@@ -372,18 +373,9 @@ struct ListHeader: View {
                     }
                 }
                 Spacer()
-                Menu {
-                    Button("New Item…") { model.showingAdd = true }
-                    Button("Import .env File…") { model.chooseImportFile() }
-                    if !model.selection.isEmpty {
-                        Divider()
-                        Button("Move Selected to a Project…") { model.moveRequest = MoveRequest(ids: model.selection.sorted()) }
-                    }
-                } label: {
-                    Image(systemName: "ellipsis")
-                }
-                .menuStyle(.button).buttonStyle(.bordered).menuIndicator(.hidden).fixedSize().focusEffectDisabled()
-                .help("New item, import, move")
+                Button { model.showingAdd = true } label: { Label("New Item", systemImage: "plus") }
+                    .buttonStyle(.borderedProminent).fixedSize()
+                    .help("Add a token, password, key or value")
             }
             HStack(spacing: 8) {
             HStack(spacing: 6) {
@@ -409,7 +401,7 @@ struct ListHeader: View {
 }
 
 /// Dropdowns under the search field: type, environment, project and service, each showing its choice, then a menu for
-/// access and sort order.
+/// sort order, access, importing and moving.
 struct FilterBar: View {
     @Bindable var model: AppModel
 
@@ -453,6 +445,11 @@ struct FilterBar: View {
                     Divider()
                     Button("Clear Filters") { model.clearFilters(); model.filter = .all }
                 }
+                Divider()
+                Button("Import .env File…") { model.chooseImportFile() }
+                if !model.selection.isEmpty {
+                    Button("Move Selected to a Project…") { model.moveRequest = MoveRequest(ids: model.selection.sorted()) }
+                }
             } label: {
                 Image(systemName: "line.3.horizontal").foregroundStyle(model.accessFilter == nil ? Color.secondary : Color.accentColor)
                     .frame(width: 30, height: 26)
@@ -461,7 +458,7 @@ struct FilterBar: View {
                     .contentShape(RoundedRectangle(cornerRadius: 8))
             }
             .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize().focusEffectDisabled()
-            .help("Sort order and access")
+            .help("Sort order, access, import and move")
         }
     }
 
@@ -524,19 +521,14 @@ struct ItemRow: View {
         let type = ItemType(item)
         HStack(spacing: 12) {
             Image(systemName: type.symbol).font(.system(size: 17, weight: .medium)).foregroundStyle(type.tint).frame(width: 24)
+                .help(type.label)
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.ref.name).font(.body.weight(.medium)).lineLimit(1).truncationMode(.middle)
+                Text(item.ref.name).font(.body.weight(.semibold)).lineLimit(1).truncationMode(.middle)
                 Text(subtitle).font(.callout).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer(minLength: 6)
             if !showsProject && showsEnvironment && !item.ref.isShared {
                 EnvBadge(environment: item.ref.environment, compact: true).fixedSize()
-            }
-            if showsProject || item.ref.isShared {
-                Text(type.label).font(.caption.weight(.medium)).foregroundStyle(.secondary)
-                    .padding(.horizontal, 7).padding(.vertical, 2)
-                    .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(.quaternary.opacity(0.6)))
-                    .fixedSize()
             }
             if hovering, let model {
                 Button { model.copyReference(item.name) } label: { Image(systemName: "link") }
