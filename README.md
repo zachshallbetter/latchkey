@@ -102,8 +102,8 @@ Restoring keeps the current value as a version first.
   are many), **Shared** and **Services**.
 - **Lists:** a tree, never a flat list of every key. Views that span projects (All, Agent-Safe, a kind or a
   service) show projects, then environments, then items; a project's own view starts at its environments. Groups
-  start closed, show their counts and environments while closed, and open by themselves when there's only one or
-  while you search. Right-click a project or environment header for actions on everything in it.
+  start closed and show their counts and environments while closed; while you search they start open. A click
+  always opens or closes one. Right-click a project or environment header for actions on everything in it.
 - **Several items:** select with ⌘-click or ⇧-click. The detail pane and the right-click menu then act on all of
   them with one approval: require approval or let agents read, set kind or service, move, grant access, delete.
 - **A whole project:** right-click it in the sidebar to select all its items, change agent access, grant access to

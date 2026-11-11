@@ -256,17 +256,17 @@ struct ItemList: View {
         let list = model.visibleItems
         List(selection: $model.selection) {
             if model.sort == .name {
-                // A tree, never a flat list of every key: project, then environment, then items, all collapsed
+                // A tree, never a flat list of every key: project, then environment, then items, all closed
                 // until opened. In a project's own view the tree starts at its environments.
                 let inProject: Bool = { if case .project = model.filter { return true } else { return false } }()
                 let groups = ItemTree.build(list)
                 ForEach(groups) { group in
                     if inProject {
                         ForEach(group.environments) { env in
-                            EnvironmentGroup(model: model, project: group.project, env: env, single: group.environments.count == 1, indent: 0)
+                            EnvironmentGroup(model: model, project: group.project, env: env, indent: 0)
                         }
                     } else if group.project.isEmpty {
-                        let open = model.isOpen("shared", single: groups.count == 1)
+                        let open = model.isOpen("shared")
                         TreeHeader(open: open, toggle: { model.toggle("shared") }) {
                             GroupHeader(symbol: "tray.full", title: "Shared", count: group.count)
                         }
@@ -276,7 +276,7 @@ struct ItemList: View {
                             }
                         }
                     } else {
-                        let open = model.isOpen(group.project, single: groups.count == 1)
+                        let open = model.isOpen(group.project)
                         TreeHeader(open: open, toggle: { model.toggle(group.project) }) {
                             GroupHeader(symbol: "folder", title: group.project, count: group.count,
                                         environments: group.environments.map { ($0.name, $0.items.count) })
@@ -284,7 +284,7 @@ struct ItemList: View {
                         .contextMenu { ProjectMenu(model: model, project: group.project) }
                         if open {
                             ForEach(group.environments) { env in
-                                EnvironmentGroup(model: model, project: group.project, env: env, single: group.environments.count == 1, indent: 18)
+                                EnvironmentGroup(model: model, project: group.project, env: env, indent: 18)
                             }
                         }
                     }
@@ -392,12 +392,11 @@ struct EnvironmentGroup: View {
     let model: AppModel
     let project: String
     let env: ItemTree.Environment
-    var single = false
     var indent: CGFloat = 18
 
     var body: some View {
         let key = "\(project)/\(env.name)"
-        let open = model.isOpen(key, single: single)
+        let open = model.isOpen(key)
         TreeHeader(open: open, toggle: { model.toggle(key) }) {
             HStack(spacing: 6) {
                 EnvBadge(environment: env.name)

@@ -246,13 +246,22 @@ final class AppModel {
 
     func item(_ name: String?) -> SecretInfo? { items.first { $0.name == name } }
 
-    /// Whether a list group is open. The only group in a list, and every group while searching, stay open.
-    func isOpen(_ key: String, single: Bool = false) -> Bool {
-        single || !search.trimmingCharacters(in: .whitespaces).isEmpty || expanded.contains(key)
+    /// Groups closed by hand during a search, where groups otherwise start open to show the matches.
+    var closedWhileSearching: Set<String> = []
+
+    var searching: Bool { !search.trimmingCharacters(in: .whitespaces).isEmpty }
+
+    /// Whether a list group is open. Groups start closed; while searching they start open. A click always wins.
+    func isOpen(_ key: String) -> Bool {
+        searching ? !closedWhileSearching.contains(key) : expanded.contains(key)
     }
 
     func toggle(_ key: String) {
-        if expanded.contains(key) { expanded.remove(key) } else { expanded.insert(key) }
+        if searching {
+            if closedWhileSearching.contains(key) { closedWhileSearching.remove(key) } else { closedWhileSearching.insert(key) }
+        } else {
+            if expanded.contains(key) { expanded.remove(key) } else { expanded.insert(key) }
+        }
     }
 
     /// Opens the groups that contain these items, so a selection made elsewhere is visible.
