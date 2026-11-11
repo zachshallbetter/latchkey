@@ -121,7 +121,10 @@ func launchApp() -> Bool {
 }
 
 /// Sends one request to the app, starting it if it isn't running. Returns the response as is, `ok` or not.
+/// Commands `latchkey mcp` starts for an agent carry LATCHKEY_ORIGIN=mcp, so their requests say so.
 func call(_ request: Request) throws -> Response {
+    var request = request
+    if ProcessInfo.processInfo.environment["LATCHKEY_ORIGIN"] == "mcp" { request.origin = "mcp" }
     var launched = false
     var retries = 0
     while true {
@@ -233,7 +236,7 @@ func runCommand(_ input: [String]) -> Never {
     let prepared: PreparedRun
     do {
         let planned = try plannedEnvironment(spec, base: ProcessInfo.processInfo.environment, call: call)
-        prepared = try prepareRun(spec, env: planned, command: cmd.joined(separator: " "), masking: masking, call: call)
+        prepared = try prepareRun(spec, env: planned, masking: masking, call: call)
     } catch { failRun(error) }
     let env = prepared.environment, secretValues = prepared.secretValues, tempDir = prepared.tempDir
 
@@ -310,7 +313,7 @@ func checkCommand(_ input: [String]) -> Never {
         names = Array(Set(referencedIDs(planned) + ids)).sorted()
     } catch { failRun(error) }
     guard !names.isEmpty else { fail("nothing to check: give IDs, --env-file, --env or --file", code: 64) }
-    let r = send(Request(op: "check", names: names, cwd: spec.cwd))
+    let r = send(Request(op: "check", names: names))
     if json {
         let report = CheckReport(r)
         let enc = Wire.encoder()
@@ -468,7 +471,7 @@ func importCommand(_ input: [String]) -> Never {
         exit(0)
     }
 
-    let r = send(Request(op: "import", cwd: currentDirectory(), command: "latchkey import \(file)",
+    let r = send(Request(op: "import",
                          items: items.values.sorted { $0.name < $1.name }, replace: replace, source: url.path))
     for n in r.added ?? [] { print("added    \(describe(items[n]!))") }
     for n in r.replaced ?? [] { print("replaced \(describe(items[n]!))") }
@@ -540,7 +543,7 @@ func batchImport(_ paths: [String], project: String?, environment: String?, shar
     }
     guard !toSend.isEmpty else { print("Nothing new to import."); exit(0) }
 
-    let r = send(Request(op: "import", cwd: currentDirectory(), command: "latchkey import (\(plan.files.count) files)",
+    let r = send(Request(op: "import",
                          items: toSend, replace: replace, source: "\(plan.files.count) files"))
     let saved = Set((r.added ?? []) + (r.replaced ?? []))
     print("imported \(r.added?.count ?? 0) new\((r.replaced?.count ?? 0) > 0 ? ", replaced \(r.replaced!.count)" : "")\((r.skipped?.count ?? 0) > 0 ? ", left \(r.skipped!.count) that already existed" : "")")
@@ -579,13 +582,16 @@ func grantCommand(_ input: [String]) -> Never {
     var names: [String] = []
     var folder: String?
     var duration: TimeInterval = 3600
+    var json = false
     var rest = input
     while !rest.isEmpty {
         let a = rest.removeFirst()
         switch a {
+        case "--json": json = true
         case "--folder":
             guard !rest.isEmpty else { fail("--folder takes a path", code: 64) }
-            folder = URL(fileURLWithPath: rest.removeFirst()).standardizedFileURL.path
+            // The broker sees where commands really run (symbolic links resolved), so grant that folder.
+            folder = URL(fileURLWithPath: rest.removeFirst()).resolvingSymlinksInPath().standardizedFileURL.path
         case "--for":
             guard !rest.isEmpty, let d = GrantStore.parseDuration(rest.removeFirst()) else {
                 fail("--for takes a time such as 30m, 2h or 1d", code: 64)
@@ -600,8 +606,16 @@ func grantCommand(_ input: [String]) -> Never {
         fail("usage: latchkey grant ID[,ID...] [--folder DIR] [--for 2h]   (or PROJECT/* or PROJECT/ENV/*)", code: 64)
     }
     if duration > GrantStore.longest { fail("the longest grant is 7 days", code: 64) }
-    let r = send(Request(op: "grant", names: names, cwd: currentDirectory(), folder: folder ?? currentDirectory(), duration: duration))
-    if let m = r.missing, !m.isEmpty { fail("no item named: \(m.joined(separator: ", "))", code: 66) }
+    let r: Response
+    do { r = try call(Request(op: "grant", names: names, folder: folder ?? currentDirectory(), duration: duration)) } catch { failRun(error) }
+    if let m = r.missing, !m.isEmpty { failMissing(m) }
+    guard r.ok else { fail(r.error ?? "the app refused the request") }
+    if json, let g = r.grants?.first {
+        let enc = Wire.encoder()
+        enc.outputFormatting = [.prettyPrinted, .sortedKeys]
+        print(String(decoding: try! enc.encode(g), as: UTF8.self))
+        exit(0)
+    }
     for g in r.grants ?? [] {
         print("granted \(g.id): \(g.names.joined(separator: ", ")) readable from \(Broker.tilde(g.folder)) for \(GrantStore.describe(duration))")
     }
@@ -646,7 +660,7 @@ func remoteCommand(_ args: [String]) -> Never {
             }
         }
         if let problem = t.problem { fail(problem, code: 64) }
-        let r = send(Request(op: "link", names: [rest[0]], cwd: currentDirectory(), target: t))
+        let r = send(Request(op: "link", names: [rest[0]], target: t))
         if let l = r.links?.first { print("linked \(l.scope) → \(l.target.label) (\(l.id))") }
         if ItemID(rest[0] + "/X")?.environment.contains(".") == false, rest[0].split(separator: "/").last.map(String.init) != t.suggestedEnvironment {
             print("tip: values that differ by service can live in their own environment, e.g. \(rest[0].split(separator: "/")[0])/\(t.suggestedEnvironment)")
@@ -699,7 +713,7 @@ func pushCommand(_ args: [String]) -> Never {
         exit(0)
     }
     let r: Response
-    do { r = try BrokerClient.send(Request(op: "push", names: [scope], cwd: currentDirectory(), command: "latchkey push \(scope)", link: link, only: only)) }
+    do { r = try BrokerClient.send(Request(op: "push", names: [scope], link: link, only: only)) }
     catch { fail("cannot reach the Latchkey app (\(error))", code: 69) }
     for p in (r.pushResults ?? []).sorted(by: { ($0.link, $0.item) < ($1.link, $1.item) }) {
         print("\(p.ok ? "pushed " : "FAILED ") \(ItemID(p.item)?.name ?? p.item)  → \(p.link)\(p.error.map { "  \($0)" } ?? "")")
@@ -775,7 +789,7 @@ func moveCommand(_ input: [String]) -> Never {
     guard !ids.isEmpty, ids.allSatisfy(Wire.isValidName) else { fail("no valid item IDs given", code: 64) }
     let usedIn = existing.filter { ids.contains($0.name) }.flatMap { $0.usedIn ?? [] }
 
-    let r = send(Request(op: "move", names: ids, cwd: currentDirectory(), command: "latchkey mv",
+    let r = send(Request(op: "move", names: ids,
                          project: target.project, environment: target.environment))
     if let m = r.missing, !m.isEmpty { fail("no item named: \(m.joined(separator: ", "))", code: 66) }
     let moved = r.moved ?? [:]
@@ -808,7 +822,9 @@ case "help", "--help", "-h":
 
 case "status":
     let r = send(Request(op: "status"))
-    for (k, v) in (r.info ?? [:]).sorted(by: { $0.key < $1.key }) { print("\(k): \(v)") }
+    var info = r.info ?? [:]
+    info["app"] = CodeIdentity.ownTeam == nil ? "not checked (this tool is unsigned)" : "the Latchkey app (signature checked)"
+    for (k, v) in info.sorted(by: { $0.key < $1.key }) { print("\(k): \(v)") }
 
 case "list":
     var only: String?
@@ -844,7 +860,7 @@ case "list":
 
 case "get":
     guard let name = args.first, Wire.isValidName(name) else { fail("usage: latchkey get ID", code: 64) }
-    let r = send(Request(op: "get", names: [name], cwd: currentDirectory()))
+    let r = send(Request(op: "get", names: [name]))
     if let m = r.missing, !m.isEmpty { failMissing(m) }
     if let d = r.denied, !d.isEmpty { failRefused(d) }
     guard let v = r.values?[name] else { fail("no value returned") }
@@ -880,13 +896,13 @@ case "set":
     }
     let value = readValue(prompt: "Value for \(name): ")
     guard !value.isEmpty else { fail("empty value; nothing saved") }
-    _ = send(Request(op: "set", names: [name], value: value, kind: kind, agentSafe: agentSafe, note: note, cwd: currentDirectory(),
+    _ = send(Request(op: "set", names: [name], value: value, kind: kind, agentSafe: agentSafe, note: note,
                      service: service))
     print("saved \(name)")
 
 case "rm":
     let ids = expandIDs(args)
-    let r = send(Request(op: "rm", names: ids, cwd: currentDirectory()))
+    let r = send(Request(op: "rm", names: ids))
     if let m = r.missing, !m.isEmpty { fail("no item named \(m.joined(separator: ", "))", code: 66) }
     for id in ids { print("removed \(id)") }
 
@@ -915,7 +931,7 @@ case "update":
         }
     }
     let ids = expandIDs(targets)
-    let r = send(Request(op: "update", names: ids, kind: kind, agentSafe: agentSafe, note: note, cwd: currentDirectory(),
+    let r = send(Request(op: "update", names: ids, kind: kind, agentSafe: agentSafe, note: note,
                          service: service))
     if let m = r.missing, !m.isEmpty { fail("no item named \(m.joined(separator: ", "))", code: 66) }
     print("updated \(ids.count) item\(ids.count == 1 ? "" : "s")")
@@ -965,7 +981,7 @@ case "restore":
     let versions = send(Request(op: "history", names: [name])).versions ?? []
     guard n <= versions.count else { fail(versions.isEmpty ? "no earlier values of \(name)" : "\(name) has \(versions.count) version(s)", code: 66) }
     let v = versions[n - 1]
-    _ = send(Request(op: "restore", cwd: currentDirectory(), version: v.id))
+    _ = send(Request(op: "restore", version: v.id))
     print("restored \(name) to its value from \(v.savedAt.formatted(date: .abbreviated, time: .shortened))")
 
 case "deleted":
@@ -978,7 +994,7 @@ case "deleted":
 
 case "forget":
     let ids = expandIDs(args)
-    let r = send(Request(op: "forget", names: ids, cwd: currentDirectory()))
+    let r = send(Request(op: "forget", names: ids))
     if let m = r.missing, !m.isEmpty { print("No earlier values of \(m.joined(separator: ", ")).") } else { print("forgot the earlier values of \(ids.count) item\(ids.count == 1 ? "" : "s")") }
 
 case "grants":

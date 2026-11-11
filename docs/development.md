@@ -40,7 +40,7 @@ both: they use the same socket. It refuses pushes.
 latchkey (CLI) ──JSON over a Unix socket──► Broker (in the app) ──► SecretStore ──► keychain
                                               │                    VersionStore     (latchkey, latchkey.history,
                                               ├─ Approver           RemoteStore      latchkey.remote services)
-                                              ├─ GrantStore ──► grants.json
+                                              ├─ GrantStore ──► keychain (latchkey.grants, this Mac)
                                               ├─ access log ──► access.jsonl
                                               └─ RemoteRunner ──► vercel / gh / railway / flyctl
 ```
@@ -53,7 +53,11 @@ latchkey (CLI) ──JSON over a Unix socket──► Broker (in the app) ──
   keychain. `KeychainStore.automatic` picks by trying a write (reads from an unentitled process just say "not
   found").
 - **`SystemApprover`** uses LocalAuthentication; the app's `PanelApprover` shows the approval panel first.
-- **`PeerInfo`** reads the caller's PID from the socket and walks parent processes.
+- **`PeerInfo`** reads the caller's PID, working folder and command line from the kernel and walks parent processes.
+  **`CodeIdentity`** checks code signatures through the socket's audit token: the app recognizes its own tool
+  (`io.snackstud.latchkey.cli`), and the tool refuses to talk to anything but the app (`io.snackstud.latchkey`), both
+  signed by the same team. `latchkey status` shows what each side saw. Requests carry no folder or command of their
+  own; the broker never trusts what a request says about its caller.
 - **`EnvFile`**, **`References`**, **`EnvImport`** parse, resolve, rewrite and plan imports.
 - **`Masker`** replaces values in streamed output, holding back a partial match across chunk boundaries.
 - **`Repo`** finds a folder's repository by reading git's files (worktrees share a common `.git`).

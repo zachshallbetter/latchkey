@@ -32,7 +32,7 @@ The limits in [docs/security.md](docs/security.md#where-protection-ends), includ
 
 - any process running as you asking the broker, and agent-safe items or grants releasing to it from the right
   folder;
-- process names in the caller chain being faked;
+- the names of a caller's parent processes being faked (the caller itself is checked by signature);
 - a command you approved, or one a grant covers, doing what it likes with the values it was given;
 - masking missing anything but an exact copy, 6 characters or longer, of a released value;
 - `latchkey get` printing the value it was asked for;

@@ -1,4 +1,5 @@
 import Foundation
+import Security
 
 /// Standing permission to read some items from one folder (and the folders inside it) until a set time,
 /// without asking. Made from an approval ("Allow here for 1 hour") or ahead of time, e.g. before stepping
@@ -59,16 +60,59 @@ public struct Grant: Codable, Identifiable, Hashable, Sendable {
     }
 }
 
-/// Grants on disk (0600 JSON), or in memory for tests. Expired grants are dropped on every read.
+/// Where grants are kept between launches.
+public protocol GrantBacking: Sendable {
+    func load() -> Data?
+    func save(_ data: Data)
+}
+
+/// Grants in one keychain item that only Latchkey can read or change, on this Mac only (not synced). A file would
+/// let any program running as you write itself a grant.
+public final class KeychainGrantBacking: GrantBacking, @unchecked Sendable {
+    public static let service = "latchkey.grants"
+    static let account = "grants"
+    let items: KeychainStore
+
+    public init(mode: KeychainStore.Mode) { items = KeychainStore(mode: mode) }
+
+    public func load() -> Data? {
+        var q = items.query(Self.account, service: Self.service)
+        q[kSecReturnData as String] = true
+        q[kSecMatchLimit as String] = kSecMatchLimitOne
+        var out: CFTypeRef?
+        return SecItemCopyMatching(q as CFDictionary, &out) == errSecSuccess ? out as? Data : nil
+    }
+
+    public func save(_ data: Data) {
+        let q = items.query(Self.account, service: Self.service)
+        if SecItemUpdate(q as CFDictionary, [kSecValueData as String: data] as CFDictionary) != errSecItemNotFound { return }
+        var add = q
+        add[kSecValueData as String] = data
+        add[kSecAttrLabel as String] = "Latchkey grants"
+        if case .iCloud = items.mode { add[kSecAttrSynchronizable as String] = false }
+        SecItemAdd(add as CFDictionary, nil)
+    }
+}
+
+/// Grants kept for the life of the object, for tests and the windowless broker.
+public final class MemoryGrantBacking: GrantBacking, @unchecked Sendable {
+    private let lock = NSLock()
+    private var data: Data?
+    public init() {}
+    public func load() -> Data? { lock.withLock { data } }
+    public func save(_ data: Data) { lock.withLock { self.data = data } }
+}
+
+/// The grants in effect. Expired grants are dropped on every read.
 public final class GrantStore: @unchecked Sendable {
     public static let longest: TimeInterval = 7 * 24 * 3600
-    private let url: URL?
+    private let backing: GrantBacking
     private var cache: [Grant] = []
     private let lock = NSLock()
 
-    public init(url: URL? = Paths.grants) {
-        self.url = url
-        if let url, let data = try? Data(contentsOf: url) {
+    public init(backing: GrantBacking = MemoryGrantBacking()) {
+        self.backing = backing
+        if let data = backing.load() {
             cache = (try? Wire.decoder().decode([Grant].self, from: data)) ?? []
         }
     }
@@ -109,11 +153,8 @@ public final class GrantStore: @unchecked Sendable {
     }
 
     private func persist() {
-        guard let url else { return }
-        try? Paths.ensureSupportDir()
         guard let data = try? Wire.encoder().encode(cache) else { return }
-        try? data.write(to: url, options: .atomic)
-        try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+        backing.save(data)
     }
 
     /// "30m", "2h", "1d", "90s". Nil for anything else.

@@ -46,7 +46,7 @@
 </ul>
 <figure class="code"><figcaption><span>How it fits together</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">latchkey (CLI) ──JSON over a Unix socket──► Broker (in the app) ──► iCloud Keychain
                                               ├─ approval panel, then Touch ID
-                                              ├─ grants      grants.json
+                                              ├─ grants      keychain, this Mac only
                                               ├─ access log  access.jsonl (never values)
                                               └─ remote pushes via vercel, gh, railway, flyctl</code></pre></figure>
 

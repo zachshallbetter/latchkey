@@ -62,9 +62,12 @@ final class BrokerTests: XCTestCase {
         XCTAssertFalse(m.covers(ApprovalMemory.key(["A", "B"], peer), now: now))
     }
 
-    func testDescribe() {
-        let s = Broker.describe(peer, Request(op: "get", cwd: NSHomeDirectory() + "/site", command: "npm test"))
-        XCTAssertEqual(s, "zsh › claude in ~/site (running npm test)")
+    func testDescribeUsesTheKernelsViewNotTheRequest() {
+        let caller = PeerInfo(pid: 7, path: "/Users/x/.local/bin/latchkey", cwd: NSHomeDirectory() + "/site", chain: ["zsh", "claude"],
+                              arguments: ["/Users/x/.local/bin/latchkey", "run", "--", "npm", "test"])
+        let s = Broker.describe(caller, Request(op: "get"))
+        XCTAssertEqual(s, "zsh › claude in ~/site (running latchkey run -- npm test)")
+        XCTAssertEqual(PeerInfo(pid: 1, path: "", cwd: "", chain: [], arguments: ["sh", "-c", "echo $HOME"]).commandLine, "sh -c 'echo $HOME'")
     }
 
     /// Writes to the real login keychain, so it runs only when asked: LATCHKEY_KEYCHAIN_TESTS=1 swift test

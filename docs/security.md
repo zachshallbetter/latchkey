@@ -24,11 +24,18 @@ command gets which value. This page says what it protects against, how, and wher
 - **One process holds values.** The command-line tool never touches the keychain. It asks the app over a Unix socket
   (`~/Library/Application Support/Latchkey/broker.sock`, readable and writable only by you). The app accepts
   connections only from your user account.
-- **Knowing who asks.** For each connection the app reads the caller's process ID and walks its parent processes,
-  which is how the approval panel and the log name `zsh › claude` and the folder.
+- **The tool checks the app.** Before sending anything, a signed `latchkey` checks that the program on the socket is
+  the Latchkey app signed by the same team, so a program that took the socket while the app wasn't running gets
+  nothing, not even a value you're saving. (An unsigned development build can't check and doesn't.)
+- **The app checks who asks, from the kernel.** For each connection the app gets the caller's identity from the
+  kernel, not from the request: its working folder, its command line, its parent processes, and whether it is
+  Latchkey's own command-line tool, by code signature. The approval panel and the log show those. Any other program
+  talking to the socket is named by its path, with a warning. Grants are matched against the folder the caller
+  really runs in.
 - **Approvals** use macOS LocalAuthentication: Touch ID, a paired Apple Watch, or your account password. The panel
   shows context first; a panel nobody answers is a denial after 90 seconds.
-- **Grants** are stored on this Mac only and last at most 7 days.
+- **Grants** are kept in a keychain item only Latchkey can read or change, on this Mac only, and last at most 7 days.
+  No file holds them, so no other program can write itself one.
 - **Temporary key files** live in a new folder only you can open, are only readable by you, and are deleted when the
   command exits.
 - **Remote pushes** pass values to each service's tool on standard input, never as arguments, so they don't appear
@@ -42,7 +49,8 @@ Be clear about these before you rely on Latchkey:
 - **Anything running as you can ask.** The socket is open to every process in your user account. Latchkey can't tell
   a program you trust from one you don't, except by the process chain it shows you. Agent-safe items and grants are
   released to any program that asks from the right place, so keep them narrow and short.
-- **The caller chain is informative, not proof.** Process names can be faked. Judge a request by its folder and
+- **The caller chain is informative, not proof.** The caller itself is checked by signature, but its parents are
+  named by their files, and file names can be faked. Judge a request by its folder and
   command as well, and deny anything unexpected.
 - **A released value is out of Latchkey's hands.** Once a command has a value, it can write it to a file, send it
   over the network, or transform it. Masking only hides exact copies of values 6 characters or longer in what the

@@ -23,7 +23,8 @@ command -v xcodegen >/dev/null || { echo "xcodegen is required: brew install xco
 (cd App && xcodegen -q)
 if [[ -n "$TEAM" ]]; then
   echo "    signing with team $TEAM (iCloud Keychain)"
-  SIGN=(-allowProvisioningUpdates)
+  # No get-task-allow: a development build would otherwise let any debugger attach to the app holding the keychain.
+  SIGN=(-allowProvisioningUpdates CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO)
 else
   echo "    no DEVELOPMENT_TEAM in App/project.yml: signing ad hoc (login keychain, this Mac only)"
   # The keychain-access-groups entitlement needs a real team; an ad hoc app that claims it will not launch.
@@ -48,6 +49,15 @@ rm -rf /Applications/Latchkey.app
 ditto "$DERIVED/Build/Products/Release/Latchkey.app" /Applications/Latchkey.app
 mkdir -p "$BIN_DIR"
 install -m 0755 .build/release/latchkey "$BIN_DIR/latchkey"
+# The app tells its own tool from any other program on its socket by this signature, and the tool checks the app's.
+if [[ -n "$TEAM" ]]; then
+  IDENTITY=$(security find-identity -v -p codesigning | awk -v t="($TEAM)\"" '/"(Apple Development|Developer ID Application):/ && index($0, t) {print $2; exit}')
+  if [[ -n "$IDENTITY" ]]; then
+    codesign --force --options runtime --timestamp=none --identifier io.snackstud.latchkey.cli --sign "$IDENTITY" "$BIN_DIR/latchkey"
+  else
+    echo "    no signing certificate for team $TEAM: the command-line tool stays unsigned, and approvals will say so" >&2
+  fi
+fi
 
 open /Applications/Latchkey.app
 for _ in {1..20}; do

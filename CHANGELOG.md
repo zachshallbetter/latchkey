@@ -22,6 +22,13 @@ The first release.
   environments.
 - `latchkey check` shows what a run would get without asking, what would ask, and what's missing.
 
+### Security
+- Approvals and grants judge the caller by what the kernel reports: its real working folder and command line, and
+  whether it's Latchkey's signed command-line tool. Other programs are named by their path, with a warning.
+- Grants live in a keychain item only Latchkey can change, not in a file.
+- The command-line tool checks the app's signature before sending anything.
+- Development installs no longer carry the debugging entitlement.
+
 ### Approvals and grants
 - An approval panel with the program chain, folder and command, then Touch ID, Apple Watch or your password.
 - Grants for a folder, its subfolders and its repository's worktrees, for up to 7 days; for items, environments or

@@ -227,7 +227,7 @@ Never run `latchkey get`. If latchkey exits with 77
       <h2 id="security-title">Apple's keychain, your approval, nothing in between</h2>
       <div class="split">
         <div>
-          <p class="section-lede">Values stay in iCloud Keychain, in Latchkey's own access group, readable only by the signed app. The command-line tool asks the app over a socket only you can open, and the app asks you.</p>
+          <p class="section-lede">Values stay in iCloud Keychain, in Latchkey's own access group, readable only by the signed app. The command-line tool asks the app over a socket only you can open, each checks the other&rsquo;s signature, and the app asks you, showing who&rsquo;s really asking.</p>
           <p class="section-lede">There's no Latchkey server and no account. Values leave the keychain only for a command you approved, a grant you made, or a push you confirmed.</p>
         </div>
         <div class="limits">

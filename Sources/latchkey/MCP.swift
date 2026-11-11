@@ -153,22 +153,24 @@ final class MCPServer: @unchecked Sendable {
     }
 
     private func check(_ args: [String: Any]) throws -> Outcome {
-        let spec = try runSpec(args)
-        let planned = try plannedEnvironment(spec, base: ProcessInfo.processInfo.environment, call: call)
-        let names = Array(Set(referencedIDs(planned) + Self.strings(args["ids"]))).sorted()
-        guard !names.isEmpty else { throw RunError.usage("nothing to check: give ids, env_files, environments or files") }
-        let report = CheckReport(try ask(Request(op: "check", names: names, cwd: spec.cwd, origin: "mcp")))
+        var cli = ["check", "--json"] + (try sourceArguments(args))
+        let ids = Self.strings(args["ids"])
+        if !ids.isEmpty { cli.append(ids.joined(separator: ",")) }
+        let result = try latchkey(cli, in: try folder(args), timeout: 60, id: nil)
+        guard result.code == 0 || result.code == 66, let data = result.stdout.text.data(using: .utf8),
+              var detail = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+            throw Self.failure(result)
+        }
+        func list(_ key: String) -> [String] { detail[key] as? [String] ?? [] }
+        let runsWithoutAsking = list("needsApproval").isEmpty && list("missing").isEmpty
+        detail["runsWithoutAsking"] = runsWithoutAsking
         var lines: [String] = []
-        func add(_ label: String, _ ids: [String]) { if !ids.isEmpty { lines.append("\(label): \(ids.joined(separator: ", "))") } }
-        add("agent-safe", report.agentSafe)
-        add("granted", report.granted)
-        add("recently approved", report.remembered)
-        add("will ask the owner", report.needsApproval)
-        add("missing", report.missing)
-        lines.append(report.runsWithoutAsking ? "latchkey_run would start without asking." :
-                        report.missing.isEmpty ? "latchkey_run would ask the owner first." : "latchkey_run would fail: items are missing.")
-        var detail = Self.json(report) as? [String: Any] ?? [:]
-        detail["runsWithoutAsking"] = report.runsWithoutAsking
+        for (label, key) in [("agent-safe", "agentSafe"), ("granted", "granted"), ("recently approved", "remembered"),
+                             ("will ask the owner", "needsApproval"), ("missing", "missing")] where !list(key).isEmpty {
+            lines.append("\(label): \(list(key).joined(separator: ", "))")
+        }
+        lines.append(runsWithoutAsking ? "latchkey_run would start without asking." :
+                        list("missing").isEmpty ? "latchkey_run would ask the owner first." : "latchkey_run would fail: items are missing.")
         return Self.toolResult(lines.joined(separator: "\n"), detail)
     }
 
@@ -176,27 +178,68 @@ final class MCPServer: @unchecked Sendable {
         let command = Self.strings(args["command"])
         guard !command.isEmpty else { throw RunError.usage("command is required: an array such as [\"npm\", \"test\"]") }
         let timeout = min(max(args["timeout_seconds"] as? Double ?? Self.defaultTimeout, 1), Self.longestTimeout)
-        let spec = try runSpec(args)
-        let planned = try plannedEnvironment(spec, base: ProcessInfo.processInfo.environment, call: call)
-        let prepared = try prepareRun(spec, env: planned, command: command.joined(separator: " "), masking: true, call: call)
-        defer { prepared.cleanUp() }
+        let cli = ["run"] + (try sourceArguments(args)) + ["--"] + command
+        let result = try latchkey(cli, in: try folder(args), timeout: timeout, id: id)
+        // latchkey's own refusals end the run before the command starts, with a latchkey: line on standard error.
+        if [64, 66, 69, 77].contains(result.code), result.stderr.text.hasPrefix("latchkey: ") { throw Self.failure(result) }
+        let out = result.stdout, err = result.stderr
+        var text = "exit code \(result.code)"
+        if result.timedOut { text += " (stopped after \(Int(timeout)) seconds)" }
+        if !out.text.isEmpty { text += "\n--- stdout\(out.truncated ? " (last \(Self.outputCap / 1024) KB)" : "") ---\n" + out.text }
+        if !err.text.isEmpty { text += "\n--- stderr\(err.truncated ? " (last \(Self.outputCap / 1024) KB)" : "") ---\n" + err.text }
+        return Self.toolResult(text, [
+            "exitCode": Int(result.code), "timedOut": result.timedOut,
+            "stdout": out.text, "stdoutTruncated": out.truncated,
+            "stderr": err.text, "stderrTruncated": err.truncated,
+        ])
+    }
 
+    private func requestGrant(_ args: [String: Any]) throws -> Outcome {
+        let ids = Self.strings(args["ids"])
+        guard !ids.isEmpty else { throw RunError.usage("ids is required: item IDs or project/environment/* patterns") }
+        let duration = args["duration"] as? String ?? "1h"
+        guard GrantStore.parseDuration(duration) != nil else { throw RunError.usage("duration is like 30m, 2h or 1d") }
+        let result = try latchkey(["grant", ids.joined(separator: ","), "--for", duration, "--json"], in: try folder(args),
+                                  timeout: Self.longestTimeout, id: nil)
+        guard result.code == 0, let data = result.stdout.text.data(using: .utf8),
+              let g = try? Wire.decoder().decode(Grant.self, from: data) else { throw Self.failure(result) }
+        let left = GrantStore.describe(g.expires.timeIntervalSince(g.created))
+        let summary = "Granted \(g.names.joined(separator: ", ")) to programs in \(Broker.tilde(g.folder))\(g.repo == nil ? "" : " and its worktrees") for \(left) (grant \(g.id))."
+        return Self.toolResult(summary, ["grant": Self.json(g)])
+    }
+
+    // MARK: running the latchkey tool for an agent
+
+    struct ToolRun {
+        var code: Int32
+        var stdout: (text: String, truncated: Bool)
+        var stderr: (text: String, truncated: Bool)
+        var timedOut: Bool
+    }
+
+    /// Runs this `latchkey` binary with `arguments` in `folder`, marked as an agent's (LATCHKEY_ORIGIN=mcp). The app
+    /// then judges a real process in the real folder: its own signed tool, its own command line. `latchkey run`
+    /// masks the command's output itself.
+    private func latchkey(_ arguments: [String], in folder: String, timeout: TimeInterval, id: String?) throws -> ToolRun {
+        guard let me = Bundle.main.executablePath else { throw RunError.failed("can't find the latchkey tool") }
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = command
-        process.environment = prepared.environment
-        process.currentDirectoryURL = URL(fileURLWithPath: spec.cwd, isDirectory: true)
+        process.executableURL = URL(fileURLWithPath: me)
+        process.arguments = arguments
+        var env = ProcessInfo.processInfo.environment
+        env["LATCHKEY_ORIGIN"] = "mcp"
+        process.environment = env
+        process.currentDirectoryURL = URL(fileURLWithPath: folder, isDirectory: true)
         process.standardInput = FileHandle.nullDevice
         let outPipe = Pipe(), errPipe = Pipe()
         process.standardOutput = outPipe
         process.standardError = errPipe
         let stdout = Tail(cap: Self.outputCap), stderr = Tail(cap: Self.outputCap)
         let pumps = DispatchGroup()
-        do { try process.run() } catch { throw RunError.failed("cannot start \(command[0]): \(error.localizedDescription)") }
-        runLock.lock(); running[id] = process; runLock.unlock()
-        defer { runLock.lock(); running[id] = nil; runLock.unlock() }
-        pumpMasked(outPipe, secrets: prepared.secretValues, group: pumps) { stdout.add($0) }
-        pumpMasked(errPipe, secrets: prepared.secretValues, group: pumps) { stderr.add($0) }
+        do { try process.run() } catch { throw RunError.failed("cannot start latchkey: \(error.localizedDescription)") }
+        if let id { runLock.lock(); running[id] = process; runLock.unlock() }
+        defer { if let id { runLock.lock(); running[id] = nil; runLock.unlock() } }
+        pumpMasked(outPipe, secrets: [], group: pumps) { stdout.add($0) }
+        pumpMasked(errPipe, secrets: [], group: pumps) { stderr.add($0) }
 
         let timedOut = Flag()
         DispatchQueue.global().asyncAfter(deadline: .now() + timeout) {
@@ -212,30 +255,29 @@ final class MCPServer: @unchecked Sendable {
             try? errPipe.fileHandleForReading.close()
         }
         let code = process.terminationReason == .uncaughtSignal ? 128 + process.terminationStatus : process.terminationStatus
-        let out = stdout.text, err = stderr.text
-        var text = "exit code \(code)"
-        if timedOut.isSet { text += " (stopped after \(Int(timeout)) seconds)" }
-        if !out.text.isEmpty { text += "\n--- stdout\(out.truncated ? " (last \(Self.outputCap / 1024) KB)" : "") ---\n" + out.text }
-        if !err.text.isEmpty { text += "\n--- stderr\(err.truncated ? " (last \(Self.outputCap / 1024) KB)" : "") ---\n" + err.text }
-        return Self.toolResult(text, [
-            "exitCode": Int(code), "timedOut": timedOut.isSet,
-            "stdout": out.text, "stdoutTruncated": out.truncated,
-            "stderr": err.text, "stderrTruncated": err.truncated,
-        ])
+        return ToolRun(code: code, stdout: stdout.text, stderr: stderr.text, timedOut: timedOut.isSet)
     }
 
-    private func requestGrant(_ args: [String: Any]) throws -> Outcome {
-        let ids = Self.strings(args["ids"])
-        guard !ids.isEmpty else { throw RunError.usage("ids is required: item IDs or project/environment/* patterns") }
-        let text = args["duration"] as? String ?? "1h"
-        guard let duration = GrantStore.parseDuration(text) else { throw RunError.usage("duration is like 30m, 2h or 1d") }
-        let cwd = try folder(args)
-        let r = try call(Request(op: "grant", names: ids, cwd: cwd, folder: cwd, duration: duration, origin: "mcp"))
-        if let m = r.missing, !m.isEmpty { throw RunError.missing(m) }
-        guard r.ok, let g = r.grants?.first else { throw RunError.failed(r.error ?? "the grant was not approved") }
-        let left = GrantStore.describe(g.expires.timeIntervalSince(g.created))
-        let summary = "Granted \(g.names.joined(separator: ", ")) to programs in \(Broker.tilde(g.folder))\(g.repo == nil ? "" : " and its worktrees") for \(left) (grant \(g.id))."
-        return Self.toolResult(summary, ["grant": Self.json(g)])
+    /// The error for a latchkey run that stopped on its own account, from its exit code and its `latchkey:` message
+    /// (the wording of failMissing and failRefused in main.swift).
+    static func failure(_ run: ToolRun) -> RunError {
+        let message = run.stderr.text.split(separator: "\n").first.map(String.init) ?? ""
+        let text = message.hasPrefix("latchkey: ") ? String(message.dropFirst(10)) : message
+        func ids(after prefix: String, until end: String?) -> [String] {
+            guard text.hasPrefix(prefix) else { return [] }
+            var rest = text.dropFirst(prefix.count)
+            if let end, let r = rest.range(of: end) { rest = rest[..<r.lowerBound] }
+            return rest.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        }
+        switch run.code {
+        case 77: return .refused(ids(after: "refused: ", until: " ("))
+        case 66:
+            let missing = ids(after: "no item named: ", until: nil)
+            return missing.isEmpty ? .unreadable(text) : .missing(missing)
+        case 69: return .unreachable(text)
+        case 64: return .usage(text)
+        default: return .failed(text.isEmpty ? "latchkey exited with \(run.code)" : text)
+        }
     }
 
     // MARK: helpers
@@ -251,18 +293,21 @@ final class MCPServer: @unchecked Sendable {
         return URL(fileURLWithPath: path).standardizedFileURL.path
     }
 
-    private func runSpec(_ args: [String: Any]) throws -> RunSpec {
-        var spec = RunSpec(cwd: try folder(args), origin: "mcp")
-        spec.envFiles = Self.strings(args["env_files"])
-        spec.scopes = Self.strings(args["environments"])
-        if let bad = spec.scopes.first(where: { !RemoteLink.isValidScope($0) }) {
-            throw RunError.usage("environments are project/environment, such as shop/development: \(bad)")
+    /// env_files, environments and files as `latchkey run` / `latchkey check` options.
+    private func sourceArguments(_ args: [String: Any]) throws -> [String] {
+        var out: [String] = []
+        for f in Self.strings(args["env_files"]) { out += ["--env-file", f] }
+        for e in Self.strings(args["environments"]) {
+            guard RemoteLink.isValidScope(e) else { throw RunError.usage("environments are project/environment, such as shop/development: \(e)") }
+            out += ["--env", e]
         }
         for (name, id) in (args["files"] as? [String: String] ?? [:]).sorted(by: { $0.key < $1.key }) {
-            guard Wire.isValidName(id) else { throw RunError.usage("files maps a variable name to an item ID: \(name)=\(id)") }
-            spec.fileArgs.append((name, id))
+            guard Wire.isValidName(id), !name.isEmpty, !name.contains("=") else {
+                throw RunError.usage("files maps a variable name to an item ID: \(name)=\(id)")
+            }
+            out += ["--file", "\(name)=\(id)"]
         }
-        return spec
+        return out
     }
 
     private func ask(_ request: Request) throws -> Response {

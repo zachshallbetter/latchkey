@@ -23,6 +23,10 @@ public struct ApprovalRequest: Sendable {
     public var production = false
     /// Asked through `latchkey mcp`, by an agent rather than a command.
     public var byAgent = false
+    /// The asking program's path when it isn't Latchkey's own signed command-line tool.
+    public var program: String?
+    /// Asked from the Latchkey window itself (the same process), not over the socket.
+    public var fromApp = false
 
     public init(action: Action, names: [String], chain: [String], folder: String, command: String? = nil,
                 duration: TimeInterval? = nil, reason: String) {
@@ -37,9 +41,6 @@ public struct ApprovalRequest: Sendable {
 
     /// Reads from a folder can be turned into a grant from the approval itself.
     public var canGrant: Bool { action == .read && !folder.isEmpty }
-    /// Requests made in the Latchkey window: the person is already there, so Touch ID alone is enough, except for
-    /// pushes, which always show the panel.
-    public var fromApp: Bool { chain.first == Broker.appCaller }
 }
 
 public enum ApprovalDecision: Sendable, Equatable {
@@ -125,7 +126,7 @@ final class ApprovalMemory: @unchecked Sendable {
     private let lock = NSLock()
 
     static func key(_ names: [String], _ peer: PeerInfo) -> String {
-        ([peer.cwd] + peer.chain + ["|"] + names.sorted()).joined(separator: "\u{1F}")
+        ([peer.cwd, peer.path] + peer.chain + ["|"] + names.sorted()).joined(separator: "\u{1F}")
     }
 
     func covers(_ key: String, now: Date = Date()) -> Bool {

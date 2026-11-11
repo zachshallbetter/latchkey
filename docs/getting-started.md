@@ -124,10 +124,10 @@ Have many projects? `latchkey import --batch` takes a list of files and imports 
    defaults delete io.snackstud.latchkey
    ```
 
-   The folder holds your grants, the access log and the broker socket.
+   The folder holds the access log and the broker socket.
 
 Items left in iCloud Keychain show in Keychain Access as "Latchkey: ID", "Latchkey history: ID" and "Latchkey link:
-…", and come back if you install Latchkey again with the same Apple Account. Delete them there to remove them
+…" (and grants on this Mac as "Latchkey grants"), and come back if you install Latchkey again with the same Apple Account. Delete them there to remove them
 without the app. Removing Latchkey doesn't change the values at your services or in your remote locations.
 
 ## Next

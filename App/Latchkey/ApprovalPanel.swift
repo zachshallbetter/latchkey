@@ -104,6 +104,11 @@ struct ApprovalView: View {
                     Text("Latchkey").font(.callout).foregroundStyle(.secondary)
                 }
             }
+            if let program = request.program {
+                Label("Asked by a program that isn't Latchkey's command-line tool: \(program)", systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange).font(.callout.weight(.semibold))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 8) {
                 row("Items", request.names.joined(separator: ", "), mono: true)
                 row("Asked by", request.chain.prefix(4).joined(separator: " › ") + (request.byAgent ? "\nan agent, through Latchkey's MCP server" : ""))

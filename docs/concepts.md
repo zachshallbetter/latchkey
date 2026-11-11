@@ -107,7 +107,7 @@ NAME=ID` (or `NAME=latchkey-file://ID` in an env file) writes the value to a tem
 |---|---|
 | Values, versions, links | iCloud Keychain (in Latchkey's own access group), synced to your Macs |
 | Kind, agent-safe, service, note, the files an item was imported from | With the item, synced |
-| Grants | `~/Library/Application Support/Latchkey/grants.json`, this Mac only |
+| Grants | A keychain item only Latchkey can change ("Latchkey grants"), this Mac only |
 | Activity log (never values) | `~/Library/Application Support/Latchkey/access.jsonl`, this Mac only |
 | The connection between the command-line tool and the app | `~/Library/Application Support/Latchkey/broker.sock` |
 

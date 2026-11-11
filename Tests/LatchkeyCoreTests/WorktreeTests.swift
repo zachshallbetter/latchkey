@@ -35,7 +35,7 @@ final class WorktreeTests: XCTestCase {
     }
 
     func testAGrantForTheCheckoutCoversItsWorktrees() {
-        let store = GrantStore(url: nil)
+        let store = GrantStore()
         let g = store.add(names: ["site/development/*"], folder: main.path, duration: 3600, createdBy: "t")
         XCTAssertEqual(g.repo, main.appendingPathComponent(".git").path)
         XCTAssertTrue(g.covers("site/development/DB", cwd: worktree.appendingPathComponent("apps/web").path))

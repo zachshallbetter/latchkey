@@ -145,12 +145,10 @@ public struct Request: Codable, Sendable {
     public var kind: ItemKind?
     public var agentSafe: Bool?
     public var note: String?
-    public var cwd: String?
-    public var command: String?      // what `run` is about to start, for the log
     public var items: [ImportItem]?  // import
     public var replace: Bool?        // import: overwrite items that already exist
     public var source: String?       // import: the file the items came from, for the approval and the log
-    public var folder: String?       // grant: the folder it covers (defaults to cwd)
+    public var folder: String?       // grant: the folder it covers (defaults to the caller's working folder)
     public var duration: Double?     // grant: seconds
     public var project: String?      // move: target project ("" for shared)
     public var environment: String?  // move: target environment
@@ -163,7 +161,7 @@ public struct Request: Codable, Sendable {
                                      // grants it asks for are limited (see Broker.grant)
 
     public init(op: String, names: [String]? = nil, value: String? = nil, kind: ItemKind? = nil,
-                agentSafe: Bool? = nil, note: String? = nil, cwd: String? = nil, command: String? = nil,
+                agentSafe: Bool? = nil, note: String? = nil,
                 items: [ImportItem]? = nil, replace: Bool? = nil, source: String? = nil,
                 folder: String? = nil, duration: Double? = nil, project: String? = nil, environment: String? = nil,
                 service: String? = nil, version: String? = nil, target: RemoteTarget? = nil, link: String? = nil,
@@ -174,8 +172,6 @@ public struct Request: Codable, Sendable {
         self.kind = kind
         self.agentSafe = agentSafe
         self.note = note
-        self.cwd = cwd
-        self.command = command
         self.items = items
         self.replace = replace
         self.source = source
@@ -279,7 +275,6 @@ public enum Paths {
     }
     public static var socket: String { supportDir.appendingPathComponent("broker.sock").path }
     public static var accessLog: URL { supportDir.appendingPathComponent("access.jsonl") }
-    public static var grants: URL { supportDir.appendingPathComponent("grants.json") }
 
     public static func ensureSupportDir() throws {
         try FileManager.default.createDirectory(at: supportDir, withIntermediateDirectories: true,

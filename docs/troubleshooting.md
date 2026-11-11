@@ -9,6 +9,17 @@ The command-line tool starts the app when it isn't running. If that fails:
 - If `latchkey-broker` (the development broker) is running, stop it: it uses the same socket.
 - `LATCHKEY_NO_LAUNCH=1` is set? Unset it, or start the app yourself.
 
+## "the program answering on Latchkey's socket isn't the Latchkey app"
+
+`latchkey` checks the app's signature before sending anything. Another program is listening where the app should be:
+quit it (the message names it), then open Latchkey. A development build of the app, signed by a different team than
+the tool, causes this too; install both from the same build.
+
+## "Asked by a program that isn't Latchkey's command-line tool"
+
+The approval panel shows this when something other than the signed `latchkey` tool asks, such as a script talking
+to the socket directly, or an unsigned development build of the tool. Deny it unless you know what it is.
+
 ## "refused" (exit 77)
 
 The item isn't agent-safe, nobody approved, and no grant covers it. The message names the items and the grant command

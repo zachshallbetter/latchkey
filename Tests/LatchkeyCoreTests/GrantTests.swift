@@ -17,20 +17,17 @@ final class GrantTests: XCTestCase {
     }
 
     func testStorePersistsCapsAndRevokes() throws {
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("grants-\(UUID().uuidString).json")
-        defer { try? FileManager.default.removeItem(at: url) }
-        let store = GrantStore(url: url)
+        let backing = MemoryGrantBacking()
+        let store = GrantStore(backing: backing)
         let g = store.add(names: ["A"], folder: "/tmp/p", duration: 30 * 86400, createdBy: "t", now: now)
         XCTAssertEqual(g.expires, now.addingTimeInterval(GrantStore.longest))
         store.add(names: ["B"], folder: "/tmp/q", duration: 60, createdBy: "t", now: now)
-        let reloaded = GrantStore(url: url)
+        let reloaded = GrantStore(backing: backing)
         XCTAssertEqual(reloaded.all(now: now).count, 2)
         XCTAssertEqual(reloaded.all(now: now.addingTimeInterval(120)).map(\.id), [g.id], "expired grants drop out")
         XCTAssertNotNil(reloaded.covering("A", cwd: "/tmp/p/sub", now: now))
         XCTAssertEqual(reloaded.revoke(g.id), 1)
         XCTAssertEqual(reloaded.revoke("nope"), 0)
-        let perms = try FileManager.default.attributesOfItem(atPath: url.path)[.posixPermissions] as? Int
-        XCTAssertEqual(perms, 0o600)
     }
 
     func testDurations() {
@@ -55,7 +52,7 @@ final class BrokerGrantTests: XCTestCase {
 
     func testApprovalCanCreateAGrantThatLaterReadsUse() throws {
         let b = try broker(.grant(3600))
-        let r = b.handle(Request(op: "get", names: ["DB"], cwd: "/tmp/site"), peer: peer)
+        let r = b.handle(Request(op: "get", names: ["DB"]), peer: peer)
         XCTAssertEqual(r.values, ["DB": "db-value-123"])
         XCTAssertEqual(b.grants.all().count, 1)
         XCTAssertEqual(b.grants.all().first?.folder, "/tmp/site")
@@ -63,15 +60,20 @@ final class BrokerGrantTests: XCTestCase {
 
         // Same folder or below: allowed by the grant even though the approver now says no.
         let denyAll = Broker(store: b.store, approver: FixedApprover(false), readApprovalWindow: 0, logURL: nil, grants: b.grants)
-        XCTAssertEqual(denyAll.handle(Request(op: "get", names: ["DB"], cwd: "/tmp/site/sub"), peer: peer).values, ["DB": "db-value-123"])
+        XCTAssertEqual(denyAll.handle(Request(op: "get", names: ["DB"]), peer: at("/tmp/site/sub")).values, ["DB": "db-value-123"])
         // Elsewhere, or another item: asks, and is denied.
-        XCTAssertEqual(denyAll.handle(Request(op: "get", names: ["DB"], cwd: "/tmp/other"), peer: peer).denied, ["DB"])
-        XCTAssertEqual(denyAll.handle(Request(op: "get", names: ["DB", "API"], cwd: "/tmp/site"), peer: peer).denied, ["API"])
+        XCTAssertEqual(denyAll.handle(Request(op: "get", names: ["DB"]), peer: at("/tmp/other")).denied, ["DB"])
+        XCTAssertEqual(denyAll.handle(Request(op: "get", names: ["DB", "API"]), peer: peer).denied, ["API"])
+        // A folder the request claims counts for nothing: only where the caller really runs.
+        XCTAssertEqual(denyAll.handle(Request(op: "get", names: ["DB"]), peer: at("/tmp/other")).denied, ["DB"])
+        XCTAssertEqual(denyAll.handle(Request(op: "check", names: ["DB"]), peer: at("/tmp/other")).needsApproval, ["DB"])
     }
+
+    func at(_ cwd: String) -> PeerInfo { PeerInfo(pid: 1, path: peer.path, cwd: cwd, chain: peer.chain) }
 
     func testGrantAheadOfTimeAndRevoke() throws {
         let b = try broker(.once)
-        let r = b.handle(Request(op: "grant", names: ["DB", "API"], cwd: "/tmp/x", folder: "/tmp/site", duration: 7200), peer: peer)
+        let r = b.handle(Request(op: "grant", names: ["DB", "API"], folder: "/tmp/site", duration: 7200), peer: peer)
         XCTAssertTrue(r.ok, r.error ?? "")
         let g = try XCTUnwrap(r.grants?.first)
         XCTAssertEqual(g.names, ["API", "DB"])
@@ -88,12 +90,12 @@ final class BrokerGrantTests: XCTestCase {
         try store.save(name: "DB", value: "db-value-123", kind: .password, agentSafe: false, note: "")
         try store.save(name: "API", value: "api-value-456", kind: .token, agentSafe: false, note: "")
         try store.save(name: "HOST", value: "db.example", kind: .value, agentSafe: true, note: "")
-        let grants = GrantStore(url: nil)
+        let grants = GrantStore()
         let g = grants.add(names: ["DB"], folder: "/tmp/site", duration: 3600, createdBy: "t")
         let asked = CountingApprover(true)
         let b = Broker(store: store, approver: asked, readApprovalWindow: 60, logURL: nil, grants: grants)
 
-        let r = b.handle(Request(op: "check", names: ["DB", "API", "HOST", "NOPE"], cwd: "/tmp/site/sub"), peer: peer)
+        let r = b.handle(Request(op: "check", names: ["DB", "API", "HOST", "NOPE"]), peer: at("/tmp/site/sub"))
         XCTAssertTrue(r.ok, r.error ?? "")
         XCTAssertEqual(r.agentSafe, ["HOST"])
         XCTAssertEqual(r.granted, ["DB"])
@@ -105,13 +107,13 @@ final class BrokerGrantTests: XCTestCase {
         XCTAssertEqual(asked.reasons.count, 0, "check never asks")
 
         // After an approval, the same request from the same caller is covered for the approval window.
-        XCTAssertEqual(b.handle(Request(op: "get", names: ["API"], cwd: "/tmp/site"), peer: peer).values, ["API": "api-value-456"])
+        XCTAssertEqual(b.handle(Request(op: "get", names: ["API"]), peer: peer).values, ["API": "api-value-456"])
         XCTAssertEqual(asked.reasons.count, 1)
-        let again = b.handle(Request(op: "check", names: ["API"], cwd: "/tmp/site"), peer: peer)
+        let again = b.handle(Request(op: "check", names: ["API"]), peer: peer)
         XCTAssertEqual(again.remembered, ["API"])
         XCTAssertNil(again.needsApproval)
         // Outside the grant's folder, DB needs approval again.
-        XCTAssertEqual(b.handle(Request(op: "check", names: ["DB"], cwd: "/tmp/other"), peer: peer).needsApproval, ["DB"])
+        XCTAssertEqual(b.handle(Request(op: "check", names: ["DB"]), peer: at("/tmp/other")).needsApproval, ["DB"])
     }
 
     func testGrantsAnAgentAsksForAreLimited() throws {
@@ -121,13 +123,15 @@ final class BrokerGrantTests: XCTestCase {
         }
         let b = Broker(store: store, approver: FixedApprover(.once), readApprovalWindow: 0, logURL: nil)
         func ask(_ names: [String], folder: String = "/tmp/site", duration: Double = 3600) -> Response {
-            b.handle(Request(op: "grant", names: names, cwd: "/tmp/site", folder: folder, duration: duration, origin: "mcp"), peer: peer)
+            b.handle(Request(op: "grant", names: names, folder: folder, duration: duration, origin: "mcp"), peer: peer)
         }
         XCTAssertFalse(ask(["shop/production/DB"]).ok)
         XCTAssertFalse(ask(["shop/vercel.production/DB"]).ok)
         XCTAssertFalse(ask(["shop/*"]).ok, "a whole project includes production")
         XCTAssertFalse(ask(["shop/production/*"]).ok)
         XCTAssertFalse(ask(["shop/development/DB"], folder: "/tmp/elsewhere").ok, "only the agent's own folder")
+        XCTAssertFalse(b.handle(Request(op: "grant", names: ["shop/development/DB"], folder: "/tmp/elsewhere", origin: "mcp"), peer: peer).ok,
+                       "claiming another folder doesn't make it the agent's own")
         let r = ask(["shop/development/*", "SHARED"], duration: 3 * 86400)
         XCTAssertTrue(r.ok, r.error ?? "")
         let g = try XCTUnwrap(r.grants?.first)
@@ -155,7 +159,14 @@ final class BrokerGrantTests: XCTestCase {
         XCTAssertTrue(r.canGrant)
         XCTAssertFalse(r.fromApp)
         XCTAssertFalse(ApprovalRequest(action: .add, names: ["A"], chain: ["zsh"], folder: "/tmp", reason: "x").canGrant)
-        XCTAssertTrue(ApprovalRequest(action: .read, names: ["A"], chain: [Broker.appCaller], folder: "", reason: "x").fromApp)
+        // Only a request from the app's own process counts as from the app, whatever a parent process is called.
+        let b = Broker(store: MemoryStore(), approver: RecordingApprover(), readApprovalWindow: 0, logURL: nil)
+        _ = b.handle(Request(op: "set", names: ["A"], value: "a-value"), peer: PeerInfo(pid: 4242, path: "/tmp/fake", cwd: "/tmp", chain: [Broker.appCaller]))
+        _ = b.handle(Request(op: "set", names: ["B"], value: "b-value"), peer: PeerInfo(pid: getpid(), path: "/Applications/Latchkey.app", cwd: "", chain: [Broker.appCaller]))
+        let seen = (b.approver as! RecordingApprover).requests
+        XCTAssertEqual(seen.map(\.fromApp), [false, true])
+        XCTAssertEqual(seen.first?.program, "/tmp/fake", "a program that isn't the signed tool is shown by its path")
+        XCTAssertNil(seen.last?.program)
     }
 }
 
@@ -178,3 +189,10 @@ final class MigrationTests: XCTestCase {
     }
 }
 
+
+/// Keeps every request it's shown and allows them all.
+final class RecordingApprover: Approver, @unchecked Sendable {
+    var requests: [ApprovalRequest] = []
+    var method: String { "test" }
+    func approve(_ request: ApprovalRequest) -> ApprovalDecision { requests.append(request); return .once }
+}

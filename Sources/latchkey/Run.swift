@@ -21,10 +21,8 @@ struct RunSpec {
     var scopes: [String] = []
     /// NAME=ID pairs delivered as temporary files.
     var fileArgs: [(name: String, id: String)] = []
-    /// The folder the command runs in; relative env file paths are read from here, and grants match it.
+    /// The folder relative env file paths are read from.
     var cwd: String
-    /// "mcp" when an agent asks through `latchkey mcp`.
-    var origin: String?
 }
 
 /// The command's environment with values filled in, the values to hide in its output, and the private folder
@@ -72,13 +70,13 @@ func referencedIDs(_ env: [String: String]) -> [String] {
 
 /// Asks for every value `env` refers to and fills them in. Missing or refused items throw; nothing is filled in
 /// unless everything was released.
-func prepareRun(_ spec: RunSpec, env planned: [String: String], command: String, masking: Bool,
+func prepareRun(_ spec: RunSpec, env planned: [String: String], masking: Bool,
                 call: (Request) throws -> Response) throws -> PreparedRun {
     var env = planned
     let fileRefs = References.fileReferences(in: env)
     let names = referencedIDs(env)
     guard !names.isEmpty else { return PreparedRun(environment: env, secretValues: [], tempDir: nil) }
-    let r = try call(Request(op: "get", names: names, cwd: spec.cwd, command: command, origin: spec.origin))
+    let r = try call(Request(op: "get", names: names))
     guard r.ok else { throw RunError.failed(r.error ?? "the app refused the request") }
     if let m = r.missing, !m.isEmpty { throw RunError.missing(m) }
     if let d = r.denied, !d.isEmpty { throw RunError.refused(d) }

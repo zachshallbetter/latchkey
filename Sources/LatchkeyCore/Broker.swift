@@ -48,7 +48,13 @@ public final class Broker: @unchecked Sendable {
         } else {
             self.versions = MemoryVersionStore()
         }
-        self.grants = grants ?? GrantStore(url: logURL == nil ? nil : Paths.grants)
+        if let grants {
+            self.grants = grants
+        } else if logURL != nil, let keychain = store as? KeychainStore {
+            self.grants = GrantStore(backing: KeychainGrantBacking(mode: keychain.mode))
+        } else {
+            self.grants = GrantStore()
+        }
         self.approver = approver
         self.readApprovalWindow = readApprovalWindow
         self.logURL = logURL
@@ -61,7 +67,7 @@ public final class Broker: @unchecked Sendable {
         defer { serial.unlock() }
         do {
             switch req.op {
-            case "status": return status()
+            case "status": return status(peer)
             case "list": return Response(ok: true, secrets: try store.list())
             case "check": return try check(req, peer: peer)
             case "get": return try get(req, peer: peer)
@@ -92,9 +98,11 @@ public final class Broker: @unchecked Sendable {
         }
     }
 
-    func status() -> Response {
+    func status(_ peer: PeerInfo) -> Response {
         let count = (try? store.list().count).map(String.init) ?? "unknown"
         return Response(ok: true, info: [
+            "caller": peer.isLatchkeyTool ? "Latchkey's command-line tool (signature checked)"
+                : "\(peer.path.isEmpty ? "unknown program" : peer.path) (not Latchkey's signed command-line tool)",
             "storage": store.location,
             "approval": approver.method,
             "items": count,
@@ -111,7 +119,7 @@ public final class Broker: @unchecked Sendable {
         let infos = Dictionary(uniqueKeysWithValues: try store.list().map { ($0.name, $0) })
         let missing = names.filter { infos[$0] == nil }
         let present = names.filter { infos[$0] != nil }
-        let cwd = req.cwd ?? peer.cwd
+        let cwd = peer.cwd
         let safe = present.filter { infos[$0]!.agentSafe }
         var granted: [String] = []
         var covering: [Grant] = []
@@ -134,7 +142,7 @@ public final class Broker: @unchecked Sendable {
         let infos = Dictionary(uniqueKeysWithValues: try store.list().map { ($0.name, $0) })
         let missing = names.filter { infos[$0] == nil }
         let present = names.filter { infos[$0] != nil }
-        let cwd = req.cwd ?? peer.cwd
+        let cwd = peer.cwd
         let needApproval = present.filter { !(infos[$0]!.agentSafe) }
         var byGrant: [Grant: [String]] = [:]
         for name in needApproval { if let g = grants.covering(name, cwd: cwd) { byGrant[g, default: []].append(name) } }
@@ -309,7 +317,7 @@ public final class Broker: @unchecked Sendable {
             return !Wire.isValidName(entry) || !existing.contains(entry)
         }
         guard missing.isEmpty else { return Response(ok: false, missing: missing) }
-        let folder = Grant.normalize(req.folder ?? req.cwd ?? peer.cwd)
+        let folder = Grant.normalize(req.folder ?? peer.cwd)
         guard !folder.isEmpty, folder != "/" else { return Response(ok: false, error: "a grant needs a folder other than /") }
         var duration = min(req.duration ?? 3600, GrantStore.longest)
         guard duration > 0 else { return Response(ok: false, error: "the duration must be positive") }
@@ -318,21 +326,19 @@ public final class Broker: @unchecked Sendable {
             if let entry = names.first(where: Self.reachesProduction) {
                 return Response(ok: false, error: "an agent can't ask for \(entry): grants it asks for can't include production or a whole project. The owner can grant it with latchkey grant.")
             }
-            guard folder == Grant.normalize(req.cwd ?? peer.cwd) else {
+            guard folder == Grant.normalize(peer.cwd) else {
                 return Response(ok: false, error: "an agent can only ask for a grant on the folder it runs in")
             }
             duration = min(duration, Self.longestAgentGrant)
         }
-        var r = req
-        r.cwd = folder
         let worktrees = Repo.commonDir(for: folder) != nil ? " (and its worktrees)" : ""
         let reason = "let programs in \(Self.tilde(folder))\(worktrees) read \(Self.count(names)) without asking for \(GrantStore.describe(duration)), asked by \(Self.who(peer))"
-        guard ask(.grant, names, peer, r, reason, duration: duration).allowed else {
-            log("grant", names, "denied", peer, r)
+        guard ask(.grant, names, peer, req, reason, duration: duration, folder: folder).allowed else {
+            log("grant", names, "denied", peer, req)
             return Response(ok: false, error: "the grant was not approved")
         }
         let g = grants.add(names: names, folder: folder, duration: duration, createdBy: Self.who(peer))
-        log("grant", names, "approved (grant \(g.id) for \(GrantStore.describe(duration)))", peer, r)
+        log("grant", names, "approved (grant \(g.id) for \(GrantStore.describe(duration)))", peer, req)
         return Response(ok: true, grants: [g])
     }
 
@@ -524,9 +530,8 @@ public final class Broker: @unchecked Sendable {
 
         let labels = links.map(\.target.label)
         let names = items.map(\.name)
-        var request = ApprovalRequest(action: .push, names: names, chain: peer.chain,
-                                      folder: (req.cwd ?? peer.cwd).isEmpty ? "" : Grant.normalize(req.cwd ?? peer.cwd), command: req.command,
-                                      reason: "push \(Self.count(names.map { ItemID($0)?.name ?? $0 })) to \(labels.joined(separator: ", ")), asked by \(Self.who(peer))")
+        var request = approvalRequest(.push, names, peer, req,
+                                      "push \(Self.count(names.map { ItemID($0)?.name ?? $0 })) to \(labels.joined(separator: ", ")), asked by \(Self.who(peer))")
         request.targets = labels
         request.production = links.contains { $0.target.isProduction }
         guard approver.approve(request).allowed else {
@@ -595,14 +600,25 @@ public final class Broker: @unchecked Sendable {
     }
 
     private func ask(_ action: ApprovalRequest.Action, _ names: [String], _ peer: PeerInfo, _ req: Request,
-                     _ reason: String, duration: TimeInterval? = nil, targets: [String] = []) -> ApprovalDecision {
-        let folder = req.cwd ?? peer.cwd
-        var request = ApprovalRequest(action: action, names: names, chain: peer.chain,
-                                      folder: folder.isEmpty ? "" : Grant.normalize(folder),
-                                      command: req.command, duration: duration, reason: reason)
+                     _ reason: String, duration: TimeInterval? = nil, folder: String? = nil, targets: [String] = []) -> ApprovalDecision {
+        var request = approvalRequest(action, names, peer, req, reason, duration: duration, folder: folder)
         request.targets = targets
-        request.byAgent = req.origin == "mcp"
         return approver.approve(request)
+    }
+
+    /// What the approval panel shows. Everything about the caller comes from the kernel: its folder, its command
+    /// line, its parents, and whether it's Latchkey's own signed tool. Nothing the request says about itself is
+    /// shown, except `folder` for a grant, which is what's being granted.
+    private func approvalRequest(_ action: ApprovalRequest.Action, _ names: [String], _ peer: PeerInfo, _ req: Request,
+                                 _ reason: String, duration: TimeInterval? = nil, folder: String? = nil) -> ApprovalRequest {
+        let place = folder ?? peer.cwd
+        var request = ApprovalRequest(action: action, names: names, chain: peer.chain,
+                                      folder: place.isEmpty ? "" : Grant.normalize(place),
+                                      command: peer.commandLine.isEmpty ? nil : peer.commandLine, duration: duration, reason: reason)
+        request.fromApp = peer.pid == getpid()
+        request.program = request.fromApp || peer.isLatchkeyTool || peer.path.isEmpty ? nil : peer.path
+        request.byAgent = req.origin == "mcp"
+        return request
     }
 
     /// The longest grant an agent can ask for through `latchkey mcp`.
@@ -639,9 +655,10 @@ public final class Broker: @unchecked Sendable {
     /// "zsh › claude in ~/Projects/site (running npm test)"
     static func describe(_ peer: PeerInfo, _ req: Request) -> String {
         let who = peer.chain.prefix(3).joined(separator: " › ")
-        let cwd = tilde(req.cwd ?? peer.cwd)
+        let cwd = tilde(peer.cwd)
         var s = (who.isEmpty ? "a process" : who) + (cwd.isEmpty ? "" : " in \(cwd)")
-        if let c = req.command, !c.isEmpty { s += " (running \(c.count > 60 ? String(c.prefix(57)) + "…" : c))" }
+        let c = peer.commandLine
+        if !c.isEmpty { s += " (running \(c.count > 60 ? String(c.prefix(57)) + "…" : c))" }
         return s
     }
 
@@ -655,12 +672,15 @@ public final class Broker: @unchecked Sendable {
         public var chain: [String]
         public var cwd: String
         public var command: String?
+        /// The asking program, when it isn't Latchkey's own command-line tool or the app.
+        public var program: String?
     }
 
     private func log(_ op: String, _ names: [String], _ decision: String, _ peer: PeerInfo, _ req: Request) {
         guard let url = logURL else { return }
         let entry = LogEntry(time: Date(), op: op, names: names, decision: decision,
-                             chain: peer.chain, cwd: req.cwd ?? peer.cwd, command: req.command)
+                             chain: peer.chain, cwd: peer.cwd, command: peer.commandLine.isEmpty ? nil : peer.commandLine,
+                             program: peer.isLatchkeyTool || peer.pid == getpid() || peer.path.isEmpty ? nil : peer.path)
         guard var line = try? Wire.encoder().encode(entry) else { return }
         line.append(0x0A)
         if let h = try? FileHandle(forWritingTo: url) {
