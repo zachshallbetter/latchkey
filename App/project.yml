@@ -1,0 +1,42 @@
+# Generate the Xcode project with:  cd App && xcodegen
+# Set DEVELOPMENT_TEAM (Xcode > Settings > Accounts) before building: iCloud Keychain needs a signed app.
+name: Latchkey
+options:
+  bundleIdPrefix: io.latchkey
+  deploymentTarget:
+    macOS: "14.0"
+packages:
+  LatchkeyCore:
+    path: ..
+settings:
+  base:
+    DEVELOPMENT_TEAM: ""
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+targets:
+  Latchkey:
+    type: application
+    platform: macOS
+    sources: [Latchkey]
+    dependencies:
+      - package: LatchkeyCore
+        product: LatchkeyCore
+    entitlements:
+      path: Latchkey/Latchkey.entitlements
+      properties:
+        # iCloud Keychain (synchronizable, data-protection keychain) is only open to signed apps
+        # with an access group. Not sandboxed: the broker reads other processes' paths to name callers.
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)io.latchkey.shared
+    info:
+      path: Latchkey/Info.plist
+      properties:
+        LSUIElement: true
+        CFBundleDisplayName: Latchkey
+        LatchkeyAccessGroup: $(AppIdentifierPrefix)io.latchkey.shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.latchkey.Latchkey
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Automatic

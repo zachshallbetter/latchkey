@@ -15,7 +15,8 @@ latchkey: read secrets from the Latchkey app without keeping them in files.
   latchkey rm NAME
   latchkey status
 
-Items not marked agent-safe need your approval in the app (Touch ID). Changes always do.
+Items not marked agent-safe need your approval (Touch ID, Apple Watch or your Mac password).
+Changes always do. Values are kept in iCloud Keychain, so they follow you to your other Macs.
 """
 
 func fail(_ message: String, code: Int32 = 1) -> Never {
@@ -216,7 +217,8 @@ case "set":
 
 case "rm":
     guard let name = args.first, Wire.isValidName(name) else { fail("usage: latchkey rm NAME", code: 64) }
-    _ = send(Request(op: "rm", names: [name], cwd: currentDirectory()))
+    let r = send(Request(op: "rm", names: [name], cwd: currentDirectory()))
+    if let m = r.missing, !m.isEmpty { fail("no item named \(name)", code: 66) }
     print("removed \(name)")
 
 case "run":
