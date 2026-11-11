@@ -140,3 +140,49 @@ final class ServiceTests: XCTestCase {
         XCTAssertEqual(EnvImport.plan("STRIPE_SECRET=sk_test_1", source: "x").items.first?.service, "Stripe")
     }
 }
+
+final class BulkTests: XCTestCase {
+    let peer = PeerInfo(pid: 1, path: "/usr/local/bin/latchkey", cwd: "/tmp", chain: ["zsh"])
+
+    func store() throws -> MemoryStore {
+        let s = MemoryStore()
+        for n in ["acp/development/A", "acp/development/B", "acp/production/A"] {
+            try s.save(name: n, value: "v-\(n)", kind: .token, agentSafe: true, note: "")
+        }
+        return s
+    }
+
+    func testDeleteManyWithOneApprovalOrNothing() throws {
+        let s = try store()
+        let approver = CountingApprover(true)
+        let b = Broker(store: s, approver: approver, logURL: nil)
+        let partial = b.handle(Request(op: "rm", names: ["acp/development/A", "nope"]), peer: peer)
+        XCTAssertFalse(partial.ok)
+        XCTAssertEqual(try s.list().count, 3, "a missing name deletes nothing")
+        XCTAssertTrue(b.handle(Request(op: "rm", names: ["acp/development/A", "acp/development/B"]), peer: peer).ok)
+        XCTAssertEqual(approver.reasons.count, 1)
+        XCTAssertEqual(try s.list().map(\.name), ["acp/production/A"])
+        XCTAssertEqual(b.handle(Request(op: "rm", names: ["gone"]), peer: peer).missing, ["gone"])
+    }
+
+    func testUpdateManyKeepsValues() throws {
+        let s = try store()
+        let approver = CountingApprover(true)
+        let b = Broker(store: s, approver: approver, logURL: nil)
+        let names = try s.list().map(\.name)
+        let r = b.handle(Request(op: "update", names: names, kind: .password, agentSafe: false, service: "Neon"), peer: peer)
+        XCTAssertTrue(r.ok, r.error ?? "")
+        XCTAssertEqual(approver.reasons.count, 1)
+        XCTAssertTrue(approver.reasons[0].hasPrefix("require approval for and set the kind to password for and set the service to Neon for 3 items"), approver.reasons[0])
+        for i in try s.list() {
+            XCTAssertFalse(i.agentSafe)
+            XCTAssertEqual(i.kind, .password)
+            XCTAssertEqual(i.service, "Neon")
+        }
+        XCTAssertEqual(try s.values(["acp/production/A"]), ["acp/production/A": "v-acp/production/A"])
+        XCTAssertFalse(b.handle(Request(op: "update", names: names), peer: peer).ok, "nothing to change")
+        XCTAssertFalse(Broker(store: s, approver: FixedApprover(false), logURL: nil)
+            .handle(Request(op: "update", names: names, agentSafe: true), peer: peer).ok)
+        XCTAssertFalse(try s.list().contains { $0.agentSafe })
+    }
+}

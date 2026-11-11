@@ -131,7 +131,7 @@ public struct ImportItem: Codable, Sendable, Hashable {
 
 /// One line of JSON from the CLI to the broker.
 public struct Request: Codable, Sendable {
-    public var op: String            // status | list | get | set | rm | import | grants | grant | revoke | move
+    public var op: String            // status | list | get | set | rm | import | grants | grant | revoke | move | update
     public var names: [String]?
     public var value: String?
     public var kind: ItemKind?

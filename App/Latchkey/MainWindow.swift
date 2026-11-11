@@ -60,8 +60,10 @@ struct MainWindow: View {
             }
             .navigationSplitViewColumnWidth(min: 280, ideal: 330)
         } detail: {
-            if model.filter != .activity, model.filter != .grants, let item = model.item(model.selection) {
+            if model.filter != .activity, model.filter != .grants, let item = model.selectedItem {
                 ItemDetail(model: model, item: item).id(item.name)
+            } else if model.filter != .activity, model.filter != .grants, model.selection.count > 1 {
+                BulkPanel(model: model, ids: model.selection.sorted())
             } else {
                 EmptyDetail(model: model)
             }
@@ -70,7 +72,16 @@ struct MainWindow: View {
         .safeAreaInset(edge: .bottom, spacing: 0) { NoticeBar(model: model) }
         .sheet(isPresented: $model.showingAdd) { AddItemSheet(model: model) }
         .sheet(item: $model.importDraft) { ImportSheet(model: model, draft: $0) }
-        .sheet(isPresented: $model.showingNewGrant) { NewGrantSheet(model: model) }
+        .sheet(item: $model.grantRequest) { NewGrantSheet(model: model, request: $0) }
+        .confirmationDialog(deleteTitle, isPresented: Binding(get: { model.deleteRequest != nil },
+                                                              set: { if !$0 { model.deleteRequest = nil } }),
+                            presenting: model.deleteRequest) { request in
+            Button("Delete \(request.ids.count == 1 ? request.ids[0] : "\(request.ids.count) Items")", role: .destructive) {
+                Task { await model.removeItems(request.ids) }
+            }
+        } message: { request in
+            Text(deleteMessage(request.ids))
+        }
         .sheet(item: $model.moveRequest) { MoveSheet(model: model, preselected: $0.ids) }
         .dropDestination(for: URL.self) { urls, _ in
             guard let url = urls.first else { return false }
@@ -83,6 +94,23 @@ struct MainWindow: View {
             Snapshot.runIfRequested(model)
             #endif
         }
+    }
+}
+
+extension MainWindow {
+    var deleteTitle: String {
+        guard let ids = model.deleteRequest?.ids else { return "Delete?" }
+        return ids.count == 1 ? "Delete \(ids[0])?" : "Delete \(ids.count) items?"
+    }
+
+    func deleteMessage(_ ids: [String]) -> String {
+        let place = model.synced ? " on all your Macs" : ""
+        let files = model.files(for: ids)
+        if files.isEmpty {
+            return "They're removed from the keychain\(place). Files that refer to them stop working, and a file that holds only references loses those values for good."
+        }
+        let shown = files.prefix(4).map(Broker.tilde).joined(separator: ", ") + (files.count > 4 ? ", …" : "")
+        return "They're removed from the keychain\(place). These files still refer to them and will stop working: \(shown). If they hold only references, those values are gone for good."
     }
 }
 
@@ -231,19 +259,36 @@ struct ItemList: View {
                         Section {
                             ForEach(rows) { item in
                                 ItemRow(item: item, showsProject: false).tag(item.name)
-                                    .contextMenu { ItemMenu(model: model, item: item) }
                             }
                         } header: {
                             HStack { EnvBadge(environment: env); Text("\(rows.count)").foregroundStyle(.secondary) }
                         }
                     }
                 }
+            } else if model.sort == .name {
+                // Every other view spans projects: one section per project, shared items last, so the same
+                // name in several projects reads as separate items.
+                ForEach(Self.groups(list), id: \.project) { group in
+                    Section {
+                        ForEach(group.items) { item in
+                            ItemRow(item: item, showsProject: false, showsEnvironment: true).tag(item.name)
+                        }
+                    } header: {
+                        HStack(spacing: 6) {
+                            Image(systemName: group.project.isEmpty ? "tray.full" : "folder")
+                            Text(group.project.isEmpty ? "Shared" : group.project).font(.headline)
+                            Text("\(group.items.count)").foregroundStyle(.secondary)
+                        }
+                    }
+                }
             } else {
                 ForEach(list) { item in
                     ItemRow(item: item).tag(item.name)
-                        .contextMenu { ItemMenu(model: model, item: item) }
                 }
             }
+        }
+        .contextMenu(forSelectionType: String.self) { ids in
+            SelectionMenu(model: model, ids: ids.sorted())
         }
         .overlay {
             if list.isEmpty {
@@ -275,16 +320,29 @@ struct ItemList: View {
                     Button("New Item…") { model.showingAdd = true }
                     Button("Import .env File…") { model.chooseImportFile() }
                     Divider()
-                    Button("Move Items to a Project…") { model.moveRequest = MoveRequest(ids: model.selection.map { [$0] } ?? []) }
+                    Button("Move Items to a Project…") { model.moveRequest = MoveRequest(ids: model.selection.sorted()) }
                 } label: { Label("Add", systemImage: "plus") }
             }
         }
     }
 }
 
+extension ItemList {
+    /// Items split by project in the list's order (projects by name, shared last).
+    static func groups(_ items: [SecretInfo]) -> [(project: String, items: [SecretInfo])] {
+        var out: [(project: String, items: [SecretInfo])] = []
+        for item in items {
+            if out.last?.project == item.ref.project { out[out.count - 1].items.append(item) }
+            else { out.append((item.ref.project, [item])) }
+        }
+        return out
+    }
+}
+
 struct ItemRow: View {
     let item: SecretInfo
     var showsProject = true
+    var showsEnvironment = false
 
     var body: some View {
         HStack(spacing: 10) {
@@ -292,13 +350,13 @@ struct ItemRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(item.ref.name).font(.body.weight(.medium)).lineLimit(1)
                 HStack(spacing: 5) {
-                    // Inside a project's environment sections both are already in the heading.
-                    if !item.ref.isShared && showsProject {
-                        Text(item.ref.project).font(.caption.weight(.medium))
+                    // Headings already name the project (and, in a project view, the environment).
+                    if !item.ref.isShared && (showsProject || showsEnvironment) {
+                        if showsProject { Text(item.ref.project).font(.caption.weight(.medium)) }
                         EnvBadge(environment: item.ref.environment, compact: true)
                     }
                     if let s = item.service { Text(s).font(.caption).foregroundStyle(.secondary) }
-                    if (item.ref.isShared || !showsProject) && item.service == nil {
+                    if (item.ref.isShared || !(showsProject || showsEnvironment)) && item.service == nil {
                         Text(item.note.isEmpty ? item.kind.label : item.note).font(.caption).foregroundStyle(.secondary)
                     }
                 }
@@ -314,21 +372,90 @@ struct ItemRow: View {
     }
 }
 
-struct ItemMenu: View {
+/// The right-click menu for the selected items; with one item it also copies.
+struct SelectionMenu: View {
     let model: AppModel
-    let item: SecretInfo
+    let ids: [String]
 
     var body: some View {
-        Button("Copy Value") { Task { await model.copyValue(item.name) } }
-        Button("Copy Reference") { model.copyReference(item.name) }
-        Divider()
-        Button("Move to a Project…") { model.moveRequest = MoveRequest(ids: [item.name]) }
-        Divider()
-        Button(item.agentSafe ? "Require Approval" : "Mark Agent-Safe") {
-            Task { _ = await model.save(name: item.name, value: nil, kind: nil, agentSafe: !item.agentSafe, note: nil) }
+        let items = ids.compactMap { model.item($0) }
+        if items.count == 1, let item = items.first {
+            Button("Copy Value") { Task { await model.copyValue(item.name) } }
+            Button("Copy Reference") { model.copyReference(item.name) }
+            Divider()
         }
-        Divider()
-        Button("Delete", role: .destructive) { Task { _ = await model.remove(item.name) } }
+        if !items.isEmpty {
+            let allSafe = items.allSatisfy(\.agentSafe)
+            Button(allSafe ? "Require Approval" : "Let Agents Read Without Asking") {
+                Task { await model.updateItems(ids, agentSafe: !allSafe) }
+            }
+            Menu("Kind") {
+                ForEach(ItemKind.allCases, id: \.self) { k in
+                    Button(k.label) { Task { await model.updateItems(ids, kind: k) } }
+                }
+            }
+            Button("Move to a Project…") { model.moveRequest = MoveRequest(ids: ids) }
+            Button("Grant Access…") { model.grantRequest = GrantRequest(ids: ids) }
+            Divider()
+            Button(items.count == 1 ? "Delete…" : "Delete \(items.count) Items…", role: .destructive) {
+                model.deleteRequest = DeleteRequest(ids: ids)
+            }
+        }
+    }
+}
+
+/// Shown in the detail pane when several items are selected.
+struct BulkPanel: View {
+    let model: AppModel
+    let ids: [String]
+    @State private var service = ""
+
+    var body: some View {
+        let items = ids.compactMap { model.item($0) }
+        let projects = Set(items.map { $0.ref.isShared ? "Shared" : $0.ref.project })
+        Form {
+            Section {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("\(items.count) items selected").font(.title2.weight(.semibold))
+                    Text(projects.count == 1 ? "In \(projects.first!)" : "Across \(projects.count) projects")
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 4)
+            }
+            Section {
+                LabeledContent("Agents") {
+                    HStack {
+                        Button("Require Approval") { Task { await model.updateItems(ids, agentSafe: false) } }
+                        Button("Let Agents Read") { Task { await model.updateItems(ids, agentSafe: true) } }
+                    }
+                }
+                LabeledContent("Kind") {
+                    Menu("Set Kind") {
+                        ForEach(ItemKind.allCases, id: \.self) { k in
+                            Button(k.label) { Task { await model.updateItems(ids, kind: k) } }
+                        }
+                    }
+                    .fixedSize()
+                }
+                LabeledContent("Service") {
+                    HStack {
+                        TextField("", text: $service, prompt: Text("Stripe, Neon…")).frame(maxWidth: 180)
+                        Button("Set") { Task { await model.updateItems(ids, service: service) } }
+                    }
+                }
+            } footer: {
+                Text("Each change applies to all \(items.count) items and asks for Touch ID once.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Section {
+                Button("Move to a Project…") { model.moveRequest = MoveRequest(ids: ids) }
+                Button("Grant Access…") { model.grantRequest = GrantRequest(ids: ids) }
+            }
+            Section {
+                Button("Delete \(items.count) Items…", role: .destructive) { model.deleteRequest = DeleteRequest(ids: ids) }
+            }
+        }
+        .formStyle(.grouped)
     }
 }
 

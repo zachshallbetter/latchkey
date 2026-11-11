@@ -62,6 +62,19 @@ struct MoveRequest: Identifiable {
     var ids: [String]
 }
 
+/// What the New Grant sheet starts with: chosen items, or a whole project or environment (`acp/*`).
+struct GrantRequest: Identifiable {
+    let id = UUID()
+    var ids: [String] = []
+    var pattern: String?
+}
+
+/// Items waiting for the delete confirmation.
+struct DeleteRequest: Identifiable {
+    let id = UUID()
+    var ids: [String]
+}
+
 enum SortOrder: String, CaseIterable {
     case name = "Name"
     case updated = "Recently Changed"
@@ -98,13 +111,14 @@ final class AppModel {
     var items: [SecretInfo] = []
     var log: [Broker.LogEntry] = []
     var grants: [Grant] = []
-    var showingNewGrant = false
+    var grantRequest: GrantRequest?
+    var deleteRequest: DeleteRequest?
     var problem: String?
     /// One-line confirmation shown at the bottom of the window, e.g. after an import.
     var notice: String?
 
     var filter: SidebarFilter = .all
-    var selection: String?
+    var selection: Set<String> = []
     var search = ""
     var sort: SortOrder = .name
     var showingAdd = false
@@ -147,7 +161,8 @@ final class AppModel {
         } catch { problem = "\(error)" }
         log = Broker.readLog(limit: 300).reversed()
         grants = broker.grants.all()
-        if let s = selection, !items.contains(where: { $0.name == s }) { selection = nil }
+        let names = Set(items.map(\.name))
+        if !selection.isSubset(of: names) { selection = selection.intersection(names) }
     }
 
     // MARK: lists
@@ -206,6 +221,40 @@ final class AppModel {
 
     func item(_ name: String?) -> SecretInfo? { items.first { $0.name == name } }
 
+    /// The one selected item, when exactly one is selected.
+    var selectedItem: SecretInfo? { selection.count == 1 ? item(selection.first) : nil }
+
+    func ids(inProject project: String) -> [String] {
+        items.filter { $0.ref.project == project }.map(\.name).sorted()
+    }
+
+    /// Files that refer to these items, as far as Latchkey knows.
+    func files(for ids: [String]) -> [String] {
+        var seen = Set<String>()
+        return items.filter { ids.contains($0.name) }.flatMap { $0.usedIn ?? [] }.filter { seen.insert($0).inserted }
+    }
+
+    // MARK: several items, one approval
+
+    func updateItems(_ ids: [String], agentSafe: Bool? = nil, kind: ItemKind? = nil, service: String? = nil) async {
+        guard !ids.isEmpty else { return }
+        if let err = await run(Request(op: "update", names: ids, kind: kind, agentSafe: agentSafe, service: service)) {
+            notice = err
+        } else {
+            notice = "Updated \(ids.count) item\(ids.count == 1 ? "" : "s")."
+        }
+    }
+
+    func removeItems(_ ids: [String]) async {
+        guard !ids.isEmpty else { return }
+        if let err = await run(Request(op: "rm", names: ids)) {
+            notice = err
+        } else {
+            for id in ids { revealed[id] = nil }
+            notice = "Deleted \(ids.count) item\(ids.count == 1 ? "" : "s")."
+        }
+    }
+
     func grants(for name: String) -> [Grant] { grants.filter { $0.names.contains { Grant.entry($0, matches: name) } } }
 
     func setService(_ name: String, _ service: String) async -> String? {
@@ -229,7 +278,7 @@ final class AppModel {
         if updated > 0 { text += "; updated references in \(updated) file\(updated == 1 ? "" : "s")" }
         if !failed.isEmpty { text += "; couldn't update \(failed.joined(separator: ", "))" }
         notice = text + "."
-        if let s = selection, let new = moved[s] { selection = new }
+        selection = Set(selection.map { moved[$0] ?? $0 })
         if !project.isEmpty { filter = .project(project) }
         return nil
     }

@@ -44,6 +44,7 @@ struct ProjectsSection: View {
             }
             ForEach(shown, id: \.self) { p in
                 SidebarRow(model: model, filter: .project(p), symbol: "folder.fill", tint: .indigo)
+                    .contextMenu { ProjectMenu(model: model, project: p) }
             }
             if model.items.contains(where: { $0.ref.isShared }) {
                 SidebarRow(model: model, filter: .shared, symbol: "tray.full.fill", tint: .gray)
@@ -53,6 +54,27 @@ struct ProjectsSection: View {
                     .font(.caption).foregroundStyle(.secondary).padding(.horizontal, 8).padding(.top, 2)
             }
         }
+    }
+}
+
+/// Actions on every item in a project, from its row in the sidebar.
+struct ProjectMenu: View {
+    let model: AppModel
+    let project: String
+
+    var body: some View {
+        let ids = model.ids(inProject: project)
+        Button("Select All \(ids.count) Items") {
+            model.filter = .project(project)
+            model.selection = Set(ids)
+        }
+        Divider()
+        Button("Require Approval for All") { Task { await model.updateItems(ids, agentSafe: false) } }
+        Button("Let Agents Read All Without Asking") { Task { await model.updateItems(ids, agentSafe: true) } }
+        Button("Grant Access to \(project)…") { model.grantRequest = GrantRequest(pattern: "\(project)/*") }
+        Divider()
+        Button("Move or Rename Project…") { model.moveRequest = MoveRequest(ids: ids) }
+        Button("Delete Project…", role: .destructive) { model.deleteRequest = DeleteRequest(ids: ids) }
     }
 }
 

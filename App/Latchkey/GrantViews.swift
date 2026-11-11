@@ -16,7 +16,7 @@ struct GrantList: View {
                 } description: {
                     Text("Every read of an item that isn't agent-safe asks first.")
                 } actions: {
-                    Button("New Grant…") { model.showingNewGrant = true }
+                    Button("New Grant…") { model.grantRequest = GrantRequest() }
                 }
             }
         }
@@ -24,7 +24,7 @@ struct GrantList: View {
         .navigationSubtitle("\(model.grants.count) in effect")
         .toolbar {
             ToolbarItemGroup {
-                Button { model.showingNewGrant = true } label: { Label("New Grant", systemImage: "plus") }
+                Button { model.grantRequest = GrantRequest() } label: { Label("New Grant", systemImage: "plus") }
                     .help("Let one folder read some items without asking, for a while")
                 if !model.grants.isEmpty {
                     Button { Task { await model.revoke("all") } } label: { Label("Revoke All", systemImage: "xmark.circle") }
@@ -64,8 +64,20 @@ struct GrantRow: View {
 struct NewGrantSheet: View {
     let model: AppModel
     @Environment(\.dismiss) private var dismiss
-    @State private var chosen: Set<String> = []
+    @State private var chosen: Set<String>
+    /// A whole project or environment (`acp/*`), which also covers items added to it later.
+    @State private var pattern: String?
     @State private var folder: URL?
+
+    init(model: AppModel, request: GrantRequest) {
+        self.model = model
+        _chosen = State(initialValue: Set(request.ids))
+        _pattern = State(initialValue: request.pattern)
+        // Start from the folder the items were imported from, when that's known.
+        let ids = request.pattern.map { p in model.items.filter { Grant.entry(p, matches: $0.name) }.map(\.name) } ?? request.ids
+        let file = model.files(for: ids).first.map { URL(fileURLWithPath: $0).deletingLastPathComponent() }
+        _folder = State(initialValue: file)
+    }
     @State private var duration: TimeInterval = 2 * 3600
     @State private var error: String?
     @State private var working = false
@@ -100,6 +112,17 @@ struct NewGrantSheet: View {
                 .labelsHidden().fixedSize()
                 Spacer()
             }
+            if let pattern {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Items").font(.callout.weight(.medium))
+                    Text("Everything in \(pattern.dropLast(2)), including items added to it later.")
+                    Button("Choose Items Instead") {
+                        chosen = Set(model.items.filter { Grant.entry(pattern, matches: $0.name) && !$0.agentSafe }.map(\.name))
+                        self.pattern = nil
+                    }
+                }
+                Spacer()
+            } else {
             Text("Items").font(.callout.weight(.medium))
             List(candidates) { item in
                 Toggle(isOn: Binding(get: { chosen.contains(item.name) },
@@ -114,6 +137,7 @@ struct NewGrantSheet: View {
             .overlay {
                 if candidates.isEmpty { Text("Every item is agent-safe already.").foregroundStyle(.secondary) }
             }
+            }
             if let error { Text(error).font(.caption).foregroundStyle(.red) }
             HStack {
                 Text("Creating it asks for Touch ID.").font(.caption).foregroundStyle(.secondary)
@@ -123,13 +147,13 @@ struct NewGrantSheet: View {
                     guard let folder else { return }
                     working = true
                     Task {
-                        error = await model.createGrant(names: chosen.sorted(), folder: folder.path, duration: duration)
+                        error = await model.createGrant(names: pattern.map { [$0] } ?? chosen.sorted(), folder: folder.path, duration: duration)
                         working = false
                         if error == nil { model.filter = .grants; dismiss() }
                     }
                 }
                 .keyboardShortcut(.defaultAction)
-                .disabled(folder == nil || chosen.isEmpty || working)
+                .disabled(folder == nil || (pattern == nil && chosen.isEmpty) || working)
             }
         }
         .padding(20)

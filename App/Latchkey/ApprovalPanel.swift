@@ -79,8 +79,8 @@ struct ApprovalView: View {
         switch request.action {
         case .read: return "Release \(request.names.count == 1 ? request.names[0] : "\(request.names.count) items")?"
         case .add: return "Add \(request.names.first ?? "item")?"
-        case .change: return "Change \(request.names.first ?? "item")?"
-        case .delete: return "Delete \(request.names.first ?? "item")?"
+        case .change: return request.names.count == 1 ? "Change \(request.names[0])?" : "Change \(request.names.count) items?"
+        case .delete: return request.names.count == 1 ? "Delete \(request.names[0])?" : "Delete \(request.names.count) items?"
         case .importItems: return "Import \(request.names.count) item\(request.names.count == 1 ? "" : "s")?"
         case .grant: return "Allow reads without asking?"
         case .move: return "Move \(request.names.count) item\(request.names.count == 1 ? "" : "s")?"

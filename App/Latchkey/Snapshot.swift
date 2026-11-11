@@ -29,7 +29,7 @@ enum Snapshot {
         guard let path = arg("--snapshot"), !started else { return }
         started = true
         if CommandLine.arguments.contains("--sample") { model.items = sampleItems }
-        if let name = arg("--select") { model.selection = name }
+        if let names = arg("--select") { model.selection = Set(names.split(separator: ",").map(String.init)) }
         if arg("--filter") == "activity" { model.filter = .activity }
         if arg("--filter") == "grants" { model.filter = .grants }
         if let f = arg("--filter"), f.hasPrefix("project:") { model.filter = .project(String(f.dropFirst(8))) }
@@ -45,8 +45,12 @@ enum Snapshot {
             drawOffscreen(Sidebar(model: model).frame(width: 260, height: 640), to: path)
             return
         }
+        if arg("--part") == "bulk" {
+            drawOffscreen(BulkPanel(model: model, ids: model.selection.sorted()).frame(width: 520, height: 560), to: path)
+            return
+        }
         if arg("--part") == "move" {
-            drawOffscreen(MoveSheet(model: model, preselected: model.selection.map { [$0] } ?? []), to: path)
+            drawOffscreen(MoveSheet(model: model, preselected: model.selection.sorted()), to: path)
             return
         }
         if arg("--part") == "menubar" {

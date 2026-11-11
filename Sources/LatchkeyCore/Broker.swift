@@ -46,6 +46,7 @@ public final class Broker: @unchecked Sendable {
             case "grant": return try grant(req, peer: peer)
             case "revoke": return revoke(req, peer: peer)
             case "move": return try move(req, peer: peer)
+            case "update": return try update(req, peer: peer)
             default: return Response(ok: false, error: "unknown op \(req.op)")
             }
         } catch {
@@ -126,15 +127,56 @@ public final class Broker: @unchecked Sendable {
         return Response(ok: true)
     }
 
+    /// Deletes one or many items with one approval. If any named item is missing nothing is deleted, so a typo
+    /// in a list never leaves half of it gone.
     func remove(_ req: Request, peer: PeerInfo) throws -> Response {
-        guard let name = req.names?.first, req.names?.count == 1 else { return Response(ok: false, error: "rm takes one name") }
-        guard (try store.info(name)) != nil else { return Response(ok: true, missing: [name]) }
-        guard ask(.delete, [name], peer, req, "delete \(name), asked by \(Self.describe(peer, req))").allowed else {
-            log("rm", [name], "denied", peer, req)
-            return Response(ok: false, error: "removal of \(name) was not approved")
+        let names = Array(Set(req.names ?? [])).sorted()
+        guard !names.isEmpty else { return Response(ok: false, error: "no names given") }
+        let existing = Set(try store.list().map(\.name))
+        let missing = names.filter { !existing.contains($0) }
+        if missing.count == names.count { return Response(ok: true, missing: missing) }
+        guard missing.isEmpty else { return Response(ok: false, error: "no item named \(missing.joined(separator: ", ")); nothing deleted", missing: missing) }
+        let what = names.count == 1 ? names[0] : Self.count(names)
+        guard ask(.delete, names, peer, req, "delete \(what), asked by \(Self.describe(peer, req))").allowed else {
+            log("rm", names, "denied", peer, req)
+            return Response(ok: false, error: "removal of \(what) was not approved")
         }
-        _ = try store.remove(name)
-        log("rm", [name], "approved", peer, req)
+        var done: [String] = []
+        for name in names {
+            do { _ = try store.remove(name); done.append(name) } catch {
+                log("rm", done, "approved (stopped at \(name))", peer, req)
+                return Response(ok: false, error: "deleted \(done.count) of \(names.count), then \(name) failed: \(error)")
+            }
+        }
+        log("rm", names, "approved", peer, req)
+        return Response(ok: true)
+    }
+
+    /// Changes agent-safe, kind, service or note on many items with one approval. Values are untouched.
+    func update(_ req: Request, peer: PeerInfo) throws -> Response {
+        let names = Array(Set(req.names ?? [])).sorted()
+        guard !names.isEmpty else { return Response(ok: false, error: "no names given") }
+        guard req.agentSafe != nil || req.kind != nil || req.service != nil || req.note != nil else {
+            return Response(ok: false, error: "nothing to change: give agent-safe, kind, service or note")
+        }
+        let existing = Set(try store.list().map(\.name))
+        let missing = names.filter { !existing.contains($0) }
+        guard missing.isEmpty else { return Response(ok: false, missing: missing) }
+        var changes: [String] = []
+        if let a = req.agentSafe { changes.append(a ? "let agents read" : "require approval for") }
+        if let k = req.kind { changes.append("set the kind to \(k.label.lowercased()) for") }
+        if let s = req.service { changes.append(s.isEmpty ? "clear the service of" : "set the service to \(s) for") }
+        if req.note != nil { changes.append("change the note of") }
+        let reason = "\(changes.joined(separator: " and ")) \(names.count == 1 ? names[0] : Self.count(names)), asked by \(Self.who(peer))"
+        guard ask(.change, names, peer, req, reason).allowed else {
+            log("update", names, "denied", peer, req)
+            return Response(ok: false, error: "the change was not approved")
+        }
+        for name in names {
+            try store.save(name: name, value: nil, kind: req.kind, agentSafe: req.agentSafe, note: req.note, usedIn: nil,
+                           service: req.service)
+        }
+        log("update", names, "approved", peer, req)
         return Response(ok: true)
     }
 

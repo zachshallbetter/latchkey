@@ -16,7 +16,10 @@ Files refer to them as latchkey://ID.
   latchkey get ID                 Print one value.
   latchkey set ID [--kind token|password|key|value] [--agent-safe] [--note TEXT] [--service NAME]
       Value is read from standard input, or prompted for when run in a terminal.
-  latchkey rm ID
+  latchkey rm ID[,ID...]|PATTERN...
+      Delete items with one approval. PATTERN is PROJECT/* or PROJECT/ENV/*.
+  latchkey update ID[,ID...]|PATTERN... [--agent-safe yes|no] [--kind KIND] [--service NAME] [--note TEXT]
+      Change settings on many items with one approval. Values are untouched.
   latchkey import FILE [--project P] [--env E | --shared] [--rewrite] [--replace] [--dry-run]
                   [--only KEY,...] [--kind KIND | --kind KEY=KIND]... [--agent-safe KEY,...|all]
       Add every KEY=VALUE in a .env file with one approval. Prints IDs, never values.
@@ -365,6 +368,31 @@ func grantCommand(_ input: [String]) -> Never {
     exit(0)
 }
 
+// MARK: - several items
+
+/// IDs from arguments: comma-separated IDs, or PROJECT/* and PROJECT/ENV/* patterns matched against the items
+/// that exist now. Fails on anything else, or on a pattern that matches nothing.
+func expandIDs(_ args: [String]) -> [String] {
+    let words = args.flatMap { $0.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) } }.filter { !$0.isEmpty }
+    guard !words.isEmpty else { fail("give one or more item IDs, or a pattern such as acp/* or acp/production/*", code: 64) }
+    var all: [String]?
+    var out: [String] = []
+    for w in words {
+        if Grant.isPattern(w) {
+            if all == nil { all = (send(Request(op: "list")).secrets ?? []).map(\.name) }
+            let matched = all!.filter { Grant.entry(w, matches: $0) }
+            if matched.isEmpty { fail("no items match \(w)", code: 66) }
+            out += matched
+        } else if Wire.isValidName(w) {
+            out.append(w)
+        } else {
+            fail("not an item ID or pattern: \(w)", code: 64)
+        }
+    }
+    var seen = Set<String>()
+    return out.filter { seen.insert($0).inserted }
+}
+
 // MARK: - move
 
 func moveCommand(_ input: [String]) -> Never {
@@ -517,10 +545,40 @@ case "set":
     print("saved \(name)")
 
 case "rm":
-    guard let name = args.first, Wire.isValidName(name) else { fail("usage: latchkey rm NAME", code: 64) }
-    let r = send(Request(op: "rm", names: [name], cwd: currentDirectory()))
-    if let m = r.missing, !m.isEmpty { fail("no item named \(name)", code: 66) }
-    print("removed \(name)")
+    let ids = expandIDs(args)
+    let r = send(Request(op: "rm", names: ids, cwd: currentDirectory()))
+    if let m = r.missing, !m.isEmpty { fail("no item named \(m.joined(separator: ", "))", code: 66) }
+    for id in ids { print("removed \(id)") }
+
+case "update":
+    var targets: [String] = []
+    var agentSafe: Bool?, kind: ItemKind?, service: String?, note: String?
+    var rest = args
+    while !rest.isEmpty {
+        let a = rest.removeFirst()
+        switch a {
+        case "--agent-safe":
+            guard let v = rest.first, ["yes", "no"].contains(v) else { fail("--agent-safe takes yes or no", code: 64) }
+            agentSafe = rest.removeFirst() == "yes"
+        case "--kind":
+            guard let v = rest.first, let k = ItemKind(rawValue: v) else { fail("--kind takes token, password, key or value", code: 64) }
+            _ = rest.removeFirst(); kind = k
+        case "--service":
+            guard !rest.isEmpty else { fail("--service takes a name (\"\" clears it)", code: 64) }
+            service = rest.removeFirst()
+        case "--note":
+            guard !rest.isEmpty else { fail("--note takes text", code: 64) }
+            note = rest.removeFirst()
+        default:
+            if a.hasPrefix("-") { fail("unknown option \(a)", code: 64) }
+            targets.append(a)
+        }
+    }
+    let ids = expandIDs(targets)
+    let r = send(Request(op: "update", names: ids, kind: kind, agentSafe: agentSafe, note: note, cwd: currentDirectory(),
+                         service: service))
+    if let m = r.missing, !m.isEmpty { fail("no item named \(m.joined(separator: ", "))", code: 66) }
+    print("updated \(ids.count) item\(ids.count == 1 ? "" : "s")")
 
 case "run":
     runCommand(args)

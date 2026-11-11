@@ -49,7 +49,7 @@ struct AddItemSheet: View {
                         saving = false
                         if error == nil {
                             model.filter = .all
-                            model.selection = name
+                            model.selection = [name]
                             dismiss()
                         }
                     }
