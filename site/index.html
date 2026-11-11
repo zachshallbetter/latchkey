@@ -54,6 +54,7 @@
     .tools.steps { grid-template-columns: repeat(3, 1fr); list-style: none; padding: 0; margin: 0; }
     .tools.steps .step { margin-bottom: 10px; }
     .tool code { font-size: .86em; }
+    .path-links { margin: 12px 0 0; }
     .home h2 { font-size: clamp(26px, 3.4vw, 34px); margin-top: 88px; }
     .home .eyebrow + h2 { margin-top: 0; }
     .home .col > p, .home .col li { max-width: 66ch; }
@@ -221,9 +222,10 @@
       <ul>
         <li><a href="features.html">Features</a></li>
         <li><a href="index.html#how">How it works</a></li>
+        <li><a href="pricing.html">Pricing</a></li>
         <li><a href="security.html">Security</a></li>
         <li><a href="developers/index.html">Docs</a></li>
-        <li><a class="button primary" href="#install">Development preview</a></li>
+        <li><a class="button primary" href="index.html#install">Development preview</a></li>
       </ul>
     </nav>
   </header>
@@ -548,6 +550,21 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
       <a class="more" href="security.html">The security model, trust boundaries and limits</a>
     </section>
 
+    <section id="paths" aria-labelledby="paths-title">
+      <div class="shead">
+      <p class="eyebrow">Get started</p>
+      <h2 id="paths-title">Three ways in</h2>
+      </div>
+      <div class="tools limits3">
+        <div class="tool"><b>For developers</b><span>Latchkey is free during the development preview. Install it from source, or see what Latchkey Pro will add when it's ready.</span>
+          <p class="path-links"><a class="more" href="#install">Install the preview</a><br><a class="more" href="pricing.html">Plans and pricing</a></p></div>
+        <div class="tool"><b>For teams</b><span>Move a small team's credentials out of scattered env files with a fixed-scope migration from Snack Studio, and help shape Latchkey Teams.</span>
+          <p class="path-links"><a class="more" href="teams.html">Developer Credential Migration</a><br><a class="more" href="teams.html#teams">Latchkey Teams</a></p></div>
+        <div class="tool"><b>For technical evaluators</b><span>Inspect how values are stored and released, where protection ends, every command, and what's built and what isn't.</span>
+          <p class="path-links"><a class="more" href="security.html">Security model</a><br><a class="more" href="developers/index.html">Developer docs</a><br><a class="more" href="roadmap.html">Roadmap</a></p></div>
+      </div>
+    </section>
+
     <section id="install" aria-labelledby="install-title">
       <div class="shead">
       <p class="eyebrow">Install</p>
@@ -575,6 +592,8 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
         <li><a href="developers/agents.html">Agents and MCP</a></li>
         <li><a href="developers/api.html">References and API</a></li>
         <li><a href="roadmap.html">Roadmap</a></li>
+        <li><a href="pricing.html">Pricing</a></li>
+        <li><a href="teams.html">Teams</a></li>
       </ul>
     </div>
   </footer>

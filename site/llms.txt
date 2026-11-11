@@ -26,6 +26,8 @@
 - [Features](features.html)
 - [Security](security.html)
 - [Roadmap](roadmap.html)
+- [Pricing](pricing.html): free during the development preview; Pro and Teams are planned, not on sale
+- [For teams](teams.html): Developer Credential Migration, a fixed-scope engagement from Snack Studio
 - [Developers overview](developers/index.html)
 - [Quickstart](developers/quickstart.html)
 - [CLI reference](developers/cli.html)

@@ -382,6 +382,35 @@
   };
 
   // ---------------------------------------------------------------------------------------------------------------
+  // Teams: an inventory of every env file under a folder, before anything is sent: where each goes, the value every
+  // project shares, what expires, and two files that disagree. Then the import.
+  SCENES.inventory = {
+    reset: function (s) { s.clear(s.$("#inv-tty")); s.prompt(s.$("#inv-tty"), "~"); },
+    play: async function (s) {
+      var tty = s.$("#inv-tty");
+      s.clear(tty);
+      await s.wait(500);
+      await s.type(tty, "lk import --scan ~/Projects --share-identical --dry-run", "~");
+      await s.lines(tty, ["~/Projects/api/.env  →  api/development: 3 to import, 1 shared, 1 in conflict",
+                          "~/Projects/api/.env.local  →  api/development: 4 to import, 1 shared, 1 in conflict",
+                          "~/Projects/blog/.env  →  blog/development: 2 to import, 1 shared",
+                          "~/Projects/shop/.env.local  →  shop/development: 4 to import, 1 shared, 1 skipped", "",
+                          "10 items from 4 files: 10 new, 0 already exist",
+                          '<span class="ok">shared (same value everywhere): OPENAI_API_KEY ×4</span>',
+                          '<span class="d">skipped: VERCEL_OIDC_TOKEN</span>',
+                          '<span class="w">conflict: api/development/DATABASE_URL differs between ~/Projects/api/.env and ~/Projects/api/.env.local; not imported</span>',
+                          "Nothing sent."], 160);
+      await s.wait(1800);
+      await s.type(tty, "lk import --scan ~/Projects --share-identical --rewrite", "~");
+      await s.lines(tty, ["recorded api/development, blog/development, shop/development", "imported 10 new",
+                          "rewrote ~/Projects/api/.env: 3 now latchkey://ID",
+                          "rewrote ~/Projects/api/.env.local: 4 now latchkey://ID",
+                          "rewrote ~/Projects/blog/.env: 2 now latchkey://ID",
+                          "rewrote ~/Projects/shop/.env.local: 4 now latchkey://ID"], 140);
+    }
+  };
+
+  // ---------------------------------------------------------------------------------------------------------------
   function attach(wrap) {
     var script = SCENES[wrap.dataset.scene];
     if (!script) return;

@@ -381,14 +381,14 @@ figure.code + .more { margin-top: 12px; }
 }
 
 /* The header on narrow screens: the sections scroll sideways under the name. */
-/* The header on narrow screens stays one row: the name, then Features, Security and Docs. How it works and
-   the preview button are on the page itself. */
+/* The header on narrow screens stays one row: the name, then Features, Pricing and Docs. How it works,
+   Security and the preview button are on the pages and in the footer. */
 @media (max-width: 720px) {
   nav.top { gap: 8px; }
   .brand { font-size: 17px; }
   nav.top ul { gap: 0; }
   nav.top ul a { min-height: 36px; padding: 0 8px; font-size: 14px; white-space: nowrap; }
-  nav.top ul li:has(.button), nav.top ul li:has(a[href$="#how"]) { display: none; }
+  nav.top ul li:has(.button), nav.top ul li:has(a[href$="#how"]), nav.top ul li:has(a[href$="security.html"]) { display: none; }
 }
 
 /* The system's Touch ID sheet, with Latchkey's own words. */
