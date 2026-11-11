@@ -20,14 +20,23 @@ Files refer to them as latchkey://ID.
       Delete items with one approval. PATTERN is PROJECT/* or PROJECT/ENV/*.
   latchkey update ID[,ID...]|PATTERN... [--agent-safe yes|no] [--kind KIND] [--service NAME] [--note TEXT]
       Change settings on many items with one approval. Values are untouched.
-  latchkey import FILE [--project P] [--env E | --shared] [--rewrite] [--replace] [--dry-run]
-                  [--only KEY,...] [--kind KIND | --kind KEY=KIND]... [--agent-safe KEY,...|all]
+  latchkey import FILE... [--batch LIST] [--project P] [--env E | --shared] [--share-identical]
+                  [--rewrite] [--replace] [--dry-run] [--only KEY,...] [--kind KIND | --kind KEY=KIND]...
+                  [--agent-safe KEY,...|all] [--agent-safe-pattern PATTERN,...] [--skip PATTERN,...]
+                  [--no-default-skip]
       Add every KEY=VALUE in a .env file with one approval. Prints IDs, never values.
       The project defaults to the repository's folder name and the environment to what the file
       name says (.env and .env.local: development; .env.production: production). --shared
       imports them as shared items named after their keys.
       --rewrite replaces each imported value in FILE with its latchkey://ID.
       Existing items are left alone unless --replace is given.
+      Several files (or --batch LIST, one path per line) are reviewed and approved together, each in its own
+      project and environment. --share-identical makes a name that holds the same value in every file that
+      has it one shared item, so rotating it is one change. Two files giving one ID different values is a
+      conflict: neither is imported and both lines stay as they are.
+      Skipped by default: VERCEL_OIDC_TOKEN, VERCEL_* and TURBO_* (vercel env pull writes them; they expire);
+      --no-default-skip turns that off, --skip adds patterns. --agent-safe-pattern 'NEXT_PUBLIC_*,VITE_*'
+      imports matching names as plain values agents may read (they ship to browsers anyway).
   latchkey mv ID[,ID...] | --from-file FILE   --to PROJECT/ENV | --shared   [--file FILE]...
       Move items into a project's environment (or back to shared) with one approval, then point
       references at the new IDs in the files each item was imported from, in --file files, and
@@ -237,7 +246,10 @@ func runCommand(_ input: [String]) -> Never {
 // MARK: - import
 
 func importCommand(_ input: [String]) -> Never {
-    var file: String?
+    var files: [String] = []
+    var shareIdentical = false
+    var skip = EnvImport.defaultSkip
+    var agentSafePatterns: [String] = []
     var rewrite = false, replace = false, dryRun = false
     var only: Set<String>?
     var defaultKind = ItemKind.token
@@ -257,6 +269,22 @@ func importCommand(_ input: [String]) -> Never {
             guard !rest.isEmpty, ItemID.isValidPart(rest[0]) else { fail("--env takes a name such as development or production", code: 64) }
             environment = rest.removeFirst()
         case "--shared": shared = true
+        case "--share-identical": shareIdentical = true
+        case "--no-default-skip": skip.removeAll { EnvImport.defaultSkip.contains($0) }
+        case "--skip":
+            guard !rest.isEmpty else { fail("--skip takes patterns such as SENTRY_AUTH_TOKEN,TEMP_*", code: 64) }
+            skip += names(rest.removeFirst()).sorted()
+        case "--agent-safe-pattern":
+            guard !rest.isEmpty else { fail("--agent-safe-pattern takes patterns such as NEXT_PUBLIC_*,VITE_*", code: 64) }
+            agentSafePatterns += names(rest.removeFirst()).sorted()
+        case "--batch":
+            guard !rest.isEmpty else { fail("--batch takes a file listing one path per line", code: 64) }
+            let list = rest.removeFirst()
+            guard let text = try? String(contentsOfFile: (list as NSString).expandingTildeInPath, encoding: .utf8) else {
+                fail("cannot read \(list)", code: 66)
+            }
+            files += text.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty && !$0.hasPrefix("#") }
         case "--rewrite": rewrite = true
         case "--replace": replace = true
         case "--dry-run": dryRun = true
@@ -280,22 +308,29 @@ func importCommand(_ input: [String]) -> Never {
                 defaultKind = k
             }
         default:
-            if a.hasPrefix("-") || file != nil { fail("usage: latchkey import FILE [options]   (see latchkey help)", code: 64) }
-            file = a
+            if a.hasPrefix("-") { fail("unknown option \(a)   (see latchkey help)", code: 64) }
+            files.append(a)
         }
     }
-    guard let file else { fail("usage: latchkey import FILE [options]   (see latchkey help)", code: 64) }
+    guard !files.isEmpty else { fail("usage: latchkey import FILE... [options]   (see latchkey help)", code: 64) }
+    if shared && (project != nil || environment != nil) { fail("--shared can't be combined with --project or --env", code: 64) }
+    if files.count > 1 {
+        batchImport(files, project: project, environment: environment, shared: shared, shareIdentical: shareIdentical,
+                    defaultKind: defaultKind, kinds: kinds, agentSafe: agentSafe, allAgentSafe: allAgentSafe, skip: skip,
+                    agentSafePatterns: agentSafePatterns, only: only, rewrite: rewrite, replace: replace, dryRun: dryRun)
+    }
+    let file = files[0]
     let url = URL(fileURLWithPath: file).standardizedFileURL
     let text: String
     do { text = try String(contentsOf: url, encoding: .utf8) }
     catch { fail("cannot read \(file): \(error.localizedDescription)", code: 66) }
 
-    if shared && (project != nil || environment != nil) { fail("--shared can't be combined with --project or --env", code: 64) }
     let placeProject = shared ? "" : (project ?? EnvImport.project(forFile: url))
     let placeEnv = shared ? "" : (environment ?? EnvImport.environment(forFile: url.lastPathComponent))
     let plan = EnvImport.plan(text, source: url.lastPathComponent, location: url.path, project: placeProject,
                               environment: placeEnv, only: only, defaultKind: defaultKind,
-                              kinds: kinds, agentSafe: agentSafe, allAgentSafe: allAgentSafe)
+                              kinds: kinds, agentSafe: agentSafe, allAgentSafe: allAgentSafe,
+                              skip: skip, agentSafePatterns: agentSafePatterns)
     let items = Dictionary(uniqueKeysWithValues: plan.items.map { ($0.name, $0) })
     let ignored = plan.ignored
     if let only {
@@ -339,6 +374,81 @@ func importCommand(_ input: [String]) -> Never {
         }
     }
     exit(0)
+}
+
+// MARK: - several files
+
+func batchImport(_ paths: [String], project: String?, environment: String?, shared: Bool, shareIdentical: Bool,
+                 defaultKind: ItemKind, kinds: [String: ItemKind], agentSafe: Set<String>, allAgentSafe: Bool,
+                 skip: [String], agentSafePatterns: [String], only: Set<String>?, rewrite: Bool, replace: Bool,
+                 dryRun: Bool) -> Never {
+    if only != nil { fail("--only works with one file", code: 64) }
+    var files: [(url: URL, text: String)] = []
+    var seen = Set<String>()
+    for p in paths {
+        let url = URL(fileURLWithPath: (p as NSString).expandingTildeInPath).standardizedFileURL
+        guard seen.insert(url.path).inserted else { continue }
+        do { files.append((url, try String(contentsOf: url, encoding: .utf8))) }
+        catch { fail("cannot read \(p): \(error.localizedDescription)", code: 66) }
+    }
+    let plan = EnvImport.batch(files, project: project, environment: environment, shared: shared, shareIdentical: shareIdentical,
+                               defaultKind: defaultKind, kinds: kinds, agentSafe: agentSafe, allAgentSafe: allAgentSafe,
+                               skip: skip, agentSafePatterns: agentSafePatterns)
+    let existing = Set((send(Request(op: "list")).secrets ?? []).map(\.name))
+
+    // The review: per file, then what's shared, skipped and in conflict. Names and counts only.
+    for f in plan.files {
+        let place = f.project.isEmpty ? "shared" : "\(f.project)/\(f.environment)"
+        let sharedHere = f.references.values.filter { !$0.contains("/") }.count
+        let skipped = f.ignored.values.filter { $0.hasPrefix("skipped") }.count
+        let conflicts = f.ignored.values.filter { $0.hasPrefix("conflict") }.count
+        var parts = ["\(f.references.count) to import"]
+        if sharedHere > 0 && !f.project.isEmpty { parts.append("\(sharedHere) shared") }
+        if skipped > 0 { parts.append("\(skipped) skipped") }
+        if conflicts > 0 { parts.append("\(conflicts) in conflict") }
+        print("\(Broker.tilde(f.url.path))  →  \(place): \(parts.joined(separator: ", "))")
+    }
+    print("")
+    let newItems = plan.items.filter { !existing.contains($0.name) }
+    let existingItems = plan.items.filter { existing.contains($0.name) }
+    print("\(plan.items.count) items from \(plan.files.count) files: \(newItems.count) new, \(existingItems.count) already exist\(existingItems.isEmpty ? "" : (replace ? " (will be overwritten)" : " (left alone; --replace overwrites)"))")
+    if !plan.shared.isEmpty {
+        print("shared (same value everywhere): " + plan.shared.sorted { $0.key < $1.key }.map { "\($0.key) ×\($0.value)" }.joined(separator: ", "))
+    }
+    let skippedNames = Set(plan.files.flatMap { f in f.ignored.filter { $0.value.hasPrefix("skipped") }.keys })
+    if !skippedNames.isEmpty { print("skipped: \(skippedNames.sorted().joined(separator: ", "))") }
+    for (id, where_) in plan.conflicts.sorted(by: { $0.key < $1.key }) {
+        print("conflict: \(id) differs between \(where_.map { Broker.tilde($0) }.joined(separator: " and ")); not imported")
+    }
+    let publicCount = plan.items.filter { EnvImport.matches(ItemID($0.name)?.name ?? $0.name, agentSafePatterns) }.count
+    if publicCount > 0 { print("\(publicCount) agent-safe plain values from --agent-safe-pattern") }
+
+    let toSend = replace ? plan.items : newItems
+    if dryRun {
+        print(rewrite ? "Nothing sent. Without --dry-run: one approval, then each file's imported values become latchkey:// references." : "Nothing sent.")
+        exit(0)
+    }
+    guard !toSend.isEmpty else { print("Nothing new to import."); exit(0) }
+
+    let r = send(Request(op: "import", cwd: currentDirectory(), command: "latchkey import (\(plan.files.count) files)",
+                         items: toSend, replace: replace, source: "\(plan.files.count) files"))
+    let saved = Set((r.added ?? []) + (r.replaced ?? []))
+    print("imported \(r.added?.count ?? 0) new\((r.replaced?.count ?? 0) > 0 ? ", replaced \(r.replaced!.count)" : "")\((r.skipped?.count ?? 0) > 0 ? ", left \(r.skipped!.count) that already existed" : "")")
+    guard rewrite else { exit(0) }
+    var failed = 0
+    for f in plan.files {
+        let refs = f.references.filter { saved.contains($0.value) }
+        guard !refs.isEmpty else { continue }
+        do {
+            try EnvFile.rewriteFile(at: f.url, original: f.text, toReferences: refs)
+            let left = f.references.count - refs.count
+            print("rewrote \(Broker.tilde(f.url.path)): \(refs.count) now latchkey://ID\(left > 0 ? ", \(left) left as they were" : "")")
+        } catch {
+            failed += 1
+            print("couldn't rewrite \(Broker.tilde(f.url.path)): \(error.localizedDescription)")
+        }
+    }
+    exit(failed == 0 ? 0 : 73)
 }
 
 // MARK: - grants

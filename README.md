@@ -22,7 +22,7 @@ command starts. Agents get only the items marked agent-safe; everything else nee
 | Browser extension or AutoFill provider | Not built |
 | SSH agent (Secure Enclave keys) | Not built |
 
-Tests: 52 (`swift test`; add `LATCHKEY_KEYCHAIN_TESTS=1` to include a real keychain round trip).
+Tests: 55 (`swift test`; add `LATCHKEY_KEYCHAIN_TESTS=1` to include a real keychain round trip).
 
 See [docs/apple-passwords-and-passkeys.md](docs/apple-passwords-and-passkeys.md) for how this uses iCloud Keychain
 and LocalAuthentication, why items don't appear in the Passwords app, and where passkeys fit.
@@ -179,7 +179,22 @@ implies (see above), and `--rewrite` swaps each value in the file for its refere
         --kind DATABASE_URL=password --kind API_HOST=value --agent-safe API_HOST
 
 Items default to kind `token` and need approval to read. Items that already exist are skipped unless you pass
-`--replace`. Empty values and values that are already references are left alone.
+`--replace`. Empty values and values that are already references are left alone, and so are `VERCEL_OIDC_TOKEN`,
+`VERCEL_*` and `TURBO_*`, which `vercel env pull` writes and which expire (`--no-default-skip` imports them,
+`--skip` adds patterns). `--agent-safe-pattern 'NEXT_PUBLIC_*,VITE_*,PUBLIC_*,EXPO_PUBLIC_*'` imports names that ship
+to browsers anyway as plain values agents may read, so a dev server doesn't ask for Touch ID on every start.
+
+Many repositories at once: one review, one approval, then each file rewritten.
+
+    find ~/Projects ~/Sites -name '.env*' -not -name '.env.example' -not -path '*/node_modules/*' > envs.txt
+    latchkey import --batch envs.txt --share-identical --agent-safe-pattern 'NEXT_PUBLIC_*,VITE_*' --dry-run
+    latchkey import --batch envs.txt --share-identical --agent-safe-pattern 'NEXT_PUBLIC_*,VITE_*' --rewrite
+
+Each file lands in its own project (its repository's folder) and environment (from its name). With
+`--share-identical`, a name that holds the same value in every file that has it, such as `GEMINI_API_KEY`, becomes
+one shared item that every file refers to, so rotating it is one change; names whose values differ stay per
+project. If two files give one ID different values (`.env` and `.env.local` in the same repository, say), that's a
+conflict: neither is imported and both lines stay as they are. The dry run prints names and counts only.
 
 To have an agent do it, tell it something like: *Run `latchkey import .env --rewrite`. Do not open, read or
 print `.env`.* The agent sees names and counts only. Values go straight from the file to the app, and you still
