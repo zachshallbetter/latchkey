@@ -51,10 +51,11 @@
     .band-price { color: var(--ink) !important; }
     .band-price b { font: 700 24px/1 var(--display); color: var(--ink); margin-right: 6px; }
     .faq { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 40px; }
-    .faq details { padding: 14px 0; border-bottom: 1px solid var(--line); }
-    .faq summary { cursor: pointer; font-weight: 650; list-style: none; }
+    .faq details { padding: 4px 0; border-bottom: 1px solid var(--line); }
+    .faq details[open] { padding-bottom: 14px; }
+    .faq summary { cursor: pointer; font-weight: 650; list-style: none; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .faq summary::-webkit-details-marker { display: none; }
-    .faq summary::after { content: "+"; float: right; color: var(--muted); font-weight: 400; }
+    .faq summary::after { content: "+"; color: var(--muted); font-weight: 400; }
     .faq details[open] summary::after { content: "–"; }
     .faq details p { margin: 8px 0 0; color: var(--muted); }
     @media (max-width: 1000px) { .plans { grid-template-columns: repeat(2, 1fr); } .pr .page-hero { grid-template-columns: minmax(0, 1fr); } }
@@ -189,7 +190,7 @@
           <div class="canvas">
             <div class="mw tty" style="left:12px;top:12px;width:576px;height:336px">
               <div class="mw-bar"><i></i><i></i><i></i><span>Terminal</span></div>
-<pre id="inv-tty" style="font-size:10.5px"><span class="l"><span class="p">~ $</span> lk import --scan ~/Projects --share-identical --rewrite</span><span class="l">recorded api/development, blog/development, shop/development</span><span class="l">imported 10 new</span><span class="l">rewrote ~/Projects/api/.env: 3 now latchkey://ID</span><span class="l">rewrote ~/Projects/api/.env.local: 4 now latchkey://ID</span><span class="l">rewrote ~/Projects/blog/.env: 2 now latchkey://ID</span><span class="l">rewrote ~/Projects/shop/.env.local: 4 now latchkey://ID</span></pre>
+<pre id="inv-tty"><span class="l"><span class="p">~ $</span> lk import --scan ~/Projects --share-identical --rewrite</span><span class="l">recorded api/development, blog/development, shop/development</span><span class="l">imported 10 new</span><span class="l">rewrote ~/Projects/api/.env: 3 now latchkey://ID</span><span class="l">rewrote ~/Projects/api/.env.local: 4 now latchkey://ID</span><span class="l">rewrote ~/Projects/blog/.env: 2 now latchkey://ID</span><span class="l">rewrote ~/Projects/shop/.env.local: 4 now latchkey://ID</span></pre>
             </div>
           </div>
         </div>

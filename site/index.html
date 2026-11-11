@@ -122,6 +122,15 @@
     .demo-foot { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin: 18px 0; }
     .try .stage { margin: 0; }
     .try .copy .fine { color: var(--muted); }
+    @media (max-width: 760px) { .button.small { min-height: 40px; } .menubar { height: 40px; } .menubar .mb-icon { height: 36px; width: 44px; } }
+    @media (max-width: 860px) {
+      .try.feature { display: flex; flex-direction: column; gap: 16px; }
+      .try .copy { display: contents; }
+      .try .copy > * { order: 0; }
+      .try .stage { order: 1; }
+      .try .demo-foot { order: 2; margin: 0; }
+      .try .copy > p.fine { order: 3; }
+    }
     .demo-foot p { margin: 0; font-size: 15px; }
     .js .demo-foot { min-height: 0; }
     .term .err { color: #ff9b8f; }

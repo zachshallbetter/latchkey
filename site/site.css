@@ -136,7 +136,7 @@ article.doc th, article.doc td { text-align: left; vertical-align: top; padding:
 article.doc th { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); white-space: nowrap; }
 article.doc td code { overflow-wrap: break-word; }
 /* Keep a flag or a hyphenated word whole: lines break between words, not at their hyphens. */
-.nw, figure.code .tok { white-space: nowrap; }
+.nw, figure.code .tok.t-flag, figure.code .tok.t-act { white-space: nowrap; }
 article.doc td:first-child:not(:only-child) { width: 38%; }
 /* Code in the docs wraps rather than scrolling; a scene sits in the column with its caption at its width. */
 article.doc figure.code pre code { white-space: pre-wrap; overflow-wrap: break-word; }
@@ -314,15 +314,15 @@ dl.pages dd { margin: 2px 0 0; color: var(--muted); }
 /* "Read more" links under a block of text: small and quiet, so they don't compete with the heading. */
 .more { display: inline-block; margin-top: 4px; font: 600 15px/1.4 var(--sans); color: var(--accent); text-decoration: none; }
 .more:hover { text-decoration: underline; }
-.more::after { content: " →"; }
+.more::after { content: "→"; margin-left: .3em; }
 figure.code + .more { margin-top: 12px; }
 
 /* A warning in a drawn panel, as the app shows it: orange, with the reason. */
 .sheet .warn { display: flex; gap: 6px; margin: -2px 0 10px; color: #e8890c; font-weight: 600; font-size: 11.5px; line-height: 1.35; }
 .sheet .warn::before { content: "\26A0"; }
 
-/* The hero scene's env file: its longest reference fits on one line. */
-#flow-env pre { font-size: 10.5px; }
+/* The hero scene's env file and the inventory's long lines fit their windows. */
+#flow-env pre, .mw.tty #inv-tty { font-size: 10.5px; }
 
 /* An iCloud hop between two Macs. */
 .sync-arc { position: absolute; z-index: 10; height: 2px; background: repeating-linear-gradient(90deg, var(--accent) 0 6px, transparent 6px 11px); opacity: .25; transition: opacity .3s; }
@@ -563,3 +563,36 @@ a.card > b::after { content: " →"; color: var(--accent); }
 
 /* Linked sections land below the sticky header. */
 main [id] { scroll-margin-top: 84px; }
+
+/* ---- Phones and touch. Targets a finger can hit (44px, as Apple recommends), controls that don't rely on hover,
+   and scenes edge to edge with larger terminal type so their text stays legible when scaled down. */
+@media (hover: none) {
+  .scene-pause { opacity: 1; width: 40px; height: 40px; }
+}
+@media (max-width: 760px) {
+  nav.top ul a, .jump a, .sec .jump a { min-height: 44px; }
+  footer.site ul { gap: 0 4px; }
+  footer.site ul a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; margin-left: -6px; }
+  .more { display: inline-flex; align-items: center; min-height: 44px; }
+  .card .links .more { min-height: 40px; }
+  button.copy { min-height: 36px; padding: 0 12px; }
+  .note-card { flex-direction: column; gap: 8px; }
+  .cta-actions .button { flex: 1 1 auto; }
+}
+@media (max-width: 640px) {
+  .scene-wrap { width: auto; margin-left: -16px; margin-right: -16px; border-radius: 0; }
+  .scene-wrap + .wide-cap, .scene-wrap + figcaption { margin-left: -16px; margin-right: -16px; padding: 0 16px; }
+  .mw.tty pre { font-size: 13px; }
+  .mw.tty #inv-tty { font-size: 12px; }
+}
+@media (max-width: 760px) {
+  footer.site a { display: inline-flex; align-items: center; min-height: 44px; }
+  .button.small { min-height: 40px; }
+  .mb-icon { height: 32px; width: 40px; }
+}
+/* The smallest phones (320px): the header's three links still fit beside the name. */
+@media (max-width: 360px) {
+  .brand { gap: 7px; font-size: 16px; }
+  .brand .logo { width: 22px; height: 23px; }
+  nav.top ul a { padding: 0 6px; font-size: 13.5px; }
+}

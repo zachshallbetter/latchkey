@@ -52,6 +52,8 @@ light and dark:
   and have captions at their width.
 - "Read more" links are small and quiet (`.more`), and a card that goes somewhere is one link (`.card-link`, `.tool`),
   not an underlined title.
+- On phones (checked at 320, 375 and 430 wide): controls are at least 40-44px tall, the pause button shows without
+  hover, scenes run edge to edge with larger terminal type, and the header keeps Features, Pricing and Docs.
 - Content reads without scripts, every image has alt text, each page has one `h1`, a title and a description, and
   loading or playing a page logs no errors.
 
