@@ -9,6 +9,9 @@ public final class Broker: @unchecked Sendable {
 
     public let store: SecretStore
     public let grants: GrantStore
+    /// Earlier values: kept when a value is replaced or an item deleted, pruned to `Versions.keep` per item and
+    /// `Versions.deletedFor` after a delete.
+    public let versions: VersionStore
     public let approver: Approver
     /// How long a read approval covers the same names from the same place. 0 asks every time.
     public var readApprovalWindow: TimeInterval
@@ -21,8 +24,15 @@ public final class Broker: @unchecked Sendable {
 
     /// Without a log (tests), grants are kept in memory too unless a store is passed.
     public init(store: SecretStore, approver: Approver, readApprovalWindow: TimeInterval = 120,
-                logURL: URL? = Paths.accessLog, grants: GrantStore? = nil) {
+                logURL: URL? = Paths.accessLog, grants: GrantStore? = nil, versions: VersionStore? = nil) {
         self.store = store
+        if let versions {
+            self.versions = versions
+        } else if logURL != nil, let keychain = store as? KeychainStore {
+            self.versions = KeychainVersionStore(mode: keychain.mode)
+        } else {
+            self.versions = MemoryVersionStore()
+        }
         self.grants = grants ?? GrantStore(url: logURL == nil ? nil : Paths.grants)
         self.approver = approver
         self.readApprovalWindow = readApprovalWindow
@@ -47,6 +57,11 @@ public final class Broker: @unchecked Sendable {
             case "revoke": return revoke(req, peer: peer)
             case "move": return try move(req, peer: peer)
             case "update": return try update(req, peer: peer)
+            case "history": return try history(req)
+            case "deleted": return Response(ok: true, versions: try versions.deleted(existing: Set(store.list().map(\.name))))
+            case "version": return try versionValue(req, peer: peer)
+            case "restore": return try restore(req, peer: peer)
+            case "forget": return try forget(req, peer: peer)
             default: return Response(ok: false, error: "unknown op \(req.op)")
             }
         } catch {
@@ -121,8 +136,10 @@ public final class Broker: @unchecked Sendable {
             log("set", [name], "denied", peer, req)
             return Response(ok: false, error: "change to \(name) was not approved")
         }
+        if !isNew, let value = req.value { try keepCurrent(name, reason: .changed, by: Self.who(peer), unlessEqualTo: value) }
         try store.save(name: name, value: req.value, kind: req.kind, agentSafe: req.agentSafe, note: req.note, usedIn: nil,
                        service: req.service)
+        pruneVersions()
         log("set", [name], "approved", peer, req)
         return Response(ok: true)
     }
@@ -143,12 +160,17 @@ public final class Broker: @unchecked Sendable {
         }
         var done: [String] = []
         for name in names {
-            do { _ = try store.remove(name); done.append(name) } catch {
+            do {
+                try keepCurrent(name, reason: .deleted, by: Self.who(peer))
+                _ = try store.remove(name)
+                done.append(name)
+            } catch {
                 log("rm", done, "approved (stopped at \(name))", peer, req)
                 return Response(ok: false, error: "deleted \(done.count) of \(names.count), then \(name) failed: \(error)")
             }
         }
         log("rm", names, "approved", peer, req)
+        pruneVersions()
         return Response(ok: true)
     }
 
@@ -210,6 +232,7 @@ public final class Broker: @unchecked Sendable {
         for name in writing {
             let i = byName[name]!
             do {
+                if toReplace.contains(name) { try keepCurrent(name, reason: .changed, by: Self.who(peer), unlessEqualTo: i.value) }
                 try store.save(name: name, value: i.value, kind: i.kind, agentSafe: i.agentSafe, note: i.note, usedIn: i.usedIn,
                                service: i.service)
                 done.append(name)
@@ -220,6 +243,7 @@ public final class Broker: @unchecked Sendable {
             }
         }
         log("import", writing, "approved", peer, req)
+        pruneVersions()
         return Response(ok: true, added: toAdd, replaced: toReplace, skipped: skipped)
     }
 
@@ -287,6 +311,7 @@ public final class Broker: @unchecked Sendable {
                 try store.save(name: to, value: value, kind: info.kind, agentSafe: info.agentSafe, note: info.note,
                                usedIn: info.usedIn, service: info.service ?? "")
                 _ = try store.remove(id)
+                try versions.rename(from: id, to: to)
                 done[id] = to
             } catch {
                 log("move", done.keys.sorted(), "approved (stopped at \(id))", peer, req)
@@ -295,6 +320,79 @@ public final class Broker: @unchecked Sendable {
         }
         log("move", moving, "approved (to \(place))", peer, req)
         return Response(ok: true, moved: done)
+    }
+
+    // MARK: versions
+
+    /// Saves the item's current value as a version before it's replaced or deleted. Skipped when the new value
+    /// is the same as the old, so re-importing an unchanged file adds no history.
+    private func keepCurrent(_ name: String, reason: Version.Reason, by: String, unlessEqualTo new: String? = nil) throws {
+        guard let info = try store.info(name), let current = try store.values([name])[name], current != new else { return }
+        try versions.record(info, value: current, reason: reason, by: by)
+    }
+
+    /// Prunes old versions. Never fails a request: history is a safety net, not the record.
+    func pruneVersions() {
+        guard let existing = try? Set(store.list().map(\.name)) else { return }
+        try? versions.prune(existing: existing)
+    }
+
+    func history(_ req: Request) throws -> Response {
+        guard let name = req.names?.first, req.names?.count == 1 else { return Response(ok: false, error: "history takes one item") }
+        return Response(ok: true, versions: try versions.list(item: name))
+    }
+
+    private func version(_ req: Request) throws -> Version? {
+        guard let id = req.version, let item = id.split(separator: "#").first.map(String.init) else { return nil }
+        return try versions.list(item: item).first { $0.id == id }
+    }
+
+    /// An earlier value, for showing in the app. Always asks: grants and agent-safe don't cover history.
+    func versionValue(_ req: Request, peer: PeerInfo) throws -> Response {
+        guard let v = try version(req) else { return Response(ok: false, error: "no such version") }
+        let when = v.savedAt.formatted(date: .abbreviated, time: .shortened)
+        guard ask(.readVersion, [v.item], peer, req, "show the value \(v.item) had until \(when), asked by \(Self.who(peer))").allowed else {
+            log("version", [v.item], "denied", peer, req)
+            return Response(ok: false, denied: [v.item])
+        }
+        log("version", [v.item], "approved (value from \(when))", peer, req)
+        return Response(ok: true, values: [v.id: try versions.value(v.id) ?? ""])
+    }
+
+    /// Puts a version back. If the item exists, its current value becomes a version first; if it was deleted,
+    /// it comes back with the settings it had.
+    func restore(_ req: Request, peer: PeerInfo) throws -> Response {
+        guard let v = try version(req), let value = try versions.value(v.id) else { return Response(ok: false, error: "no such version") }
+        let exists = try store.info(v.item) != nil
+        let when = v.savedAt.formatted(date: .abbreviated, time: .shortened)
+        let reason = exists ? "restore \(v.item) to its value from \(when), asked by \(Self.who(peer))"
+                            : "bring back \(v.item), deleted \(when), asked by \(Self.who(peer))"
+        guard ask(.restore, [v.item], peer, req, reason).allowed else {
+            log("restore", [v.item], "denied", peer, req)
+            return Response(ok: false, error: "the restore was not approved")
+        }
+        if exists { try keepCurrent(v.item, reason: .restored, by: Self.who(peer), unlessEqualTo: value) }
+        try store.save(name: v.item, value: value, kind: v.kind, agentSafe: v.agentSafe, note: v.note, usedIn: v.usedIn,
+                       service: v.service ?? "")
+        log("restore", [v.item], "approved (value from \(when))", peer, req)
+        pruneVersions()
+        return Response(ok: true)
+    }
+
+    /// Deletes every version of the named items.
+    func forget(_ req: Request, peer: PeerInfo) throws -> Response {
+        let names = Array(Set(req.names ?? [])).sorted()
+        guard !names.isEmpty else { return Response(ok: false, error: "no names given") }
+        let found = try names.flatMap { try versions.list(item: $0) }
+        guard !found.isEmpty else { return Response(ok: true, missing: names) }
+        let what = names.count == 1 ? names[0] : Self.count(names)
+        guard ask(.delete, names, peer, req, "forget the earlier values of \(what) for good, asked by \(Self.who(peer))").allowed else {
+            log("forget", names, "denied", peer, req)
+            return Response(ok: false, error: "forgetting the history was not approved")
+        }
+        for v in found { try versions.remove(v.id) }
+        log("forget", names, "approved (\(found.count) version\(found.count == 1 ? "" : "s"))", peer, req)
+        return Response(ok: true)
     }
 
     /// Taking access away never needs approval.
@@ -390,6 +488,7 @@ public final class Broker: @unchecked Sendable {
         // failed write, not the whole process: by default writing to a closed socket raises SIGPIPE, which kills it.
         signal(SIGPIPE, SIG_IGN)
         try Paths.ensureSupportDir()
+        pruneVersions()
         if let fd = try? UnixSocket.connect(socketPath) {
             close(fd)
             throw ServeError.alreadyRunning(socketPath)

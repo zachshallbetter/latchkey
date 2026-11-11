@@ -54,15 +54,17 @@ struct MainWindow: View {
                     ActivityList(model: model)
                 } else if model.filter == .grants {
                     GrantList(model: model)
+                } else if model.filter == .deleted {
+                    DeletedList(model: model)
                 } else {
                     ItemList(model: model)
                 }
             }
             .navigationSplitViewColumnWidth(min: 280, ideal: 330)
         } detail: {
-            if model.filter != .activity, model.filter != .grants, let item = model.selectedItem {
+            if model.filter != .activity, model.filter != .grants, model.filter != .deleted, let item = model.selectedItem {
                 ItemDetail(model: model, item: item).id(item.name)
-            } else if model.filter != .activity, model.filter != .grants, model.selection.count > 1 {
+            } else if model.filter != .activity, model.filter != .grants, model.filter != .deleted, model.selection.count > 1 {
                 BulkPanel(model: model, ids: model.selection.sorted())
             } else {
                 EmptyDetail(model: model)
@@ -105,12 +107,13 @@ extension MainWindow {
 
     func deleteMessage(_ ids: [String]) -> String {
         let place = model.synced ? " on all your Macs" : ""
+        let days = Int(Versions.deletedFor / 86400)
         let files = model.files(for: ids)
         if files.isEmpty {
-            return "They're removed from the keychain\(place). Files that refer to them stop working, and a file that holds only references loses those values for good."
+            return "They move to Recently Deleted\(place) and can be restored for \(days) days. Until then, files that refer to them stop working."
         }
         let shown = files.prefix(4).map(Broker.tilde).joined(separator: ", ") + (files.count > 4 ? ", …" : "")
-        return "They're removed from the keychain\(place). These files still refer to them and will stop working: \(shown). If they hold only references, those values are gone for good."
+        return "They move to Recently Deleted\(place) and can be restored for \(days) days. Until then these files stop working: \(shown)."
     }
 }
 
@@ -150,6 +153,7 @@ struct Sidebar: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Access").font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.leading, 8)
                     SidebarRow(model: model, filter: .grants, symbol: "hourglass", tint: .teal)
+                    SidebarRow(model: model, filter: .deleted, symbol: "trash.fill", tint: .gray)
                 }
                 Spacer(minLength: 0)
                 StorageBadge(model: model)
@@ -623,6 +627,9 @@ struct EmptyDetail: View {
         if model.filter == .activity {
             ContentUnavailableView("Activity", systemImage: "clock.arrow.circlepath",
                                    description: Text("Who read or changed what, from where. Values are never logged."))
+        } else if model.filter == .deleted {
+            ContentUnavailableView("Recently Deleted", systemImage: "trash",
+                                   description: Text("Deleted items can be brought back for \(Int(Versions.deletedFor / 86400)) days, with the settings they had."))
         } else if model.filter == .grants {
             ContentUnavailableView("Grants", systemImage: "hourglass",
                                    description: Text("A grant lets commands run from one folder read some items without asking, until it ends. Make one before you step away from an agent, or choose “Allow from this folder” on an approval."))
@@ -654,6 +661,46 @@ struct NoticeBar: View {
                 try? await Task.sleep(for: .seconds(8))
                 if model.notice == n { model.notice = nil }
             }
+        }
+    }
+}
+
+/// Items deleted in the last 30 days, with a way back.
+struct DeletedList: View {
+    let model: AppModel
+    @State private var forgetting: Version?
+
+    var body: some View {
+        List(model.deleted) { v in
+            HStack(spacing: 10) {
+                KindIcon(kind: v.kind, size: 28).opacity(0.6)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(v.item).font(.callout.monospaced()).lineLimit(1).truncationMode(.middle)
+                    let left = max(0, Int((Versions.deletedFor - Date().timeIntervalSince(v.savedAt)) / 86400))
+                    Text("Deleted \(v.savedAt.formatted(.relative(presentation: .named))) by \(v.by) · \(left) day\(left == 1 ? "" : "s") left")
+                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                }
+                Spacer()
+                Button("Restore") { Task { await model.restore(v) } }
+            }
+            .contextMenu {
+                Button("Restore") { Task { await model.restore(v) } }
+                Button("Forget for Good…", role: .destructive) { forgetting = v }
+            }
+        }
+        .overlay {
+            if model.deleted.isEmpty {
+                ContentUnavailableView("Nothing Deleted", systemImage: "trash",
+                                       description: Text("Items you delete stay here for \(Int(Versions.deletedFor / 86400)) days."))
+            }
+        }
+        .navigationTitle("Recently Deleted")
+        .navigationSubtitle("\(model.deleted.count) item\(model.deleted.count == 1 ? "" : "s")")
+        .confirmationDialog("Forget \(forgetting?.item ?? "")?", isPresented: Binding(get: { forgetting != nil }, set: { if !$0 { forgetting = nil } }),
+                            presenting: forgetting) { v in
+            Button("Forget for Good", role: .destructive) { Task { await model.forgetHistory([v.item]) } }
+        } message: { _ in
+            Text("Its value and every earlier value are deleted and can't be brought back.")
         }
     }
 }

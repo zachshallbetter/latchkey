@@ -97,10 +97,10 @@ public final class KeychainStore: SecretStore, @unchecked Sendable {
         var service: String?
     }
 
-    func query(_ name: String? = nil) -> [String: Any] {
+    func query(_ name: String? = nil, service: String = KeychainStore.service) -> [String: Any] {
         var q: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: Self.service,
+            kSecAttrService as String: service,
         ]
         if let name { q[kSecAttrAccount as String] = name }
         if case .iCloud(let group) = mode {

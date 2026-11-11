@@ -13,14 +13,15 @@ command starts. Agents get only the items marked agent-safe; everything else nee
 | Keychain storage: iCloud Keychain when signed, login keychain otherwise | Built |
 | Broker: agent-safe policy, approval panel then Touch ID / Apple Watch / password, grants, access log | Built |
 | Projects, environments and services: item IDs `project/environment/NAME`, import placement, moving items, project-wide grants | Built |
-| `latchkey` command-line tool: `run`, `list`, `get`, `set`, `rm`, `update`, `import`, `mv`, `grant`, `grants`, `revoke`, `status`; starts the app if needed | Built |
+| Version history: earlier values kept on change and delete, restore, Recently Deleted for 30 days | Built |
+| `latchkey` command-line tool: `run`, `list`, `get`, `set`, `rm`, `update`, `import`, `mv`, `history`, `restore`, `deleted`, `forget`, `grant`, `grants`, `revoke`, `status`; starts the app if needed | Built |
 | `latchkey-broker`: the broker without a window, for development | Built |
 | App: window with sidebar, item list and detail; reveal and copy behind Touch ID; .env import sheet; activity log; menu bar panel; settings; open at login. Hosts the broker | Built; needs a team set to sync |
 | Key-file delivery, expiry reminders | Not built |
 | Browser extension or AutoFill provider | Not built |
 | SSH agent (Secure Enclave keys) | Not built |
 
-Tests: 41 (`swift test`; add `LATCHKEY_KEYCHAIN_TESTS=1` to include a real keychain round trip).
+Tests: 46 (`swift test`; add `LATCHKEY_KEYCHAIN_TESTS=1` to include a real keychain round trip).
 
 See [docs/apple-passwords-and-passkeys.md](docs/apple-passwords-and-passkeys.md) for how this uses iCloud Keychain
 and LocalAuthentication, why items don't appear in the Passwords app, and where passkeys fit.
@@ -80,6 +81,21 @@ can't drift from the references. Service and "used in" travel with the item in i
     latchkey update 'acp/*' --agent-safe no                                  # many items, one approval
     latchkey rm 'old-project/*'
 
+## History and recovery
+
+When a value is replaced (`set`, Change Value, `import --replace`, a restore) the old value is kept as a version,
+with when and by whom. Deleting an item keeps its value too, in **Recently Deleted**, for 30 days. Versions are
+keychain items in the same keychain and access group as the items, so they sync the same way; moving an item takes
+its history with it. Each item keeps its last 10 versions.
+
+Showing an earlier value or restoring one always asks for approval (grants and agent-safe don't cover history).
+Restoring keeps the current value as a version first.
+
+    latchkey history acp/production/DATABASE_URL
+    latchkey restore acp/production/DATABASE_URL --version 2
+    latchkey deleted
+    latchkey forget acp/production/DATABASE_URL      # earlier values gone for good
+
 ## Using the app
 
 - **Sidebar:** All, Agent-Safe, Ask First and Activity, a count per kind, then **Projects** (with a filter once there
@@ -101,6 +117,8 @@ can't drift from the references. Service and "used in" travel with the item in i
 - **Move to a Project…** (item menu, the detail pane, or the **+** menu): pick items, a project and an environment,
   and the files whose references should follow; one approval.
 - **Grants:** what each grant covers and when it ends; revoke one or all, or make a new one.
+- **History:** each item's earlier values in its detail pane, with show and restore; **Recently Deleted** under
+  Access brings deleted items back.
 - **Menu bar:** search, copy a value, or jump to an item.
 
 ## Build

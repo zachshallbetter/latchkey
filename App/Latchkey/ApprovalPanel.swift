@@ -84,6 +84,8 @@ struct ApprovalView: View {
         case .importItems: return "Import \(request.names.count) item\(request.names.count == 1 ? "" : "s")?"
         case .grant: return "Allow reads without asking?"
         case .move: return "Move \(request.names.count) item\(request.names.count == 1 ? "" : "s")?"
+        case .readVersion: return "Show an earlier value of \(request.names.first ?? "item")?"
+        case .restore: return "Restore \(request.names.first ?? "item")?"
         }
     }
 

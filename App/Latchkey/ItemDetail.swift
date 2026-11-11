@@ -7,6 +7,8 @@ struct ItemDetail: View {
     let item: SecretInfo
     @State private var noteDraft = ""
     @State private var serviceDraft = ""
+    @State private var versions: [Version] = []
+    @State private var confirmingForget = false
     @State private var changingValue = false
     @State private var confirmingDelete = false
     @State private var working = false
@@ -129,6 +131,44 @@ struct ItemDetail: View {
                 }
             }
 
+            Section {
+                if versions.isEmpty {
+                    Text("No earlier values yet. When this value changes, the old one is kept here.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(versions) { v in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(v.savedAt.formatted(date: .abbreviated, time: .shortened)).font(.callout)
+                                    Text("\(v.reason == .changed ? "Replaced" : v.reason == .restored ? "Replaced by a restore" : "Deleted") by \(v.by)")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Button {
+                                    if model.revealedVersions[v.id] != nil { model.revealedVersions[v.id] = nil }
+                                    else { act { await model.revealVersion(v) } }
+                                } label: { Image(systemName: model.revealedVersions[v.id] == nil ? "eye" : "eye.slash") }
+                                .buttonStyle(.borderless).help("Show this earlier value (asks for approval)")
+                                Button("Restore") { act { await model.restore(v) } }
+                            }
+                            if let value = model.revealedVersions[v.id] {
+                                Text(value).font(.caption.monospaced()).textSelection(.enabled).lineLimit(4)
+                            }
+                        }
+                    }
+                }
+            } header: {
+                Text("History")
+            } footer: {
+                HStack {
+                    Text("The last \(Versions.keep) values are kept. Restoring keeps the current value too.")
+                    Spacer()
+                    if !versions.isEmpty { Button("Forget History…") { confirmingForget = true }.buttonStyle(.link) }
+                }
+                .font(.caption).foregroundStyle(.secondary)
+            }
+
             Section("Recent Activity") {
                 let entries = model.activity(for: item.name)
                 if entries.isEmpty {
@@ -146,6 +186,17 @@ struct ItemDetail: View {
         .disabled(working)
         .onAppear { noteDraft = item.note; serviceDraft = item.service ?? "" }
         .onChange(of: item.service) { _, s in serviceDraft = s ?? "" }
+        .task(id: item.updatedAt) { versions = model.history(for: item.name) }
+        .confirmationDialog("Forget the history of \(item.ref.name)?", isPresented: $confirmingForget) {
+            Button("Forget \(versions.count) Earlier Value\(versions.count == 1 ? "" : "s")", role: .destructive) {
+                act {
+                    await model.forgetHistory([item.name])
+                    versions = model.history(for: item.name)
+                }
+            }
+        } message: {
+            Text("The current value stays. The earlier ones are deleted\(model.synced ? " on all your Macs" : "") and can't be brought back.")
+        }
         .onChange(of: item.note) { _, n in noteDraft = n }
         .onDisappear { if noteDraft != item.note { saveNote() } }
         .sheet(isPresented: $changingValue) { ChangeValueSheet(model: model, item: item) }
@@ -153,9 +204,9 @@ struct ItemDetail: View {
             Button("Delete", role: .destructive) { act { _ = await model.remove(item.name) } }
         } message: {
             if let files = item.usedIn, !files.isEmpty {
-                Text("It is removed from the keychain\(model.synced ? " on all your Macs" : ""). These files still refer to it and will stop working: \(files.map(Broker.tilde).joined(separator: ", ")). If they hold only the reference, this deletes the value for good.")
+                Text("It moves to Recently Deleted\(model.synced ? " on all your Macs" : "") and can be restored for \(Int(Versions.deletedFor / 86400)) days. Until then these files stop working: \(files.map(Broker.tilde).joined(separator: ", ")).")
             } else {
-                Text("It is removed from the keychain\(model.synced ? " on all your Macs" : ""). Any file that refers to latchkey://\(item.name) will stop working, and if a file holds only the reference, this deletes the value for good.")
+                Text("It moves to Recently Deleted\(model.synced ? " on all your Macs" : "") and can be restored for \(Int(Versions.deletedFor / 86400)) days. Until then, files that refer to latchkey://\(item.name) stop working.")
             }
         }
     }

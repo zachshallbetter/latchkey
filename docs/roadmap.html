@@ -198,6 +198,9 @@ const tiers = [
     { t: "Remote machines and services", s: "L", who: ["you", "agents"],
       gap: "<b>Gap:</b> values are needed on servers, in CI and in hosted environments, and today they're copied by hand.",
       plan: "<b>Plan:</b> forward the Latchkey socket over SSH so a command on a server asks your Mac (and you approve there), and push values to GitHub Actions, Vercel or Fly with one command that records where each item went, so Replace can update them." },
+    { t: "Version history and recovery", s: "M", who: ["you"], built: true,
+      gap: "<b>Gap:</b> a changed or deleted value was gone, and a file rewritten to references could lose its only copy.",
+      plan: "<b>Built:</b> the last 10 values of each item, Recently Deleted for 30 days, restore with approval, synced like the items." },
   ]},
   { id: "agents", eyebrow: "Tier 2", title: "Built for agents", note: "Where Latchkey can be clearly better than a .env file or a password manager.", items: [
     { t: "Use a value without holding it", s: "M", who: ["agents"],

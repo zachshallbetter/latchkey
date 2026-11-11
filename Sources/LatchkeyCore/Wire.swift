@@ -132,6 +132,7 @@ public struct ImportItem: Codable, Sendable, Hashable {
 /// One line of JSON from the CLI to the broker.
 public struct Request: Codable, Sendable {
     public var op: String            // status | list | get | set | rm | import | grants | grant | revoke | move | update
+                                     // | history | deleted | version | restore | forget
     public var names: [String]?
     public var value: String?
     public var kind: ItemKind?
@@ -147,12 +148,13 @@ public struct Request: Codable, Sendable {
     public var project: String?      // move: target project ("" for shared)
     public var environment: String?  // move: target environment
     public var service: String?      // set: the issuing service ("" clears it)
+    public var version: String?      // restore, version: a version id
 
     public init(op: String, names: [String]? = nil, value: String? = nil, kind: ItemKind? = nil,
                 agentSafe: Bool? = nil, note: String? = nil, cwd: String? = nil, command: String? = nil,
                 items: [ImportItem]? = nil, replace: Bool? = nil, source: String? = nil,
                 folder: String? = nil, duration: Double? = nil, project: String? = nil, environment: String? = nil,
-                service: String? = nil) {
+                service: String? = nil, version: String? = nil) {
         self.op = op
         self.names = names
         self.value = value
@@ -169,6 +171,7 @@ public struct Request: Codable, Sendable {
         self.project = project
         self.environment = environment
         self.service = service
+        self.version = version
     }
 }
 
@@ -190,11 +193,14 @@ public struct Response: Codable, Sendable {
     public var grants: [Grant]?
     /// move: old id to new id.
     public var moved: [String: String]?
+    /// history, deleted: version records, newest first. Never values.
+    public var versions: [Version]?
 
     public init(ok: Bool, error: String? = nil, secrets: [SecretInfo]? = nil, values: [String: String]? = nil,
                 masked: [String]? = nil, denied: [String]? = nil, missing: [String]? = nil,
                 info: [String: String]? = nil, added: [String]? = nil, replaced: [String]? = nil,
-                skipped: [String]? = nil, grants: [Grant]? = nil, moved: [String: String]? = nil) {
+                skipped: [String]? = nil, grants: [Grant]? = nil, moved: [String: String]? = nil,
+                versions: [Version]? = nil) {
         self.ok = ok
         self.error = error
         self.secrets = secrets
@@ -208,6 +214,7 @@ public struct Response: Codable, Sendable {
         self.skipped = skipped
         self.grants = grants
         self.moved = moved
+        self.versions = versions
     }
 }
 

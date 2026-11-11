@@ -28,7 +28,10 @@ enum Snapshot {
     static func runIfRequested(_ model: AppModel) {
         guard let path = arg("--snapshot"), !started else { return }
         started = true
-        if CommandLine.arguments.contains("--sample") { model.items = sampleItems }
+        if CommandLine.arguments.contains("--sample") {
+            model.items = sampleItems
+            model.deleted = sampleVersions.filter { $0.reason == .deleted }
+        }
         if let names = arg("--select") {
             model.selection = Set(names.split(separator: ",").map(String.init))
             model.reveal(Array(model.selection))
@@ -49,6 +52,14 @@ enum Snapshot {
             return
         }
         if let q = arg("--search") { model.search = q }
+        if arg("--part") == "detail", let item = model.selectedItem {
+            drawOffscreen(ItemDetail(model: model, item: item).frame(width: 540, height: 1180), to: path)
+            return
+        }
+        if arg("--part") == "deleted" {
+            drawOffscreen(DeletedList(model: model).frame(width: 440, height: 260), to: path)
+            return
+        }
         if arg("--part") == "list" {
             drawOffscreen(ItemList(model: model).frame(width: 400, height: 620), to: path)
             return
@@ -95,6 +106,23 @@ enum Snapshot {
             i("site/development/NEXT_PUBLIC_API_HOST", .value, nil, safe: true),
             i("GEMINI_API_KEY", .token, "Google"),
             i("GITHUB_TOKEN", .token, "GitHub"),
+        ]
+    }
+
+    static var usesSample: Bool { requested && CommandLine.arguments.contains("--sample") }
+
+    /// Example history for screenshots.
+    static var sampleVersions: [Version] {
+        let now = Date()
+        func v(_ item: String, _ ago: Double, _ reason: Version.Reason, _ by: String) -> Version {
+            Version(id: "\(item)#\(Int(ago))", item: item, savedAt: now.addingTimeInterval(-ago), reason: reason, by: by,
+                    kind: .password, agentSafe: false, note: "", service: "Neon", usedIn: nil)
+        }
+        return [
+            v("acp/production/DATABASE_URL", 3 * 3600, .changed, "the Latchkey app"),
+            v("acp/production/DATABASE_URL", 9 * 86400, .changed, "zsh › claude"),
+            v("acp/production/DATABASE_URL", 40 * 86400, .restored, "the Latchkey app"),
+            v("old-site/production/SENTRY_DSN", 2 * 86400, .deleted, "the Latchkey app"),
         ]
     }
 

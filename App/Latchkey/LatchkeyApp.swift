@@ -52,7 +52,7 @@ struct LatchkeyApp: App {
 // MARK: - Model
 
 enum SidebarFilter: Hashable {
-    case all, agentSafe, needsApproval, activity, grants, shared
+    case all, agentSafe, needsApproval, activity, grants, shared, deleted
     case kind(ItemKind)
     case project(String)
     case service(String)
@@ -65,6 +65,7 @@ enum SidebarFilter: Hashable {
         case .activity: return "Activity"
         case .grants: return "Grants"
         case .shared: return "Shared"
+        case .deleted: return "Recently Deleted"
         case .kind(let k): return k.label + "s"
         case .project(let p): return p
         case .service(let s): return s
@@ -127,6 +128,10 @@ final class AppModel {
     var items: [SecretInfo] = []
     var log: [Broker.LogEntry] = []
     var grants: [Grant] = []
+    /// The latest deletion of each item deleted in the last 30 days.
+    var deleted: [Version] = []
+    /// Earlier values currently shown; each hides itself after a short while.
+    var revealedVersions: [String: String] = [:]
     var grantRequest: GrantRequest?
     var deleteRequest: DeleteRequest?
     var problem: String?
@@ -179,6 +184,7 @@ final class AppModel {
         } catch { problem = "\(error)" }
         log = Broker.readLog(limit: 300).reversed()
         grants = broker.grants.all()
+        deleted = (try? broker.versions.deleted(existing: Set(items.map(\.name)))) ?? []
         let names = Set(items.map(\.name))
         if !selection.isSubset(of: names) { selection = selection.intersection(names) }
     }
@@ -187,7 +193,7 @@ final class AppModel {
 
     func matches(_ f: SidebarFilter, _ i: SecretInfo) -> Bool {
         switch f {
-        case .all, .activity, .grants: return true
+        case .all, .activity, .grants, .deleted: return true
         case .agentSafe: return i.agentSafe
         case .needsApproval: return !i.agentSafe
         case .shared: return i.ref.isShared
@@ -214,6 +220,7 @@ final class AppModel {
         switch f {
         case .activity: return log.count
         case .grants: return grants.count
+        case .deleted: return deleted.count
         default: return items.filter { matches(f, $0) }.count
         }
     }
@@ -267,6 +274,42 @@ final class AppModel {
     func files(for ids: [String]) -> [String] {
         var seen = Set<String>()
         return items.filter { ids.contains($0.name) }.flatMap { $0.usedIn ?? [] }.filter { seen.insert($0).inserted }
+    }
+
+    // MARK: history
+
+    /// Earlier values of an item, newest first. Records only; values need approval.
+    func history(for name: String) -> [Version] {
+        #if DEBUG
+        if Snapshot.usesSample { return Snapshot.sampleVersions.filter { $0.item == name } }
+        #endif
+        return (try? broker.versions.list(item: name)) ?? []
+    }
+
+    func revealVersion(_ v: Version) async {
+        let r = await send(Request(op: "version", version: v.id))
+        guard let value = r.values?[v.id] else { notice = r.denied != nil ? "Not approved." : (r.error ?? "Couldn't read that version."); return }
+        revealedVersions[v.id] = value
+        Task {
+            try? await Task.sleep(for: .seconds(30))
+            if revealedVersions[v.id] == value { revealedVersions[v.id] = nil }
+        }
+    }
+
+    func restore(_ v: Version) async {
+        if let err = await run(Request(op: "restore", version: v.id)) {
+            notice = err
+        } else {
+            notice = "Restored \(v.item) to its value from \(v.savedAt.formatted(date: .abbreviated, time: .shortened))."
+            revealed[v.item] = nil
+            selection = [v.item]
+            reveal([v.item])
+            if filter == .deleted { filter = .all }
+        }
+    }
+
+    func forgetHistory(_ names: [String]) async {
+        if let err = await run(Request(op: "forget", names: names)) { notice = err } else { notice = "Forgot the earlier values." }
     }
 
     // MARK: several items, one approval

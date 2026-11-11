@@ -32,6 +32,12 @@ Files refer to them as latchkey://ID.
       Move items into a project's environment (or back to shared) with one approval, then point
       references at the new IDs in the files each item was imported from, in --file files, and
       in the --from-file file. --from-file moves the shared items that FILE refers to.
+  latchkey history ID             Earlier values of an item: when and by whom they were replaced. Never values.
+  latchkey restore ID [--version N]
+      Put back version N (1 = most recent) of ID, or bring back a deleted item. The current value
+      is kept as a version first. Asks for approval.
+  latchkey deleted                Items deleted in the last 30 days, which restore can bring back.
+  latchkey forget ID[,ID...]      Delete the earlier values of items for good. Asks for approval.
   latchkey grant ID[,ID...] [--folder DIR] [--for 2h]
       Let commands run from DIR (default: here) and the folders inside it read these items
       without asking, until the time is up (30m, 2h, 1d; at most 7d). Asks for approval once.
@@ -591,6 +597,42 @@ case "grant":
 
 case "mv":
     moveCommand(args)
+
+case "history":
+    guard let name = args.first, Wire.isValidName(name) else { fail("usage: latchkey history ID", code: 64) }
+    let versions = send(Request(op: "history", names: [name])).versions ?? []
+    if versions.isEmpty { print("No earlier values of \(name).") }
+    for (n, v) in versions.enumerated() {
+        let when = v.savedAt.formatted(date: .abbreviated, time: .shortened)
+        print("\(String(n + 1).padding(toLength: 3, withPad: " ", startingAt: 0)) \(when)  \(v.reason.rawValue.padding(toLength: 8, withPad: " ", startingAt: 0))  by \(v.by)")
+    }
+    if !versions.isEmpty { print("Kept: the last \(Versions.keep) per item. `latchkey restore \(name) --version N` puts one back.") }
+
+case "restore":
+    guard let name = args.first, Wire.isValidName(name) else { fail("usage: latchkey restore ID [--version N]", code: 64) }
+    var n = 1
+    if let i = args.firstIndex(of: "--version") {
+        guard i + 1 < args.count, let v = Int(args[i + 1]), v >= 1 else { fail("--version takes a number from `latchkey history`", code: 64) }
+        n = v
+    }
+    let versions = send(Request(op: "history", names: [name])).versions ?? []
+    guard n <= versions.count else { fail(versions.isEmpty ? "no earlier values of \(name)" : "\(name) has \(versions.count) version(s)", code: 66) }
+    let v = versions[n - 1]
+    _ = send(Request(op: "restore", cwd: currentDirectory(), version: v.id))
+    print("restored \(name) to its value from \(v.savedAt.formatted(date: .abbreviated, time: .shortened))")
+
+case "deleted":
+    let gone = send(Request(op: "deleted")).versions ?? []
+    if gone.isEmpty { print("Nothing deleted in the last 30 days.") }
+    for v in gone {
+        let left = max(0, Int((Versions.deletedFor - Date().timeIntervalSince(v.savedAt)) / 86400))
+        print("\(v.item)  deleted \(v.savedAt.formatted(date: .abbreviated, time: .shortened)) by \(v.by)  (\(left) day\(left == 1 ? "" : "s") left)")
+    }
+
+case "forget":
+    let ids = expandIDs(args)
+    let r = send(Request(op: "forget", names: ids, cwd: currentDirectory()))
+    if let m = r.missing, !m.isEmpty { print("No earlier values of \(m.joined(separator: ", ")).") } else { print("forgot the earlier values of \(ids.count) item\(ids.count == 1 ? "" : "s")") }
 
 case "grants":
     printGrants(send(Request(op: "grants")).grants ?? [])
