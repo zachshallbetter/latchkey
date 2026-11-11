@@ -80,6 +80,11 @@ The dry run says why for each: empty, already a reference, an expiring Vercel or
 Open **Recently Deleted** in the app, or run `latchkey deleted`, and restore them within 30 days. After that, the
 values are gone from Latchkey; check your version control or the service that issued them.
 
+## Latchkey for Safari shows two panels, or Save does nothing
+
+A tab that was open when Latchkey was updated keeps the old extension's script alongside the new one. Reload the tab.
+If Save then says it couldn't reach Latchkey, open the app and try again.
+
 ## Where are the logs?
 
 The activity log is `~/Library/Application Support/Latchkey/access.jsonl`: one JSON line per read, change, grant,

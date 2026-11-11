@@ -15,6 +15,7 @@
   var pageURL = location.href;
   var FIELDS = "input:not([type=password]):not([type=hidden]), textarea";
   var MAX_FOUND = 100;
+  var UNREACHABLE = "Couldn't reach Latchkey. Reload this page; if that doesn't help, open the Latchkey app.";
 
   // ---- Where to look, and the words around a value
   var SKIP = "script,style,noscript,svg,template,[contenteditable=true]";
@@ -40,6 +41,16 @@
     return { label: labelFor(el), nearby: nearbyFor(el), host: location.hostname, field: field };
   }
 
+  function visible(el) {
+    if (!el || !document.contains(el)) return false;
+    var r = el.getBoundingClientRect();
+    if (r.width < 4 || r.height < 4) return false;
+    var doc = document.documentElement;
+    if (r.right + window.scrollX <= 0 || r.bottom + window.scrollY <= 0 || r.left + window.scrollX >= doc.scrollWidth) return false;
+    if (el.checkVisibility) return el.checkVisibility({ opacityProperty: true, visibilityProperty: true });
+    var cs = getComputedStyle(el);
+    return cs.visibility !== "hidden" && cs.opacity !== "0";
+  }
   function live(d) {
     var el = d.element;
     if (!document.contains(el) || el.matches("input[type=password], input[type=hidden]")) return false;
@@ -66,7 +77,15 @@
     if (!text || text.length < 16 || el.matches("input[type=password], input[type=hidden]")) return;
     prune();
     D.findAll(text, contextFor(el, field)).forEach(function (r) {
-      if (byValue.has(r.value)) return;
+      var seen = byValue.get(r.value);
+      if (seen) {
+        // The same key shown somewhere you can see it: anchor to that copy, not a hidden one.
+        if (!visible(seen.element) && visible(el)) {
+          seen.element = el;
+          if (pills.has(seen.id)) place(pills.get(seen.id), el, false); else if (seen.result.confidence === "high") showPill(seen);
+        }
+        return;
+      }
       var d = { id: nextID++, result: r, element: el };
       byValue.set(r.value, d);
       if (found.length >= MAX_FOUND) retire(found.shift());
@@ -102,7 +121,7 @@
   function report() {
     prune();
     var shown = found;
-    try { browser.runtime.sendMessage({ op: "count", count: shown.length }); } catch (e) {}
+    try { browser.runtime.sendMessage({ op: "count", count: shown.length }).catch(function () {}); } catch (e) {}
   }
 
   // Changes to the page: look again at what changed, a moment later. Fields filled by script don't always change the
@@ -152,7 +171,11 @@
   }
   function place(h, el, below) {
     var r = el.getBoundingClientRect();
-    if (!r.width && !r.height) { h.style.display = "none"; return; }
+    if (!below && (!visible(el) || r.bottom < 0 || r.top > window.innerHeight)) { h.style.display = "none"; return; }
+    if (below && !visible(el)) {   // a panel whose key isn't on screen: bottom-right corner
+      h.style.display = ""; h.style.left = Math.max(8, window.innerWidth - (h.offsetWidth || 340) - 16) + "px";
+      h.style.top = Math.max(8, window.innerHeight - (h.offsetHeight || 260) - 16) + "px"; return;
+    }
     h.style.display = "";
     var w = h.offsetWidth || 160, height = h.offsetHeight || 28;
     var left = Math.min(window.innerWidth - w - 8, Math.max(8, below ? r.left : r.right - w));
@@ -238,7 +261,7 @@
         if (match.length === 1) placeSel.value = match[0];
       }
       explain();
-    });
+    }).catch(function () { status.textContent = UNREACHABLE; explain(); });
     root.getElementById("lk-no").addEventListener("click", close);
     function close() { h.remove(); if (panelHost === h) panelHost = null; }
     h.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
@@ -263,7 +286,7 @@
           status.textContent = (res && res.error) || "Not saved.";
           save.disabled = false;
         }
-      });
+      }).catch(function () { status.textContent = UNREACHABLE; save.disabled = false; });
     });
     panelHost = h;
     place(h, h._anchor, true);

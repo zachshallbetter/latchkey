@@ -97,6 +97,8 @@ The first release.
   certificates. Confident finds get a Save to Latchkey button beside the key; others are listed in the toolbar panel,
   with a count on its button. Save Selection to Latchkey saves anything it missed. It can't read stored values.
 - After a save, the extension shows the reference to use; its toolbar button says whether it can reach Latchkey.
+- The Save to Latchkey button sits beside the copy of a key you can see, not a hidden copy kept for the page's copy
+  button, and Save says so when it can't reach the app instead of waiting.
 
 ### Approvals
 - With Touch ID, the approval panel takes the fingerprint itself: one step, not a panel and then a sheet.
