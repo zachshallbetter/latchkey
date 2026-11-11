@@ -58,9 +58,18 @@
     this.point = function (x, y, ms) {
       if (!cursor) return Promise.resolve();
       cursor.style.transitionDuration = self.instant ? "0s" : (ms || 800) + "ms";
+      x = Math.max(0, Math.min(x, canvas.offsetWidth - 24)); y = Math.max(0, Math.min(y, canvas.offsetHeight - 28));
       cursor.style.transform = "translate(" + x + "px," + y + "px)";
       return quietly(self.wait(ms || 800));
     };
+    /// A point in canvas units, offset from an element's top-left: motion that follows the layout in use.
+    this.at = function (el, dx, dy) {
+      if (typeof el === "string") el = self.$(el);
+      var c = canvas.getBoundingClientRect(), r = el.getBoundingClientRect(), sc = c.width / canvas.offsetWidth;
+      return [(r.left - c.left) / sc + (dx || 0), (r.top - c.top) / sc + (dy || 0)];
+    };
+    /// Where the pointer waits between actions: near the bottom right of whichever layout is showing.
+    this.rest = function (ms) { return self.point(canvas.offsetWidth - 90, canvas.offsetHeight - 60, ms); };
     this.pointAt = function (el, dx, dy, ms) {
       if (typeof el === "string") el = self.$(el);
       var c = canvas.getBoundingClientRect(), r = el.getBoundingClientRect(), s = c.width / canvas.offsetWidth;
@@ -108,7 +117,7 @@
       label.textContent = "Reading references";
       for (var i = 0; i < lines.length; i++) {
         s.on(lines[i], "hl");
-        s.fly(chips[i], [64 + i * 12, 52 + i * 19], [446, 76 + i * 22], 700);
+        s.fly(chips[i], s.at(lines[i], 52 + i * 12, 0), s.at(st, 8, -8 + i * 22), 700);
         await s.wait(240);
       }
       await s.wait(700);
@@ -117,7 +126,7 @@
       await s.wait(1500);
       st.className = "state done"; label.textContent = "Released to npm run dev";
       await s.wait(500);
-      for (var j = 0; j < vals.length; j++) { s.fly(vals[j], [470, 98], [80 + j * 96, 286], 760); await s.wait(140); }
+      for (var j = 0; j < vals.length; j++) { s.fly(vals[j], s.at(st, 40, 8), s.at(tty, 60 + j * 96, tty.offsetHeight - 70), 760); await s.wait(140); }
       await s.wait(800);
       vals.forEach(s.land);
       lines.forEach(function (l) { s.on(l, "hl", false); });
@@ -240,7 +249,7 @@
       s.$("#agent-items").textContent = "shop/development/DATABASE_URL, shop/development/STRIPE_KEY";
       s.$("#agent-cmd").textContent = "lk run --env shop/development -- npm test";
       s.$("#agent-only span").textContent = "Only for npm test";
-      s.point(470, 300, 1);
+      s.rest(1);
     },
     play: async function (s) {
       var tty = s.$("#agent-tty");
@@ -260,7 +269,7 @@
       await s.click(s.$("#agent-allow"));
       await s.wait(300);
       s.hide("#agent-panel");
-      await s.point(470, 300, 700);
+      await s.rest(700);
       await s.lines(tty, ['<span class="d"> ✓ db/connect.test.ts (3 tests)</span>', '   connecting to <span class="c">&lt;concealed by latchkey&gt;</span>',
                           '<span class="d"> Test Files  2 passed (2)</span>']);
       await s.wait(900);
@@ -280,7 +289,7 @@
       await s.pointAt("#agent-deny", 0, 4, 700);
       await s.click(s.$("#agent-deny"));
       s.hide("#agent-panel");
-      await s.point(470, 300, 600);
+      await s.rest(600);
       await s.lines(tty, ['<span class="err">latchkey: refused: shop/production/DATABASE_URL (not agent-safe, not approved, no grant)</span>',
                           '<span class="k">⏺ Claude</span> <span class="d">Latchkey refused that (exit 77), so I\'ll stop and ask you.</span>'], 220);
     }
@@ -319,7 +328,7 @@
   // ---------------------------------------------------------------------------------------------------------------
   // Latchkey for Safari: a new key on the page where it was made, saved to a project's environment.
   SCENES.safari = {
-    reset: function (s) { s.hide("#saf-save"); s.hide("#saf-touch"); s.on("#saf-touch", "ok", false); s.hide("#saf-done"); s.point(420, 240, 1); },
+    reset: function (s) { s.hide("#saf-save"); s.hide("#saf-touch"); s.on("#saf-touch", "ok", false); s.hide("#saf-done"); s.rest(1); },
     play: async function (s) {
       await s.wait(700);
       await s.pointAt("#saf-btn", 0, 3);
@@ -335,7 +344,7 @@
       await s.wait(500);
       s.hide("#saf-touch");
       s.show("#saf-done");
-      await s.point(420, 240, 700);
+      await s.rest(700);
     }
   };
 
@@ -360,7 +369,7 @@
   // Security: a committed reference shows only a name; a script that asks Latchkey directly, not through the signed
   // lk tool, gets the panel with its warning, and is denied.
   SCENES.direct = {
-    reset: function (s) { s.clear(s.$("#dir-tty")); s.prompt(s.$("#dir-tty")); s.hide("#dir-panel"); s.hide("#dir-note"); s.point(480, 300, 1); },
+    reset: function (s) { s.clear(s.$("#dir-tty")); s.prompt(s.$("#dir-tty")); s.hide("#dir-panel"); s.hide("#dir-note"); s.rest(1); },
     play: async function (s) {
       var tty = s.$("#dir-tty");
       s.clear(tty);
@@ -376,7 +385,7 @@
       await s.pointAt("#dir-deny", 0, 4, 700);
       await s.click(s.$("#dir-deny"));
       s.hide("#dir-panel");
-      await s.point(480, 300, 600);
+      await s.rest(600);
       await s.lines(tty, ['<span class="err">refused: shop/development/STRIPE_KEY (not agent-safe, not approved, no grant)</span>']);
     }
   };
@@ -411,19 +420,84 @@
   };
 
   // ---------------------------------------------------------------------------------------------------------------
+  // Portrait layouts, for phones: the same windows stacked in a canvas 360 units wide, so a scene draws at about its
+  // natural size instead of shrunk to fit. Each entry is [selector, which match, position]; anything not listed keeps
+  // its place. The HTML holds the landscape layout, which is what shows without scripts.
+  var M = 8, FULL = 344;
+  var PORTRAIT = {
+    flow: { w: 360, h: 494, place: [["#flow-env", 0, { left: M, top: 8, width: FULL, height: 134 }], [".lk-card", 0, { left: M, top: 154, width: FULL }],
+                                     [".mw.tty", 0, { left: M, top: 274, width: FULL, height: 212 }]] },
+    clone: { w: 360, h: 448, place: [[".mw.tty", 0, { left: M, top: 8, width: FULL, height: 432 }], ["#clone-env", 0, { left: 16, top: 44, width: 328, height: 214 }]] },
+    importenv: { w: 360, h: 508, place: [["#imp-env", 0, { left: M, top: 8, width: FULL, height: 152 }], [".mw.tty", 0, { left: M, top: 168, width: FULL, height: 332 }],
+                                         ["#imp-touch", 0, { left: 65, top: 150 }]] },
+    macs: { w: 360, h: 600, place: [[".device", 0, { left: 12, top: 8 }], ["#macs-a", 0, { left: M, top: 24, width: FULL, height: 206 }],
+                                    ["#macs-arc", 0, { left: 180, top: 230, width: 56, transform: "rotate(90deg)", transformOrigin: "0 0" }], [".cloud", 0, { left: 158, top: 236 }],
+                                    [".device", 1, { left: 12, top: 292 }], [".mw.tty", 0, { left: M, top: 308, width: FULL, height: 284 }]] },
+    agent: { w: 360, h: 520, place: [[".mw.tty", 0, { left: M, top: 8, width: FULL, height: 504 }], ["#agent-panel", 0, { left: M, top: 48, width: FULL }],
+                                     ["#agent-note", 0, { left: 40, top: 380 }], [".cursor", 0, { transform: "translate(270px, 460px)" }]] },
+    rotate: { w: 360, h: 552, place: [[".mw.tty", 0, { left: M, top: 8, width: FULL, height: 300 }], [".mw.ed", 0, { left: M, top: 320, width: FULL, height: 86 }],
+                                      [".mw.app", 0, { left: M, top: 418, width: FULL, height: 126 }]] },
+    safari: { w: 360, h: 300, place: [[".mw.web", 0, { left: M, top: 8, width: FULL, height: 284 }], ["#saf-save", 0, { left: 20, top: 166, width: 320 }],
+                                      ["#saf-touch", 0, { left: 65, top: 96 }], ["#saf-done", 0, { left: 12, top: 166, width: 336 }], [".cursor", 0, { transform: "translate(270px, 240px)" }]] },
+    log: { w: 360, h: 270, place: [[".mw.tty", 0, { left: M, top: 8, width: FULL, height: 254 }]] },
+    direct: { w: 360, h: 470, place: [[".mw.tty", 0, { left: M, top: 8, width: FULL, height: 454 }], ["#dir-note", 0, { left: 20, top: 160 }],
+                                      ["#dir-panel", 0, { left: M, top: 40, width: FULL }], [".cursor", 0, { transform: "translate(270px, 410px)" }]] },
+    inventory: { w: 360, h: 600, place: [[".mw.tty", 0, { left: M, top: 8, width: FULL, height: 584 }]] }
+  };
+  /// Portrait when the scene's column is narrower than this: a phone, or any column too narrow for the landscape
+  /// drawing to stay legible.
+  var NARROW = 480;
+  function wantsPortrait(wrap) { return !!PORTRAIT[wrap.dataset.scene] && wrap.parentElement.clientWidth < NARROW; }
+
+  /// Puts a scene in its portrait or landscape layout. Landscape is the HTML's own inline styles, kept to restore.
+  function layout(wrap, portrait) {
+    var spec = PORTRAIT[wrap.dataset.scene], canvas = wrap.querySelector(".canvas");
+    if (!spec) return;
+    if (wrap.__land === undefined) wrap.__land = wrap.getAttribute("style") || "";
+    wrap.classList.toggle("portrait", portrait);
+    if (portrait) { wrap.style.setProperty("--w", spec.w); wrap.style.setProperty("--h", spec.h); }
+    else wrap.setAttribute("style", wrap.__land);
+    spec.place.forEach(function (entry) {
+      var el = canvas.querySelectorAll(entry[0])[entry[1]];
+      if (!el) return;
+      if (el.__land === undefined) el.__land = el.getAttribute("style") || "";
+      el.setAttribute("style", el.__land);
+      if (!portrait) return;
+      Object.keys(entry[2]).forEach(function (k) {
+        var v = entry[2][k];
+        el.style[k] = typeof v === "number" ? v + "px" : v;
+      });
+    });
+  }
+
   function attach(wrap) {
     var script = SCENES[wrap.dataset.scene];
     if (!script) return;
-    var p = new Player(wrap), canvas = p.canvas, w = +getComputedStyle(wrap).getPropertyValue("--w");
-    function fit() { canvas.style.setProperty("--s", wrap.clientWidth / w); }
+    var p = new Player(wrap), canvas = p.canvas;
+    function fit() { canvas.style.setProperty("--s", wrap.clientWidth / +getComputedStyle(wrap).getPropertyValue("--w")); }
+    var isPortrait = wantsPortrait(wrap);
+    layout(wrap, isPortrait);
     fit();
     if ("ResizeObserver" in window) new ResizeObserver(fit).observe(wrap); else window.addEventListener("resize", fit);
+    // Rotating a phone or resizing a window can narrow or widen the column: switch layouts and start again.
+    var relayout = function () {
+      var want = wantsPortrait(wrap);
+      if (want === isPortrait) return;
+      isPortrait = want;
+      p.token++; layout(wrap, isPortrait); fit();
+      if (!reduce && visible && !paused) { playing = false; setTimeout(loop, 60); }
+    };
+    // Deferred a frame: switching layouts resizes the scene, which mustn't happen inside the observer's own callback.
+    if ("ResizeObserver" in window) new ResizeObserver(function () { requestAnimationFrame(relayout); }).observe(wrap.parentElement);
+    window.addEventListener("resize", relayout);
+    var mq = window.matchMedia("(max-width: 640px)");
+    if (mq.addEventListener) mq.addEventListener("change", relayout); else if (mq.addListener) mq.addListener(relayout);
+    var visible = false, paused = false, playing = false;
     if (reduce) return;   // the last frame, as written in the HTML
 
     var btn = document.createElement("button");
     btn.type = "button"; btn.className = "scene-pause"; btn.innerHTML = PAUSE; btn.setAttribute("aria-label", "Pause this animation");
     wrap.appendChild(btn);
-    var visible = false, paused = false, playing = false;
     async function loop() {
       if (playing) return;
       playing = true;

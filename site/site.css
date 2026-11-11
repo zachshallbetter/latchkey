@@ -580,7 +580,7 @@ main [id] { scroll-margin-top: 84px; }
   .cta-actions .button { flex: 1 1 auto; }
 }
 @media (max-width: 640px) {
-  .scene-wrap { width: auto; margin-left: -16px; margin-right: -16px; border-radius: 0; }
+  .scene-wrap { width: auto; margin-left: -16px; margin-right: -16px; border-radius: 0; overflow-x: clip; }
   .scene-wrap + .wide-cap, .scene-wrap + figcaption { margin-left: -16px; margin-right: -16px; padding: 0 16px; }
   .mw.tty pre { font-size: 13px; }
   .mw.tty #inv-tty { font-size: 12px; }
@@ -596,3 +596,7 @@ main [id] { scroll-margin-top: 84px; }
   .brand .logo { width: 22px; height: 23px; }
   nav.top ul a { padding: 0 6px; font-size: 13.5px; }
 }
+
+/* Portrait scenes (scenes.js) draw at about their natural size on a phone, so terminals keep their normal type. */
+.scene-wrap.portrait .mw.tty pre { font-size: 11.5px; }
+.scene-wrap.portrait .mw.tty #inv-tty { font-size: 10.5px; }
