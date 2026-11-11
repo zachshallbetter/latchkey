@@ -31,7 +31,7 @@ struct RemoteSheet: View {
                 }
             }
 
-            if links.isEmpty && !adding {
+            if links.isEmpty {
                 VStack(spacing: 12) {
                     RoundedRectangle(cornerRadius: 22, style: .continuous).fill(.quaternary.opacity(0.4))
                         .frame(width: 88, height: 88)
@@ -58,14 +58,10 @@ struct RemoteSheet: View {
                 .frame(minHeight: 160)
             }
 
-            if adding {
-                AddLinkForm(model: model, scope: scope) { adding = false }
-            }
-
             if !links.isEmpty {
                 HStack {
                     Button(checking ? "Checking…" : "Check Status") { check() }.disabled(checking || working)
-                    Button("Add a Location…") { adding = true }.disabled(adding)
+                    Button("Add a Location…") { adding = true }
                 }
             }
             Spacer(minLength: 0)
@@ -78,7 +74,8 @@ struct RemoteSheet: View {
             }
         }
         .padding(24)
-        .frame(width: 620, height: adding ? 680 : 520)
+        .frame(width: 620, height: 520)
+        .sheet(isPresented: $adding) { AddLocationSheet(model: model, scope: scope, itemCount: itemCount) }
         .confirmationDialog("Unlink \(unlinking?.target.label ?? "")?", isPresented: Binding(get: { unlinking != nil }, set: { if !$0 { unlinking = nil } }),
                             presenting: unlinking) { link in
             Button("Unlink", role: .destructive) { Task { await model.unlink(link) } }
@@ -169,10 +166,35 @@ private struct LinkRow: View {
 }
 
 /// The fields each service needs, with the folder defaulting to where the environment's items were imported from.
-private struct AddLinkForm: View {
+extension RemoteTarget.Service {
+    /// A plain symbol for the service's picker; Latchkey doesn't use the services' own marks.
+    var symbol: String {
+        switch self {
+        case .vercel: return "triangle.fill"
+        case .github: return "chevron.left.forwardslash.chevron.right"
+        case .railway: return "tram.fill"
+        case .fly: return "paperplane.fill"
+        }
+    }
+
+    /// Where to get the service's command-line tool.
+    var installPage: URL {
+        switch self {
+        case .vercel: return URL(string: "https://vercel.com/docs/cli")!
+        case .github: return URL(string: "https://cli.github.com")!
+        case .railway: return URL(string: "https://docs.railway.com/guides/cli")!
+        case .fly: return URL(string: "https://fly.io/docs/flyctl/install/")!
+        }
+    }
+}
+
+/// Links an environment to Vercel, GitHub Actions, Railway or Fly. Nothing here signs in or stores a token: pushes run
+/// each service's own tool, signed in as you, so the sheet checks the tool is installed and the details are complete.
+struct AddLocationSheet: View {
     let model: AppModel
     let scope: String
-    let done: () -> Void
+    let itemCount: Int
+    @Environment(\.dismiss) private var dismiss
     @State private var service: RemoteTarget.Service = .vercel
     @State private var project = ""
     @State private var environment = "preview"
@@ -183,11 +205,13 @@ private struct AddLinkForm: View {
     @State private var directory = ""
     @State private var error: String?
     @State private var working = false
+    /// The service's tool: its version when installed, nil while checking, "" when it isn't installed.
+    @State private var toolVersion: String?
 
-    init(model: AppModel, scope: String, done: @escaping () -> Void) {
+    init(model: AppModel, scope: String, itemCount: Int) {
         self.model = model
         self.scope = scope
-        self.done = done
+        self.itemCount = itemCount
         let ids = model.items.filter { $0.name.hasPrefix(scope + "/") }.map(\.name)
         let folder = model.files(for: ids).first.map { URL(fileURLWithPath: $0).deletingLastPathComponent().path } ?? ""
         _directory = State(initialValue: folder)
@@ -196,6 +220,9 @@ private struct AddLinkForm: View {
         _environment = State(initialValue: ["development", "preview", "production"].contains(instance) ? instance : "preview")
     }
 
+    private var projectName: String { String(scope.split(separator: "/").first ?? "") }
+    private var envName: String { String(scope.split(separator: "/").last ?? "") }
+
     var target: RemoteTarget {
         func v(_ s: String) -> String? { let t = s.trimmingCharacters(in: .whitespaces); return t.isEmpty ? nil : t }
         return RemoteTarget(service: service, project: v(project), environment: v(environment), repo: v(repo),
@@ -203,82 +230,185 @@ private struct AddLinkForm: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Divider()
-            Picker("Service", selection: $service) {
-                ForEach(RemoteTarget.Service.allCases, id: \.self) { Text($0.label).tag($0) }
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 14) {
+                IconTile(symbol: "cloud", tint: .blue, size: 48)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Add Remote Location").font(.title2.weight(.semibold))
+                    HStack(spacing: 6) {
+                        Text(projectName).font(.callout.weight(.medium))
+                        EnvBadge(environment: envName, compact: true).fixedSize()
+                        Text("· \(itemCount) item\(itemCount == 1 ? "" : "s")").font(.callout).foregroundStyle(.secondary)
+                    }
+                }
             }
-            .pickerStyle(.segmented)
-            Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 6) {
+            Text("Link this environment to a deployment platform to push its values there and see what's out of step.")
+                .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 12) {
+                Text("Service").frame(width: 110, alignment: .leading)
+                Picker("", selection: $service) {
+                    ForEach(RemoteTarget.Service.allCases, id: \.self) { s in Label(s.label, systemImage: s.symbol).tag(s) }
+                }
+                .pickerStyle(.segmented).labelsHidden()
+            }
+            .padding(.horizontal, 14)
+
+            Card {
                 switch service {
                 case .vercel:
-                    field("Project", $project, "name or ID; blank uses the folder's linked project")
-                    GridRow {
-                        Text("Environment").foregroundStyle(.secondary)
-                        Picker("", selection: $environment) {
-                            ForEach(["development", "preview", "production"], id: \.self) { Text($0).tag($0) }
-                        }
-                        .labelsHidden().pickerStyle(.segmented)
-                    }
-                    if environment == "preview" { field("Git branch", $branch, "optional") }
-                    folderRow
+                    field("Project", $project, "Name or ID", "Leave blank to use the project the folder is linked to with vercel link.")
+                    choice("Environment", ["development", "preview", "production"], "The Vercel environment to set variables in.")
+                    if environment == "preview" { field("Git branch", $branch, "Optional", "Only for preview deployments of this branch.") }
+                    folder(last: true)
                 case .github:
-                    field("Repository", $repo, "owner/repo")
-                    field("Environment", $environment, "optional; blank means repository secrets")
+                    field("Repository", $repo, "owner/repo", "The repository whose Actions secrets are set.")
+                    field("Environment", $environment, "Optional", "A GitHub Actions environment. Leave blank for repository secrets.", last: true)
                 case .railway:
-                    field("Environment", $environment, "production, staging…")
-                    field("Service", $serviceName, "the service to set variables on")
-                    field("Project ID", $project, "blank uses the folder's linked project")
-                    folderRow
+                    field("Service", $serviceName, "api, web…", "The Railway service to set variables on.")
+                    field("Environment", $environment, "production, staging…", "The Railway environment.")
+                    field("Project ID", $project, "Optional", "Leave blank to use the project the folder is linked to with railway link.")
+                    folder(last: true)
                 case .fly:
-                    field("App", $app, "the Fly app")
+                    field("App", $app, "your-app", "The Fly app whose secrets are set. Changes are staged until your next deploy.", last: true)
                 }
             }
-            .textFieldStyle(.roundedBorder)
-            if let p = target.problem { Text(p).font(.caption).foregroundStyle(.secondary) }
-            if target.isProduction { Text("Pushes here count as production and need an extra confirmation every time.").font(.caption).foregroundStyle(.orange) }
-            if let error { Text(error).font(.caption).foregroundStyle(.red) }
-            HStack {
-                if ProcessRunner.locate(service.tool) == nil {
-                    Text("\(service.tool) isn't installed on this Mac.").font(.caption).foregroundStyle(.orange)
+
+            VStack(alignment: .leading, spacing: 8) {
+                toolStatus
+                if let p = target.problem {
+                    Label(p, systemImage: "exclamationmark.circle.fill").foregroundStyle(.red).font(.callout)
                 }
-                Spacer()
-                Button("Cancel", action: done)
-                Button("Link") {
+                if target.isProduction {
+                    Label("Pushes here count as production and ask for an extra confirmation every time.", systemImage: "info.circle")
+                        .foregroundStyle(.secondary).font(.callout)
+                }
+                if let error { Label(error, systemImage: "exclamationmark.triangle.fill").foregroundStyle(.red).font(.callout) }
+            }
+
+            SheetFooter(note: "Values go through \(service.label)'s own tool, signed in as you. Nothing is deployed.") {
+                Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
+                Button("Add Location") {
                     working = true
                     Task {
                         error = await model.addLink(scope, target)
                         working = false
-                        if error == nil { done() }
+                        if error == nil { dismiss() }
                     }
                 }
-                .disabled(target.problem != nil || working)
+                .keyboardShortcut(.defaultAction)
+                .disabled(target.problem != nil || working || toolVersion == "")
             }
         }
-        .onChange(of: service) { _, s in if s == .github || s == .railway { environment = environment == "preview" ? "" : environment } }
+        .padding(24)
+        .frame(width: 620)
+        .task(id: service) { await checkTool() }
+        .onChange(of: service) { _, s in
+            if s == .github || s == .railway { environment = environment == "preview" ? "" : environment }
+            if s == .vercel && environment.isEmpty { environment = "preview" }
+        }
     }
 
     @ViewBuilder
-    private func field(_ label: String, _ text: Binding<String>, _ prompt: String) -> some View {
-        GridRow {
-            Text(label).foregroundStyle(.secondary)
-            TextField("", text: text, prompt: Text(prompt))
+    private var toolStatus: some View {
+        switch toolVersion {
+        case nil:
+            Label("Looking for \(service.tool)…", systemImage: "hourglass").foregroundStyle(.secondary).font(.callout)
+        case ""?:
+            HStack {
+                Label("\(service.tool) isn't installed on this Mac. Latchkey uses it to push.", systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange).font(.callout)
+                Spacer()
+                Link("Install…", destination: service.installPage).font(.callout)
+                Button("Check Again") { Task { await checkTool() } }.controlSize(.small)
+            }
+        case let v?:
+            Label("\(service.tool) is installed\(v.isEmpty ? "" : " (\(v))")", systemImage: "checkmark.circle.fill")
+                .foregroundStyle(.green).font(.callout)
         }
     }
 
-    private var folderRow: some View {
-        GridRow {
-            Text("Folder").foregroundStyle(.secondary)
-            HStack {
-                Text(directory.isEmpty ? "none" : Broker.tilde(directory)).font(.callout.monospaced()).lineLimit(1).truncationMode(.head)
-                Spacer()
-                Button("Choose…") {
-                    let panel = NSOpenPanel()
-                    panel.canChooseDirectories = true
-                    panel.canChooseFiles = false
-                    if panel.runModal() == .OK, let url = panel.url { directory = url.path }
+    /// Finds the tool and asks it for its version; "" when it isn't installed.
+    private func checkTool() async {
+        toolVersion = nil
+        let tool = service.tool
+        let version: String = await Task.detached {
+            guard let path = ProcessRunner.locate(tool) else { return "" }
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: path)
+            p.arguments = ["--version"]
+            let out = Pipe()
+            p.standardOutput = out
+            p.standardError = Pipe()
+            guard (try? p.run()) != nil else { return "" }
+            let deadline = Date().addingTimeInterval(5)
+            while p.isRunning && Date() < deadline { try? await Task.sleep(for: .milliseconds(50)) }
+            if p.isRunning { p.terminate(); return "installed" }
+            let text = String(decoding: out.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+            // The first version-like word: "Vercel CLI 39.1.0", "gh version 2.63.0 (...)", "flyctl v0.3.82 ...".
+            let word = text.split(whereSeparator: { $0 == " " || $0 == "\n" }).first { $0.first?.isNumber == true || ($0.first == "v" && $0.dropFirst().first?.isNumber == true) }
+            return word.map { $0.hasPrefix("v") ? String($0) : "v" + $0 } ?? "installed"
+        }.value
+        toolVersion = version == "installed" ? "installed" : version
+    }
+
+    @ViewBuilder
+    private func field(_ label: String, _ text: Binding<String>, _ prompt: String, _ caption: String, last: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Text(label).frame(width: 110, alignment: .leading)
+                VStack(alignment: .leading, spacing: 4) {
+                    TextField(label, text: text, prompt: Text(prompt)).textFieldStyle(.roundedBorder)
+                    Text(caption).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
             }
+            .padding(.vertical, 10)
+            if !last { Divider() }
+        }
+    }
+
+    @ViewBuilder
+    private func choice(_ label: String, _ options: [String], _ caption: String) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Text(label).frame(width: 110, alignment: .leading)
+                VStack(alignment: .leading, spacing: 4) {
+                    Picker("", selection: $environment) { ForEach(options, id: \.self) { Text($0).tag($0) } }
+                        .pickerStyle(.segmented).labelsHidden()
+                    Text(caption).font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            .padding(.vertical, 10)
+            Divider()
+        }
+    }
+
+    @ViewBuilder
+    private func folder(last: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Text("Folder").frame(width: 110, alignment: .leading)
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(directory.isEmpty ? "None chosen" : Broker.tilde(directory)).font(.callout.monospaced())
+                            .foregroundStyle(directory.isEmpty ? .secondary : .primary)
+                            .lineLimit(1).truncationMode(.head)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 8).padding(.vertical, 5)
+                            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(.separator))
+                        Button("Choose…") {
+                            let panel = NSOpenPanel()
+                            panel.canChooseDirectories = true
+                            panel.canChooseFiles = false
+                            if panel.runModal() == .OK, let url = panel.url { directory = url.path }
+                        }
+                    }
+                    Text("The project's folder, where its link to \(service.label) lives. The tool runs from here.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            .padding(.vertical, 10)
+            if !last { Divider() }
         }
     }
 }

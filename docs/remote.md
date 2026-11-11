@@ -32,8 +32,10 @@ latchkey remote link shop/production fly app=shop-api
 | `branch` | Vercel preview | One Git branch |
 | `dir` | Vercel, Railway | A folder linked with `vercel link` or `railway link`, instead of `project` |
 
-Linking asks for approval. A link covers the whole environment, including items added later. In the app: right-click
-an environment › **Remote Locations…** › **Add a Location…**.
+Linking asks for approval. A link covers the whole environment, including items added later. In the app: open an
+item's **Edit › Remote Locations…** (or its Remote card) › **Add a Location…**. The sheet asks for the service's
+details, says whether its command-line tool is installed (with a link to install it), and enables **Add Location** once
+the details are complete. It never asks for a service token: pushes use the tool, signed in as you.
 
 When a service needs different values from your laptop, give it its own environment (`shop/vercel.preview` beside
 `shop/preview`) and link that.

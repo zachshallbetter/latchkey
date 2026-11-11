@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Remote locations
+- **Add Remote Location** is its own sheet: pick the service, fill in its details (each explained), choose the
+  environment, and see whether the service's tool is installed, with a link to install it. **Add Location** stays
+  disabled until the details are complete.
+- List rows show the item's type as a small label.
+
 ### The window
 - A new layout, arranged like 1Password: All Items, **Review** (what may need a look: values changed since a push,
   values not pushed, grants about to end), Activity, then projects and services, then Grants and Recently Deleted.

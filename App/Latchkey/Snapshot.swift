@@ -104,6 +104,10 @@ enum Snapshot {
             drawOffscreen(ReviewList(model: model).frame(width: 420, height: 760), to: path)
             return
         }
+        if arg("--part") == "addlocation" {
+            drawOffscreen(AddLocationSheet(model: model, scope: arg("--scope") ?? "shop/staging", itemCount: 3), to: path)
+            return
+        }
         if arg("--part") == "pushapproval" {
             var r = ApprovalRequest(action: .push, names: ["shop/production/DATABASE_URL", "shop/production/STRIPE_SECRET_KEY"],
                                     chain: ["the Latchkey app"], folder: "", reason: "push 2 items")

@@ -532,6 +532,12 @@ struct ItemRow: View {
             if !showsProject && showsEnvironment && !item.ref.isShared {
                 EnvBadge(environment: item.ref.environment, compact: true).fixedSize()
             }
+            if showsProject || item.ref.isShared {
+                Text(type.label).font(.caption.weight(.medium)).foregroundStyle(.secondary)
+                    .padding(.horizontal, 7).padding(.vertical, 2)
+                    .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(.quaternary.opacity(0.6)))
+                    .fixedSize()
+            }
             if hovering, let model {
                 Button { model.copyReference(item.name) } label: { Image(systemName: "link") }
                     .buttonStyle(.borderless).help("Copy latchkey://\(item.name)")
