@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="../site.css">
   <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="../llms.txt">
   <script defer src="../site.js"></script>
+  <script defer src="../scenes.js"></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -46,7 +47,6 @@
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey status</code></pre></figure>
 <p>You should see <code>storage: iCloud Keychain storage (sync status not verified)</code>.</p>
 
-<p>Imports support quoted multiline values and refuse malformed syntax before saving anything. Rewriting replaces the complete assignment and stops if the file changed while approval was pending.</p>
 <h2 id="import">2. Import an env file</h2>
 <p>Look first. A dry run prints names and where each would go, never values:</p>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">cd ~/Projects/shop
@@ -55,11 +55,46 @@ latchkey import .env.local --dry-run</code></pre></figure>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey import .env.local --rewrite</code></pre></figure>
 <figure class="code"><figcaption><span>.env.local</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">DATABASE_URL=latchkey://shop/development/DATABASE_URL
 STRIPE_KEY=latchkey://shop/development/STRIPE_KEY</code></pre></figure>
+<p>Imports support quoted multiline values and refuse malformed syntax before saving anything. Rewriting replaces the complete assignment and stops if the file changed while approval was pending.</p>
+<figure class="doc-scene"><div class="scene-wrap" data-scene="importenv" style="--w:600;--h:380" aria-hidden="true">
+          <div class="canvas">
+            <div class="mw ed" id="imp-env" style="left:12px;top:12px;width:576px;height:134px">
+              <div class="mw-bar"><i></i><i></i><i></i><span>shop/.env.local</span></div>
+<pre><span class="ln kept"><span class="key">PORT</span>=<span class="lit">3000</span></span><span class="ln"><span class="key">DATABASE_URL</span>=<span class="v ref" data-before="postgres://app:9fK2…@db.neon.tech/shop" data-after="latchkey://shop/development/DATABASE_URL">latchkey://shop/development/DATABASE_URL</span></span><span class="ln"><span class="key">STRIPE_KEY</span>=<span class="v ref" data-before="sk_test_51Hx…" data-after="latchkey://shop/development/STRIPE_KEY">latchkey://shop/development/STRIPE_KEY</span></span><span class="ln"><span class="key">OPENAI_API_KEY</span>=<span class="v ref" data-before="sk-proj-Qx8…" data-after="latchkey://shop/development/OPENAI_API_KEY">latchkey://shop/development/OPENAI_API_KEY</span></span></pre>
+            </div>
+            <div class="mw tty" style="left:12px;top:158px;width:576px;height:210px">
+              <div class="mw-bar"><i></i><i></i><i></i><span>Terminal — ~/Projects/shop</span></div>
+<pre id="imp-tty"><span class="l"><span class="p">~/Projects/shop $</span> lk import .env.local --rewrite --skip PORT</span><span class="l">recorded shop/development: DATABASE_URL, OPENAI_API_KEY, STRIPE_KEY</span><span class="l">added    shop/development/DATABASE_URL  password</span><span class="l">added    shop/development/OPENAI_API_KEY  token</span><span class="l">added    shop/development/STRIPE_KEY  token</span><span class="l">rewrote .env.local: 3 values now latchkey://ID</span><span class="l"><span class="d">next: lk run --env-file .env.local -- &lt;your command&gt;</span></span></pre>
+            </div>
+            <div class="sheet touch off" id="imp-touch" style="left:185px;top:120px">
+              <svg class="fp" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg>
+              <p><b>Latchkey is trying to import 3 items</b></p><p>Touch ID or enter your password.</p>
+            </div>
+          </div>
+        </div><figcaption class="fine wide-cap">The dry run, then the import: one approval, and each value in the file becomes its reference. Here <code>--skip PORT</code> leaves a plain setting as it is.</figcaption></figure>
 <p>Every project at once: <code>latchkey import --scan ~/Projects --dry-run</code>, then again without <code>--dry-run</code>. Or <code>latchkey import --batch files.txt</code>, one path per line. Either way, one approval. See the <a href="cli.html#import">import options</a>.</p>
 
 <h2 id="run">3. Run a command</h2>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey run --env-file .env.local -- npm run dev
 latchkey run --env shop/development -- npm test      # no env file needed</code></pre></figure>
+<figure class="doc-scene"><div class="scene-wrap" data-scene="flow" style="--w:600;--h:340" aria-hidden="true">
+        <div class="canvas" id="flow">
+          <div class="mw ed" id="flow-env" style="left:12px;top:16px;width:400px;height:142px">
+            <div class="mw-bar"><i></i><i></i><i></i><span>shop/.env.local</span></div>
+<pre><span class="ln r"><span class="key">DATABASE_URL</span>=<span class="ref">latchkey://shop/development/DATABASE_URL</span></span><span class="ln r"><span class="key">STRIPE_KEY</span>=<span class="ref">latchkey://shop/development/STRIPE_KEY</span></span><span class="ln r"><span class="key">OPENAI_API_KEY</span>=<span class="ref">latchkey://OPENAI_API_KEY</span></span><span class="ln kept"><span class="key">PORT</span>=<span class="lit">3000</span></span></pre>
+          </div>
+          <div class="lk-card" style="left:424px;top:24px;width:164px">
+            <div class="head"><span class="mark"><img src="../logo.svg" alt=""></span><div><b>Latchkey</b><small>iCloud Keychain</small></div></div>
+            <div class="state done" id="flow-state"><svg class="fp" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg><span>Values stay out of the file and the output</span></div>
+          </div>
+          <div class="mw tty" style="left:12px;top:172px;width:576px;height:156px">
+            <div class="mw-bar"><i></i><i></i><i></i><span>Terminal — ~/Projects/shop</span></div>
+<pre id="flow-tty"><span class="l"><span class="p">~/Projects/shop $</span> lk run --env-file .env.local -- npm run dev</span><span class="l"><span class="d">&gt; shop@1.0.0 dev</span></span><span class="l"><span class="d">&gt; next dev</span></span><span class="l"></span><span class="l">  ▲ Next.js</span><span class="l">  - Local:   http://localhost:3000</span><span class="l">  <span class="ok">✓ Ready</span></span></pre>
+          </div>
+          <span class="chip ref">DATABASE_URL</span><span class="chip ref">STRIPE_KEY</span><span class="chip ref">OPENAI_API_KEY</span>
+          <span class="chip val">••••••••</span><span class="chip val">••••••••</span><span class="chip val">••••••••</span>
+        </div>
+      </div><figcaption class="fine wide-cap"><code>lk run</code> reads the references, asks Latchkey for the values, and starts the command with them in its environment; anything it prints of them is concealed.</figcaption></figure>
 <p>Reads ask unless a grant or the No Approval setting permits them. Values that reach the command&rsquo;s output are replaced with <code>&lt;concealed by latchkey&gt;</code>. The command&rsquo;s exit status becomes <code>latchkey run</code>&rsquo;s.</p>
 
 <h2 id="grant">4. Let an agent work</h2>
