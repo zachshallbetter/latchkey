@@ -21,6 +21,9 @@
   --t-flag: #7a3cb3;
   --t-val: #1d6b43;
   --t-dim: #5a6472;
+  /* Behind a scene's windows: a little lighter than the page in dark mode, a little deeper in light. */
+  --scene-wash: #e3e8ef;
+  --tty-bg: #0f1318;
   --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   --display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
   --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
@@ -33,6 +36,7 @@
     --code-bg: #10151b; --code-fig: #19202a; --code-ink: #dbe3ec;
     --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 16px 40px rgba(0, 0, 0, .45);
     --t-act: #6cb2ff; --t-flag: #c9a2ff; --t-val: #7fd6a4; --t-dim: #98a2b0;
+    --scene-wash: #26303c; --tty-bg: #12171e;
     color-scheme: dark;
   }
 }
@@ -42,6 +46,7 @@
   --code-bg: #10151b; --code-fig: #19202a; --code-ink: #dbe3ec;
   --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 16px 40px rgba(0, 0, 0, .45);
   --t-act: #6cb2ff; --t-flag: #c9a2ff; --t-val: #7fd6a4; --t-dim: #98a2b0;
+  --scene-wash: #26303c; --tty-bg: #12171e;
   color-scheme: dark;
 }
 
@@ -180,6 +185,7 @@ dl.pages dd { margin: 2px 0 0; color: var(--muted); }
 .feature .copy > p { color: var(--muted); }
 .feature .copy h3 { font-size: clamp(22px, 2.6vw, 28px); letter-spacing: -0.02em; margin-top: 10px; }
 .feature figure.code { margin: 14px 0 0; }
+.feature figure.code pre code, .cap pre { white-space: pre-wrap; overflow-wrap: break-word; }
 .step { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); font: 700 14px/1 var(--sans); }
 @media (max-width: 860px) {
   .feature, .feature.flip { grid-template-columns: minmax(0, 1fr); padding: 40px 0; }
@@ -188,9 +194,8 @@ dl.pages dd { margin: 2px 0 0; color: var(--muted); }
 
 /* A scene. The canvas is drawn at --w × --h and scaled to the wrap's width; scenes.js sets --s. Without scripts, or
    with reduced motion, it shows its last frame. */
-.scene-wrap { position: relative; width: 100%; aspect-ratio: var(--w) / var(--h); border-radius: 16px; overflow: hidden;
-              background: radial-gradient(120% 90% at 20% 0%, color-mix(in srgb, var(--accent) 10%, var(--bg-2)), var(--bg-2));
-              border: 1px solid var(--line); }
+.scene-wrap { position: relative; width: 100%; aspect-ratio: var(--w) / var(--h); border-radius: 24px;
+              background: radial-gradient(62% 58% at 50% 50%, color-mix(in srgb, var(--accent) 9%, var(--scene-wash)), transparent 72%); }
 .scene-wrap .canvas { position: absolute; left: 0; top: 0; width: calc(var(--w) * 1px); height: calc(var(--h) * 1px);
                       transform: scale(var(--s, 1)); transform-origin: 0 0; font: 13px/1.5 var(--sans); color: var(--ink); }
 .scene-pause { position: absolute; right: 10px; bottom: 10px; z-index: 30; display: grid; place-items: center; width: 30px; height: 30px; padding: 0;
@@ -201,18 +206,18 @@ dl.pages dd { margin: 2px 0 0; color: var(--muted); }
 .no-js .scene-pause { display: none; }
 
 /* Mac windows inside a scene. */
-.mw { position: absolute; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden;
+.mw { position: absolute; border-radius: 11px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden;
       transition: opacity .35s ease, transform .35s ease; }
 .mw-bar { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; background: var(--bg-2); border-bottom: 1px solid var(--line); }
 .mw-bar i { width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; flex: none; }
 .mw-bar i:nth-child(2) { background: #febc2e; } .mw-bar i:nth-child(3) { background: #28c840; }
 .mw-bar span { margin: 0 auto; padding-right: 42px; font: 600 12px/1 var(--sans); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mw.tty { background: #0f1318; border-color: #222a33; color: #d7dee7; }
+.mw.tty { background: var(--tty-bg); border-color: #2a333e; color: #d7dee7; }
 .mw.tty .mw-bar { background: #171c22; border-color: #222a33; }
 .mw.tty .mw-bar span { color: #8b95a1; }
 .mw pre { margin: 0; padding: 10px 12px; font: 500 11.5px/1.65 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
 .mw.tty pre { height: calc(100% - 28px); overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
-.mw.tty pre > span.l { display: block; min-height: 1.65em; }
+.mw.tty pre > span.l { display: block; flex: none; min-height: 1.65em; }
 .mw .p { color: #8ec5ff; } .mw .d { color: #8b95a1; } .mw .c { color: #ffcf6b; } .mw .ok { color: #7fd6a4; } .mw .err { color: #ff9b8f; } .mw .w { color: #f0c27b; }
 .mw .k { color: #c9a2ff; }
 .mw.tty .cur { display: inline-block; width: 7px; height: 13px; vertical-align: -2px; background: #d7dee7; }
@@ -288,8 +293,11 @@ dl.pages dd { margin: 2px 0 0; color: var(--muted); }
 .tagnote { position: absolute; z-index: 22; padding: 4px 10px; border-radius: 999px; background: #34c759; color: #06210f; font: 600 11px/1.4 var(--sans);
            box-shadow: 0 6px 16px rgba(0, 0, 0, .25); transition: opacity .25s ease, transform .25s ease; }
 .tagnote.off { opacity: 0; transform: translateY(6px); }
-.more { font-weight: 600; text-decoration: none; }
+/* "Read more" links under a block of text: small and quiet, so they don't compete with the heading. */
+.more { display: inline-block; margin-top: 4px; font: 600 15px/1.4 var(--sans); color: var(--accent); text-decoration: none; }
+.more:hover { text-decoration: underline; }
 .more::after { content: " →"; }
+figure.code + .more { margin-top: 12px; }
 
 /* An iCloud hop between two Macs. */
 .sync-arc { position: absolute; z-index: 10; height: 2px; background: repeating-linear-gradient(90deg, var(--accent) 0 6px, transparent 6px 11px); opacity: .25; transition: opacity .3s; }
@@ -308,10 +316,32 @@ dl.pages dd { margin: 2px 0 0; color: var(--muted); }
 .mw.web .save { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 999px; background: #1f7cf0; color: #fff; font: 600 10.5px/1.4 var(--sans); transition: opacity .3s; }
 .mw.web .save svg { width: 9px; height: 11px; fill: #fff; }
 
+/* The Latchkey window drawn inside a scene, after the app's own layout: a sidebar of filter tiles and projects,
+   then the list grouped by environment, or an item's detail. */
+.mw.app .body { display: grid; grid-template-columns: 96px 1fr; height: calc(100% - 28px); }
+.mw.app .sb { padding: 8px 6px; background: var(--bg-2); border-right: 1px solid var(--line); }
+.mw.app .tl { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
+.mw.app .tl span { position: relative; padding: 14px 5px 3px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); font: 650 8.5px/1.1 var(--sans); }
+.mw.app .tl span.on { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.mw.app .tl span b { position: absolute; top: 3px; right: 5px; font-size: 9px; }
+.mw.app .sh { margin: 4px 3px 3px; font: 650 8.5px/1 var(--sans); color: var(--muted); }
+.mw.app .pj { display: flex; align-items: center; gap: 5px; padding: 3px 4px; border-radius: 5px; background: var(--surface); font-size: 10.5px; font-weight: 600; }
+.mw.app .pj i { width: 10px; height: 10px; border-radius: 3px; background: #6b7cf5; }
+.mw.app .pj em { margin-left: auto; font-style: normal; color: var(--muted); font-weight: 500; }
+.mw.app .card { display: flex; align-items: center; gap: 8px; margin: 8px; padding: 8px; border-radius: 8px; background: var(--bg-2); }
+.mw.app .card .ki { width: 28px; height: 28px; border-radius: 8px; }
+.mw.app .card b { display: block; font-size: 13px; }
+.mw.app .card small { color: var(--muted); font-size: 10.5px; }
+.mw.app .kv { display: flex; justify-content: space-between; gap: 8px; margin: 0 8px; padding: 5px 2px; border-bottom: 1px solid var(--line); font-size: 11px; }
+.mw.app .kv em { font-style: normal; color: var(--muted); transition: color .3s; }
+.mw.app .kv em.hl { color: var(--ok); font-weight: 600; }
 /* Rows in the Latchkey window drawn inside a scene. */
-.mw.app .rows { padding: 8px; }
+.mw.app .rows { padding: 6px; min-width: 0; }
 .mw.app .row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px; transition: background-color .3s; }
 .mw.app .row b { font-weight: 600; font-size: 12px; }
+.mw.app .row span:not(.ki) { min-width: 0; }
+.mw.app .row span b, .mw.app .row span small { display: block; margin: 0; font-size: 11px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mw.app .row span small { font-size: 9.5px; }
 .mw.app .row small { margin-left: auto; color: var(--muted); font-size: 11px; }
 .mw.app .row.hl { background: var(--accent); color: var(--accent-ink); }
 .mw.app .row.hl small { color: inherit; opacity: .85; }
@@ -320,7 +350,7 @@ dl.pages dd { margin: 2px 0 0; color: var(--muted); }
 .mw.app .ki { width: 20px; height: 20px; border-radius: 6px; flex: none; display: grid; place-items: center; background: #1f7cf0; }
 .mw.app .ki.pw { background: #f2994a; } .mw.app .ki.val { background: #8a929c; }
 .mw.app .ki::after { content: ""; width: 8px; height: 8px; border-radius: 2px; background: rgba(255, 255, 255, .9); }
-.mw.app .sub { padding: 2px 8px 6px; font: 650 10.5px/1 var(--sans); color: var(--muted); }
+.mw.app .sub { padding: 4px 8px 4px; font: 650 9.5px/1 var(--sans); color: var(--muted); }
 
 @media (prefers-reduced-motion: reduce) {
   .mw, .sheet, .chip, .cursor, .lk-card .state, .mw.ed .ln, .scene-pause, .tagnote { transition: none; }
@@ -328,9 +358,12 @@ dl.pages dd { margin: 2px 0 0; color: var(--muted); }
 }
 
 /* The header on narrow screens: the sections scroll sideways under the name. */
+/* The header on narrow screens stays one row: the name, then Features, Security and Docs. How it works and
+   the preview button are on the page itself. */
 @media (max-width: 720px) {
-  nav.top { flex-wrap: wrap; gap: 0 12px; padding-top: 6px; }
-  nav.top ul { order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; padding-bottom: 6px; }
-  nav.top ul a { min-height: 34px; padding: 0 10px; white-space: nowrap; }
-  nav.top ul li:has(.button) { display: none; }
+  nav.top { gap: 8px; }
+  .brand { font-size: 17px; }
+  nav.top ul { gap: 0; }
+  nav.top ul a { min-height: 36px; padding: 0 8px; font-size: 14px; white-space: nowrap; }
+  nav.top ul li:has(.button), nav.top ul li:has(a[href$="#how"]) { display: none; }
 }

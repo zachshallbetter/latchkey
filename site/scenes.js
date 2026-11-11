@@ -168,15 +168,14 @@
       var tty = s.$("#imp-tty");
       s.clear(tty);
       await s.wait(600);
-      await s.type(tty, "lk import .env.local --skip PORT,NODE_ENV --dry-run");
+      await s.type(tty, "lk import .env.local --dry-run --skip PORT");
       await s.lines(tty, ["into project shop, environment development",
-                          '<span class="d">ignore   NODE_ENV  (skipped: expires, or excluded by --skip)</span>',
                           '<span class="d">ignore   PORT  (skipped: expires, or excluded by --skip)</span>',
                           "add      shop/development/DATABASE_URL  password",
                           "add      shop/development/OPENAI_API_KEY  token",
                           "add      shop/development/STRIPE_KEY  token"], 140);
       await s.wait(1300);
-      await s.type(tty, "lk import .env.local --skip PORT,NODE_ENV --rewrite");
+      await s.type(tty, "lk import .env.local --rewrite --skip PORT");
       s.show("#imp-touch");
       await s.wait(1300);
       s.on("#imp-touch", "ok");
@@ -292,7 +291,7 @@
   SCENES.rotate = {
     reset: function (s) {
       s.clear(s.$("#rot-tty")); s.prompt(s.$("#rot-tty"));
-      s.on("#rot-ref", "hl", false); s.$("#rot-ver").textContent = "1 earlier value";
+      s.on("#rot-ref", "hl", false); s.on("#rot-ver", "hl", false); s.$("#rot-ver").textContent = "1 earlier value";
     },
     play: async function (s) {
       var tty = s.$("#rot-tty");
@@ -310,7 +309,7 @@
                           "  New value (leave empty to skip): ••••••••"], 160);
       await s.wait(700);
       await s.lines(tty, ['  <span class="ok">saved; the old value is in its history</span>']);
-      s.$("#rot-ver").textContent = "2 earlier values";
+      s.$("#rot-ver").textContent = "2 earlier values"; s.on("#rot-ver", "hl");
       s.on("#rot-ref", "hl");
       await s.wait(1600);
       s.on("#rot-ref", "hl", false);

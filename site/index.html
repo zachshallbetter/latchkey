@@ -23,8 +23,21 @@
        scenes (scenes.js), then the interactive approval panel, the app window and the key proxy. Text sections keep
        a reading column (.col); scenes and the app window use the full width. */
     .home .col { max-width: 760px; margin-left: auto; margin-right: auto; }
+    /* A section opens with a head aligned to the feature rows, then a wide example (a scene, a demo, the app
+       window, a grid of cards); any longer text follows in the centered reading column. */
+    .home section:not(.hero) { margin-top: 112px; }
+    .home .shead { max-width: 820px; margin-bottom: 28px; }
+    .home .shead h2 { margin-top: 0; }
+    .home .shead .intro { margin-bottom: 0; }
+    .home .col.after { margin-top: 28px; }
+    .home .cap-row { margin-top: 14px; }
+    .home .cap-row p { max-width: none; }
+    .home figure.code pre code { white-space: pre-wrap; overflow-wrap: break-word; }
+    .tools.limits3 { grid-template-columns: repeat(3, 1fr); margin: 0 0 16px; }
+    .tools.steps { grid-template-columns: repeat(3, 1fr); list-style: none; padding: 0; margin: 0; }
+    .tools.steps .step { margin-bottom: 10px; }
+    .tool code { font-size: .86em; }
     .home h2 { font-size: clamp(26px, 3.4vw, 34px); margin-top: 88px; }
-    .home .col > .eyebrow:first-child { margin-top: 88px; }
     .home .eyebrow + h2 { margin-top: 0; }
     .home .col > p, .home .col li { max-width: 66ch; }
     .home .feature h3 { margin-top: 12px; }
@@ -47,12 +60,12 @@
     .facts-row li { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 13.5px; color: var(--muted); }
 
     .scene-cap { max-width: 70ch; margin-top: 12px; }
-    .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+    .tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
     .tool { display: block; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); text-decoration: none; }
     .tool:hover { border-color: var(--accent); }
     .tool b { display: block; margin-bottom: 4px; font: 650 17px/1.3 var(--display); }
     .tool span { color: var(--muted); font-size: 15px; }
-    .try .stage { max-width: 860px; margin-left: auto; margin-right: auto; }
+    .appwrap { position: static; transform: none; left: auto; width: 100%; }
     .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin: 24px 0 8px; }
     .fine { font-size: 14px; color: var(--muted); }
 
@@ -85,10 +98,6 @@
     .panel .btn { white-space: nowrap; padding: 5px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 13px; }
     .panel .btn.go { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
 
-    .limits { padding-left: 20px; }
-    .limits li { margin: 8px 0; }
-    ol.install { padding-left: 22px; }
-    ol.install li { margin: 8px 0; }
     .placeholder { border: 1px dashed var(--warn); border-radius: 8px; padding: 10px 14px; font-size: 15px; color: var(--muted); }
 
     /* Scenes: shown when scripts run; the static figures above them stand in otherwise. */
@@ -99,7 +108,7 @@
     .button.small { min-height: 32px; padding: 0 12px; font-size: 14px; }
     .term .bar .tt { margin-left: 8px; font: 500 12px/11px var(--sans); color: #8b95a1; }
     /* A fixed-height terminal that keeps its last line in view, with room below it for the panel's overlap. */
-    #demo-out { height: 290px; overflow-y: auto; padding-bottom: 70px; }
+    #demo-out { height: 290px; overflow: hidden; padding-bottom: 70px; }
     .caret { display: inline-block; width: 8px; height: 15px; vertical-align: -2px; background: #d7dee7; animation: blink 1s steps(1) infinite; }
     @keyframes blink { 50% { opacity: 0; } }
     .panel { transition: opacity .18s ease, transform .18s ease, visibility .18s; }
@@ -110,8 +119,9 @@
     .panel button:not(:disabled):hover { filter: brightness(1.06); }
     .panel label { display: flex; align-items: center; gap: 6px; margin-top: 6px; color: var(--ink); }
     /* Beside the panel, in the space it hangs into. */
-    .demo-foot { position: absolute; left: 0; bottom: 0; width: calc(100% - min(430px, 94%) - 8px); display: flex; flex-direction: column;
-                 align-items: flex-start; gap: 10px; padding-bottom: 8px; }
+    .demo-foot { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin: 18px 0; }
+    .try .stage { margin: 0; }
+    .try .copy .fine { color: var(--muted); }
     .demo-foot p { margin: 0; font-size: 15px; }
     .js .demo-foot { min-height: 0; }
     .term .err { color: #ff9b8f; }
@@ -190,7 +200,8 @@
     .appwin .chrome i:nth-child(2) { background: #febc2e; } .appwin .chrome i:nth-child(3) { background: #28c840; }
     .appwin .chrome span { margin-left: 8px; font-weight: 600; color: var(--muted); }
     .appwin .body { display: grid; grid-template-columns: 210px 290px 1fr; height: 560px; }
-    .appwin .side, .appwin .list, .appwin .detail { overflow-y: auto; padding: 12px; min-width: 0; }
+    .appwin .side, .appwin .list, .appwin .detail { overflow-y: auto; padding: 12px; min-width: 0; scrollbar-width: none; }
+    .appwin .side::-webkit-scrollbar, .appwin .list::-webkit-scrollbar, .appwin .detail::-webkit-scrollbar { display: none; }
     .appwin .side { background: var(--bg-2); border-right: 1px solid var(--line); }
     .appwin .list { border-right: 1px solid var(--line); }
     .appwin .list.wide { grid-column: span 2; border-right: 0; }
@@ -295,10 +306,9 @@
       .proxy .packet.go { animation: none; opacity: 0; }
       .stage { padding-bottom: 0; }
       #demo-out { height: 260px; padding-bottom: 18px; }
-      .demo-foot { position: static; width: auto; margin-top: 12px; }
       .js .panel:not(.on) { display: none; }
       .panel { position: relative; right: auto; width: 100%; margin-top: -20px; }
-      .tools { grid-template-columns: 1fr; }
+      .tools, .tools.limits3, .tools.steps { grid-template-columns: 1fr; }
       .lede { font-size: 18px; }
     }
   </style>
@@ -358,7 +368,7 @@
     </section>
 
     <section id="how" aria-labelledby="how-title">
-      <div class="col">
+      <div class="shead">
         <p class="eyebrow">How it works</p>
         <h2 id="how-title">Your repository isn't your whole development environment.</h2>
         <p class="intro">Source code is portable: clone it anywhere and it's all there. The credentials it needs aren't. They sit in gitignored files on one Mac, in dashboards, in chat history. Latchkey gives them one home, a stable name for each, and a way for your tools to use them.</p>
@@ -389,20 +399,20 @@
         <div class="copy">
           <span class="step">2</span>
           <h3>Keep the files. Move the secrets.</h3>
-          <p>Point Latchkey at an env file. A dry run shows where each value would go and sends nothing. Then one approval saves them to iCloud Keychain under the repository's name and the environment the file name implies, and <code>--rewrite</code> leaves a reference where each value was. Plain settings such as <code>PORT</code> can stay as they are.</p>
-          <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code>lk import .env.local --skip PORT,NODE_ENV --dry-run
-lk import .env.local --skip PORT,NODE_ENV --rewrite</code></pre></figure>
+          <p>Point Latchkey at an env file. A dry run shows where each value would go and sends nothing. Then one approval saves them to iCloud Keychain under the repository's name and the environment the file name implies, and <code>--rewrite</code> leaves a reference where each value was. Plain settings such as <code>PORT</code> can stay as they are with <code>--skip</code>.</p>
+          <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code>lk import .env.local --dry-run --skip PORT
+lk import .env.local --rewrite --skip PORT</code></pre></figure>
           <a class="more" href="developers/cli.html#import">Importing, every option</a>
         </div>
         <div class="scene-wrap" data-scene="importenv" style="--w:600;--h:380" aria-hidden="true">
           <div class="canvas">
             <div class="mw ed" id="imp-env" style="left:12px;top:12px;width:576px;height:134px">
               <div class="mw-bar"><i></i><i></i><i></i><span>shop/.env.local</span></div>
-<pre><span class="ln kept"><span class="key">NODE_ENV</span>=<span class="lit">development</span></span><span class="ln kept"><span class="key">PORT</span>=<span class="lit">3000</span></span><span class="ln"><span class="key">DATABASE_URL</span>=<span class="v ref" data-before="postgres://app:9fK2…@db.neon.tech/shop" data-after="latchkey://shop/development/DATABASE_URL">latchkey://shop/development/DATABASE_URL</span></span><span class="ln"><span class="key">STRIPE_KEY</span>=<span class="v ref" data-before="sk_test_51Hx…" data-after="latchkey://shop/development/STRIPE_KEY">latchkey://shop/development/STRIPE_KEY</span></span><span class="ln"><span class="key">OPENAI_API_KEY</span>=<span class="v ref" data-before="sk-proj-Qx8…" data-after="latchkey://shop/development/OPENAI_API_KEY">latchkey://shop/development/OPENAI_API_KEY</span></span></pre>
+<pre><span class="ln kept"><span class="key">PORT</span>=<span class="lit">3000</span></span><span class="ln"><span class="key">DATABASE_URL</span>=<span class="v ref" data-before="postgres://app:9fK2…@db.neon.tech/shop" data-after="latchkey://shop/development/DATABASE_URL">latchkey://shop/development/DATABASE_URL</span></span><span class="ln"><span class="key">STRIPE_KEY</span>=<span class="v ref" data-before="sk_test_51Hx…" data-after="latchkey://shop/development/STRIPE_KEY">latchkey://shop/development/STRIPE_KEY</span></span><span class="ln"><span class="key">OPENAI_API_KEY</span>=<span class="v ref" data-before="sk-proj-Qx8…" data-after="latchkey://shop/development/OPENAI_API_KEY">latchkey://shop/development/OPENAI_API_KEY</span></span></pre>
             </div>
             <div class="mw tty" style="left:12px;top:158px;width:576px;height:210px">
               <div class="mw-bar"><i></i><i></i><i></i><span>Terminal — ~/Projects/shop</span></div>
-<pre id="imp-tty"><span class="l"><span class="p">~/Projects/shop $</span> lk import .env.local --skip PORT,NODE_ENV --rewrite</span><span class="l">recorded shop/development: DATABASE_URL, OPENAI_API_KEY, STRIPE_KEY</span><span class="l">added    shop/development/DATABASE_URL  password</span><span class="l">added    shop/development/OPENAI_API_KEY  token</span><span class="l">added    shop/development/STRIPE_KEY  token</span><span class="l">rewrote .env.local: 3 values now latchkey://ID</span><span class="l"><span class="d">next: lk run --env-file .env.local -- &lt;your command&gt;</span></span></pre>
+<pre id="imp-tty"><span class="l"><span class="p">~/Projects/shop $</span> lk import .env.local --rewrite --skip PORT</span><span class="l">recorded shop/development: DATABASE_URL, OPENAI_API_KEY, STRIPE_KEY</span><span class="l">added    shop/development/DATABASE_URL  password</span><span class="l">added    shop/development/OPENAI_API_KEY  token</span><span class="l">added    shop/development/STRIPE_KEY  token</span><span class="l">rewrote .env.local: 3 values now latchkey://ID</span><span class="l"><span class="d">next: lk run --env-file .env.local -- &lt;your command&gt;</span></span></pre>
             </div>
             <div class="sheet touch off" id="imp-touch" style="left:185px;top:120px">
               <svg class="fp" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg>
@@ -424,18 +434,22 @@ lk import .env.local --skip PORT,NODE_ENV --rewrite</code></pre></figure>
           <div class="canvas">
             <span class="device" style="left:14px;top:14px">MACBOOK PRO</span>
             <span class="device" style="left:332px;top:14px">MAC MINI</span>
-            <div class="mw app" id="macs-a" style="left:12px;top:32px;width:240px;height:200px">
+            <div class="mw app" id="macs-a" style="left:8px;top:32px;width:256px;height:206px">
               <div class="mw-bar"><i></i><i></i><i></i><span>Latchkey</span></div>
-              <div class="rows">
-                <div class="sub">SHOP · DEVELOPMENT</div>
-                <div class="row added"><span class="ki pw"></span><b>DATABASE_URL</b><small>Neon</small></div>
-                <div class="row added"><span class="ki"></span><b>STRIPE_KEY</b><small>Stripe</small></div>
-                <div class="sub">SHARED</div>
-                <div class="row added"><span class="ki"></span><b>OPENAI_API_KEY</b><small>OpenAI</small></div>
+              <div class="body">
+                <div class="sb"><div class="tl"><span class="on"><b>3</b>All</span><span><b>0</b>No Approval</span><span><b>3</b>Ask First</span><span><b>1</b>Activity</span></div>
+                  <p class="sh">Projects</p><div class="pj"><i></i>shop<em>2</em></div></div>
+                <div class="rows">
+                  <div class="sub">shop · development</div>
+                  <div class="row added"><span class="ki pw"></span><span><b>DATABASE_URL</b><small>Password · Neon</small></span></div>
+                  <div class="row added"><span class="ki"></span><span><b>STRIPE_KEY</b><small>Token · Stripe</small></span></div>
+                  <div class="sub">Shared</div>
+                  <div class="row added"><span class="ki"></span><span><b>OPENAI_API_KEY</b><small>Token · OpenAI</small></span></div>
+                </div>
               </div>
             </div>
-            <div class="sync-arc" id="macs-arc" style="left:252px;top:132px;width:78px"></div>
-            <div class="cloud" style="left:269px;top:110px"><svg viewBox="0 0 24 24"><path d="M18.5 19H7a5 5 0 0 1-.6-9.96A6.5 6.5 0 0 1 19 9.5a4.75 4.75 0 0 1-.5 9.5z"/></svg></div>
+            <div class="sync-arc" id="macs-arc" style="left:264px;top:132px;width:66px"></div>
+            <div class="cloud" style="left:275px;top:110px"><svg viewBox="0 0 24 24"><path d="M18.5 19H7a5 5 0 0 1-.6-9.96A6.5 6.5 0 0 1 19 9.5a4.75 4.75 0 0 1-.5 9.5z"/></svg></div>
             <div class="mw tty" style="left:330px;top:32px;width:298px;height:316px">
               <div class="mw-bar"><i></i><i></i><i></i><span>Terminal</span></div>
 <pre id="macs-tty"><span class="l"><span class="p">~/Code/shop $</span> lk export shop/development --out .env.local</span><span class="l">wrote .env.local: 3 references, 1 plain setting</span><span class="l"><span class="p">~/Code/shop $</span> lk run --env-file .env.local -- npm test</span><span class="l"><span class="d"> Test Files  2 passed (2)</span></span></pre>
@@ -470,11 +484,17 @@ lk import .env.local --skip PORT,NODE_ENV --rewrite</code></pre></figure>
       </div>
     </section>
 
-    <section class="try" id="demo-section" aria-labelledby="try-title">
-      <div class="col">
+    <section class="try feature flip" id="demo-section" aria-labelledby="try-title">
+      <div class="copy">
         <p class="eyebrow">Try it</p>
         <h2 id="try-title">Be the person at the Mac</h2>
         <p>An agent's command is asking for two keys. Choose in the panel the way you would in the app: Deny prints the real refusal, Allow Once runs the tests with the values concealed, and a grant shows the next run going through, or, limited to one command, asking again.</p>
+      
+        <div class="demo-foot">
+          <p id="demo-status" class="fine" aria-live="polite">You're the person at the Mac: when the agent's command asks, choose in the panel.</p>
+          <button id="demo-restart" class="button secondary small" type="button" hidden>Start over</button>
+        </div>
+        <p class="fine">Everything the panel shows comes from macOS, not from the request: the program and those that started it, the folder it runs in, and its full command line. A script that talks to Latchkey directly instead of through the signed <code>lk</code> tool is named by its path, with a warning. The same limits can be set ahead of time with <code>lk grant 'shop/development/*' --session --for 4h</code>.</p>
       </div>
       <div class="stage" id="demo">
         <div class="menubar">
@@ -523,22 +543,17 @@ lk import .env.local --skip PORT,NODE_ENV --rewrite</code></pre></figure>
           <button type="button" class="touch-btn" data-t="pw">Use Password…</button>
           <button type="button" class="touch-btn" data-t="deny">Deny</button>
         </div>
-        <div class="demo-foot">
-          <p id="demo-status" class="fine" aria-live="polite">You're the person at the Mac: when the agent's command asks, choose in the panel.</p>
-          <button id="demo-restart" class="button secondary small" type="button" hidden>Start over</button>
-        </div>
-      </div>
-      <div class="col">
-        <p class="fine">Everything the panel shows comes from macOS, not from the request: the program and those that started it, the folder it runs in, and its full command line. A script that talks to Latchkey directly instead of through the signed <code>lk</code> tool is named by its path, with a warning. The same limits can be set ahead of time with <code>lk grant 'shop/development/*' --session --for 4h</code>.</p>
       </div>
     </section>
 
-    <section class="col" id="app" aria-labelledby="app-title">
+    <section id="app" aria-labelledby="app-title">
+      <div class="shead">
       <p class="eyebrow">The app</p>
       <h2 id="app-title">Everything in one window</h2>
-      <p>Items grouped by project and environment, which ones agents may read without asking, where each is used, every request in Activity, and the grants in effect. This window works with example data. What you chose in the panel above is already in its Activity, and a grant you made is under Grants, where Revoke stops future reads through it. Changes ask for Touch ID; revealing a value asks unless its No Approval setting permits it.</p>
-      <div class="appwrap"><div class="appwin" id="appwin" aria-label="The Latchkey window, with example data"></div></div>
-      <p class="fine">Example data; the values are made up. The menu bar icon opens a smaller panel with search and recent activity, like the one above the terminal.</p>
+      <p class="intro">Items grouped by project and environment, which ones agents may read without asking, where each is used, every request in Activity, and the grants in effect. This window works with example data. What you chose in the panel above is already in its Activity, and a grant you made is under Grants, where Revoke stops future reads through it. Changes ask for Touch ID; revealing a value asks unless its No Approval setting permits it.</p>
+      </div>
+      <div class="appwrap"><div class="appwin" id="appwin" aria-label="The Latchkey window, with example data"></div>
+      <p class="fine cap-row">Example data; the values are made up. The menu bar icon opens a smaller panel with search and recent activity, like the one above the terminal.</p></div>
     </section>
 
     <div class="feature" id="rotate">
@@ -550,26 +565,29 @@ lk import .env.local --skip PORT,NODE_ENV --rewrite</code></pre></figure>
       </div>
       <div class="scene-wrap" data-scene="rotate" style="--w:600;--h:360" aria-hidden="true">
         <div class="canvas">
-          <div class="mw tty" style="left:12px;top:12px;width:576px;height:248px">
+          <div class="mw tty" style="left:12px;top:12px;width:576px;height:228px">
             <div class="mw-bar"><i></i><i></i><i></i><span>Terminal — ~/Projects/shop</span></div>
 <pre id="rot-tty"><span class="l"><span class="p">~/Projects/shop $</span> lk rotate shop/development/STRIPE_KEY --open</span><span class="l">ended grant 7c41e9 (shop/development/*)</span><span class="l"></span><span class="l">[1/1] shop/development/STRIPE_KEY  (Stripe)</span><span class="l">  Make a new key at https://dashboard.stripe.com/apikeys, then revoke the old one there.</span><span class="l">  New value (leave empty to skip): ••••••••</span><span class="l">  <span class="ok">saved; the old value is in its history</span></span></pre>
           </div>
-          <div class="mw ed" style="left:12px;top:272px;width:340px;height:76px">
+          <div class="mw ed" style="left:12px;top:248px;width:352px;height:106px">
             <div class="mw-bar"><i></i><i></i><i></i><span>shop/.env.local</span></div>
-            <pre><span class="ln" id="rot-ref"><span class="key">STRIPE_KEY</span>=<span class="ref">latchkey://shop/development/STRIPE_KEY</span></span><span class="ln"><span class="lit">unchanged</span></span></pre>
+            <pre style="font-size:10.5px"><span class="ln" id="rot-ref"><span class="key">STRIPE_KEY</span>=<span class="ref">latchkey://shop/development/STRIPE_KEY</span></span><span class="ln"><span class="lit"># the reference stays the same</span></span></pre>
           </div>
-          <div class="mw app" style="left:364px;top:272px;width:224px;height:76px">
+          <div class="mw app" style="left:376px;top:248px;width:212px;height:106px">
             <div class="mw-bar"><i></i><i></i><i></i><span>Latchkey</span></div>
-            <div class="rows"><div class="row"><span class="ki"></span><b>STRIPE_KEY</b><small id="rot-ver">2 earlier values</small></div></div>
+            <div class="card"><span class="ki"></span><span><b>STRIPE_KEY</b><small>shop/development · Stripe</small></span></div>
+            <div class="kv"><span>History</span><em id="rot-ver">2 earlier values</em></div>
           </div>
         </div>
       </div>
     </div>
 
-    <section class="col" id="proxy" aria-labelledby="proxy-title">
+    <section id="proxy" aria-labelledby="proxy-title">
+      <div class="shead">
       <p class="eyebrow">Mediated use</p>
       <h2 id="proxy-title">Keys an agent can use without reading</h2>
-      <p>A command that has a key in its environment can print it, encode it or send it somewhere, and masking only catches exact copies. For OpenAI and Anthropic keys, <code>lk run --proxy</code> keeps the key out of the command. The command gets a placeholder and a base URL on your Mac; Latchkey adds the real key to requests bound for <code>api.openai.com</code> or <code>api.anthropic.com</code> and refuses unauthenticated requests. Other credentials are still delivered normally.</p>
+      <p class="intro">A command that has a key in its environment can print it, encode it or send it somewhere, and masking only catches exact copies. For OpenAI and Anthropic keys, <code>lk run --proxy</code> keeps the key out of the command entirely. Try what a command could do with it:</p>
+      </div>
       <div class="scene proxy" id="proxy-demo">
         <div class="lanes">
           <div class="lane"><p class="label">In the command's environment</p><pre>OPENAI_API_KEY=lk-proxy-3f9c…8e4a
@@ -587,14 +605,18 @@ Authorization: Bearer <span id="proxy-auth">lk-proxy-3f9c…8e4a</span></pre></d
         <div class="term mini"><pre id="proxy-out"><span class="d">Choose something for the command to try.</span></pre></div>
         <p class="fine" id="proxy-status" aria-live="polite"></p>
       </div>
-      <p>For AWS, <code>lk run --aws-session</code> gives the command credentials from STS that expire after 15 minutes, while your long-lived key stays in Latchkey.</p>
-      <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code>lk run --proxy --env shop/development -- npm test
+      <div class="col after">
+        <p>The command gets a placeholder and a base URL on your Mac; Latchkey adds the real key to requests bound for <code>api.openai.com</code> or <code>api.anthropic.com</code> and refuses unauthenticated ones. Other credentials are still delivered normally. For AWS, <code>lk run --aws-session</code> gives the command STS credentials that expire after 15 minutes, while your long-lived key stays in Latchkey.</p>
+        <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code>lk run --proxy --env shop/development -- npm test
 lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></pre></figure>
+      </div>
     </section>
 
-    <section class="col" id="tools" aria-labelledby="tools-title">
+    <section id="tools" aria-labelledby="tools-title">
+      <div class="shead">
       <p class="eyebrow">Integrations</p>
       <h2 id="tools-title">Built for the tools you already use</h2>
+      </div>
       <div class="tools">
         <a class="tool" href="developers/cli.html"><b>Terminal and CLI</b><span>Run commands with values filled in, check what a run would get, and manage items, environments and history with <code>lk</code>.</span></a>
         <a class="tool" href="developers/agents.html"><b>Coding agents</b><span>A skill for Claude Code, Codex, Gemini CLI and Cursor; an MCP server with no secret-read tool; approvals and scoped grants.</span></a>
@@ -603,27 +625,34 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
       </div>
     </section>
 
-    <section class="col" id="security" aria-labelledby="security-title">
+    <section id="security" aria-labelledby="security-title">
+      <div class="shead">
       <p class="eyebrow">Security</p>
       <h2 id="security-title">What it protects, and where it stops</h2>
-      <p>Values live in iCloud Keychain in an access group only the signed Latchkey app can read. The <code>lk</code> tool checks the app's signature before sending anything, the app reads each caller's identity from the kernel, and every release, change and refusal goes in a tamper-evident log. Latchkey is as precise about its limits:</p>
-      <ul class="limits">
-        <li>A command you allowed has the key, and Latchkey can't control what it does with it. <code>--proxy</code> is the exception, for OpenAI and Anthropic.</li>
-        <li>A reference names a secret; it doesn't grant access to it. Every read that isn't agent-safe or granted still asks.</li>
-        <li>Any program running under your account can ask, so keep grants narrow and deny requests you don't recognize.</li>
-      </ul>
-      <p><a class="more" href="security.html">The security model, trust boundaries and limits</a></p>
+      <p class="intro">Values live in iCloud Keychain in an access group only the signed Latchkey app can read. The <code>lk</code> tool checks the app's signature before sending anything, the app reads each caller's identity from the kernel, and every release, change and refusal goes in a tamper-evident log. Latchkey is as precise about its limits.</p>
+      </div>
+      <div class="tools limits3">
+        <div class="tool"><b>A released value is out of its hands</b><span>A command you allowed has the key, and Latchkey can't control what it does with it. <code>--proxy</code> is the exception, for OpenAI and Anthropic.</span></div>
+        <div class="tool"><b>A reference isn't permission</b><span>It names a secret; it doesn't grant access to it. Every read that isn't agent-safe or granted still asks.</span></div>
+        <div class="tool"><b>Anything running as you can ask</b><span>Keep grants narrow and short, and deny requests you don't recognize.</span></div>
+      </div>
+      <a class="more" href="security.html">The security model, trust boundaries and limits</a>
     </section>
 
-    <section class="col" id="install" aria-labelledby="install-title">
+    <section id="install" aria-labelledby="install-title">
+      <div class="shead">
+      <p class="eyebrow">Install</p>
       <h2 id="install-title">Your projects move. Your credentials shouldn't need copying along with them.</h2>
-      <ol class="install">
-        <li>From a source checkout, run <code>scripts/install.sh</code> to build and install Latchkey.</li>
-        <li>Open Latchkey, then choose <b>Latchkey › Install Command Line Tool…</b> to add <code>latchkey</code> and <code>lk</code> to <code>~/.local/bin</code>.</li>
-        <li>Run <code>lk status</code>. It should say <code>storage: iCloud Keychain</code>.</li>
+      </div>
+      <ol class="tools steps">
+        <li class="tool"><span class="step">1</span><b>Build and install</b><span>From a source checkout, run <code>scripts/install.sh</code>.</span></li>
+        <li class="tool"><span class="step">2</span><b>Add the command-line tool</b><span>Open Latchkey and choose <b>Latchkey › Install Command Line Tool…</b> to add <code>latchkey</code> and <code>lk</code> to <code>~/.local/bin</code>.</span></li>
+        <li class="tool"><span class="step">3</span><b>Check it</b><span>Run <code>lk status</code>. It should say <code>storage: iCloud Keychain</code>.</span></li>
       </ol>
+      <div class="col after">
       <p class="placeholder">Development preview: there is no public disk image or Homebrew release yet. If you have the source checkout, use <code>scripts/install.sh</code> with Xcode and XcodeGen installed; configure your signing team in <code>App/project.yml</code> for iCloud Keychain storage. See the <a href="developers/quickstart.html#install">source installation steps</a>.</p>
       <p class="fine">macOS 15 or later. Intel release verification is pending. iCloud Keychain on for sync between Macs. <a href="developers/quickstart.html">Quickstart</a> · <a href="developers/cli.html">Command reference</a></p>
+      </div>
     </section>
   </main>
 

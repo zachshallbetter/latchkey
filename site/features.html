@@ -91,11 +91,11 @@ lk restore shop/development/STRIPE_KEY --version 1</pre><a href="developers/cli.
           <div class="canvas">
             <div class="mw ed" id="imp-env" style="left:12px;top:12px;width:576px;height:134px">
               <div class="mw-bar"><i></i><i></i><i></i><span>shop/.env.local</span></div>
-<pre><span class="ln kept"><span class="key">NODE_ENV</span>=<span class="lit">development</span></span><span class="ln kept"><span class="key">PORT</span>=<span class="lit">3000</span></span><span class="ln"><span class="key">DATABASE_URL</span>=<span class="v ref" data-before="postgres://app:9fK2…@db.neon.tech/shop" data-after="latchkey://shop/development/DATABASE_URL">latchkey://shop/development/DATABASE_URL</span></span><span class="ln"><span class="key">STRIPE_KEY</span>=<span class="v ref" data-before="sk_test_51Hx…" data-after="latchkey://shop/development/STRIPE_KEY">latchkey://shop/development/STRIPE_KEY</span></span><span class="ln"><span class="key">OPENAI_API_KEY</span>=<span class="v ref" data-before="sk-proj-Qx8…" data-after="latchkey://shop/development/OPENAI_API_KEY">latchkey://shop/development/OPENAI_API_KEY</span></span></pre>
+<pre><span class="ln kept"><span class="key">PORT</span>=<span class="lit">3000</span></span><span class="ln"><span class="key">DATABASE_URL</span>=<span class="v ref" data-before="postgres://app:9fK2…@db.neon.tech/shop" data-after="latchkey://shop/development/DATABASE_URL">latchkey://shop/development/DATABASE_URL</span></span><span class="ln"><span class="key">STRIPE_KEY</span>=<span class="v ref" data-before="sk_test_51Hx…" data-after="latchkey://shop/development/STRIPE_KEY">latchkey://shop/development/STRIPE_KEY</span></span><span class="ln"><span class="key">OPENAI_API_KEY</span>=<span class="v ref" data-before="sk-proj-Qx8…" data-after="latchkey://shop/development/OPENAI_API_KEY">latchkey://shop/development/OPENAI_API_KEY</span></span></pre>
             </div>
             <div class="mw tty" style="left:12px;top:158px;width:576px;height:210px">
               <div class="mw-bar"><i></i><i></i><i></i><span>Terminal — ~/Projects/shop</span></div>
-<pre id="imp-tty"><span class="l"><span class="p">~/Projects/shop $</span> lk import .env.local --skip PORT,NODE_ENV --rewrite</span><span class="l">recorded shop/development: DATABASE_URL, OPENAI_API_KEY, STRIPE_KEY</span><span class="l">added    shop/development/DATABASE_URL  password</span><span class="l">added    shop/development/OPENAI_API_KEY  token</span><span class="l">added    shop/development/STRIPE_KEY  token</span><span class="l">rewrote .env.local: 3 values now latchkey://ID</span><span class="l"><span class="d">next: lk run --env-file .env.local -- &lt;your command&gt;</span></span></pre>
+<pre id="imp-tty"><span class="l"><span class="p">~/Projects/shop $</span> lk import .env.local --rewrite --skip PORT</span><span class="l">recorded shop/development: DATABASE_URL, OPENAI_API_KEY, STRIPE_KEY</span><span class="l">added    shop/development/DATABASE_URL  password</span><span class="l">added    shop/development/OPENAI_API_KEY  token</span><span class="l">added    shop/development/STRIPE_KEY  token</span><span class="l">rewrote .env.local: 3 values now latchkey://ID</span><span class="l"><span class="d">next: lk run --env-file .env.local -- &lt;your command&gt;</span></span></pre>
             </div>
             <div class="sheet touch off" id="imp-touch" style="left:185px;top:120px">
               <svg class="fp" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg>
@@ -128,18 +128,22 @@ lk project</pre><a href="developers/cli.html#environments">Projects</a></article
           <div class="canvas">
             <span class="device" style="left:14px;top:14px">MACBOOK PRO</span>
             <span class="device" style="left:332px;top:14px">MAC MINI</span>
-            <div class="mw app" id="macs-a" style="left:12px;top:32px;width:240px;height:200px">
+            <div class="mw app" id="macs-a" style="left:8px;top:32px;width:256px;height:206px">
               <div class="mw-bar"><i></i><i></i><i></i><span>Latchkey</span></div>
-              <div class="rows">
-                <div class="sub">SHOP · DEVELOPMENT</div>
-                <div class="row added"><span class="ki pw"></span><b>DATABASE_URL</b><small>Neon</small></div>
-                <div class="row added"><span class="ki"></span><b>STRIPE_KEY</b><small>Stripe</small></div>
-                <div class="sub">SHARED</div>
-                <div class="row added"><span class="ki"></span><b>OPENAI_API_KEY</b><small>OpenAI</small></div>
+              <div class="body">
+                <div class="sb"><div class="tl"><span class="on"><b>3</b>All</span><span><b>0</b>No Approval</span><span><b>3</b>Ask First</span><span><b>1</b>Activity</span></div>
+                  <p class="sh">Projects</p><div class="pj"><i></i>shop<em>2</em></div></div>
+                <div class="rows">
+                  <div class="sub">shop · development</div>
+                  <div class="row added"><span class="ki pw"></span><span><b>DATABASE_URL</b><small>Password · Neon</small></span></div>
+                  <div class="row added"><span class="ki"></span><span><b>STRIPE_KEY</b><small>Token · Stripe</small></span></div>
+                  <div class="sub">Shared</div>
+                  <div class="row added"><span class="ki"></span><span><b>OPENAI_API_KEY</b><small>Token · OpenAI</small></span></div>
+                </div>
               </div>
             </div>
-            <div class="sync-arc" id="macs-arc" style="left:252px;top:132px;width:78px"></div>
-            <div class="cloud" style="left:269px;top:110px"><svg viewBox="0 0 24 24"><path d="M18.5 19H7a5 5 0 0 1-.6-9.96A6.5 6.5 0 0 1 19 9.5a4.75 4.75 0 0 1-.5 9.5z"/></svg></div>
+            <div class="sync-arc" id="macs-arc" style="left:264px;top:132px;width:66px"></div>
+            <div class="cloud" style="left:275px;top:110px"><svg viewBox="0 0 24 24"><path d="M18.5 19H7a5 5 0 0 1-.6-9.96A6.5 6.5 0 0 1 19 9.5a4.75 4.75 0 0 1-.5 9.5z"/></svg></div>
             <div class="mw tty" style="left:330px;top:32px;width:298px;height:316px">
               <div class="mw-bar"><i></i><i></i><i></i><span>Terminal</span></div>
 <pre id="macs-tty"><span class="l"><span class="p">~/Code/shop $</span> lk export shop/development --out .env.local</span><span class="l">wrote .env.local: 3 references, 1 plain setting</span><span class="l"><span class="p">~/Code/shop $</span> lk run --env-file .env.local -- npm test</span><span class="l"><span class="d"> Test Files  2 passed (2)</span></span></pre>
