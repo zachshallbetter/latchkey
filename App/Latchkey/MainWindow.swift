@@ -308,7 +308,13 @@ struct ItemList: View {
         .listStyle(.inset)
         .scrollContentBackground(.hidden)
         .contextMenu(forSelectionType: String.self) { ids in
-            SelectionMenu(model: model, ids: ids.sorted())
+            if !ids.isEmpty { SelectionMenu(model: model, ids: ids.sorted()) }
+        }
+        // The Item menu acts on the selected rows that are shown, and only while the list has focus.
+        .focusedValue(\.itemSelection, list.map(\.name).filter(model.selection.contains))
+        .onDeleteCommand {
+            let ids = list.map(\.name).filter(model.selection.contains)
+            if !ids.isEmpty { model.deleteRequest = DeleteRequest(ids: ids) }
         }
         .overlay { emptyOverlay(list) }
     }
@@ -553,35 +559,71 @@ struct ItemRow: View {
     }
 }
 
-/// The right-click menu for the selected items; with one item it also copies.
+/// What can be done to the selected items, with shortcuts: the right-click menu and the menu bar's Item menu. Copying a
+/// value takes one item; everything else applies to all of them with one approval.
 struct SelectionMenu: View {
     let model: AppModel
     let ids: [String]
 
     var body: some View {
         let items = ids.compactMap { model.item($0) }
-        if items.count == 1, let item = items.first {
-            Button("Copy Value") { Task { await model.copyValue(item.name) } }
-            Button("Copy Reference") { model.copyReference(item.name) }
-            Divider()
+        let several = items.count > 1
+        Button("Copy Value") { if let item = items.first { Task { await model.copyValue(item.name) } } }
+            .keyboardShortcut("c", modifiers: [.command, .option]).disabled(items.count != 1)
+        Button(several ? "Copy \(items.count) References" : "Copy Reference") { model.copyReferences(items.map(\.name)) }
+            .keyboardShortcut("c", modifiers: [.command, .shift]).disabled(items.isEmpty)
+        Button("Copy as Env File Lines") { model.copyReferences(items.map(\.name), envLines: true) }
+            .keyboardShortcut("e", modifiers: [.command, .shift]).disabled(items.isEmpty)
+        Divider()
+        let allSafe = !items.isEmpty && items.allSatisfy(\.agentSafe)
+        Button(allSafe ? "Require Approval" : "Let Agents Read Without Asking") {
+            Task { await model.updateItems(items.map(\.name), agentSafe: !allSafe) }
         }
-        if !items.isEmpty {
-            let allSafe = items.allSatisfy(\.agentSafe)
-            Button(allSafe ? "Require Approval" : "Let Agents Read Without Asking") {
-                Task { await model.updateItems(ids, agentSafe: !allSafe) }
-            }
-            Menu("Kind") {
-                ForEach(ItemKind.allCases, id: \.self) { k in
-                    Button(k.label) { Task { await model.updateItems(ids, kind: k) } }
-                }
-            }
-            Button("Move to a Project…") { model.moveRequest = MoveRequest(ids: ids) }
-            Button("Grant Access…") { model.grantRequest = GrantRequest(ids: ids) }
-            Divider()
-            Button(items.count == 1 ? "Delete…" : "Delete \(items.count) Items…", role: .destructive) {
-                model.deleteRequest = DeleteRequest(ids: ids)
+        .keyboardShortcut("a", modifiers: [.command, .option]).disabled(items.isEmpty)
+        Menu("Kind") {
+            ForEach(ItemKind.allCases, id: \.self) { k in
+                Button(k.label) { Task { await model.updateItems(items.map(\.name), kind: k) } }
             }
         }
+        .disabled(items.isEmpty)
+        Button("Move to a Project…") { model.moveRequest = MoveRequest(ids: items.map(\.name)) }
+            .keyboardShortcut("m", modifiers: [.command, .shift]).disabled(items.isEmpty)
+        Button("Grant Access…") { model.grantRequest = GrantRequest(ids: items.map(\.name)) }
+            .keyboardShortcut("g", modifiers: [.command, .shift]).disabled(items.isEmpty)
+        Divider()
+        Button(several ? "Delete \(items.count) Items…" : "Delete…", role: .destructive) {
+            model.deleteRequest = DeleteRequest(ids: items.map(\.name))
+        }
+        .keyboardShortcut(.delete, modifiers: .command).disabled(items.isEmpty)
+    }
+}
+
+extension FocusedValues {
+    /// The rows selected in the item list while it has focus, so the Item menu never acts on keys typed into a field.
+    @Entry var itemSelection: [String]?
+}
+
+/// The menu bar's Item menu: the selection menu, for the rows selected in the focused list.
+struct ItemCommands: Commands {
+    let model: AppModel
+    @FocusedValue(\.itemSelection) private var selection
+
+    var body: some Commands {
+        CommandMenu("Item") {
+            SelectionMenu(model: model, ids: selection ?? [])
+        }
+    }
+}
+
+extension AppModel {
+    /// One `latchkey://` reference per line, or `NAME=latchkey://ID` lines to paste into an env file.
+    func copyReferences(_ ids: [String], envLines: Bool = false) {
+        guard !ids.isEmpty else { return }
+        if ids.count == 1 && !envLines { return copyReference(ids[0]) }
+        let lines = ids.map { envLines ? "\(ItemID($0)?.name ?? $0)=\(References.scheme)\($0)" : References.scheme + $0 }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(lines.joined(separator: "\n") + (envLines ? "\n" : ""), forType: .string)
+        notice = "Copied \(ids.count) \(envLines ? "env file line" : "reference")\(ids.count == 1 ? "" : "s")."
     }
 }
 
@@ -629,8 +671,13 @@ struct BulkPanel: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section {
+                Button("Copy \(items.count) References") { model.copyReferences(items.map(\.name)) }
+                Button("Copy as Env File Lines") { model.copyReferences(items.map(\.name), envLines: true) }
                 Button("Move to a Project…") { model.moveRequest = MoveRequest(ids: ids) }
                 Button("Grant Access…") { model.grantRequest = GrantRequest(ids: ids) }
+            } footer: {
+                Text("⌘-click or Shift-click rows to change the selection, and ⌘A to select every row shown. The Item menu's shortcuts act on every selected row.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Section {
                 Button("Delete \(items.count) Items…", role: .destructive) { model.deleteRequest = DeleteRequest(ids: ids) }

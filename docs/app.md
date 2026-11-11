@@ -50,9 +50,24 @@ Each is a list with the selected entry's detail on the right.
 
 ### Selecting several items
 
-⌘-click or ⇧-click to select several. The detail pane becomes a summary with actions for all of them: require
-approval or let agents read, set the kind or service, move, grant access, delete. Each action asks for Touch ID once.
-Right-clicking the selection offers the same.
+⌘-click or ⇧-click to select several, ⇧↑ and ⇧↓ to extend the selection, and ⌘A to select every row shown. The
+detail pane becomes a summary with actions for all of them: copy their references, require approval or let agents
+read, set the kind or service, move, grant access, delete. Each change asks for Touch ID once.
+
+The **Item** menu and the right-click menu act on the selected rows that are shown, with these shortcuts while the list
+has focus:
+
+| Action | Shortcut |
+| --- | --- |
+| Copy Value (one item) | ⌥⌘C |
+| Copy Reference, or every selected item's reference, one per line | ⇧⌘C |
+| Copy as Env File Lines (`NAME=latchkey://ID`) | ⇧⌘E |
+| Require Approval, or Let Agents Read Without Asking | ⌥⌘A |
+| Move to a Project… | ⇧⌘M |
+| Grant Access… | ⇧⌘G |
+| Delete… | ⌘⌫ or Delete |
+
+Deleting always asks first. Kind has no shortcut; it's in both menus.
 
 ### An item's detail
 
