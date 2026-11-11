@@ -5,10 +5,11 @@ served. It isn't hosted or connected to any service yet.
 
 | File | What it is |
 |---|---|
-| `index.html` | The home page. Its own CSS is inline; the terminal and approval panel in the hero are HTML, not images |
+| `index.html` | The home page: one column that follows the `shop` example from env file to rotation. Its CSS is inline; the terminal and approval panel are HTML drawn after the app's real panel, not images |
 | `site.css` | Shared styles: colour tokens (light and dark), header, footer, code blocks, and the developer docs layout |
 | `site.js` | Copy buttons on code blocks |
-| `logo.svg` | The mark, used in the header, hero, favicon and download box. Replace this one file to change the logo |
+| `logo.svg` | The mark, used in the header, the drawn approval panel and the favicon. Replace this one file to change the logo |
+| `apple-touch-icon.png` | 180×180, rendered from the app icon (`sips -s format png -z 180 180 …/AppIcon.icns`) |
 | `developers/` | Developer docs: overview, quickstart, CLI reference, agents and MCP, references and API |
 | `llms.txt` | Plain-text facts, agent instructions and links for language-model tools |
 | `robots.txt` | Crawl policy |
@@ -24,7 +25,9 @@ belongs in both places. Every page shares the same header, sidebar and footer; c
 
 ## Before it goes live
 
-- A domain, then canonical URLs, `og:url`, an Open Graph image and a sitemap.
+- A domain, then canonical URLs, `og:url`, an Open Graph image (the pages use a text-only `summary` card until then)
+  and a sitemap.
+- The download link and Homebrew command in **Install** on the home page (marked PLACEHOLDER).
 - The **Download** buttons point at this repository's latest GitHub release, which only works once releases are
   public, and the page says the app is signed and notarized: notarize the release first (`scripts/release.sh`).
 - The page says Apple silicon and Intel: try the release on an Intel Mac.

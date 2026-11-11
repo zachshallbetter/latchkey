@@ -13,6 +13,8 @@
   <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="../logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="twitter:card" content="summary">
   <link rel="stylesheet" href="../site.css">
   <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="../llms.txt">
   <script defer src="../site.js"></script>
@@ -23,10 +25,8 @@
     <nav class="top wrap" aria-label="Main">
       <a class="brand" href="../index.html"><span class="mark"><img src="../logo.svg" alt=""></span>Latchkey</a>
       <ul>
-        <li class="hide-sm"><a href="../index.html#how">How it works</a></li>
-        <li class="hide-sm"><a href="../index.html#security">Security</a></li>
-        <li><a href="index.html" aria-current="page">Developers</a></li>
-        <li><a class="button primary" href="../index.html#download">Download</a></li>
+        <li><a href="index.html" aria-current="page">Docs</a></li>
+        <li><a class="button primary" href="../index.html#install">Download</a></li>
       </ul>
     </nav>
   </header>
@@ -40,11 +40,11 @@
 
 <h2 id="conventions">Conventions</h2>
 <ul>
-<li><strong><code>lk</code></strong> is the same tool: <code>lk run -- npm test</code>.</li>
-<li><strong>IDs</strong> are <code>NAME</code> or <code>project/environment/NAME</code>. Where a command takes several, separate them with commas.</li>
-<li><strong>PATTERN</strong> means <code>project/*</code> or <code>project/environment/*</code>.</li>
-<li><strong>Approvals.</strong> Each command that changes items asks once for everything it touches.</li>
-<li><strong>Starting the app.</strong> If the app isn&rsquo;t running, <code>latchkey</code> starts it hidden and waits. <code>LATCHKEY_NO_LAUNCH=1</code> fails with 69 instead.</li>
+<li><code>lk</code> is the same tool: <code>lk run -- npm test</code>.</li>
+<li>IDs are <code>NAME</code> or <code>project/environment/NAME</code>. Where a command takes several, separate them with commas.</li>
+<li>PATTERN means <code>project/*</code> or <code>project/environment/*</code>.</li>
+<li>Each command that changes items asks for approval once, for everything it touches.</li>
+<li>If the app isn&rsquo;t running, <code>latchkey</code> starts it hidden and waits. <code>LATCHKEY_NO_LAUNCH=1</code> fails with 69 instead.</li>
 </ul>
 
 <h2 id="running">Running commands</h2>

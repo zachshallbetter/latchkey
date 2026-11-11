@@ -13,6 +13,8 @@
   <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="../logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="twitter:card" content="summary">
   <link rel="stylesheet" href="../site.css">
   <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="../llms.txt">
   <script defer src="../site.js"></script>
@@ -23,10 +25,8 @@
     <nav class="top wrap" aria-label="Main">
       <a class="brand" href="../index.html"><span class="mark"><img src="../logo.svg" alt=""></span>Latchkey</a>
       <ul>
-        <li class="hide-sm"><a href="../index.html#how">How it works</a></li>
-        <li class="hide-sm"><a href="../index.html#security">Security</a></li>
-        <li><a href="index.html" aria-current="page">Developers</a></li>
-        <li><a class="button primary" href="../index.html#download">Download</a></li>
+        <li><a href="index.html" aria-current="page">Docs</a></li>
+        <li><a class="button primary" href="../index.html#install">Download</a></li>
       </ul>
     </nav>
   </header>
@@ -40,9 +40,9 @@
 
 <h2 id="pieces">The pieces</h2>
 <ul>
-<li><strong>The app</strong> holds the keychain. It runs the broker, shows approval panels, and keeps the log, grants and history. Only the signed app can read Latchkey&rsquo;s keychain access group.</li>
-<li><strong><code>latchkey</code></strong>, the command-line tool, asks the app for everything over a Unix socket. It starts the app in the background if it isn&rsquo;t running.</li>
-<li><strong>References</strong> such as <code>latchkey://shop/production/DATABASE_URL</code> go in env files and environment variables in place of values.</li>
+<li>The app holds the keychain. It runs the broker, shows approval panels, and keeps the log, grants and history. Only the signed app can read Latchkey&rsquo;s keychain access group.</li>
+<li><code>latchkey</code>, the command-line tool, asks the app for everything over a Unix socket. It starts the app in the background if it isn&rsquo;t running.</li>
+<li>References such as <code>latchkey://shop/production/DATABASE_URL</code> go in env files and environment variables in place of values.</li>
 </ul>
 <figure class="code"><figcaption><span>How it fits together</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">latchkey (CLI) ──JSON over a Unix socket──► Broker (in the app) ──► iCloud Keychain
                                               ├─ approval panel, then Touch ID
@@ -51,12 +51,12 @@
                                               └─ remote pushes via vercel, gh, railway, flyctl</code></pre></figure>
 
 <h2 id="start">Where to start</h2>
-<div class="cards">
-<a class="card" href="quickstart.html"><h3>Quickstart</h3><p>Install the tool, import an env file, run a command, grant a folder.</p></a>
-<a class="card" href="cli.html"><h3>CLI reference</h3><p>Every command and option, environment variables and exit codes.</p></a>
-<a class="card" href="agents.html"><h3>Agents and MCP</h3><p>Instructions for coding agents, grants for unattended work, Latchkey&rsquo;s MCP server, and other MCP servers behind <code>latchkey run</code>.</p></a>
-<a class="card" href="api.html"><h3>References and API</h3><p>The reference formats, the broker protocol, the access log, and the files Latchkey keeps.</p></a>
-</div>
+<dl class="pages">
+<dt><a href="quickstart.html">Quickstart</a></dt><dd>Install the tool, import an env file, run a command, grant a folder.</dd>
+<dt><a href="cli.html">CLI reference</a></dt><dd>Every command and option, environment variables and exit codes.</dd>
+<dt><a href="agents.html">Agents and MCP</a></dt><dd>Instructions for coding agents, narrower grants, keys an agent can use without reading, rotation after a session, SSH, and Latchkey&rsquo;s MCP server.</dd>
+<dt><a href="api.html">References and API</a></dt><dd>The reference formats, the broker protocol, the access log, and the files Latchkey keeps.</dd>
+</dl>
 
 <h2 id="ids">Item IDs</h2>
 <p>An item is either shared, <code>NAME</code>, or belongs to one environment of a project, <code>project/environment/NAME</code>. Each part is letters, digits, <code>_</code>, <code>-</code> and <code>.</code>, at most 64 bytes. The ID is the only place project and environment are stored.</p>

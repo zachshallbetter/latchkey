@@ -13,6 +13,8 @@
   <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="../logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="twitter:card" content="summary">
   <link rel="stylesheet" href="../site.css">
   <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="../llms.txt">
   <script defer src="../site.js"></script>
@@ -23,10 +25,8 @@
     <nav class="top wrap" aria-label="Main">
       <a class="brand" href="../index.html"><span class="mark"><img src="../logo.svg" alt=""></span>Latchkey</a>
       <ul>
-        <li class="hide-sm"><a href="../index.html#how">How it works</a></li>
-        <li class="hide-sm"><a href="../index.html#security">Security</a></li>
-        <li><a href="index.html" aria-current="page">Developers</a></li>
-        <li><a class="button primary" href="../index.html#download">Download</a></li>
+        <li><a href="index.html" aria-current="page">Docs</a></li>
+        <li><a class="button primary" href="../index.html#install">Download</a></li>
       </ul>
     </nav>
   </header>
@@ -80,9 +80,9 @@ latchkey rotate --touched --since 4h --by claude --open --push</code></pre></fig
 <figure class="code"><figcaption><span>On the other Mac</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">export LATCHKEY_SOCKET=/tmp/latchkey-$USER.sock    # on the other Mac
 latchkey run --env shop/development -- npm test</code></pre></figure>
 <ul>
-<li><strong>Every request asks.</strong> Your Mac sees only your <code>ssh</code> client, so grants and recent approvals don&rsquo;t apply, and grants can&rsquo;t be made over the connection. Agent-safe items still go through.</li>
-<li><strong>The approval panel says so</strong>, and shows what the tool on the other computer says it&rsquo;s running, marked as unchecked.</li>
-<li><strong>The tool there can&rsquo;t check the app&rsquo;s signature</strong> through a forwarded socket; <code>latchkey status</code> says so.</li>
+<li>Every request asks. Your Mac sees only your <code>ssh</code> client, so grants and recent approvals don&rsquo;t apply, and grants can&rsquo;t be made over the connection. Agent-safe items still go through.</li>
+<li>The approval panel says so, and shows what the tool on the other computer says it&rsquo;s running, marked as unchecked.</li>
+<li>The tool there can&rsquo;t check the app&rsquo;s signature through a forwarded socket; <code>latchkey status</code> says so.</li>
 <li>The other computer needs <code>latchkey</code> too; the tool is macOS only.</li>
 </ul>
 
@@ -96,11 +96,11 @@ latchkey run --env shop/development -- npm test</code></pre></figure>
 }</code></pre></figure>
 <table><thead><tr><th>Tool</th><th>What it does</th><th>Asks you?</th></tr></thead><tbody><tr><td><code>latchkey_status</code></td><td>Where values are kept, how you approve, item and grant counts</td><td>No</td></tr><tr><td><code>latchkey_list</code></td><td>Item IDs with kind, service and agent-safe, by <code>project</code> or <code>environment</code>. Never values</td><td>No</td></tr><tr><td><code>latchkey_check</code></td><td>What a run would get without asking, what would ask, and what&rsquo;s missing, for <code>env_files</code>, <code>environments</code>, <code>files</code> or <code>ids</code></td><td>No</td></tr><tr><td><code>latchkey_run</code></td><td>Runs <code>command</code> (an argument array) in <code>cwd</code> with references filled in. Returns the exit code and the output, masked</td><td>When an item isn&rsquo;t agent-safe or granted</td></tr><tr><td><code>latchkey_request_grant</code></td><td>Asks you for a grant on <code>ids</code> in the agent&rsquo;s folder for <code>duration</code></td><td>Always</td></tr></tbody></table>
 <ul>
-<li><strong>Output</strong> is always masked, and only the last 64 KB of each stream is returned, with a flag when it was cut. Standard input is empty.</li>
-<li><strong>Commands stop</strong> after <code>timeout_seconds</code>: 600 by default, at most 3600. Use it for tests, builds and scripts; run dev servers in a shell with <code>latchkey run</code>. A cancelled request stops its command.</li>
-<li><strong>Grants an agent asks for</strong> cover only the folder it runs in (and that repository&rsquo;s worktrees), end when the agent quits or after a day at most, and can&rsquo;t include production environments or a whole project. Grant those yourself with <code>latchkey grant</code>.</li>
-<li><strong>Approval panels</strong> for requests through the MCP server say they come from an agent.</li>
-<li><strong>Not offered:</strong> reading values, changing or deleting items, earlier values, remote locations and pushes.</li>
+<li>Output is always masked, and only the last 64 KB of each stream is returned, with a flag when it was cut. Standard input is empty.</li>
+<li>Commands stop after <code>timeout_seconds</code>: 600 by default, at most 3600. Use it for tests, builds and scripts; run dev servers in a shell with <code>latchkey run</code>. A cancelled request stops its command.</li>
+<li>Grants an agent asks for cover only the folder it runs in (and that repository&rsquo;s worktrees), end when the agent quits or after a day at most, and can&rsquo;t include production environments or a whole project. Grant those yourself with <code>latchkey grant</code>.</li>
+<li>Approval panels for requests through the MCP server say they come from an agent.</li>
+<li>Reading values, changing or deleting items, earlier values, remote locations and pushes aren&rsquo;t offered.</li>
 </ul>
 <figure class="code"><figcaption><span>A latchkey_run result</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="json">{
   &quot;content&quot;: [{ &quot;type&quot;: &quot;text&quot;, &quot;text&quot;: &quot;exit code 0

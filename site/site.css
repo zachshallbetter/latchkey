@@ -72,7 +72,6 @@ nav.top ul a:hover, nav.top ul a[aria-current="page"] { color: var(--ink); backg
 .button.secondary { background: var(--surface); color: var(--ink); border-color: var(--line); }
 .button.secondary:hover { border-color: var(--accent); }
 nav.top .button { min-height: 36px; padding: 0 14px; font-size: 14px; }
-@media (max-width: 720px) { nav.top ul li.hide-sm { display: none; } }
 
 /* Footer */
 footer.site { border-top: 1px solid var(--line); margin-top: 72px; padding: 28px 0 40px; color: var(--muted); font-size: 15px; }
@@ -116,14 +115,11 @@ article.doc li { margin: 6px 0; }
 .toc h2 { margin: 0 0 6px !important; padding: 0 !important; border: 0 !important; font: 700 12.5px/1.2 var(--sans) !important; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .toc ul { columns: 2 220px; margin: 0; padding-left: 18px; font-size: 15px; }
 .toc li { margin: 3px 0; }
-.note { margin: 18px 0; padding: 12px 16px; border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 10px; background: var(--accent-soft); font-size: 16px; }
+.note { margin: 18px 0; padding: 12px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg-2); font-size: 16px; }
 .note p:last-child { margin: 0; }
-.note.warn { border-left-color: var(--warn); background: var(--surface); }
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 18px 0; }
-.card { display: block; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); text-decoration: none; }
-.card:hover { border-color: var(--accent); }
-.card h3 { margin: 0 0 4px; }
-.card p { margin: 0; color: var(--muted); font-size: 15.5px; }
+dl.pages { margin: 18px 0; }
+dl.pages dt { font-weight: 650; margin-top: 14px; }
+dl.pages dd { margin: 2px 0 0; color: var(--muted); }
 .pager { display: flex; justify-content: space-between; gap: 12px; margin-top: 56px; }
 .pager a { display: block; flex: 1; max-width: 48%; padding: 12px 16px; border: 1px solid var(--line); border-radius: 12px; text-decoration: none; font-weight: 650; color: var(--ink); background: var(--surface); }
 .pager a:hover { border-color: var(--accent); }
