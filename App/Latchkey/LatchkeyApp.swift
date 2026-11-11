@@ -32,6 +32,14 @@ final class AppModel {
         let group = Bundle.main.object(forInfoDictionaryKey: "LatchkeyAccessGroup") as? String
         store = KeychainStore.automatic(accessGroup: group)
         broker = Broker(store: store, approver: SystemApprover())
+        #if DEBUG
+        if let i = CommandLine.arguments.firstIndex(of: "--snapshot"), i + 1 < CommandLine.arguments.count {
+            let path = CommandLine.arguments[i + 1]
+            refresh()
+            DispatchQueue.main.async { Snapshot.write(MenuView(model: self), to: path) }
+            return
+        }
+        #endif
         let broker = broker
         Thread.detachNewThread { [weak self] in
             do { try broker.serve() } catch {
@@ -192,3 +200,25 @@ struct AddItemView: View {
         .frame(width: 420)
     }
 }
+
+#if DEBUG
+/// `Latchkey --snapshot out.png` draws the menu bar panel off screen and exits, without starting the broker.
+/// For screenshots in docs and for checking the UI without clicking.
+@MainActor
+enum Snapshot {
+    static func write<V: View>(_ view: V, to path: String) {
+        let host = NSHostingView(rootView: view.background(Color(nsColor: .windowBackgroundColor)))
+        host.frame.size = host.fittingSize
+        let window = NSWindow(contentRect: host.frame, styleMask: .borderless, backing: .buffered, defer: false)
+        window.contentView = host
+        host.layoutSubtreeIfNeeded()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { exit(1) }
+            host.cacheDisplay(in: host.bounds, to: rep)
+            do { try rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: path)) }
+            catch { FileHandle.standardError.write(Data("\(error)\n".utf8)); exit(1) }
+            exit(0)
+        }
+    }
+}
+#endif
