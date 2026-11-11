@@ -95,6 +95,19 @@
     .demo-foot p { margin: 0; font-size: 15px; }
     .js .demo-foot { min-height: 0; }
     .term .err { color: #ff9b8f; }
+    .term .t-act { color: #8ec5ff; } .term .t-flag { color: #d4b3ff; } .term .t-val { color: #a5e3b5; }
+    .term .t-sep { color: #8b95a1; } .term .t-child { color: #d7dee7; }
+    /* The completion list under the command as it's typed, the way an editor suggests. */
+    .term { position: relative; }
+    .complete { position: absolute; z-index: 2; min-width: 260px; max-width: 360px; margin: 0; padding: 4px; list-style: none;
+                background: #1c232c; border: 1px solid #2c3540; border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
+                font: 500 12.5px/1.45 var(--mono); }
+    .complete li { display: grid; grid-template-columns: max-content 1fr; gap: 10px; padding: 3px 8px; border-radius: 5px; color: #d7dee7; }
+    .complete li.sel { background: #2b4a73; }
+    .complete li b { font-weight: 600; color: #d4b3ff; }
+    .complete li b.a { color: #8ec5ff; }
+    .complete li span { color: #a3adb9; font-family: var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .complete li.sel span { color: #d0d7e0; }
     .term .note { color: #8ec5ff; }
 
     .envfile .v { transition: background-color .5s ease, color .5s ease; border-radius: 3px; }
@@ -291,7 +304,7 @@ lk rotate --touched --since 4h --by claude --open --push</code></pre></figure>
       </ul>
     </div>
   </footer>
-  <script defer src="site.js"></script>
+  <script src="site.js"></script>
   <script>
   // The home page's scenes. Each one only redraws what Latchkey really prints and shows; with reduced motion they
   // jump to each step instead of animating.
@@ -329,10 +342,57 @@ lk rotate --touched --since 4h --by claude --open --push</code></pre></figure>
       var c = out.querySelector(".caret"); if (c) c.remove();
       if (on) write('<span class="caret"></span>');
     }
+    var RUN_FLAGS = ["--env", "--env-file", "--file", "--no-masking", "--proxy", "--aws-session", "--aws-role"];
+    var completeBox = document.createElement("ul");
+    completeBox.className = "complete"; completeBox.hidden = true; completeBox.setAttribute("aria-hidden", "true");
+    out.parentNode.appendChild(completeBox);
+    /// Suggestions for the part being typed: actions after lk, options after that, the -- separator.
+    function suggest(typed) {
+      var parts = typed.split(" "), cur = parts[parts.length - 1];
+      if (parts.length === 2 && cur) {
+        return Object.keys(LK.actions).filter(function (a) { return a.indexOf(cur) === 0; }).slice(0, 4)
+          .map(function (a) { return { name: a, tip: LK.actions[a], act: true }; });
+      }
+      var pastSeparator = parts.slice(0, -1).indexOf("--") >= 0;   // after --, it's the program's own arguments
+      if (!pastSeparator && cur.indexOf("-") === 0) {
+        var list = RUN_FLAGS.filter(function (f) { return f.indexOf(cur) === 0; })
+          .map(function (f) { return { name: f, tip: LK.flags[f][0] }; });
+        if ("--".indexOf(cur) === 0) list.push({ name: "--", tip: "Everything after this is the command lk starts" });
+        return list.slice(0, 5);
+      }
+      return [];
+    }
+    function showComplete(typed, full) {
+      var items = suggest(typed);
+      if (!items.length) { completeBox.hidden = true; return; }
+      var target = full.split(" ")[typed.split(" ").length - 1];
+      completeBox.innerHTML = items.map(function (it) {
+        return '<li' + (it.name === target ? ' class="sel"' : "") + '><b' + (it.act ? ' class="a"' : "") + ">" + esc(it.name) +
+               "</b><span>" + esc(it.tip) + "</span></li>";
+      }).join("");
+      var c = out.querySelector(".caret"), term = out.parentNode.getBoundingClientRect();
+      if (!c) return;
+      var r = c.getBoundingClientRect();
+      completeBox.hidden = false;
+      var left = Math.min(r.left - term.left, term.width - completeBox.offsetWidth - 8);
+      completeBox.style.left = Math.max(8, left) + "px";
+      completeBox.style.top = (r.bottom - term.top + 4) + "px";
+    }
     async function type(text, id) {
-      caret(false); write(PROMPT);
-      if (reduce) { write(esc(text)); return; }
-      for (var i = 0; i < text.length; i++) { if (id !== run) return; write(esc(text[i])); await wait(18); }
+      caret(false);
+      var before = out.innerHTML + PROMPT;
+      if (!reduce) {
+        for (var i = 1; i <= text.length; i++) {
+          if (id !== run) { completeBox.hidden = true; return; }
+          out.innerHTML = before + esc(text.slice(0, i)) + '<span class="caret"></span>';
+          out.scrollTop = out.scrollHeight;
+          showComplete(text.slice(0, i), text);
+          await wait(completeBox.hidden ? 18 : 55);
+        }
+      }
+      completeBox.hidden = true;
+      out.innerHTML = before + (text ? LK.highlight(text, { inert: true }) : "");
+      out.scrollTop = out.scrollHeight;
     }
     async function lines(list, id) {
       for (var i = 0; i < list.length; i++) { if (id !== run) return; write("\n" + list[i]); await wait(90); }

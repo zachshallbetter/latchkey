@@ -7,14 +7,15 @@ served. It isn't hosted or connected to any service yet.
 |---|---|
 | `index.html` | The home page: one column that follows the `shop` example from env file to rotation. Its CSS is inline; the terminal and approval panel are HTML drawn after the app's real panel, not images |
 | `site.css` | Shared styles: colour tokens (light and dark), header, footer, code blocks, and the developer docs layout |
-| `site.js` | Copy buttons on code blocks |
+| `site.js` | Copy buttons, and `lk` commands coloured by part (action, option, value, the program it runs) with an explanation of each on hover or focus. The explanations live in its `ACTIONS` and `FLAGS`; keep them in step with the CLI. On the home page each code block is one keyboard stop and the arrow keys move between parts; on the developer pages explanations are hover-only, since the tables there cover every option |
 | `logo.svg` | The mark, used in the header, the drawn approval panel and the favicon. Replace this one file to change the logo |
 | `apple-touch-icon.png` | 180×180, rendered from the app icon (`sips -s format png -z 180 180 …/AppIcon.icns`) |
 | `developers/` | Developer docs: overview, quickstart, CLI reference, agents and MCP, references and API |
 | `llms.txt` | Plain-text facts, agent instructions and links for language-model tools |
 | `robots.txt` | Crawl policy |
 
-The home page has three scenes, each redrawing only what Latchkey really prints and shows. In the approval
+In the opening terminal, a completion list appears under the command as each part is typed, the way an editor
+suggests, drawn from the same explanations. The home page has three scenes, each redrawing only what Latchkey really prints and shows. In the approval
 panel, the visitor plays the person at the Mac: Deny prints the real refusal, Allow Once runs the tests with the
 value concealed, and a grant shows the next run going through or, limited to one command, asking again. The env
 file rewrites itself into references. The proxy scene lets the visitor call the API, print, encode or send the key,
