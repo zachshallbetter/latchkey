@@ -24,6 +24,8 @@ The first release.
 - The Touch ID sheet says only what's asked ("Latchkey is trying to add shop/development/DB for claude"); the
   approval panel above it still shows the caller, folder and command.
 - After an import, the next-steps sheet offers a prompt to copy into an agent's instructions.
+- The window shows changes made on your other Macs: it looks again when Latchkey comes to the front and every 30
+  seconds while a window is open. Before, an open window kept showing an item deleted on another Mac.
 
 ### App Store groundwork
 - An isolated experimental sandbox build and preflight checks, following the Apple SDK patterns used in Peel.
