@@ -20,7 +20,7 @@ struct LatchkeyApp: App {
             }
         }
 
-        MenuBarExtra("Latchkey", systemImage: "key.horizontal") {
+        MenuBarExtra("Latchkey", image: "MenuBarIcon") {
             MenuBarPanel(model: model)
         }
         .menuBarExtraStyle(.window)

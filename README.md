@@ -86,6 +86,7 @@ approve the batch with Touch ID.
     Sources/latchkey       command-line tool
     Tests/LatchkeyCoreTests
     Sources/latchkey-broker  broker without a window
+    App/Branding/          the logo (key.svg)
     scripts/               install.sh, make-icon.swift
     App/                   the macOS menu bar app (xcodegen project.yml)
     docs/
@@ -98,3 +99,13 @@ approve the batch with Touch ID.
 | password | passwords, connection strings | yes |
 | key | SSH, GPG, .p8, .pem | yes |
 | value | IP addresses, host names, account ids | no |
+
+## Logo
+
+The key is a Font Awesome Pro glyph (commercial license; the notice is kept inside each copy of the SVG). After
+changing `App/Branding/key.svg`, regenerate the app icon:
+
+    swift scripts/make-icon.swift App/Branding/key.svg App/Latchkey/Assets.xcassets/AppIcon.appiconset/icon_1024.png
+
+then resize it to the smaller sizes in the same folder (`sips -z 512 512 … --out icon_512.png`, and so on). The menu bar
+icon and the in-app mark are copies of the SVG in `Assets.xcassets` (`MenuBarIcon`, `Logo`).

@@ -33,6 +33,14 @@ struct KindIcon: View {
     }
 }
 
+/// The Latchkey key, tinted like an SF Symbol so it follows the context it sits in.
+struct LogoMark: View {
+    var size: CGFloat = 44
+    var body: some View {
+        Image("Logo").resizable().renderingMode(.template).scaledToFit().frame(width: size, height: size)
+    }
+}
+
 struct MainWindow: View {
     @Bindable var model: AppModel
 
@@ -199,7 +207,7 @@ struct ItemList: View {
         .overlay {
             if list.isEmpty {
                 ContentUnavailableView {
-                    Label(model.items.isEmpty ? "No Items Yet" : "No Matches", systemImage: "key.horizontal")
+                    Label { Text(model.items.isEmpty ? "No Items Yet" : "No Matches") } icon: { LogoMark() }
                 } description: {
                     Text(model.items.isEmpty
                          ? "Add a token, or drop a .env file here to import it."
@@ -335,8 +343,11 @@ struct EmptyDetail: View {
             ContentUnavailableView("Activity", systemImage: "clock.arrow.circlepath",
                                    description: Text("Who read or changed what, from where. Values are never logged."))
         } else {
-            ContentUnavailableView("No Item Selected", systemImage: "key.horizontal",
-                                   description: Text("Files keep latchkey://NAME references; Latchkey keeps the values."))
+            ContentUnavailableView {
+                Label { Text("No Item Selected") } icon: { LogoMark() }
+            } description: {
+                Text("Files keep latchkey://NAME references; Latchkey keeps the values.")
+            }
         }
     }
 }

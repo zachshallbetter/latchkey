@@ -1,0 +1,289 @@
+<title>Latchkey Roadmap</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; a status strip, then tiers of work as divided rows (size | item | who it helps). */
+:root {
+  --bg: #f6f8f8;
+  --surface: #ffffff;
+  --fg: #14201f;
+  --muted: #566664;
+  --line: #dbe3e2;
+  --accent: #1b6f86;        /* teal-to-indigo, from the app icon */
+  --accent-soft: #e2f0f2;
+  --next: #0e7a5c;
+  --next-soft: #ddf3ea;
+  --code-bg: #eaf0ef;
+  --display: "Space Grotesk", "Avenir Next", system-ui, sans-serif;
+  --body: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1615; --surface: #152020; --fg: #e4eceb; --muted: #93a5a2; --line: #26332f;
+    --accent: #6cc3d8; --accent-soft: #173238; --next: #5fd3a8; --next-soft: #15322a; --code-bg: #1c2928;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1615; --surface: #152020; --fg: #e4eceb; --muted: #93a5a2; --line: #26332f;
+  --accent: #6cc3d8; --accent-soft: #173238; --next: #5fd3a8; --next-soft: #15322a; --code-bg: #1c2928;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg); color: var(--fg);
+  font: 15px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 72px;
+}
+.wrap { max-width: 920px; margin: 0 auto; display: grid; gap: 40px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(2rem, 5vw, 2.75rem); line-height: 1.1; }
+h2 { font-size: 1.35rem; }
+h3 { font-size: 1.02rem; font-weight: 600; }
+p { margin: 0; }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+a { color: var(--accent); }
+.eyebrow { font: 500 0.75rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+
+header { display: grid; gap: 14px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.mark { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; flex: none;
+  background: linear-gradient(150deg, #1a9e8f, #214a9e); }
+.mark svg { width: 24px; height: 24px; fill: #ffffff; }
+header .lede { max-width: 65ch; color: var(--muted); font-size: 1.05rem; }
+.principle { max-width: 65ch; }
+.principle strong { font-family: var(--display); margin-right: 6px; }
+
+/* status strip */
+.status { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.status div { background: var(--surface); padding: 14px 16px; display: grid; gap: 4px; min-width: 0; }
+.status .k { font: 500 0.72rem/1.2 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.status .v { font-weight: 500; }
+.status .warn { color: #b25d00; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .status .warn { color: #f0a54a; } }
+:root[data-theme="dark"] .status .warn { color: #f0a54a; }
+
+/* controls */
+.controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--surface); }
+.seg button { font: 500 0.85rem var(--body); color: var(--muted); background: none; border: 0; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.seg button:focus-visible, .toggle input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.82rem; color: var(--muted); }
+.toggle { display: inline-flex; gap: 8px; align-items: center; font-size: 0.88rem; cursor: pointer; }
+
+/* tiers */
+.tier { display: grid; gap: 12px; }
+.tier-head { display: grid; gap: 4px; }
+.tier-head p { color: var(--muted); max-width: 65ch; }
+.items { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.item { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 6px 16px; padding: 16px 18px; border-top: 1px solid var(--line); }
+.item:first-child { border-top: 0; }
+.item[hidden] { display: none; }
+.size { font: 600 0.8rem/1 var(--mono); width: 34px; height: 26px; display: grid; place-items: center; border-radius: 6px; background: var(--accent-soft); color: var(--accent); margin-top: 1px; }
+.body { display: grid; gap: 6px; min-width: 0; }
+.title-row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.gap, .plan { font-size: 0.93rem; max-width: 70ch; }
+.gap { color: var(--muted); }
+.gap b, .plan b { color: var(--fg); font-weight: 600; }
+.who { display: flex; gap: 6px; align-items: flex-start; }
+.pill { font: 500 0.72rem/1 var(--body); padding: 5px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.pill.next { background: var(--next-soft); color: var(--next); border-color: transparent; font-weight: 600; }
+.item.is-next .size { background: var(--next-soft); color: var(--next); }
+
+@media (max-width: 620px) {
+  .item { grid-template-columns: 38px minmax(0, 1fr); }
+  .who { grid-column: 2; }
+}
+
+.limits { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.limits div { display: grid; gap: 6px; padding: 16px 18px; border: 1px dashed var(--line); border-radius: 12px; min-width: 0; }
+.limits p { color: var(--muted); font-size: 0.92rem; }
+footer { color: var(--muted); font-size: 0.85rem; display: grid; gap: 4px; }
+.empty { padding: 18px; color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) { .seg button { transition: background .15s, color .15s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span class="mark" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Pro 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2026 Fonticons, Inc.--><path d="M416.5 64C504.9 64 576.5 135.6 576.5 224C576.5 312.4 504.9 384 416.5 384C383.9 384 353.5 374.2 328.3 357.5L253.8 432L295.2 473.4L250 518.6L208.6 477.2L173.8 511.9L215.2 553.3L170 598.5L83.4 511.9L283.2 312.1C266.5 286.8 256.7 256.5 256.7 223.9C256.7 135.5 328.3 63.9 416.7 63.9zM416.5 128C363.5 128 320.5 171 320.5 224C320.5 277 363.5 320 416.5 320C469.5 320 512.5 277 512.5 224C512.5 171 469.5 128 416.5 128z"/></svg></span>
+      <span class="eyebrow">Latchkey · roadmap · November 2026</span>
+    </div>
+    <h1>What would make Latchkey excellent</h1>
+    <p class="lede">Latchkey keeps secrets for one person's Macs and the agents running on them. Files hold <code>latchkey://NAME</code> references; the app holds the values and releases them when a command starts. Below are the gaps between what's built and a tool you'd trust every day, in priority order.</p>
+    <p class="principle"><strong>Guiding rule:</strong> <span>values move from the keychain straight to the process that needs them. People approve; agents get references.</span></p>
+  </header>
+
+  <section class="status" aria-label="Where it stands">
+    <div><span class="k">Built</span><span class="v">CLI: run, get, set, rm, list, import, status</span></div>
+    <div><span class="k">Built</span><span class="v">Mac app: window, import sheet, menu bar, settings</span></div>
+    <div><span class="k">Built</span><span class="v">Approval by Touch ID, Apple Watch or password; access log</span></div>
+    <div><span class="k">Blocked</span><span class="v warn">iCloud sync: the app isn't signed with a team yet</span></div>
+  </section>
+
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Show items that help">
+      <button type="button" id="f-all" data-f="all" aria-pressed="true">Everything</button>
+      <button type="button" id="f-you" data-f="you" aria-pressed="false">For you</button>
+      <button type="button" id="f-agents" data-f="agents" aria-pressed="false">For agents</button>
+    </div>
+    <label class="toggle"><input type="checkbox" id="only-next"><span>Only what's next up</span></label>
+    <div class="legend" aria-label="Size key"><span><b>S</b> hours</span><span><b>M</b> a day or two</span><span><b>L</b> a week or more</span></div>
+  </div>
+
+  <main id="tiers" class="wrap" style="gap:36px"></main>
+
+  <section class="tier">
+    <div class="tier-head">
+      <span class="eyebrow">Outside the plan</span>
+      <h2>Limits and non-goals</h2>
+    </div>
+    <div class="limits">
+      <div><h3>Items in the Passwords app</h3><p>Apple doesn't let other apps write to or read from the Passwords app. Latchkey uses the same iCloud Keychain underneath, in its own group. CSV import is the bridge.</p></div>
+      <div><h3>Passkeys as API tokens</h3><p>A passkey only signs logins for one website. Latchkey uses the same Touch ID check for approvals, and Secure Enclave keys for SSH.</p></div>
+      <div><h3>Teams and other platforms</h3><p>Latchkey is for one person's Macs. Shared vaults, Windows and Linux are out of scope.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Sizes are rough estimates for one person working with Claude. "Next up" marks the recommended first batch: it fixes what got in the way during the first real session (an agent stalled while nobody was at the Mac to approve).</p>
+  </footer>
+</div>
+
+<script>
+const tiers = [
+  { id: "basics", eyebrow: "Tier 1", title: "Fix the basics", note: "Things that undercut daily use or trust today.", items: [
+    { t: "Sign the app with your team", s: "S", who: ["you"], next: true,
+      gap: "<b>Gap:</b> unsigned builds can't use iCloud Keychain, so nothing syncs, and every reinstall makes macOS ask for your login password per item.",
+      plan: "<b>Plan:</b> sign in to Xcode with your Apple Account and set <code>DEVELOPMENT_TEAM</code>. A personal team should cover your own Macs; a paid Developer ID and notarization only matter for sharing builds." },
+    { t: "CLI starts the app when it isn't running", s: "S", who: ["you", "agents"], next: true,
+      gap: "<b>Gap:</b> if the app is closed, every <code>latchkey</code> command fails with “cannot reach the app”.",
+      plan: "<b>Plan:</b> when the socket is missing, launch Latchkey in the background, wait for it to answer, then carry on." },
+    { t: "Time-limited grants", s: "M", who: ["agents"], next: true,
+      gap: "<b>Gap:</b> when you step away, approval prompts time out and agents stall.",
+      plan: "<b>Plan:</b> grants such as “agents in <code>~/Projects/site</code> may read these 4 items for 2 hours”, created from the window or from an approval. Each grant appears in Activity and can be revoked." },
+    { t: "“Allow for this project” on the approval", s: "M", who: ["you", "agents"], next: true,
+      gap: "<b>Gap:</b> the system sheet can only say yes or no, with one line of context.",
+      plan: "<b>Plan:</b> a Latchkey panel before Touch ID shows who is asking, from which folder and for which command, with Deny, Allow once, and Allow here for 1 hour / today." },
+    { t: "Verify callers by code signature", s: "M", who: ["agents"],
+      gap: "<b>Gap:</b> the caller chain is process names, which any program can fake, and callers are identified by PID, which can be reused.",
+      plan: "<b>Plan:</b> identify the caller by its audit token instead of its PID, and check the signing team of each process in the chain (Claude, Cursor, Terminal), so rules can trust a real identity." },
+  ]},
+  { id: "agents", eyebrow: "Tier 2", title: "Built for agents", note: "Where Latchkey can be clearly better than a .env file or a password manager.", items: [
+    { t: "Use a value without holding it", s: "M", who: ["agents"],
+      gap: "<b>Gap:</b> “agent-safe” means the agent can hold the value: it can call <code>latchkey get</code>, and masking only catches exact copies.",
+      plan: "<b>Plan:</b> refuse <code>get</code> to agent callers, and mask base64, URL-encoded and JSON-escaped copies too." },
+    { t: "MCP server", s: "M", who: ["agents"],
+      gap: "<b>Gap:</b> agents learn Latchkey from instructions and shell commands.",
+      plan: "<b>Plan:</b> <code>latchkey mcp</code> with tools to list and describe items, run a command with references filled in, and request a secret. No tool returns a value." },
+    { t: "Secret requests", s: "M", who: ["agents", "you"],
+      gap: "<b>Gap:</b> to add a key, an agent has to handle the value or ask you to do it out of band.",
+      plan: "<b>Plan:</b> the agent asks for <code>STRIPE_KEY</code> for this project, a notification opens a field in the app, you paste the value, and the agent gets back only the reference." },
+    { t: "Agent setup kit", s: "S", who: ["agents"],
+      gap: "<b>Gap:</b> every agent needs to be told how to use Latchkey, and nothing stops it from running <code>cat .env</code>.",
+      plan: "<b>Plan:</b> <code>latchkey agents-md</code> prints instructions for CLAUDE.md or AGENTS.md, plus a Claude Code hook that blocks commands like <code>cat .env</code> and <code>printenv</code>." },
+    { t: "Rules beyond one switch", s: "L", who: ["agents", "you"],
+      gap: "<b>Gap:</b> agent-safe is one yes/no per item.",
+      plan: "<b>Plan:</b> rules per caller (agents vs. your terminal), per folder and per command, e.g. “DATABASE_URL only for <code>npm test</code> in this repo”." },
+    { t: "Header-injecting proxy", s: "L", who: ["agents"],
+      gap: "<b>Gap:</b> any value in a process's environment can be printed or written to a file.",
+      plan: "<b>Plan:</b> <code>latchkey proxy</code> adds the <code>Authorization</code> header for specific hosts, so an agent calls the API without ever holding the token." },
+  ]},
+  { id: "daily", eyebrow: "Tier 3", title: "Day-to-day use", note: "Smaller features that remove friction.", items: [
+    { t: "Key files", s: "M", who: ["you", "agents"],
+      gap: "<b>Gap:</b> tools that want a file path (.p8, .pem, service-account JSON) can't use an environment value.",
+      plan: "<b>Plan:</b> <code>GOOGLE_APPLICATION_CREDENTIALS=latchkey-file://gcp-sa</code> writes a 0600 temporary file and deletes it when the command exits." },
+    { t: "Project commands", s: "M", who: ["you", "agents"],
+      gap: "<b>Gap:</b> there's no standard way to set up a project or check it in CI.",
+      plan: "<b>Plan:</b> <code>latchkey init</code> writes a <code>.env.latchkey</code> you can commit, <code>latchkey check</code> confirms every reference exists without reading values, <code>latchkey export</code> serves Docker, and a shell hook loads references per folder." },
+    { t: "Last used, expiry and rotation", s: "M", who: ["you"],
+      gap: "<b>Gap:</b> nothing says which tokens are stale, unused or about to expire.",
+      plan: "<b>Plan:</b> last-used dates from the log, an expiry date per item, reminders before expiry, and a list of items nothing has read in 90 days." },
+    { t: "Items with fields", s: "M", who: ["you"],
+      gap: "<b>Gap:</b> AWS and database credentials come in sets that are stored as unrelated items.",
+      plan: "<b>Plan:</b> group items such as <code>aws.access_key_id</code> and <code>aws.secret_access_key</code> as one card with fields." },
+    { t: "Scan for plain-text secrets", s: "M", who: ["you", "agents"],
+      gap: "<b>Gap:</b> secrets already sitting in repos and old .env files stay there.",
+      plan: "<b>Plan:</b> <code>latchkey scan</code> finds likely secrets and offers to import them, plus a git pre-commit hook." },
+    { t: "Activity alerts", s: "S", who: ["you"],
+      gap: "<b>Gap:</b> denied or unusual reads are only visible if you open Activity.",
+      plan: "<b>Plan:</b> notifications for denials and first-time callers, and filters by item, folder and outcome." },
+  ]},
+  { id: "moving", eyebrow: "Tier 4", title: "Moving in", note: "Getting existing secrets into Latchkey, and getting them back out safely.", items: [
+    { t: "Import from Passwords", s: "S", who: ["you"],
+      gap: "<b>Gap:</b> tokens you've saved in the Passwords app can't be read by other apps.",
+      plan: "<b>Plan:</b> read a Passwords CSV export (File > Export), pick the entries that are really API tokens, import them, then delete the CSV." },
+    { t: "Import from other managers", s: "M", who: ["you"],
+      gap: "<b>Gap:</b> secrets in 1Password or Bitwarden have to be copied over one by one.",
+      plan: "<b>Plan:</b> importers that use the <code>op</code> and <code>bw</code> command-line tools." },
+    { t: "Encrypted backup", s: "M", who: ["you"],
+      gap: "<b>Gap:</b> until the app is signed, the login keychain is the only copy, with no recovery.",
+      plan: "<b>Plan:</b> an export encrypted with a passphrase, and a matching restore." },
+  ]},
+  { id: "later", eyebrow: "Tier 5", title: "Later", note: "Larger work that builds on everything above.", items: [
+    { t: "SSH agent with Secure Enclave keys", s: "L", who: ["you", "agents"],
+      gap: "<b>Gap:</b> SSH keys sit on disk as files.",
+      plan: "<b>Plan:</b> keys that can't be exported and ask for Touch ID on each use, also usable for git commit signing. Each Mac gets its own key." },
+    { t: "Approve from iPhone", s: "L", who: ["you", "agents"],
+      gap: "<b>Gap:</b> when you're away from the Mac, only the Apple Watch can approve.",
+      plan: "<b>Plan:</b> an iPhone companion that receives approval requests, for agents working while you're out." },
+    { t: "Distribution", s: "M", who: ["you"],
+      gap: "<b>Gap:</b> installing means building from source.",
+      plan: "<b>Plan:</b> a notarized build, a Homebrew cask, and in-app updates." },
+    { t: "Test coverage", s: "M", who: ["you"],
+      gap: "<b>Gap:</b> there are no end-to-end tests for <code>latchkey run</code> or the socket server, and no UI tests.",
+      plan: "<b>Plan:</b> tests that run the CLI against a broker with a test approver, plus a few UI tests for the window." },
+  ]},
+];
+
+const mount = document.getElementById("tiers");
+mount.innerHTML = tiers.map(tier => `
+  <section class="tier" id="tier-${tier.id}" aria-labelledby="h-${tier.id}">
+    <div class="tier-head">
+      <span class="eyebrow">${tier.eyebrow}</span>
+      <h2 id="h-${tier.id}">${tier.title}</h2>
+      <p>${tier.note}</p>
+    </div>
+    <ul class="items">
+      ${tier.items.map(i => `
+        <li class="item${i.next ? " is-next" : ""}" data-who="${i.who.join(" ")}" data-next="${i.next ? 1 : 0}">
+          <span class="size" title="${{S: "Hours", M: "A day or two", L: "A week or more"}[i.s]}">${i.s}</span>
+          <div class="body">
+            <div class="title-row"><h3>${i.t}</h3>${i.next ? '<span class="pill next">Next up</span>' : ""}</div>
+            <p class="gap">${i.gap}</p>
+            <p class="plan">${i.plan}</p>
+          </div>
+          <div class="who">${i.who.map(w => `<span class="pill">${w === "you" ? "You" : "Agents"}</span>`).join("")}</div>
+        </li>`).join("")}
+      <li class="empty" hidden>Nothing in this tier matches the filter.</li>
+    </ul>
+  </section>`).join("");
+
+let filter = "all", onlyNext = false;
+try { filter = localStorage.getItem("lk-filter") || "all"; onlyNext = localStorage.getItem("lk-next") === "1"; } catch (e) {}
+
+function apply() {
+  document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.f === filter)));
+  document.getElementById("only-next").checked = onlyNext;
+  document.querySelectorAll(".tier[id^='tier-']").forEach(sec => {
+    let shown = 0;
+    sec.querySelectorAll(".item").forEach(li => {
+      const ok = (filter === "all" || li.dataset.who.split(" ").includes(filter)) && (!onlyNext || li.dataset.next === "1");
+      li.hidden = !ok;
+      if (ok) shown++;
+    });
+    sec.querySelector(".empty").hidden = shown > 0;
+    sec.hidden = onlyNext && shown === 0;
+  });
+  try { localStorage.setItem("lk-filter", filter); localStorage.setItem("lk-next", onlyNext ? "1" : "0"); } catch (e) {}
+}
+document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => { filter = b.dataset.f; apply(); }));
+document.getElementById("only-next").addEventListener("change", e => { onlyNext = e.target.checked; apply(); });
+apply();
+</script>
