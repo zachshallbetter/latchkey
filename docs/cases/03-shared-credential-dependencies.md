@@ -8,7 +8,7 @@ Developers sometimes reuse provider credentials among projects, whether intentio
 
 ## Desired flow
 
-Project A, B and C each have `OPENAI_API_KEY=latchkey://shared/openai/PRIMARY_KEY`. There is one vault record, multiple configuration references and potentially distinct per-caller approval policies. Rotation updates the vault item, so references need not change.
+Project A, B and C each have `OPENAI_API_KEY=latchkey://OPENAI_API_KEY` (a shared item; shared IDs have no project or environment part). There is one vault record, multiple configuration references and potentially distinct per-caller approval policies. Rotation updates the vault item, so references need not change.
 
 ## Acceptance / tests
 
