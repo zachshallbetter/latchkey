@@ -2,67 +2,6 @@ import AppKit
 import LatchkeyCore
 import SwiftUI
 
-struct GrantList: View {
-    let model: AppModel
-
-    var body: some View {
-        List {
-            ForEach(model.grants) { g in GrantRow(model: model, grant: g) }
-        }
-        .overlay {
-            if model.grants.isEmpty {
-                ContentUnavailableView {
-                    Label("No Grants", systemImage: "hourglass")
-                } description: {
-                    Text("Every read of an item that isn't agent-safe asks first.")
-                } actions: {
-                    Button("New Grant…") { model.grantRequest = GrantRequest() }
-                }
-            }
-        }
-        .navigationTitle("Grants")
-        .navigationSubtitle("\(model.grants.count) in effect")
-        .toolbar {
-            ToolbarItemGroup {
-                Button { model.grantRequest = GrantRequest() } label: { Label("New Grant", systemImage: "plus") }
-                    .help("Let one folder read some items without asking, for a while")
-                if !model.grants.isEmpty {
-                    Button { Task { await model.revoke("all") } } label: { Label("Revoke All", systemImage: "xmark.circle") }
-                        .help("End every grant now")
-                }
-            }
-        }
-    }
-}
-
-struct GrantRow: View {
-    let model: AppModel
-    let grant: Grant
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "hourglass").foregroundStyle(.teal).frame(width: 18)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(Broker.tilde(grant.folder)).font(.callout.monospaced().weight(.medium)).lineLimit(1).truncationMode(.head)
-                Text(grant.names.joined(separator: ", ")).font(.callout).lineLimit(2)
-                if grant.repo != nil { Text("Includes repository worktrees").font(.caption).foregroundStyle(.secondary) }
-                if !grant.limits.isEmpty { Text(grant.limits.prefix(1).capitalized + grant.limits.dropFirst()).font(.caption).foregroundStyle(.secondary) }
-                TimelineView(.periodic(from: .now, by: 30)) { _ in
-                    Text("Ends \(grant.expires.formatted(.relative(presentation: .named))) · from \(grant.createdBy)")
-                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                }
-            }
-            Spacer()
-            Button("Revoke") { Task { await model.revoke(grant.id) } }.buttonStyle(.borderless)
-        }
-        .padding(.vertical, 3)
-        .contextMenu {
-            Button("Show Folder in Finder") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: grant.folder)]) }
-            Button("Revoke", role: .destructive) { Task { await model.revoke(grant.id) } }
-        }
-    }
-}
-
 struct NewGrantSheet: View {
     let model: AppModel
     @Environment(\.dismiss) private var dismiss
@@ -89,8 +28,8 @@ struct NewGrantSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("New Grant").font(.title3.weight(.semibold))
+            VStack(alignment: .leading, spacing: 10) {
+                SheetHeader(symbol: "checkmark.shield", tint: .teal, title: "New Grant")
                 Text("Programs in this folder, its subfolders and its repository’s Git worktrees can read these items until the grant ends. Revoking stops future reads, not values already released.")
                     .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }

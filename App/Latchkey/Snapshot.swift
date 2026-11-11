@@ -30,7 +30,7 @@ enum Snapshot {
         started = true
         if CommandLine.arguments.contains("--sample") {
             model.items = sampleItems
-            model.log = []
+            model.log = sampleLog
             model.grants = []
             model.deleted = sampleVersions.filter { $0.reason == .deleted }
             model.links = [
@@ -41,7 +41,6 @@ enum Snapshot {
         }
         if let names = arg("--select") {
             model.selection = Set(names.split(separator: ",").map(String.init))
-            model.reveal(Array(model.selection))
         }
         if arg("--filter") == "activity" { model.filter = .activity }
         if arg("--filter") == "grants" { model.filter = .grants }
@@ -71,6 +70,38 @@ enum Snapshot {
         }
         if arg("--part") == "remote" {
             drawOffscreen(RemoteSheet(model: model, scope: arg("--scope") ?? "shop/production"), to: path)
+            return
+        }
+        if arg("--part") == "additem" {
+            drawOffscreen(AddItemSheet(model: model), to: path)
+            return
+        }
+        if arg("--part") == "changevalue", let item = model.selectedItem {
+            drawOffscreen(ChangeValueSheet(model: model, item: item), to: path)
+            return
+        }
+        if arg("--part") == "edititem", let item = model.selectedItem {
+            drawOffscreen(EditItemSheet(model: model, item: item), to: path)
+            return
+        }
+        if arg("--part") == "findingdetail", let f = model.findings.first {
+            drawOffscreen(FindingDetail(model: model, finding: f).frame(width: 560, height: 700), to: path)
+            return
+        }
+        if arg("--part") == "activitydetail", let e = model.log.first {
+            drawOffscreen(ActivityDetail(entry: e).frame(width: 560, height: 640), to: path)
+            return
+        }
+        if arg("--part") == "deleteddetail", let v = model.deleted.first {
+            drawOffscreen(DeletedDetail(model: model, version: v).frame(width: 560, height: 640), to: path)
+            return
+        }
+        if arg("--part") == "activity" {
+            drawOffscreen(ActivityList(model: model).frame(width: 460, height: 560), to: path)
+            return
+        }
+        if arg("--part") == "review" {
+            drawOffscreen(ReviewList(model: model).frame(width: 420, height: 760), to: path)
             return
         }
         if arg("--part") == "pushapproval" {
@@ -109,6 +140,23 @@ enum Snapshot {
     }
 
     /// Example projects for screenshots: nothing here is a real value or a real project.
+    /// A few access-log entries, decoded the way the log file is read.
+    static var sampleLog: [Broker.LogEntry] {
+        let now = Date()
+        func entry(_ minutesAgo: Double, _ op: String, _ names: [String], _ decision: String, _ chain: [String]) -> Broker.LogEntry? {
+            let json: [String: Any] = ["time": ISO8601DateFormatter().string(from: now.addingTimeInterval(-minutesAgo * 60)), "op": op,
+                                       "names": names, "decision": decision, "chain": chain, "cwd": NSHomeDirectory() + "/Projects/shop"]
+            return (try? JSONSerialization.data(withJSONObject: json)).flatMap { try? Wire.decoder().decode(Broker.LogEntry.self, from: $0) }
+        }
+        return [
+            entry(3, "get", ["shop/production/DATABASE_URL"], "approved", ["zsh", "claude"]),
+            entry(9, "update", ["shop/development/API_TOKEN"], "denied", ["the Latchkey app"]),
+            entry(42, "rm", ["shop/preview/OLD_KEY"], "approved", ["zsh", "zsh", "claude"]),
+            entry(65, "revoke", ["shop/development/API_TOKEN"], "revoked 1 grant", ["zsh", "claude"]),
+            entry(130, "import", ["shop/development/API_TOKEN", "shop/development/DATABASE_URL", "shop/development/PGHOST"], "approved", ["the Latchkey app"]),
+        ].compactMap { $0 }
+    }
+
     static var sampleItems: [SecretInfo] {
         let now = Date()
         func i(_ id: String, _ kind: ItemKind, _ service: String?, safe: Bool = false, used: [String]? = nil) -> SecretInfo {

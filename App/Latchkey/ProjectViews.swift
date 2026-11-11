@@ -36,36 +36,7 @@ struct EnvBadge: View {
 }
 
 /// Projects in the sidebar. With many projects a filter field appears, so hundreds stay usable.
-struct ProjectsSection: View {
-    let model: AppModel
-    @State private var query = ""
-
-    var body: some View {
-        let all = model.projects
-        let q = query.trimmingCharacters(in: .whitespaces).lowercased()
-        let shown = q.isEmpty ? all : all.filter { $0.lowercased().contains(q) }
-        VStack(alignment: .leading, spacing: 2) {
-            Text("Projects").font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.leading, 8)
-            if all.count > 8 {
-                TextField("Filter \(all.count) projects", text: $query)
-                    .textFieldStyle(.roundedBorder).controlSize(.small).padding(.horizontal, 4).padding(.bottom, 4)
-            }
-            ForEach(shown, id: \.self) { p in
-                SidebarRow(model: model, filter: .project(p), symbol: "folder.fill", tint: .indigo)
-                    .contextMenu { ProjectMenu(model: model, project: p) }
-            }
-            if model.items.contains(where: { $0.ref.isShared }) {
-                SidebarRow(model: model, filter: .shared, symbol: "tray.full.fill", tint: .gray)
-            }
-            if all.isEmpty {
-                Text("Import a project's .env file, or move items into a project.")
-                    .font(.caption).foregroundStyle(.secondary).padding(.horizontal, 8).padding(.top, 2)
-            }
-        }
-    }
-}
-
-/// Actions on every item in a project, from its row in the sidebar or its header in a list.
+/// Actions on every item in a project, from its card in the list.
 struct ProjectMenu: View {
     let model: AppModel
     let project: String
@@ -85,7 +56,6 @@ struct GroupMenu: View {
 
     var body: some View {
         Button("Select All \(ids.count) Items") {
-            model.reveal(ids)
             model.selection = Set(ids)
         }
         Divider()
@@ -139,8 +109,8 @@ struct MoveSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Move to a Project").font(.title3.weight(.semibold))
+            VStack(alignment: .leading, spacing: 10) {
+                SheetHeader(symbol: "folder", tint: .indigo, title: "Move to a Project")
                 Text("Items keep their values and settings; their IDs change, and references in the files below are updated.")
                     .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }

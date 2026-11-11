@@ -50,7 +50,9 @@ struct MainWindow: View {
                 .navigationSplitViewColumnWidth(min: 230, ideal: 250, max: 320)
         } content: {
             Group {
-                if model.filter == .activity {
+                if model.filter == .overview {
+                    ReviewList(model: model)
+                } else if model.filter == .activity {
                     ActivityList(model: model)
                 } else if model.filter == .grants {
                     GrantList(model: model)
@@ -60,17 +62,28 @@ struct MainWindow: View {
                     ItemList(model: model)
                 }
             }
-            .navigationSplitViewColumnWidth(min: 280, ideal: 330)
+            .navigationSplitViewColumnWidth(min: 300, ideal: 360)
         } detail: {
-            if model.filter != .activity, model.filter != .grants, model.filter != .deleted, let item = model.selectedItem {
+            if model.filter == .overview {
+                if let f = model.findings.first(where: { $0.id == model.selectedFinding }) { FindingDetail(model: model, finding: f).id(f.id) }
+                else { EmptyDetail(model: model) }
+            } else if model.filter == .activity {
+                if let e = model.log.first(where: { $0.key == model.selectedLog }) { ActivityDetail(entry: e).id(e.key) }
+                else { EmptyDetail(model: model) }
+            } else if model.filter == .deleted {
+                if let v = model.deleted.first(where: { $0.id == model.selectedVersion }) { DeletedDetail(model: model, version: v).id(v.id) }
+                else { EmptyDetail(model: model) }
+            } else if model.filter == .grants {
+                if let g = model.grants.first(where: { $0.id == model.selectedGrant }) { GrantDetail(model: model, grant: g).id(g.id) }
+                else { EmptyDetail(model: model) }
+            } else if model.filter.listsItems, let item = model.selectedItem {
                 ItemDetail(model: model, item: item).id(item.name)
-            } else if model.filter != .activity, model.filter != .grants, model.filter != .deleted, model.selection.count > 1 {
+            } else if model.filter.listsItems, model.selection.count > 1 {
                 BulkPanel(model: model, ids: model.selection.sorted())
             } else {
                 EmptyDetail(model: model)
             }
         }
-        .searchable(text: $model.search, placement: .sidebar, prompt: "Search")
         .safeAreaInset(edge: .bottom, spacing: 0) { NoticeBar(model: model) }
         .sheet(isPresented: $model.showingAdd) { AddItemSheet(model: model) }
         .sheet(item: $model.importDraft) { ImportSheet(model: model, draft: $0) }
@@ -125,103 +138,111 @@ struct Sidebar: View {
     @Bindable var model: AppModel
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                Grid(horizontalSpacing: 8, verticalSpacing: 8) {
-                    GridRow {
-                        Tile(model: model, filter: .all, symbol: "square.grid.2x2.fill", color: .blue)
-                        Tile(model: model, filter: .agentSafe, symbol: "person.badge.shield.checkmark.fill", color: .green)
-                    }
-                    GridRow {
-                        Tile(model: model, filter: .needsApproval, symbol: "hand.raised.fill", color: .red)
-                        Tile(model: model, filter: .activity, symbol: "clock.arrow.circlepath", color: .indigo)
-                    }
-                }
+        VStack(spacing: 0) {
+            ScrollView {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Kinds").font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.leading, 8)
-                    ForEach(ItemKind.allCases, id: \.self) { k in
-                        SidebarRow(model: model, filter: .kind(k), kind: k)
-                    }
-                }
-                ProjectsSection(model: model)
-                if !model.services.isEmpty {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Services").font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.leading, 8)
-                        ForEach(model.services, id: \.self) { s in
-                            SidebarRow(model: model, filter: .service(s), symbol: "server.rack", tint: .gray)
+                    HStack(spacing: 10) {
+                        LogoMark(size: 30).foregroundStyle(.blue)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("Latchkey").font(.title3.weight(.semibold))
+                            Text("Development secrets").font(.callout).foregroundStyle(.secondary)
                         }
                     }
+                    .padding(.horizontal, 8).padding(.top, 2)
+                    Divider().padding(.vertical, 12).padding(.horizontal, 8)
+
+                    nav(.all, "square.grid.2x2", count: model.items.count)
+                    NavRow(title: SidebarFilter.overview.title, symbol: "shield", count: model.findings.isEmpty ? nil : model.findings.count,
+                           badge: true, selected: model.filter == .overview) { model.filter = .overview }
+                    nav(.activity, "waveform.path.ecg")
+
+                    if !model.items.isEmpty {
+                        SidebarSection(model: model, title: "Projects") {
+                            ForEach(model.projects, id: \.self) { p in
+                                NavRow(title: p, symbol: "folder", count: model.count(.project(p)), selected: model.filter == .project(p)) { model.filter = .project(p) }
+                                    .contextMenu { ProjectMenu(model: model, project: p) }
+                            }
+                            if model.items.contains(where: { $0.ref.isShared }) {
+                                NavRow(title: "Shared", symbol: "tray.full", count: model.count(.shared), selected: model.filter == .shared) { model.filter = .shared }
+                            }
+                        }
+                        if !model.services.isEmpty {
+                            SidebarSection(model: model, title: "Services") {
+                                ForEach(model.services, id: \.self) { s in
+                                    ServiceRow(name: s, count: model.count(.service(s)), selected: model.filter == .service(s)) { model.filter = .service(s) }
+                                }
+                            }
+                        }
+                    }
+
+                    Divider().padding(.vertical, 10).padding(.horizontal, 8)
+                    nav(.grants, "checkmark.shield", count: model.grants.isEmpty ? nil : model.grants.count)
+                    nav(.deleted, "trash", count: model.deleted.isEmpty ? nil : model.deleted.count)
                 }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Access").font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.leading, 8)
-                    SidebarRow(model: model, filter: .grants, symbol: "hourglass", tint: .teal)
-                    SidebarRow(model: model, filter: .deleted, symbol: "trash.fill", tint: .gray)
-                }
-                Spacer(minLength: 0)
-                StorageBadge(model: model)
+                .padding(10)
             }
-            .padding(10)
+            StorageBadge(model: model).padding(10)
         }
+    }
+
+    private func nav(_ filter: SidebarFilter, _ symbol: String, count: Int? = nil) -> some View {
+        NavRow(title: filter.title, symbol: symbol, count: count, selected: model.filter == filter) { model.filter = filter }
     }
 }
 
-struct Tile: View {
+/// A sidebar heading that folds its rows away.
+struct SidebarSection<Content: View>: View {
     let model: AppModel
-    let filter: SidebarFilter
-    let symbol: String
-    let color: Color
+    let title: String
+    @ViewBuilder let content: () -> Content
+    @State private var hovering = false
 
     var body: some View {
-        let on = model.filter == filter
+        let collapsed = model.collapsedSections.contains(title)
         Button {
-            model.filter = filter
-        } label: {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .top) {
-                    Image(systemName: symbol)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(on ? color : .white)
-                        .frame(width: 28, height: 28)
-                        .background(Circle().fill(on ? AnyShapeStyle(.white) : AnyShapeStyle(color.gradient)))
-                    Spacer()
-                    Text("\(model.count(filter))").font(.callout.weight(.semibold).monospacedDigit())
-                        .foregroundStyle(on ? .white : .secondary)
-                }
-                Text(filter.title).font(.headline).foregroundStyle(on ? .white : .primary).lineLimit(1)
+            withAnimation(.snappy) {
+                if collapsed { model.collapsedSections.remove(title) } else { model.collapsedSections.insert(title) }
             }
-            .padding(10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(on ? AnyShapeStyle(color.gradient) : AnyShapeStyle(.quaternary.opacity(0.6))))
-            .contentShape(RoundedRectangle(cornerRadius: 12))
+        } label: {
+            HStack {
+                Text(title.uppercased()).font(.caption.weight(.semibold)).tracking(0.6).foregroundStyle(.secondary)
+                Spacer()
+                // Shown on hover, or while folded, so the headings stay quiet.
+                Image(systemName: "chevron.down").font(.caption2.weight(.semibold)).foregroundStyle(.tertiary)
+                    .rotationEffect(.degrees(collapsed ? -90 : 0))
+                    .opacity(collapsed || hovering ? 1 : 0)
+            }
+            .padding(.horizontal, 10).padding(.top, 16).padding(.bottom, 4)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .accessibilityLabel("\(title), \(collapsed ? "collapsed" : "expanded")")
+        if !collapsed { content() }
     }
 }
 
-struct SidebarRow: View {
-    let model: AppModel
-    let filter: SidebarFilter
-    var kind: ItemKind? = nil
-    var symbol: String? = nil
-    var tint: Color = .gray
+/// A service in the sidebar: its initial in a small tile, its name, and how many items it issued.
+struct ServiceRow: View {
+    let name: String
+    let count: Int
+    let selected: Bool
+    let action: () -> Void
 
     var body: some View {
-        let on = model.filter == filter
-        Button { model.filter = filter } label: {
-            HStack(spacing: 8) {
-                if let kind {
-                    KindIcon(kind: kind, size: 20)
-                } else {
-                    RoundedRectangle(cornerRadius: 5, style: .continuous).fill(tint.gradient).frame(width: 20, height: 20)
-                        .overlay(Image(systemName: symbol ?? "circle").font(.system(size: 10, weight: .semibold)).foregroundStyle(.white))
-                }
-                Text(filter.title)
-                Spacer()
-                Text("\(model.count(filter))").foregroundStyle(.secondary).monospacedDigit()
+        Button(action: action) {
+            HStack(spacing: 10) {
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .strokeBorder(selected ? Color.white.opacity(0.8) : Color.secondary.opacity(0.6), lineWidth: 1.2)
+                    .frame(width: 20, height: 20)
+                    .overlay(Text(String(name.prefix(1)).uppercased()).font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(selected ? Color.white : Color.secondary))
+                Text(name).lineLimit(1).foregroundStyle(selected ? Color.white : Color.primary)
+                Spacer(minLength: 4)
+                Text("\(count)").monospacedDigit().foregroundStyle(selected ? Color.white.opacity(0.85) : Color.secondary)
             }
-            .padding(.horizontal, 8).padding(.vertical, 5)
-            .background(RoundedRectangle(cornerRadius: 6).fill(on ? AnyShapeStyle(.selection.opacity(0.35)) : AnyShapeStyle(.clear)))
+            .padding(.horizontal, 10).padding(.vertical, 7)
+            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(selected ? AnyShapeStyle(Color.accentColor.gradient) : AnyShapeStyle(.clear)))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -233,19 +254,24 @@ struct StorageBadge: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Label(model.synced ? "iCloud Keychain" : "This Mac only", systemImage: model.synced ? "icloud.fill" : "desktopcomputer")
-                .font(.callout.weight(.medium))
-            Text(model.synced
-                 ? "Uses iCloud Keychain; delivery to other Macs is not verified."
-                 : "Using the local keychain fallback. See Settings.")
-                .font(.caption).foregroundStyle(.secondary)
+            HStack(spacing: 8) {
+                Image(systemName: model.synced ? "icloud" : "desktopcomputer").foregroundStyle(.secondary)
+                Text(model.synced ? "iCloud Keychain" : "This Mac only").font(.callout.weight(.medium))
+                Spacer(minLength: 4)
+                Circle().fill(model.problem == nil ? (model.synced ? Color.green : Color.orange) : Color.red).frame(width: 7, height: 7)
+                Text(model.problem == nil ? (model.synced ? "On" : "Local") : "Problem").font(.caption).foregroundStyle(.secondary)
+            }
             if let p = model.problem {
                 Text(p).font(.caption).foregroundStyle(.red).textSelection(.enabled)
             }
         }
-        .padding(10)
+        .padding(.horizontal, 12).padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 10).fill(.quaternary.opacity(0.5)))
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.quaternary.opacity(0.35)))
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(.separator.opacity(0.5)))
+        .help(model.synced
+              ? "Items are kept in iCloud Keychain and sync to your Macs signed in to the same Apple Account. Latchkey can't confirm when another Mac has received a change."
+              : "Items are kept in this Mac's login keychain and don't sync. See Settings.")
     }
 }
 
@@ -254,53 +280,40 @@ struct StorageBadge: View {
 struct ItemList: View {
     @Bindable var model: AppModel
 
+    @FocusState private var searching: Bool
+
     var body: some View {
         let list = model.visibleItems
+        VStack(spacing: 0) {
+            ListHeader(model: model, count: list.count, searching: $searching)
+            itemList(list)
+        }
+        .navigationTitle(model.filter.title)
+        .toolbar(removing: .title)
+    }
+
+    /// Every item that matches, in one list, as 1Password lists them: each row says its project and environment
+    /// unless the view already does.
+    @ViewBuilder
+    private func itemList(_ list: [SecretInfo]) -> some View {
+        let inProject: Bool = { if case .project = model.filter { return true } else { return false } }()
         List(selection: $model.selection) {
-            if model.sort == .name {
-                // A tree, never a flat list of every key: project, then environment, then items, all closed
-                // until opened. In a project's own view the tree starts at its environments.
-                let inProject: Bool = { if case .project = model.filter { return true } else { return false } }()
-                let groups = ItemTree.build(list)
-                ForEach(groups) { group in
-                    if inProject {
-                        ForEach(group.environments) { env in
-                            EnvironmentGroup(model: model, project: group.project, env: env, indent: 0)
-                        }
-                    } else if group.project.isEmpty {
-                        let open = model.isOpen("shared")
-                        TreeHeader(open: open, toggle: { model.toggle("shared") }) {
-                            GroupHeader(symbol: "tray.full", title: "Shared", count: group.count)
-                        }
-                        if open {
-                            ForEach(group.environments.flatMap(\.items)) { item in
-                                ItemRow(item: item, showsProject: false).padding(.leading, 18).tag(item.name)
-                            }
-                        }
-                    } else {
-                        let open = model.isOpen(group.project)
-                        TreeHeader(open: open, toggle: { model.toggle(group.project) }) {
-                            GroupHeader(symbol: "folder", title: group.project, count: group.count,
-                                        environments: group.environments.map { ($0.name, $0.items.count) })
-                        }
-                        .contextMenu { ProjectMenu(model: model, project: group.project) }
-                        if open {
-                            ForEach(group.environments) { env in
-                                EnvironmentGroup(model: model, project: group.project, env: env, indent: 18)
-                            }
-                        }
-                    }
-                }
-            } else {
-                ForEach(list) { item in
-                    ItemRow(item: item).tag(item.name)
-                }
+            ForEach(list) { item in
+                ItemRow(model: model, item: item, showsProject: !inProject,
+                        showsEnvironment: model.environmentFilter == nil, remote: model.remoteStates[item.name])
+                    .tag(item.name)
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .contextMenu(forSelectionType: String.self) { ids in
             SelectionMenu(model: model, ids: ids.sorted())
         }
-        .overlay {
+        .overlay { emptyOverlay(list) }
+    }
+
+    @ViewBuilder
+    private func emptyOverlay(_ list: [SecretInfo]) -> some View {
             if list.isEmpty {
                 ContentUnavailableView {
                     Label { Text(model.items.isEmpty ? "No Items Yet" : "No Matches") } icon: { LogoMark() }
@@ -315,162 +328,214 @@ struct ItemList: View {
                     }
                 }
             }
+    }
+}
+
+/// The list's top: what's shown and how many, its menu, and the search field (⌘F).
+struct ListHeader: View {
+    @Bindable var model: AppModel
+    let count: Int
+    var searching: FocusState<Bool>.Binding
+
+    private var subtitle: String {
+        var parts = ["\(count) item\(count == 1 ? "" : "s")"]
+        switch model.filter {
+        case .project(let p):
+            let envs = model.environments(in: p)
+            parts.append(envs.count == 1 ? envs[0] : "\(envs.count) environments")
+        case .all where model.search.isEmpty:
+            let projects = model.projects.count, shared = model.count(.shared)
+            parts.append("\(projects) project\(projects == 1 ? "" : "s")")
+            if shared > 0 { parts.append("\(shared) shared") }
+        default:
+            break
         }
-        .navigationTitle(model.filter.title)
-        .navigationSubtitle("\(list.count) item\(list.count == 1 ? "" : "s")")
-        .toolbar {
-            ToolbarItemGroup {
-                Menu {
-                    Picker("Sort By", selection: $model.sort) {
-                        ForEach(SortOrder.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+        return parts.joined(separator: " · ")
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 12) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(model.filter.title).font(.title2.weight(.semibold)).lineLimit(1)
+                    if case .project(let p) = model.filter {
+                        HStack(spacing: 6) {
+                            ForEach(model.environments(in: p), id: \.self) { EnvBadge(environment: $0, compact: true).fixedSize() }
+                            Text("· \(count) item\(count == 1 ? "" : "s")").font(.callout).foregroundStyle(.secondary)
+                        }
+                    } else {
+                    ViewThatFits(in: .horizontal) {
+                        Text(subtitle).fixedSize()
+                        Text("\(count) item\(count == 1 ? "" : "s")")
                     }
-                    .pickerStyle(.inline)
-                } label: { Label("Sort", systemImage: "arrow.up.arrow.down") }
+                    .font(.callout).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                }
+                Spacer()
                 Menu {
                     Button("New Item…") { model.showingAdd = true }
                     Button("Import .env File…") { model.chooseImportFile() }
+                    if !model.selection.isEmpty {
+                        Divider()
+                        Button("Move Selected to a Project…") { model.moveRequest = MoveRequest(ids: model.selection.sorted()) }
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                }
+                .menuStyle(.button).buttonStyle(.bordered).menuIndicator(.hidden).fixedSize().focusEffectDisabled()
+                .help("New item, import, move")
+            }
+            HStack(spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                TextField("Search items…", text: $model.search).textFieldStyle(.plain).focused(searching)
+                if !model.search.isEmpty {
+                    Button { model.search = "" } label: { Image(systemName: "xmark.circle.fill") }.buttonStyle(.plain).foregroundStyle(.secondary)
+                } else {
+                    Text("⌘F").font(.caption.weight(.medium)).foregroundStyle(.secondary)
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(.quaternary.opacity(0.8)))
+                }
+            }
+            .padding(.horizontal, 12).padding(.vertical, 9)
+            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.quaternary.opacity(0.3)))
+            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(.separator.opacity(0.8)))
+            .background(Button("") { searching.wrappedValue = true }.keyboardShortcut("f").hidden())
+            }
+            FilterBar(model: model)
+        }
+        .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 10)
+    }
+}
+
+/// Dropdowns under the search field: type, environment, project and service, each showing its choice, then a menu for
+/// access and sort order.
+struct FilterBar: View {
+    @Bindable var model: AppModel
+
+    private var project: String? { if case .project(let p) = model.filter { return p } else { return nil } }
+    private var service: String? { if case .service(let s) = model.filter { return s } else { return nil } }
+
+    var body: some View {
+        HStack(spacing: 6) {
+            pill("Type", model.categoryFilter) {
+                Button("Any Type") { model.categoryFilter = nil }
+                Divider()
+                ForEach(model.categories, id: \.self) { c in Button(c) { model.categoryFilter = c } }
+            }
+            pill("Environment", model.environmentFilter) {
+                Button("Any Environment") { model.environmentFilter = nil }
+                Divider()
+                ForEach(model.allEnvironments, id: \.self) { e in Button(e) { model.environmentFilter = e } }
+            }
+            pill("Project", project) {
+                Button("Any Project") { model.filter = .all }
+                Divider()
+                ForEach(model.projects, id: \.self) { p in Button(p) { model.filter = .project(p) } }
+                Button("Shared") { model.filter = .shared }
+            }
+            pill("Service", service.map { $0.isEmpty ? "None" : $0 }) {
+                Button("Any Service") { model.filter = .all }
+                Divider()
+                ForEach(model.services, id: \.self) { s in Button(s) { model.filter = .service(s) } }
+            }
+            Spacer(minLength: 0)
+            Menu {
+                Picker("Sort By", selection: $model.sort) {
+                    ForEach(SortOrder.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                }
+                Picker("Access", selection: $model.accessFilter) {
+                    Text("Any Access").tag(Bool?.none)
+                    Text("No Approval").tag(Bool?.some(true))
+                    Text("Ask First").tag(Bool?.some(false))
+                }
+                if model.filtersActive || project != nil || service != nil {
                     Divider()
-                    Button("Move Items to a Project…") { model.moveRequest = MoveRequest(ids: model.selection.sorted()) }
-                } label: { Label("Add", systemImage: "plus") }
+                    Button("Clear Filters") { model.clearFilters(); model.filter = .all }
+                }
+            } label: {
+                Image(systemName: "line.3.horizontal").foregroundStyle(model.accessFilter == nil ? Color.secondary : Color.accentColor)
+                    .frame(width: 30, height: 26)
+                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(.quaternary.opacity(0.3)))
+                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(.separator.opacity(0.8)))
+                    .contentShape(RoundedRectangle(cornerRadius: 8))
             }
+            .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize().focusEffectDisabled()
+            .help("Sort order and access")
         }
+    }
+
+    /// A dropdown that names its choice, highlighted while one is made.
+    private func pill<Items: View>(_ title: String, _ choice: String?, @ViewBuilder _ items: () -> Items) -> some View {
+        Menu { items() } label: {
+            HStack(spacing: 4) {
+                Text(choice ?? title).lineLimit(1)
+                Image(systemName: "chevron.down").font(.caption2.weight(.semibold))
+            }
+            .font(.callout)
+            .foregroundStyle(choice == nil ? Color.primary : Color.accentColor)
+            .padding(.horizontal, 10).padding(.vertical, 5)
+            .background(RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(choice == nil ? AnyShapeStyle(.quaternary.opacity(0.3)) : AnyShapeStyle(Color.accentColor.opacity(0.15))))
+            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(.separator.opacity(0.8)))
+            .contentShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize().focusEffectDisabled()
     }
 }
 
-/// Items arranged as projects → environments → items, in the list's order (shared items last).
-enum ItemTree {
-    struct Environment: Identifiable {
-        let name: String
-        var items: [SecretInfo]
-        var id: String { name }
-    }
-
-    struct Project: Identifiable {
-        let project: String
-        var environments: [Environment]
-        var id: String { project }
-        var count: Int { environments.reduce(0) { $0 + $1.items.count } }
-    }
-
-    static func build(_ items: [SecretInfo]) -> [Project] {
-        var out: [Project] = []
-        for item in items.sorted(by: { $0.ref < $1.ref }) {
-            let p = item.ref.project, e = item.ref.environment
-            if out.last?.project != p { out.append(Project(project: p, environments: [])) }
-            if out[out.count - 1].environments.last?.name != e {
-                out[out.count - 1].environments.append(Environment(name: e, items: []))
-            }
-            out[out.count - 1].environments[out[out.count - 1].environments.count - 1].items.append(item)
-        }
-        return out
-    }
-}
-
-/// A header row that opens and closes its group. Plain rows rather than a disclosure control, so opening a
-/// group from code (selecting an item elsewhere) and clicking behave the same, on screen and in snapshots.
-struct TreeHeader<Label: View>: View {
-    let open: Bool
-    let toggle: () -> Void
-    @ViewBuilder let label: () -> Label
-
-    var body: some View {
-        Button(action: toggle) {
-            HStack(spacing: 6) {
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                    .rotationEffect(.degrees(open ? 90 : 0))
-                    .frame(width: 12)
-                label()
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(open ? "Collapse" : "Expand")
-        // A group header opens and closes; it isn't an item, so it never takes the selection.
-        .selectionDisabled()
-    }
-}
-
-/// A collapsible environment inside a project, with the bulk actions for everything in it.
-struct EnvironmentGroup: View {
-    let model: AppModel
-    let project: String
-    let env: ItemTree.Environment
-    var indent: CGFloat = 18
-
-    var body: some View {
-        let key = "\(project)/\(env.name)"
-        let open = model.isOpen(key)
-        TreeHeader(open: open, toggle: { model.toggle(key) }) {
-            HStack(spacing: 6) {
-                EnvBadge(environment: env.name)
-                Text("\(env.items.count)").foregroundStyle(.secondary).monospacedDigit()
-                Spacer()
-                let safe = env.items.filter(\.agentSafe).count
-                if safe > 0 { Text("\(safe) agent-safe").font(.caption).foregroundStyle(.green) }
-                PlaceLabel(links: model.links(for: key), local: env.items.contains { !($0.usedIn ?? []).isEmpty })
-            }
-        }
-        .padding(.leading, indent)
-        .contextMenu {
-            GroupMenu(model: model, title: key, ids: env.items.map(\.name), pattern: "\(key)/*")
-        }
-        if open {
-            ForEach(env.items) { item in
-                ItemRow(item: item, showsProject: false, remote: model.remoteStates[item.name]).padding(.leading, indent + 18).tag(item.name)
-            }
-        }
-    }
-}
-
-struct GroupHeader: View {
-    let symbol: String
+/// A page's title and summary, for views without the item list's header.
+struct PageHeader: View {
     let title: String
-    let count: Int
-    var environments: [(String, Int)] = []
-
+    let subtitle: String
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: symbol).foregroundStyle(.secondary).frame(width: 18)
-            Text(title).font(.body.weight(.semibold)).lineLimit(1)
-            Text("\(count)").foregroundStyle(.secondary).monospacedDigit()
-            Spacer(minLength: 4)
-            // Which environments the project has, at a glance, while it's collapsed.
-            HStack(spacing: 3) {
-                ForEach(environments.prefix(4), id: \.0) { EnvBadge(environment: $0.0, compact: true) }
-                if environments.count > 4 { Text("+\(environments.count - 4)").font(.caption2).foregroundStyle(.secondary) }
-            }
+        VStack(alignment: .leading, spacing: 1) {
+            Text(title).font(.title2.weight(.semibold))
+            Text(subtitle).font(.callout).foregroundStyle(.secondary)
         }
-        .padding(.vertical, 2)
+        .padding(.bottom, 2)
     }
 }
 
 struct ItemRow: View {
+    var model: AppModel? = nil
     let item: SecretInfo
     var showsProject = true
     var showsEnvironment = false
     /// Out of date or never pushed somewhere this item's environment is linked.
     var remote: RemoteState? = nil
+    @State private var hovering = false
+
+    /// Project · environment · service, leaving out what the view already says. In a project's view: type · service,
+    /// with the environment as a badge on the right.
+    private var subtitle: String {
+        var parts: [String] = []
+        if !showsProject && !item.ref.isShared { parts.append(ItemType(item).label) }
+        else if item.ref.isShared { parts.append("Shared") }
+        else {
+            parts.append(item.ref.project)
+            if showsEnvironment { parts.append(item.ref.environment) }
+        }
+        if let s = item.service { parts.append(s) }
+        return parts.joined(separator: " · ")
+    }
 
     var body: some View {
-        HStack(spacing: 10) {
-            KindIcon(kind: item.kind)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(item.ref.name).font(.body.weight(.medium)).lineLimit(1)
-                HStack(spacing: 5) {
-                    // Headings already name the project (and, in a project view, the environment).
-                    if !item.ref.isShared && (showsProject || showsEnvironment) {
-                        if showsProject { Text(item.ref.project).font(.caption.weight(.medium)) }
-                        EnvBadge(environment: item.ref.environment, compact: true)
-                    }
-                    if let s = item.service { Text(s).font(.caption).foregroundStyle(.secondary) }
-                    if (item.ref.isShared || !(showsProject || showsEnvironment)) && item.service == nil {
-                        Text(item.note.isEmpty ? item.kind.label : item.note).font(.caption).foregroundStyle(.secondary)
-                    }
-                }
-                .lineLimit(1)
+        let type = ItemType(item)
+        HStack(spacing: 12) {
+            Image(systemName: type.symbol).font(.system(size: 17, weight: .medium)).foregroundStyle(type.tint).frame(width: 24)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.ref.name).font(.body.weight(.medium)).lineLimit(1).truncationMode(.middle)
+                Text(subtitle).font(.callout).foregroundStyle(.secondary).lineLimit(1)
             }
-            Spacer()
+            Spacer(minLength: 6)
+            if !showsProject && showsEnvironment && !item.ref.isShared {
+                EnvBadge(environment: item.ref.environment, compact: true).fixedSize()
+            }
+            if hovering, let model {
+                Button { model.copyReference(item.name) } label: { Image(systemName: "link") }
+                    .buttonStyle(.borderless).help("Copy latchkey://\(item.name)")
+            }
             if remote == .outOfDate {
                 Image(systemName: "arrow.triangle.2.circlepath").foregroundStyle(.orange)
                     .help("Changed since it was last pushed to a remote location")
@@ -484,6 +549,9 @@ struct ItemRow: View {
             }
         }
         .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .onHover { hovering = $0 }
+        .help(item.name)
     }
 }
 
@@ -574,65 +642,6 @@ struct BulkPanel: View {
     }
 }
 
-struct ActivityList: View {
-    let model: AppModel
-
-    var body: some View {
-        let entries = model.visibleLog
-        List(Array(entries.enumerated()), id: \.offset) { _, e in
-            ActivityRow(entry: e, showNames: true)
-        }
-        .overlay {
-            if entries.isEmpty {
-                ContentUnavailableView("No Activity", systemImage: "clock",
-                                       description: Text("Every read and change shows up here, never the values."))
-            }
-        }
-        .navigationTitle("Activity")
-        .navigationSubtitle("\(entries.count) entries")
-    }
-}
-
-struct ActivityRow: View {
-    let entry: Broker.LogEntry
-    var showNames = true
-
-    var icon: (String, Color) {
-        let d = entry.decision
-        if d.hasPrefix("denied") { return ("xmark.octagon.fill", .red) }
-        if d.hasPrefix("approved") { return ("touchid", .blue) }
-        return ("checkmark.circle.fill", .green)
-    }
-
-    var verb: String {
-        switch entry.op {
-        case "get": return "Read"
-        case "set": return "Saved"
-        case "rm": return "Deleted"
-        case "import": return "Imported"
-        default: return entry.op
-        }
-    }
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: icon.0).foregroundStyle(icon.1).frame(width: 18)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(showNames ? "\(verb) \(entry.names.joined(separator: ", "))" : verb)
-                    .font(.callout.weight(.medium)).lineLimit(2)
-                Text("\(entry.decision) · \(entry.chain.prefix(3).joined(separator: " › "))")
-                    .font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                if !entry.cwd.isEmpty {
-                    Text(Broker.tilde(entry.cwd)).font(.caption.monospaced()).foregroundStyle(.tertiary).lineLimit(1).truncationMode(.head)
-                }
-            }
-            Spacer()
-            Text(entry.time.formatted(.relative(presentation: .named))).font(.caption).foregroundStyle(.secondary)
-        }
-        .padding(.vertical, 2)
-    }
-}
-
 struct EmptyDetail: View {
     let model: AppModel
 
@@ -678,46 +687,6 @@ struct NoticeBar: View {
     }
 }
 
-/// Items deleted in the last 30 days, with a way back.
-struct DeletedList: View {
-    let model: AppModel
-    @State private var forgetting: Version?
-
-    var body: some View {
-        List(model.deleted) { v in
-            HStack(spacing: 10) {
-                KindIcon(kind: v.kind, size: 28).opacity(0.6)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(v.item).font(.callout.monospaced()).lineLimit(1).truncationMode(.middle)
-                    let left = max(0, Int((Versions.deletedFor - Date().timeIntervalSince(v.savedAt)) / 86400))
-                    Text("Deleted \(v.savedAt.formatted(.relative(presentation: .named))) by \(v.by) · \(left) day\(left == 1 ? "" : "s") left")
-                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                }
-                Spacer()
-                Button("Restore") { Task { await model.restore(v) } }
-            }
-            .contextMenu {
-                Button("Restore") { Task { await model.restore(v) } }
-                Button("Forget for Good…", role: .destructive) { forgetting = v }
-            }
-        }
-        .overlay {
-            if model.deleted.isEmpty {
-                ContentUnavailableView("Nothing Deleted", systemImage: "trash",
-                                       description: Text("Items you delete stay here for \(Int(Versions.deletedFor / 86400)) days."))
-            }
-        }
-        .navigationTitle("Recently Deleted")
-        .navigationSubtitle("\(model.deleted.count) item\(model.deleted.count == 1 ? "" : "s")")
-        .confirmationDialog("Forget \(forgetting?.item ?? "")?", isPresented: Binding(get: { forgetting != nil }, set: { if !$0 { forgetting = nil } }),
-                            presenting: forgetting) { v in
-            Button("Forget for Good", role: .destructive) { Task { await model.forgetHistory([v.item]) } }
-        } message: { _ in
-            Text("Its value and every earlier value are deleted and can't be brought back.")
-        }
-    }
-}
-
 /// Where an environment's values live: the services it's linked to, or "Local" when it's only used from files on
 /// this Mac, so a header answers "is this what Vercel has?" without opening anything.
 struct PlaceLabel: View {
@@ -729,11 +698,11 @@ struct PlaceLabel: View {
         if !services.isEmpty {
             Label(services.map { $0.label.replacingOccurrences(of: " Actions", with: "") }.joined(separator: ", "), systemImage: "icloud")
                 .font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                .help("Linked: \(links.map(\.target.label).joined(separator: "; "))")
+            .help("Linked: \(links.map(\.target.label).joined(separator: "; "))")
         } else if local {
             Label("Local", systemImage: "laptopcomputer")
                 .font(.caption).foregroundStyle(.secondary)
-                .help("Used from files on this Mac; not linked to Vercel, GitHub Actions, Railway or Fly")
+            .help("Used from files on this Mac; not linked to Vercel, GitHub Actions, Railway or Fly")
         } else {
             Text("Not linked").font(.caption).foregroundStyle(.tertiary)
         }

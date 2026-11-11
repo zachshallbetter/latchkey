@@ -71,14 +71,18 @@ struct LatchkeyApp: App {
 // MARK: - Model
 
 enum SidebarFilter: Hashable {
-    case all, agentSafe, needsApproval, activity, grants, shared, deleted
+    case overview, all, agentSafe, needsApproval, activity, grants, shared, deleted
     case kind(ItemKind)
     case project(String)
     case service(String)
 
+    /// Views that list items, where a selection shows its detail.
+    var listsItems: Bool { ![.overview, .activity, .grants, .deleted].contains(self) }
+
     var title: String {
         switch self {
-        case .all: return "All"
+        case .overview: return "Review"
+        case .all: return "All Items"
         case .agentSafe: return "No Approval"
         case .needsApproval: return "Ask First"
         case .activity: return "Activity"
@@ -87,7 +91,7 @@ enum SidebarFilter: Hashable {
         case .deleted: return "Recently Deleted"
         case .kind(let k): return k.label + "s"
         case .project(let p): return p
-        case .service(let s): return s
+        case .service(let s): return s.isEmpty ? "Other Services" : s
         }
     }
 }
@@ -179,7 +183,6 @@ final class AppModel {
     var nextSteps: NextSteps?
     var moveRequest: MoveRequest?
     /// Open groups in item lists: a project name, "project/environment", or "shared". Everything starts closed.
-    var expanded: Set<String> = []
     /// Values currently shown in the detail pane; each hides itself after a short while.
     var revealed: [String: String] = [:]
 
@@ -279,6 +282,7 @@ final class AppModel {
         grants = broker.grants.all()
         deleted = (try? broker.versions.deleted(existing: Set(items.map(\.name)))) ?? []
         links = (try? broker.remotes.all()) ?? []
+        records = (try? broker.records.environments()) ?? []
         remoteStates = computeRemoteStates()
         let names = Set(items.map(\.name))
         if !selection.isSubset(of: names) { selection = selection.intersection(names) }
@@ -288,13 +292,13 @@ final class AppModel {
 
     func matches(_ f: SidebarFilter, _ i: SecretInfo) -> Bool {
         switch f {
-        case .all, .activity, .grants, .deleted: return true
+        case .overview, .all, .activity, .grants, .deleted: return true
         case .agentSafe: return i.agentSafe
         case .needsApproval: return !i.agentSafe
         case .shared: return i.ref.isShared
         case .kind(let k): return i.kind == k
         case .project(let p): return i.ref.project == p
-        case .service(let s): return i.service == s
+        case .service(let s): return s.isEmpty ? i.service == nil : i.service == s
         }
     }
 
@@ -306,6 +310,50 @@ final class AppModel {
     var services: [String] {
         Array(Set(items.compactMap(\.service))).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
     }
+
+    /// Categories present, in a fixed order, for the list's filter.
+    var categories: [String] {
+        let order = ["Token", "API Key", "Database", "URL", "Password", "Key File", "Plain Value"]
+        let present = Set(items.map { ItemType($0).label })
+        return order.filter(present.contains)
+    }
+
+    /// Every environment any item is in, in their usual order.
+    var allEnvironments: [String] {
+        Array(Set(items.filter { !$0.ref.isShared }.map(\.ref.environment))).sorted(by: Environments.order)
+    }
+
+    /// Narrowing within the list, on top of what the sidebar shows: one environment, one kind, or by access.
+    var environmentFilter: String?
+    /// A category as the list shows it: Token, API Key, Database, URL and so on.
+    var categoryFilter: String?
+    /// True: only items agents may read; false: only items that ask first.
+    var accessFilter: Bool?
+    var filtersActive: Bool { environmentFilter != nil || categoryFilter != nil || accessFilter != nil }
+
+    func clearFilters() { environmentFilter = nil; categoryFilter = nil; accessFilter = nil }
+
+    /// Environment records, for Review's unconfirmed variables.
+    var records: [EnvironmentRecord] = []
+    /// What's selected in Review, Activity, Recently Deleted and Grants, for their detail panes.
+    var selectedFinding: String?
+    var selectedLog: String?
+    var selectedVersion: String?
+    var selectedGrant: String?
+
+    /// Confirms variables found through old file locations: one approval per environment.
+    func confirmVariables(_ variables: [(scope: String, name: String)]) async {
+        for (scope, names) in Dictionary(grouping: variables, by: \.scope).sorted(by: { $0.key < $1.key }) {
+            if let err = await run(Request(op: "environment-set", names: [scope], confirm: names.map(\.name))) {
+                notice = err
+                return
+            }
+        }
+        refresh()
+    }
+
+    /// Sidebar sections (Projects, Services) the person has folded away.
+    var collapsedSections: Set<String> = []
 
     func environments(in project: String) -> [String] {
         Array(Set(items.filter { $0.ref.project == project }.map(\.ref.environment))).sorted(by: Environments.order)
@@ -325,8 +373,16 @@ final class AppModel {
         let list = items.filter { matches(filter, $0) }
             .filter { q.isEmpty || $0.name.lowercased().contains(q) || $0.note.lowercased().contains(q)
                 || ($0.service ?? "").lowercased().contains(q) }
+            .filter { i in environmentFilter.map { !i.ref.isShared && i.ref.environment == $0 } ?? true }
+            .filter { i in categoryFilter.map { ItemType(i).label == $0 } ?? true }
+            .filter { i in accessFilter.map { i.agentSafe == $0 } ?? true }
         switch sort {
-        case .name: return list.sorted { $0.ref < $1.ref }
+        case .name:
+            // Alphabetical by name, as a password manager lists items; the same name in several places by project, then environment.
+            return list.sorted { a, b in
+                let c = a.ref.name.localizedStandardCompare(b.ref.name)
+                return c != .orderedSame ? c == .orderedAscending : a.ref < b.ref
+            }
         case .updated: return list.sorted { $0.updatedAt > $1.updatedAt }
         }
     }
@@ -342,31 +398,6 @@ final class AppModel {
     func item(_ name: String?) -> SecretInfo? { items.first { $0.name == name } }
 
     /// Groups closed by hand during a search, where groups otherwise start open to show the matches.
-    var closedWhileSearching: Set<String> = []
-
-    var searching: Bool { !search.trimmingCharacters(in: .whitespaces).isEmpty }
-
-    /// Whether a list group is open. Groups start closed; while searching they start open. A click always wins.
-    func isOpen(_ key: String) -> Bool {
-        searching ? !closedWhileSearching.contains(key) : expanded.contains(key)
-    }
-
-    func toggle(_ key: String) {
-        if searching {
-            if closedWhileSearching.contains(key) { closedWhileSearching.remove(key) } else { closedWhileSearching.insert(key) }
-        } else {
-            if expanded.contains(key) { expanded.remove(key) } else { expanded.insert(key) }
-        }
-    }
-
-    /// Opens the groups that contain these items, so a selection made elsewhere is visible.
-    func reveal(_ ids: [String]) {
-        for id in ids {
-            guard let ref = ItemID(id) else { continue }
-            if ref.isShared { expanded.insert("shared") } else { expanded.formUnion([ref.project, "\(ref.project)/\(ref.environment)"]) }
-        }
-    }
-
     /// The one selected item, when exactly one is selected.
     var selectedItem: SecretInfo? { selection.count == 1 ? item(selection.first) : nil }
 
@@ -503,7 +534,6 @@ final class AppModel {
             notice = "Restored \(v.item) to its value from \(v.savedAt.formatted(date: .abbreviated, time: .shortened))."
             revealed[v.item] = nil
             selection = [v.item]
-            reveal([v.item])
             if filter == .deleted { filter = .all }
         }
     }
@@ -540,6 +570,12 @@ final class AppModel {
         await run(Request(op: "update", names: [name], fillSites: sites))
     }
 
+    /// Several settings of one item in one request, so one approval: only the ones given change.
+    func updateDetails(_ name: String, kind: ItemKind?, agentSafe: Bool?, service: String?, note: String?, fillSites: [String]?) async -> String? {
+        guard kind != nil || agentSafe != nil || service != nil || note != nil || fillSites != nil else { return nil }
+        return await run(Request(op: "update", names: [name], kind: kind, agentSafe: agentSafe, note: note, service: service, fillSites: fillSites))
+    }
+
     func setService(_ name: String, _ service: String) async -> String? {
         await run(Request(op: "set", names: [name], service: service))
     }
@@ -565,7 +601,6 @@ final class AppModel {
         if !failed.isEmpty { text += "; couldn't update \(failed.joined(separator: ", "))" }
         notice = text + "."
         selection = Set(selection.map { moved[$0] ?? $0 })
-        reveal(Array(selection))
         if !project.isEmpty { filter = .project(project) }
         return nil
     }
