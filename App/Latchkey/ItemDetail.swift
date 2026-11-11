@@ -21,10 +21,9 @@ struct ItemDetail: View {
                 valueCard
                 detailsCard
                 grantsCard
-                usedIn
                 remote
-                history
                 activity
+                history
             }
             .padding(16)
         }
@@ -68,6 +67,7 @@ struct ItemDetail: View {
                         Chip(text: item.ref.project)
                         EnvBadge(environment: item.ref.environment)
                     }
+                    if let s = item.service { Chip(text: s) }
                 }
             }
             Spacer(minLength: 8)
@@ -75,6 +75,9 @@ struct ItemDetail: View {
                 Button("Change Value…") { changingValue = true }
                 Button("Edit Details…") { editing = true }
                 Button("Move…") { model.moveRequest = MoveRequest(ids: [item.name]) }
+                if !item.ref.isShared {
+                    Button("Remote Locations…") { model.remoteRequest = RemoteRequest(scope: "\(item.ref.project)/\(item.ref.environment)") }
+                }
                 Divider()
                 Button("Copy Reference") { model.copyReference(item.name) }
                 Divider()
@@ -123,8 +126,9 @@ struct ItemDetail: View {
     private var detailsCard: some View {
         VStack(alignment: .leading, spacing: 6) {
             Card {
-                CardRow(label: "Kind") {
-                    Text(item.kind.label).foregroundStyle(.secondary)
+                CardRow(label: "Type") {
+                    Label(ItemType(item).label, systemImage: ItemType(item).symbol).foregroundStyle(.secondary)
+                        .help("Stored as a \(item.kind.label.lowercased()). \(item.kind.isSecret ? "Masked in command output." : "Not masked in output.")")
                 }
                 CardRow(label: "Access") {
                     Text(item.agentSafe ? "No approval" : "Requires approval").foregroundStyle(.secondary)
@@ -144,13 +148,26 @@ struct ItemDetail: View {
                 CardRow(label: "Note") {
                     Text(item.note.isEmpty ? "None" : item.note).foregroundStyle(.secondary).lineLimit(2).multilineTextAlignment(.trailing)
                 }
-                CardRow(label: "Fill in Safari on", last: true) {
-                    Text(item.fillSites.map { $0.joined(separator: ", ") } ?? "Its service's site and deployment platforms")
-                        .foregroundStyle(.secondary).lineLimit(2).multilineTextAlignment(.trailing)
+                CardRow(label: "Used in", last: true) {
+                    let paths = item.usedIn ?? []
+                    if paths.isEmpty {
+                        Text("No files yet").foregroundStyle(.secondary)
+                    } else {
+                        Button { withAnimation(.snappy) { showsFiles.toggle() } } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "folder")
+                                Text(paths.count == 1 ? Broker.tilde(paths[0]) : "\(Broker.tilde(paths[0])) and \(paths.count - 1) more")
+                                    .lineLimit(1).truncationMode(.head)
+                                Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+                                    .rotationEffect(.degrees(showsFiles ? 90 : 0))
+                            }
+                            .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
-            Text(item.kind.isSecret ? "Masked in command output." : "Plain values are not masked in output.")
-                .font(.caption).foregroundStyle(.secondary).padding(.leading, 4)
+            usedIn
         }
     }
 
@@ -177,10 +194,6 @@ struct ItemDetail: View {
     @ViewBuilder
     private var usedIn: some View {
         if let paths = item.usedIn, !paths.isEmpty {
-            LinkCard(symbol: "folder", title: "Used In",
-                     detail: paths.count == 1 ? Broker.tilde(paths[0]) : "\(Broker.tilde(paths[0])) and \(paths.count - 1) more") {
-                withAnimation(.snappy) { showsFiles.toggle() }
-            }
             if showsFiles {
                 Card {
                     ForEach(Array(paths.enumerated()), id: \.element) { i, path in
@@ -202,7 +215,7 @@ struct ItemDetail: View {
 
     @ViewBuilder
     private var remote: some View {
-        if !item.ref.isShared {
+        if !item.ref.isShared, !model.remoteStates(of: item).isEmpty {
             let states = model.remoteStates(of: item)
             let stale = states.contains { $0.state == .outOfDate }
             let detail = states.isEmpty ? "Not linked"

@@ -133,14 +133,14 @@ struct Sidebar: View {
                         LogoMark(size: 30).foregroundStyle(.blue)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("Latchkey").font(.title3.weight(.semibold))
-                            Text("Development credentials").font(.callout).foregroundStyle(.secondary)
+                            Text("Development secrets").font(.callout).foregroundStyle(.secondary)
                         }
                     }
                     .padding(.horizontal, 8).padding(.top, 2)
                     Divider().padding(.vertical, 12).padding(.horizontal, 8)
 
-                    nav(.all, "key", count: model.items.count)
-                    nav(.overview, "checkmark.shield", count: model.reviewCount > 0 ? model.reviewCount : nil)
+                    nav(.all, "square.grid.2x2", count: model.items.count)
+                    nav(.overview, "shield", count: model.reviewCount > 0 ? model.reviewCount : nil)
                     nav(.activity, "waveform.path.ecg")
 
                     if !model.items.isEmpty {
@@ -163,7 +163,7 @@ struct Sidebar: View {
                     }
 
                     Divider().padding(.vertical, 10).padding(.horizontal, 8)
-                    nav(.grants, "hourglass", count: model.grants.isEmpty ? nil : model.grants.count)
+                    nav(.grants, "checkmark.shield", count: model.grants.isEmpty ? nil : model.grants.count)
                     nav(.deleted, "trash", count: model.deleted.isEmpty ? nil : model.deleted.count)
                 }
                 .padding(10)
@@ -182,6 +182,7 @@ struct SidebarSection<Content: View>: View {
     let model: AppModel
     let title: String
     @ViewBuilder let content: () -> Content
+    @State private var hovering = false
 
     var body: some View {
         let collapsed = model.collapsedSections.contains(title)
@@ -191,15 +192,18 @@ struct SidebarSection<Content: View>: View {
             }
         } label: {
             HStack {
-                Text(title).font(.callout.weight(.medium)).foregroundStyle(.secondary)
+                Text(title.uppercased()).font(.caption.weight(.semibold)).tracking(0.6).foregroundStyle(.secondary)
                 Spacer()
+                // Shown on hover, or while folded, so the headings stay quiet.
                 Image(systemName: "chevron.down").font(.caption2.weight(.semibold)).foregroundStyle(.tertiary)
                     .rotationEffect(.degrees(collapsed ? -90 : 0))
+                    .opacity(collapsed || hovering ? 1 : 0)
             }
             .padding(.horizontal, 10).padding(.top, 16).padding(.bottom, 4)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .onHover { hovering = $0 }
         .accessibilityLabel("\(title), \(collapsed ? "collapsed" : "expanded")")
         if !collapsed { content() }
     }
@@ -351,10 +355,6 @@ struct ListHeader: View {
                 Menu {
                     Button("New Item…") { model.showingAdd = true }
                     Button("Import .env File…") { model.chooseImportFile() }
-                    Divider()
-                    Picker("Sort By", selection: $model.sort) {
-                        ForEach(SortOrder.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                    }
                     if !model.selection.isEmpty {
                         Divider()
                         Button("Move Selected to a Project…") { model.moveRequest = MoveRequest(ids: model.selection.sorted()) }
@@ -363,12 +363,12 @@ struct ListHeader: View {
                     Image(systemName: "ellipsis")
                 }
                 .menuStyle(.button).buttonStyle(.bordered).menuIndicator(.hidden).fixedSize().focusEffectDisabled()
-                .help("New, import and sort")
+                .help("New item, import, move")
             }
             HStack(spacing: 8) {
             HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField("Search credentials…", text: $model.search).textFieldStyle(.plain).focused(searching)
+                TextField("Search items…", text: $model.search).textFieldStyle(.plain).focused(searching)
                 if !model.search.isEmpty {
                     Button { model.search = "" } label: { Image(systemName: "xmark.circle.fill") }.buttonStyle(.plain).foregroundStyle(.secondary)
                 } else {
@@ -381,71 +381,86 @@ struct ListHeader: View {
             .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.quaternary.opacity(0.3)))
             .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(.separator.opacity(0.8)))
             .background(Button("") { searching.wrappedValue = true }.keyboardShortcut("f").hidden())
-            FilterMenu(model: model)
             }
-            if model.filtersActive {
-                HStack(spacing: 6) {
-                    if let e = model.environmentFilter { FilterChip(text: e) { model.environmentFilter = nil } }
-                    if let c = model.categoryFilter { FilterChip(text: c) { model.categoryFilter = nil } }
-                    if let a = model.accessFilter { FilterChip(text: a ? "No approval" : "Ask first") { model.accessFilter = nil } }
-                    Spacer()
-                    Button("Clear") { model.clearFilters() }.buttonStyle(.link).font(.callout)
-                }
-            }
+            FilterBar(model: model)
         }
         .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 10)
     }
 }
 
-/// Narrows the list to one project, environment, kind, or access setting.
-struct FilterMenu: View {
+/// Dropdowns under the search field: type, environment, project and service, each showing its choice, then a menu for
+/// access and sort order.
+struct FilterBar: View {
     @Bindable var model: AppModel
 
+    private var project: String? { if case .project(let p) = model.filter { return p } else { return nil } }
+    private var service: String? { if case .service(let s) = model.filter { return s } else { return nil } }
+
     var body: some View {
-        Menu {
-            Picker("Category", selection: $model.categoryFilter) {
-                Text("All Categories").tag(String?.none)
-                ForEach(model.categories, id: \.self) { Text($0).tag(String?.some($0)) }
-            }
-            Picker("Environment", selection: $model.environmentFilter) {
-                Text("All Environments").tag(String?.none)
-                ForEach(model.allEnvironments, id: \.self) { Text($0).tag(String?.some($0)) }
-            }
-            Picker("Access", selection: $model.accessFilter) {
-                Text("Any Access").tag(Bool?.none)
-                Text("No Approval").tag(Bool?.some(true))
-                Text("Ask First").tag(Bool?.some(false))
-            }
-            if model.filtersActive {
+        HStack(spacing: 6) {
+            pill("Type", model.categoryFilter) {
+                Button("Any Type") { model.categoryFilter = nil }
                 Divider()
-                Button("Clear Filters") { model.clearFilters() }
+                ForEach(model.categories, id: \.self) { c in Button(c) { model.categoryFilter = c } }
             }
-        } label: {
-            Image(systemName: model.filtersActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease")
-                .foregroundStyle(model.filtersActive ? Color.accentColor : Color.secondary)
-                .frame(width: 38, height: 36)
-                .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.quaternary.opacity(0.3)))
-                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(.separator.opacity(0.8)))
-                .contentShape(RoundedRectangle(cornerRadius: 10))
+            pill("Environment", model.environmentFilter) {
+                Button("Any Environment") { model.environmentFilter = nil }
+                Divider()
+                ForEach(model.allEnvironments, id: \.self) { e in Button(e) { model.environmentFilter = e } }
+            }
+            pill("Project", project) {
+                Button("Any Project") { model.filter = .all }
+                Divider()
+                ForEach(model.projects, id: \.self) { p in Button(p) { model.filter = .project(p) } }
+                Button("Shared") { model.filter = .shared }
+            }
+            pill("Service", service.map { $0.isEmpty ? "None" : $0 }) {
+                Button("Any Service") { model.filter = .all }
+                Divider()
+                ForEach(model.services, id: \.self) { s in Button(s) { model.filter = .service(s) } }
+            }
+            Spacer(minLength: 0)
+            Menu {
+                Picker("Sort By", selection: $model.sort) {
+                    ForEach(SortOrder.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                }
+                Picker("Access", selection: $model.accessFilter) {
+                    Text("Any Access").tag(Bool?.none)
+                    Text("No Approval").tag(Bool?.some(true))
+                    Text("Ask First").tag(Bool?.some(false))
+                }
+                if model.filtersActive || project != nil || service != nil {
+                    Divider()
+                    Button("Clear Filters") { model.clearFilters(); model.filter = .all }
+                }
+            } label: {
+                Image(systemName: "line.3.horizontal").foregroundStyle(model.accessFilter == nil ? Color.secondary : Color.accentColor)
+                    .frame(width: 30, height: 26)
+                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(.quaternary.opacity(0.3)))
+                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(.separator.opacity(0.8)))
+                    .contentShape(RoundedRectangle(cornerRadius: 8))
+            }
+            .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize().focusEffectDisabled()
+            .help("Sort order and access")
+        }
+    }
+
+    /// A dropdown that names its choice, highlighted while one is made.
+    private func pill<Items: View>(_ title: String, _ choice: String?, @ViewBuilder _ items: () -> Items) -> some View {
+        Menu { items() } label: {
+            HStack(spacing: 4) {
+                Text(choice ?? title).lineLimit(1)
+                Image(systemName: "chevron.down").font(.caption2.weight(.semibold))
+            }
+            .font(.callout)
+            .foregroundStyle(choice == nil ? Color.primary : Color.accentColor)
+            .padding(.horizontal, 10).padding(.vertical, 5)
+            .background(RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(choice == nil ? AnyShapeStyle(.quaternary.opacity(0.3)) : AnyShapeStyle(Color.accentColor.opacity(0.15))))
+            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(.separator.opacity(0.8)))
+            .contentShape(RoundedRectangle(cornerRadius: 8))
         }
         .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize().focusEffectDisabled()
-        .help("Filter by category, environment or access")
-    }
-}
-
-/// An active filter, with a button that removes it.
-struct FilterChip: View {
-    let text: String
-    let remove: () -> Void
-    var body: some View {
-        HStack(spacing: 4) {
-            Text(text).font(.callout.weight(.medium))
-            Button(action: remove) { Image(systemName: "xmark").font(.caption2.weight(.bold)) }.buttonStyle(.plain)
-                .accessibilityLabel("Remove \(text) filter")
-        }
-        .padding(.horizontal, 8).padding(.vertical, 3)
-        .background(Capsule().fill(Color.accentColor.opacity(0.2)))
-        .foregroundStyle(Color.accentColor)
     }
 }
 
@@ -594,21 +609,24 @@ struct ItemRow: View {
     var remote: RemoteState? = nil
     @State private var hovering = false
 
+    /// Project · environment · service, leaving out what the view already says; the type when nothing else is left.
+    private var subtitle: String {
+        var parts: [String] = []
+        if item.ref.isShared { parts.append("Shared") } else {
+            if showsProject { parts.append(item.ref.project) }
+            if showsEnvironment { parts.append(item.ref.environment) }
+        }
+        if let s = item.service { parts.append(s) }
+        return parts.isEmpty ? ItemType(item).label : parts.joined(separator: " · ")
+    }
+
     var body: some View {
         let type = ItemType(item)
         HStack(spacing: 12) {
             Image(systemName: type.symbol).font(.system(size: 17, weight: .medium)).foregroundStyle(type.tint).frame(width: 24)
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.ref.name).font(.body.weight(.medium)).lineLimit(1).truncationMode(.middle)
-                HStack(spacing: 5) {
-                    // Headings already name the project (and, in a project view, the environment).
-                    if !item.ref.isShared && (showsProject || showsEnvironment) {
-                        if showsProject { Text(item.ref.project).font(.caption.weight(.medium)) }
-                        EnvBadge(environment: item.ref.environment, compact: true)
-                    }
-                    Text(item.service.map { "\(type.label) · \($0)" } ?? type.label).font(.caption).foregroundStyle(.secondary)
-                }
-                .lineLimit(1)
+                Text(subtitle).font(.callout).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer(minLength: 6)
             if hovering, let model {

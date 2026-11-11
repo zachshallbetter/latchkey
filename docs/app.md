@@ -19,10 +19,11 @@ Arranged the way 1Password arranges vaults and tags:
 
 ### The list
 
-The list's header names what's shown and how many, with a search field (⌘F), a filter button (a category such as
-token, API key or database; an environment; or access; active filters show as chips you can remove) and a **…** menu:
-New Item, Import and sort order. Items are listed by name, each with its project and environment, its type (token,
-API key, database, URL, password, key file, plain value) and service. Long names are shortened in the middle, with
+The list's header names what's shown and how many, with a search field (⌘F) and a **…** menu (New Item, Import,
+Move). Under the search field, **Type**, **Environment**, **Project** and **Service** dropdowns narrow the list and
+show what they're set to, and the button after them holds the sort order, access and **Clear Filters**. Items are
+listed by name, each with an icon for its type (token, API key, database, URL, password, key file, plain value) and a
+line naming its project, environment and service. Long names are shortened in the middle, with
 the full ID on hover, and hovering a row shows a button that copies its `latchkey://` reference.
 
 Badges on an item: a green shield for agent-safe, an orange arrow when its value changed since it was last pushed to a
@@ -43,16 +44,16 @@ Right-clicking the selection offers the same.
   to your other devices through Universal Clipboard), marks it so clipboard managers skip it, and clears it after 60
   seconds. Both ask unless the item is agent-safe.
 - **Reference**: the `latchkey://` text to paste into a file.
-- The header shows the item's project and environment. **Edit** offers **Change Value…**, **Edit Details…** (kind,
-  access, service, note and Safari fill sites, saved together with one Touch ID), **Move…**, **Copy Reference** and
-  **Delete…** (the item moves to Recently Deleted for 30 days).
-- **Kind**, **Access** (switch it to let any program read it without approval), **Service** (with a link to make a
-  new key there), **Note** and **Fill in Safari on**.
+- The header shows the item's project, environment and service. **Edit** offers **Change Value…**, **Edit
+  Details…** (kind, access, service, note and Safari fill sites, saved together with one Touch ID), **Move…**,
+  **Remote Locations…**, **Copy Reference** and **Delete…** (the item moves to Recently Deleted for 30 days).
+- **Type** (hover for how it's stored and whether it's masked), **Access** (switch it to let any program read it
+  without approval), **Service** (with a link to make a new key there), **Note**, and **Used in**: the files it was
+  imported from; click to list them.
 - Grants that cover it, with **Revoke**.
-- **Used In**: the files it was imported from; click to list them.
-- **Remote**: where the item stands at linked locations; click to manage them.
-- **History**: click for earlier values, with show and restore; **Forget History…** deletes them for good.
-- **Recent Activity**.
+- **Remote**, when its environment is linked: where the item stands; click to manage the locations.
+- **Recent Activity**, then **History**: click for earlier values, with show and restore; **Forget History…** deletes
+  them for good.
 
 ### Adding and importing
 
