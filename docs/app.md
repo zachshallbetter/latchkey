@@ -36,8 +36,9 @@ Right-clicking the selection offers the same.
 
 ### An item's detail
 
-- **Value**: hidden. The eye shows it for 30 seconds; the copy button copies it and clears the clipboard after 60
-  seconds (and marks the copy so clipboard managers skip it). Both ask unless the item is agent-safe.
+- **Value**: hidden. The eye shows it for 30 seconds; the copy button copies it to this Mac's clipboard only (not
+  to your other devices through Universal Clipboard), marks it so clipboard managers skip it, and clears it after 60
+  seconds. Both ask unless the item is agent-safe.
 - **Reference**: the `latchkey://` text to paste into a file.
 - **Change Value…**, **Kind**, **Allow reads without approval**, **Project** (with **Move…**), **Service**,
   **Note**.

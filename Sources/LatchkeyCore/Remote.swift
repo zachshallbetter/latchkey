@@ -237,6 +237,10 @@ public struct RemoteLink: Codable, Identifiable, Hashable, Sendable {
     }
 
     public func covers(_ item: String) -> Bool { item.hasPrefix(scope + "/") && ItemID(item)?.isShared == false }
+
+    /// Whether this link's state matters for an item: it's the environment's own, or it has been pushed here (a shared
+    /// item the environment's record names, say).
+    public func tracks(_ item: String) -> Bool { covers(item) || pushed[item] != nil }
 }
 
 /// How an item stands against one link.

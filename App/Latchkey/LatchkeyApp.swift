@@ -439,7 +439,7 @@ final class AppModel {
         let changed = Dictionary(grouping: (try? broker.versions.list(item: nil)) ?? [], by: \.item).mapValues { $0.map(\.savedAt).max() }
         var out: [String: RemoteState] = [:]
         for item in items {
-            let states = links.filter { $0.covers(item.name) }.map { $0.state(of: item.name, valueChangedAt: changed[item.name] ?? nil) }
+            let states = links.filter { $0.tracks(item.name) }.map { $0.state(of: item.name, valueChangedAt: changed[item.name] ?? nil) }
             if states.contains(.outOfDate) { out[item.name] = .outOfDate }
             else if states.contains(.notPushed) { out[item.name] = .notPushed }
             else if !states.isEmpty { out[item.name] = .current }
@@ -450,7 +450,7 @@ final class AppModel {
     /// Per-link state of one item.
     func remoteStates(of item: SecretInfo) -> [(link: RemoteLink, state: RemoteState)] {
         let changed = history(for: item.name).first?.savedAt
-        return links.filter { $0.covers(item.name) }.map { ($0, $0.state(of: item.name, valueChangedAt: changed)) }
+        return links.filter { $0.tracks(item.name) }.map { ($0, $0.state(of: item.name, valueChangedAt: changed)) }
     }
 
     func addLink(_ scope: String, _ target: RemoteTarget) async -> String? {
@@ -616,7 +616,8 @@ final class AppModel {
     func copyValue(_ name: String) async {
         guard let v = await value(of: name) else { return }
         let pb = NSPasteboard.general
-        pb.clearContents()
+        // This Mac only: without it, Universal Clipboard hands the value to your other devices.
+        pb.prepareForNewContents(with: .currentHostOnly)
         pb.setString(v, forType: .string)
         // Clipboard managers that honour this skip the entry.
         pb.setString("", forType: NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType"))

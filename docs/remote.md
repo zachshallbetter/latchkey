@@ -71,7 +71,11 @@ latchkey push shop/production --to <link> --only shop/production/DATABASE_URL
 
 - **Nothing is deployed.** Railway and Fly would deploy by default, so those flags turn it off. New values take effect
   on the service's next deploy, which you start.
-- Each item is named after the last part of its ID (`shop/production/DATABASE_URL` is pushed as `DATABASE_URL`).
+- **What's sent:** with an [environment record](cli.md#environments), its variables. Shared items go under the
+  variable's name, and plain settings such as `PORT` go as non-secret values. Unconfirmed variables are listed but
+  not sent until `lk env confirm`. Until `env migrate` has checked the environment, its own items the record doesn't
+  name yet are sent too. Without a record, the environment's own items are sent, each named after the last part of
+  its ID (`shop/production/DATABASE_URL` is pushed as `DATABASE_URL`). `remote status` compares the same list.
 - Error messages from the tools are shortened, and any value in them is replaced with `<value>`.
 
 After a push, Latchkey records when each item was pushed to each link. An item changed since then shows an orange badge

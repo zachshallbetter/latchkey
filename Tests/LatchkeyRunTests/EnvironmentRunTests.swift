@@ -112,10 +112,18 @@ final class FreshCheckoutTests: XCTestCase {
         unlink(socket)
     }
 
+    /// A real repository (git init), so Git can answer whether a file is ignored.
     func checkout(_ path: String, origin: String) throws -> URL {
         let dir = root.appendingPathComponent(path)
-        try FileManager.default.createDirectory(at: dir.appendingPathComponent(".git"), withIntermediateDirectories: true)
-        try "[remote \"origin\"]\n\turl = \(origin)\n".write(to: dir.appendingPathComponent(".git/config"), atomically: true, encoding: .utf8)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        for args in [["init", "-q"], ["remote", "add", "origin", origin]] {
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+            p.arguments = ["-C", dir.path] + args
+            try p.run()
+            p.waitUntilExit()
+            XCTAssertEqual(p.terminationStatus, 0, "git \(args.joined(separator: " "))")
+        }
         return dir
     }
 
@@ -180,9 +188,22 @@ final class FreshCheckoutTests: XCTestCase {
         XCTAssertFalse(byEnv.contains("no environment record"), byEnv)
 
         try lk(["export", "shop/development", "--values"], in: b, expect: 64)   // values only to a named file
+        let notIgnored = try lk(["export", "shop/development", "--out", "values.env", "--values"], in: b, expect: 73)
+        XCTAssertTrue(notIgnored.contains("isn't ignored by Git"), notIgnored)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: b.appendingPathComponent("values.env").path), "nothing written")
+        try "values.env\n".write(to: b.appendingPathComponent(".gitignore"), atomically: true, encoding: .utf8)
         try lk(["export", "shop/development", "--out", "values.env", "--values"], in: b)
         let values = b.appendingPathComponent("values.env").path
         XCTAssertTrue(try String(contentsOfFile: values, encoding: .utf8).contains("OPENAI_API_KEY=fixture-openai-value"))
         XCTAssertEqual((try FileManager.default.attributesOfItem(atPath: values)[.posixPermissions] as? Int), 0o600)
+
+        // Ignored but tracked (added before it was ignored): still refused.
+        let add = Process()
+        add.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+        add.arguments = ["-C", b.path, "add", "-f", "values.env"]
+        try add.run()
+        add.waitUntilExit()
+        let tracked = try lk(["export", "shop/development", "--out", "values.env", "--values", "--replace"], in: b, expect: 73)
+        XCTAssertTrue(tracked.contains("is tracked by Git"), tracked)
     }
 }

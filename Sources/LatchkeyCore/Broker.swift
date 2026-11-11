@@ -815,14 +815,55 @@ public final class Broker: @unchecked Sendable {
     func valueChangedAt(_ item: String) -> Date? { try? versions.list(item: item).first?.savedAt }
 
     /// Compares names with each link's target. Reads names only; never sends or keeps a value.
+    /// One variable an environment sends to its links: an item (wherever it lives) under the variable's name, or a plain
+    /// setting. `key` is what a link records the push under: the item's ID, or `project/environment/NAME` for a setting.
+    struct PushEntry {
+        var name: String
+        var item: String?
+        var literal: String?
+        var secret: Bool
+        var unconfirmed: Bool
+        var key: String
+    }
+
+    /// What `scope` sends to its links. With a record: each of its variables, shared items and plain settings included,
+    /// plus, until `env migrate` has checked it, the environment's own items the record doesn't name yet. Without one:
+    /// the environment's own items, as before records.
+    func pushEntries(_ scope: String) throws -> [PushEntry] {
+        let all = try store.list()
+        let byID = Dictionary(uniqueKeysWithValues: all.map { ($0.name, $0) })
+        let own = all.filter { $0.name.hasPrefix(scope + "/") }
+        func item(_ i: SecretInfo, as name: String, unconfirmed: Bool = false) -> PushEntry {
+            PushEntry(name: name, item: i.name, literal: nil, secret: i.kind.isSecret, unconfirmed: unconfirmed, key: i.name)
+        }
+        guard let record = try records.environments().first(where: { $0.scope == scope }) else {
+            return own.map { item($0, as: $0.ref.name) }
+        }
+        var out: [PushEntry] = record.variables.keys.sorted().map { name in
+            let unconfirmed = record.inferred.contains(name)
+            switch record.variables[name]! {
+            case .credential(let id):
+                return byID[id].map { item($0, as: name, unconfirmed: unconfirmed) }
+                    ?? PushEntry(name: name, item: id, literal: nil, secret: true, unconfirmed: unconfirmed, key: id)
+            case .literal(let v):
+                return PushEntry(name: name, item: nil, literal: v, secret: false, unconfirmed: unconfirmed, key: "\(scope)/\(name)")
+            }
+        }
+        if !record.legacyChecked {
+            out += own.filter { record.variables[$0.ref.name] == nil }.map { item($0, as: $0.ref.name) }
+        }
+        return out
+    }
+
     func remoteStatus(_ req: Request) throws -> Response {
         guard let scope = req.names?.first, RemoteLink.isValidScope(scope) else { return Response(ok: false, error: "status takes a project/environment") }
-        let items = try store.list().filter { $0.name.hasPrefix(scope + "/") }
-        let expected = Set(items.map(\.ref.name))
+        let entries = try pushEntries(scope)
+        let expected = Set(entries.map(\.name))
         var out: [RemoteStatus] = []
         for link in try remotes.all() where link.scope == scope {
             let r = runner.run(link.target.listCommand, timeout: 60)
-            let stale = items.filter { link.state(of: $0.name, valueChangedAt: valueChangedAt($0.name)) == .outOfDate }.map(\.ref.name).sorted()
+            let stale = entries.filter { e in e.item.map { link.state(of: $0, valueChangedAt: valueChangedAt($0)) == .outOfDate } ?? false }
+                .map(\.name).sorted()
             guard r.status == 0, let names = link.target.names(fromListOutput: r.stdout) else {
                 out.append(RemoteStatus(link: link.id, label: link.target.label, error: Self.toolError(r, link.target), outOfDate: stale))
                 continue
@@ -841,12 +882,18 @@ public final class Broker: @unchecked Sendable {
         guard let scope = req.names?.first, RemoteLink.isValidScope(scope) else { return Response(ok: false, error: "push takes a project/environment") }
         let links = try remotes.all().filter { $0.scope == scope && (req.link == nil || $0.id == req.link) }
         guard !links.isEmpty else { return Response(ok: false, error: req.link == nil ? "\(scope) isn't linked anywhere" : "no such link for \(scope)") }
-        var items = try store.list().filter { $0.name.hasPrefix(scope + "/") }
-        if let only = req.only { items = items.filter { only.contains($0.name) } }
-        guard !items.isEmpty else { return Response(ok: false, error: "no items to push in \(scope)") }
+        var entries = try pushEntries(scope)
+        if let only = req.only { entries = entries.filter { e in only.contains(e.key) || only.contains(e.name) || e.item.map(only.contains) == true } }
+        // Unconfirmed variables (found through old file locations) aren't sent until someone confirms them.
+        let held = entries.filter(\.unconfirmed)
+        entries = entries.filter { !$0.unconfirmed }
+        guard !entries.isEmpty else {
+            return Response(ok: false, error: held.isEmpty ? "nothing to push in \(scope)"
+                            : "\(scope) has only unconfirmed variables: \(held.map(\.name).joined(separator: ", ")) (lk env confirm \(scope))")
+        }
 
         let labels = links.map(\.target.label)
-        let names = items.map(\.name)
+        let names = entries.map(\.key)
         var request = approvalRequest(.push, names, peer, req,
                                       "push \(Self.count(names.map { ItemID($0)?.name ?? $0 })) to \(labels.joined(separator: ", ")), asked by \(Self.who(peer))")
         request.targets = labels
@@ -856,19 +903,24 @@ public final class Broker: @unchecked Sendable {
             return Response(ok: false, error: "the push was not approved")
         }
 
-        let values = try store.values(names)
+        let stored = try store.values(entries.compactMap(\.item))
+        var values: [String: String] = [:]
+        for e in entries { values[e.key] = e.item.flatMap { stored[$0] } ?? e.literal }
         var results: [PushResult] = []
         for var link in links {
             var batch: [(name: String, value: String, secret: Bool)] = []
             var ids: [String] = []
-            for item in items {
-                guard let value = values[item.name] else { results.append(PushResult(link: link.id, item: item.name, ok: false, error: "no value")); continue }
+            for e in held {
+                results.append(PushResult(link: link.id, item: e.key, ok: false, error: "not sent: unconfirmed in the environment's record (lk env confirm \(scope) \(e.name))"))
+            }
+            for e in entries {
+                guard let value = values[e.key] else { results.append(PushResult(link: link.id, item: e.key, ok: false, error: "no value")); continue }
                 if link.target.service == .fly && value.contains("\n") {
-                    results.append(PushResult(link: link.id, item: item.name, ok: false, error: "Fly secrets import takes one line per value"))
+                    results.append(PushResult(link: link.id, item: e.key, ok: false, error: "Fly secrets import takes one line per value"))
                     continue
                 }
-                batch.append((item.ref.name, value, item.kind.isSecret))
-                ids.append(item.name)
+                batch.append((e.name, value, e.secret))
+                ids.append(e.key)
             }
             let commands = link.target.pushCommands(batch)
             // One command per item, except Fly, where one command carries them all.
