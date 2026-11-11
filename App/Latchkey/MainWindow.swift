@@ -256,34 +256,60 @@ struct ItemList: View {
                 // until opened. In a project's own view the tree starts at its environments.
                 let inProject: Bool = { if case .project = model.filter { return true } else { return false } }()
                 let groups = ItemTree.build(list)
-                ForEach(groups) { group in
-                    if inProject && group.environments.count == 1 {
-                        // One environment: its items directly; the header names the environment.
-                        ForEach(group.environments[0].items) { item in
-                            ItemRow(model: model, item: item, showsProject: false, remote: model.remoteStates[item.name]).tag(item.name)
-                        }
-                    } else if inProject {
-                        ForEach(group.environments) { env in
-                            EnvironmentGroup(model: model, project: group.project, env: env, indent: 0)
-                        }
-                    } else if group.project.isEmpty {
-                        let open = model.isOpen("shared")
-                        TreeHeader(open: open, toggle: { model.toggle("shared") }) {
-                            GroupHeader(symbol: "tray.full", title: "Shared", count: group.count)
-                        }
-                        if open {
-                            ForEach(group.environments.flatMap(\.items)) { item in
-                                ItemRow(model: model, item: item, showsProject: false).padding(.leading, 18).tag(item.name)
+                if inProject {
+                    ForEach(groups) { group in
+                        if group.environments.count == 1 {
+                            // One environment: its items directly; the header names the environment.
+                            ForEach(group.environments[0].items) { item in
+                                ItemRow(model: model, item: item, showsProject: false, remote: model.remoteStates[item.name]).tag(item.name)
+                            }
+                        } else {
+                            ForEach(group.environments) { env in
+                                EnvironmentGroup(model: model, project: group.project, env: env, indent: 0)
                             }
                         }
-                    } else {
+                    }
+                } else {
+                    let projects = groups.filter { !$0.project.isEmpty }
+                    if !projects.isEmpty {
+                        ListSectionHeading(title: "Projects")
+                        ForEach(projects) { projectGroup($0) }
+                    }
+                    if let shared = groups.first(where: { $0.project.isEmpty }) {
+                        ListSectionHeading(title: "Shared")
+                        Group {
+                            let open = model.isOpen("shared")
+                            GroupCard(open: open, symbol: "tray.full", tiled: true, title: "Shared", count: shared.count) { model.toggle("shared") }
+                            if open {
+                                ForEach(shared.environments.flatMap(\.items)) { item in
+                                    ItemRow(model: model, item: item, showsProject: false).padding(.leading, 18).tag(item.name)
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                ForEach(list) { item in
+                    ItemRow(model: model, item: item).tag(item.name)
+                }
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .contextMenu(forSelectionType: String.self) { ids in
+            SelectionMenu(model: model, ids: ids.sorted())
+        }
+        .overlay { emptyOverlay(list) }
+    }
+
+    /// A project as a card that opens to its items (or, with several environments, to them).
+    @ViewBuilder
+    private func projectGroup(_ group: ItemTree.Project) -> some View {
                         let open = model.isOpen(group.project)
                         // One environment: its items sit right under the project, which shows the environment's badge.
                         let only = group.environments.count == 1 ? group.environments[0] : nil
-                        TreeHeader(open: open, toggle: { model.toggle(group.project) }) {
-                            GroupHeader(symbol: "folder", title: group.project, count: group.count,
-                                        environments: group.environments.map { ($0.name, $0.items.count) })
-                        }
+                        GroupCard(open: open, symbol: "folder", title: group.project, count: group.count,
+                                  environments: group.environments.map(\.name)) { model.toggle(group.project) }
                         .contextMenu {
                             if let env = only {
                                 GroupMenu(model: model, title: "\(group.project)/\(env.name)", ids: env.items.map(\.name), pattern: "\(group.project)/\(env.name)/*")
@@ -300,18 +326,10 @@ struct ItemList: View {
                                 EnvironmentGroup(model: model, project: group.project, env: env, indent: 18)
                             }
                         }
-                    }
-                }
-            } else {
-                ForEach(list) { item in
-                    ItemRow(model: model, item: item).tag(item.name)
-                }
-            }
-        }
-        .contextMenu(forSelectionType: String.self) { ids in
-            SelectionMenu(model: model, ids: ids.sorted())
-        }
-        .overlay {
+    }
+
+    @ViewBuilder
+    private func emptyOverlay(_ list: [SecretInfo]) -> some View {
             if list.isEmpty {
                 ContentUnavailableView {
                     Label { Text(model.items.isEmpty ? "No Items Yet" : "No Matches") } icon: { LogoMark() }
@@ -326,7 +344,6 @@ struct ItemList: View {
                     }
                 }
             }
-        }
     }
 }
 
@@ -352,12 +369,30 @@ struct ListHeader: View {
         return parts.joined(separator: " · ")
     }
 
+    /// The tile beside the title: what kind of view this is.
+    private var icon: (String, Color) {
+        switch model.filter {
+        case .project: return ("folder.fill", .indigo)
+        case .shared: return ("tray.full.fill", .gray)
+        case .service: return ("server.rack", .gray)
+        case .kind(let k): return (k.symbol, k.tint)
+        case .agentSafe: return ("person.badge.shield.checkmark.fill", .green)
+        case .needsApproval: return ("hand.raised.fill", .red)
+        default: return ("key.fill", .blue)
+        }
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 12) {
+                IconTile(symbol: icon.0, tint: icon.1, size: 42)
+                VStack(alignment: .leading, spacing: 1) {
                     Text(model.filter.title).font(.title2.weight(.semibold)).lineLimit(1)
-                    Text(subtitle).font(.callout).foregroundStyle(.secondary)
+                    ViewThatFits(in: .horizontal) {
+                        Text(subtitle).fixedSize()
+                        Text("\(count) credential\(count == 1 ? "" : "s")")
+                    }
+                    .font(.callout).foregroundStyle(.secondary).lineLimit(1)
                 }
                 Spacer()
                 Menu {
@@ -390,11 +425,14 @@ struct ListHeader: View {
                 if !model.search.isEmpty {
                     Button { model.search = "" } label: { Image(systemName: "xmark.circle.fill") }.buttonStyle(.plain).foregroundStyle(.secondary)
                 } else {
-                    Text("⌘F").font(.caption).foregroundStyle(.tertiary)
+                    Text("⌘F").font(.caption.weight(.medium)).foregroundStyle(.secondary)
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(.quaternary.opacity(0.8)))
                 }
             }
-            .padding(.horizontal, 10).padding(.vertical, 7)
-            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(.quaternary.opacity(0.5)))
+            .padding(.horizontal, 12).padding(.vertical, 9)
+            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.quaternary.opacity(0.3)))
+            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(.separator.opacity(0.8)))
             .background(Button("") { searching.wrappedValue = true }.keyboardShortcut("f").hidden())
         }
         .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 10)
@@ -540,25 +578,76 @@ struct EnvironmentGroup: View {
     }
 }
 
-struct GroupHeader: View {
+/// A project (or Shared) as a card in the list: opens and closes its items. Not an item, so it never takes the selection.
+struct GroupCard: View {
+    let open: Bool
     let symbol: String
+    var tiled = false
     let title: String
     let count: Int
-    var environments: [(String, Int)] = []
+    var environments: [String] = []
+    let toggle: () -> Void
+    @State private var hovering = false
 
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: symbol).foregroundStyle(.secondary).frame(width: 18)
-            Text(title).font(.body.weight(.semibold)).lineLimit(1).truncationMode(.middle)
-            Text("\(count)").foregroundStyle(.secondary).monospacedDigit().fixedSize()
-            Spacer(minLength: 4)
-            // Which environments the project has, at a glance, while it's collapsed.
-            HStack(spacing: 6) {
-                ForEach(environments.prefix(4), id: \.0) { EnvBadge(environment: $0.0, compact: true).fixedSize() }
-                if environments.count > 4 { Text("+\(environments.count - 4)").font(.caption2).foregroundStyle(.secondary) }
+        Button(action: toggle) {
+            HStack(spacing: 10) {
+                Image(systemName: "chevron.right").font(.callout.weight(.semibold)).foregroundStyle(.secondary)
+                    .rotationEffect(.degrees(open ? 90 : 0)).frame(width: 10)
+                Group {
+                    if tiled {
+                        RoundedRectangle(cornerRadius: 7, style: .continuous).fill(.quaternary.opacity(0.6)).frame(width: 28, height: 28)
+                            .overlay(Image(systemName: symbol).font(.system(size: 13, weight: .medium)).foregroundStyle(.secondary))
+                    } else {
+                        Image(systemName: symbol).font(.system(size: 18, weight: .regular)).foregroundStyle(.indigo).frame(width: 28)
+                    }
+                }
+                // The name comes first: in a narrow column the environment badges give way rather than cut it short.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 6) {
+                        label.fixedSize()
+                        Spacer(minLength: 6)
+                        HStack(spacing: 4) {
+                            ForEach(environments.prefix(3), id: \.self) { EnvBadge(environment: $0, compact: true).fixedSize() }
+                            if environments.count > 3 { Text("+\(environments.count - 3)").font(.caption2).foregroundStyle(.secondary) }
+                        }
+                    }
+                    HStack { label; Spacer(minLength: 0) }
+                }
             }
+            .padding(.horizontal, 10).padding(.vertical, 9)
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(.quaternary.opacity(open || hovering ? 0.55 : 0.25)))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(.separator.opacity(0.6)))
+            .contentShape(RoundedRectangle(cornerRadius: 12))
         }
-        .padding(.vertical, 2)
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .help(environments.isEmpty ? title : "\(title): \(environments.joined(separator: ", "))")
+        .accessibilityLabel("\(title), \(count) items, \(open ? "open" : "closed")")
+        .selectionDisabled()
+        .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
+    }
+}
+
+extension GroupCard {
+    var label: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(title).font(.body.weight(.semibold)).lineLimit(1).truncationMode(.middle)
+            Text("\(count) item\(count == 1 ? "" : "s")").font(.callout).foregroundStyle(.secondary)
+        }
+    }
+}
+
+/// A heading over a group of cards in the list.
+struct ListSectionHeading: View {
+    let title: String
+    var body: some View {
+        Text(title).font(.callout.weight(.medium)).foregroundStyle(.secondary).padding(.top, 8).padding(.leading, 4)
+            .selectionDisabled()
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets(top: 2, leading: 12, bottom: 0, trailing: 12))
     }
 }
 
@@ -608,6 +697,7 @@ struct ItemRow: View {
         .contentShape(Rectangle())
         .onHover { hovering = $0 }
         .help(item.name)
+        .listRowSeparator(.hidden)
     }
 }
 
