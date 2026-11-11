@@ -56,6 +56,31 @@ public enum Services {
         "Fly": "https://fly.io/dashboard",
     ]
 
+    /// Sites Latchkey for Safari may fill any item on: where keys are set as a deployment's environment variables or
+    /// secrets. An item may also be filled on its own service's site (see `keyPages`). Matched by host, https only.
+    public static let fillPlatforms = [
+        "vercel.com", "github.com", "railway.com", "railway.app", "fly.io", "netlify.com", "render.com",
+        "dash.cloudflare.com", "supabase.com", "heroku.com", "console.aws.amazon.com", "console.cloud.google.com",
+    ]
+
+    /// The host of an https page origin, or nil for anything else (http, a file, a port, a malformed origin).
+    public static func fillHost(_ origin: String) -> String? {
+        guard let url = URL(string: origin), url.scheme == "https", url.port == nil, url.user == nil,
+              let host = url.host?.lowercased(), !host.isEmpty else { return nil }
+        return host
+    }
+
+    /// Whether Latchkey for Safari may fill an item from `service` into a page at `origin`: a deployment platform,
+    /// or the service's own site (the registrable part of its key page's host, such as stripe.com).
+    public static func mayFill(origin: String, service: String?) -> Bool {
+        guard let host = fillHost(origin) else { return false }
+        func under(_ domain: String) -> Bool { host == domain || host.hasSuffix("." + domain) }
+        if fillPlatforms.contains(where: under) { return true }
+        guard let service, let page = keyPages[service], let pageHost = URL(string: page)?.host?.lowercased() else { return false }
+        let own = pageHost.split(separator: ".").suffix(2).joined(separator: ".")
+        return under(own)
+    }
+
     public static func guess(key: String, value: String) -> String? {
         for (prefix, service) in valuePrefixes where value.hasPrefix(prefix) { return service }
         let lower = value.lowercased()

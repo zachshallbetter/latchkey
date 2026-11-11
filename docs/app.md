@@ -119,8 +119,13 @@ makes a plain (unmasked) item.
 - For anything it missed, select the text, Control-click, and choose **Save Selection to Latchkey**.
 - It also notes fields that expect a key, token, secret, private key, certificate or connection string, the way a
   password manager spots password fields: by label, placeholder, name and autocomplete hint, never by what's in them.
-  Sign-in passwords, one-time codes and email fields aren't counted. The toolbar panel lists them; filling them from
-  Latchkey isn't built yet.
+  Sign-in passwords, one-time codes and email fields aren't counted. The toolbar panel lists them.
+- **Fill from Latchkey:** click into one of those fields and a Latchkey badge appears in it. The badge lists the items
+  that may be filled on this site, most like the field first; choose one and approve with Touch ID, and the value goes
+  into that field. An item may be filled only on its service's own site (a Stripe key on stripe.com) and on the sites
+  where deployments keep environment variables and secrets: Vercel, GitHub, Railway, Fly, Netlify, Render, Cloudflare,
+  Supabase, Heroku, and the AWS and Google Cloud consoles. The app decides this, over https only, and asks every time;
+  no grant or agent-safe setting stands in. Fill never reaches a frame inside the page.
 
 The app asks you to approve, showing the page's site, and the item's note says where it came from. Saving over an
 existing item keeps the old value in its history. After a save, the panel shows the reference to use, ready to copy.
@@ -132,6 +137,7 @@ button says whether it can reach Latchkey and lists what it found on the page. I
 there with a development build, turn on Safari › Settings › Advanced › **Show features for web developers**, then
 Develop › **Allow Unsigned Extensions**; a notarized release doesn't need this.
 
-The extension can't read any stored value, not even an agent-safe one. It reaches the app through its own socket, which
-admits only Latchkey's signed extension and only for listing item names and saving a value.
+The extension can't read stored values; the one exception is fill, which releases one item into the field you chose
+after you approve it. It reaches the app through its own socket, which admits only Latchkey's signed extension and only
+for listing item names, saving a value and filling one item.
 

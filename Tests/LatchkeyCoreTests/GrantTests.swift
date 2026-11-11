@@ -154,7 +154,7 @@ final class BrokerGrantTests: XCTestCase {
         XCTAssertEqual(b.handle(Request(op: "check", names: ["DB"]), peer: ssh).needsApproval, ["DB"])
     }
 
-    func testTheSafariExtensionCanOnlyListAndSave() throws {
+    func testTheSafariExtensionCanOnlyListSaveAndFill() throws {
         let recorder = RecordingApprover()
         let store = MemoryStore()
         try store.save(name: "DB", value: "db-value-123", kind: .password, agentSafe: true, note: "")
@@ -176,6 +176,55 @@ final class BrokerGrantTests: XCTestCase {
         XCTAssertNil(asked.program, "named as the extension, not by its path")
         XCTAssertFalse(asked.canGrant)
         XCTAssertTrue(asked.reason.contains("Latchkey's Safari extension on https://dashboard.stripe.com"), asked.reason)
+    }
+
+    func testFillSitesAreHttpsDeployPlatformsOrTheServicesOwnSite() {
+        XCTAssertTrue(Services.mayFill(origin: "https://vercel.com", service: nil))
+        XCTAssertTrue(Services.mayFill(origin: "https://github.com", service: "OpenAI"))
+        XCTAssertTrue(Services.mayFill(origin: "https://us-east-1.console.aws.amazon.com", service: nil))
+        XCTAssertTrue(Services.mayFill(origin: "https://dashboard.stripe.com", service: "Stripe"))
+        XCTAssertFalse(Services.mayFill(origin: "https://dashboard.stripe.com", service: "OpenAI"), "not another service's site")
+        XCTAssertFalse(Services.mayFill(origin: "https://example.com", service: "Stripe"))
+        XCTAssertFalse(Services.mayFill(origin: "http://vercel.com", service: nil), "https only")
+        XCTAssertFalse(Services.mayFill(origin: "https://vercel.com:8443", service: nil))
+        XCTAssertFalse(Services.mayFill(origin: "https://vercel.com.example.net", service: nil))
+        XCTAssertFalse(Services.mayFill(origin: "https://notvercel.com", service: nil))
+        XCTAssertFalse(Services.mayFill(origin: "https://user@vercel.com", service: nil))
+        XCTAssertFalse(Services.mayFill(origin: "vercel.com", service: nil))
+    }
+
+    func testTheSafariExtensionFillsOneItemOnAnAllowedSiteAndAsksEveryTime() throws {
+        let recorder = RecordingApprover()
+        let store = MemoryStore()
+        try store.save(name: "shop/production/STRIPE_KEY", value: "stripe-value-123", kind: .token, agentSafe: true, note: "",
+                       usedIn: nil, service: "Stripe")
+        let b = Broker(store: store, approver: recorder, logURL: nil)
+        var ext = PeerInfo(pid: 1, path: "/Applications/Latchkey.app/Contents/PlugIns/LatchkeySafari.appex/Contents/MacOS/LatchkeySafari", cwd: "/", chain: [])
+        ext.isSafariExtension = true
+        let gate = Broker.Gate.safariExtension
+        let fill = Request(op: "fill", names: ["shop/production/STRIPE_KEY"], page: "https://vercel.com")
+        XCTAssertEqual(b.handle(fill, peer: ext, gate: gate).values, ["shop/production/STRIPE_KEY": "stripe-value-123"])
+        XCTAssertEqual(b.handle(fill, peer: ext, gate: gate).values?.count, 1)
+        XCTAssertEqual(recorder.requests.count, 2, "agent-safe or just approved, every fill asks")
+        let asked = try XCTUnwrap(recorder.requests.last)
+        XCTAssertTrue(asked.fromSafari)
+        XCTAssertFalse(asked.canGrant)
+        XCTAssertTrue(asked.reason.contains("into a field on vercel.com"), asked.reason)
+        XCTAssertTrue(b.grants.all().isEmpty)
+
+        // A site it may not go to is refused before anyone is asked; so is more than one item, or no page.
+        let elsewhere = b.handle(Request(op: "fill", names: ["shop/production/STRIPE_KEY"], page: "https://example.com"), peer: ext, gate: gate)
+        XCTAssertFalse(elsewhere.ok)
+        XCTAssertNil(elsewhere.values)
+        XCTAssertFalse(b.handle(Request(op: "fill", names: ["shop/production/STRIPE_KEY"]), peer: ext, gate: gate).ok)
+        XCTAssertFalse(b.handle(Request(op: "fill", names: ["shop/production/STRIPE_KEY", "X"], page: "https://vercel.com"), peer: ext, gate: gate).ok)
+        XCTAssertEqual(recorder.requests.count, 2)
+
+        // Only the extension fills, and a denial releases nothing.
+        XCTAssertFalse(b.handle(fill, peer: tool(["lk", "get"])).ok)
+        let denied = Broker(store: store, approver: FixedApprover(false), logURL: nil).handle(fill, peer: ext, gate: gate)
+        XCTAssertFalse(denied.ok)
+        XCTAssertNil(denied.values)
     }
 
     func testApprovalCanGrantForTheSessionOrTheCommand() throws {

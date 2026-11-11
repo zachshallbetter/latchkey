@@ -439,7 +439,7 @@ lk rotate --touched --since 4h --by claude --open --push</code></pre></figure>
       <dt>History</dt><dd>The last 10 values of each item, and deleted items for 30 days.</dd>
       <dt>Remote locations</dt><dd>Link an environment to Vercel, GitHub Actions, Railway or Fly, check what's missing, and push with each service's own tool. Production needs a second confirmation.</dd>
       <dt>MCP server</dt><dd><code>lk mcp</code> lets an agent list items, check what a run would get, run commands and ask for a grant. It has no direct secret-read tool. Child output masks exact values; transformed secrets can still leak.</dd>
-      <dt>Latchkey for Safari</dt><dd>When a page shows you a new key, the extension spots it and offers to save it to Latchkey, with your approval. Select anything it missed and save that. It can't read values.</dd>
+      <dt>Latchkey for Safari</dt><dd>When a page shows you a new key, the extension spots it and offers to save it to Latchkey, with your approval. Select anything it missed and save that. In a field that takes a key, it fills one from Latchkey on deployment sites, with Touch ID each time.</dd>
       <dt>Another Mac over SSH</dt><dd>Forward the app's socket with <code>ssh -R</code>; each read without the No Approval setting asks you here; local grants do not apply.</dd>
     </dl>
 

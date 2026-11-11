@@ -79,6 +79,7 @@ public final class Broker: @unchecked Sendable {
             case "verify-log": return verifyLog()
             case "get": return try get(req, peer: peer)
             case "set": return try set(req, peer: peer)
+            case "fill": return try fill(req, peer: peer)
             case "rm": return try remove(req, peer: peer)
             case "import": return try importItems(req, peer: peer)
             case "grants": return Response(ok: true, grants: grants.all())
@@ -209,6 +210,26 @@ public final class Broker: @unchecked Sendable {
         pruneVersions()
         log("set", [name], "approved", peer, req)
         return Response(ok: true)
+    }
+
+    /// Latchkey for Safari filling one item into a field on the page you're on. Only that item, only on a site it may
+    /// go to (`Services.mayFill`, decided here, not by the extension), and only with your approval every time: no
+    /// grant, recent approval or agent-safe setting stands in, because the value leaves Latchkey for a web page.
+    func fill(_ req: Request, peer: PeerInfo) throws -> Response {
+        guard peer.isSafariExtension else { return Response(ok: false, error: "fill is only for Latchkey for Safari") }
+        guard let name = req.names?.first, req.names?.count == 1 else { return Response(ok: false, error: "fill takes one name") }
+        guard let info = try store.info(name) else { return Response(ok: true, missing: [name]) }
+        guard let page = req.page, let host = Services.fillHost(page), Services.mayFill(origin: page, service: info.service) else {
+            log("fill", [name], "refused (not a site it may be filled on: \(req.page ?? "no page"))", peer, req)
+            return Response(ok: false, error: "\(name) can't be filled on this site. Latchkey fills an item only on its service's own site and where deployments keep their environment variables.")
+        }
+        guard ask(.read, [name], peer, req, "fill \(name) into a field on \(host)").allowed else {
+            log("fill", [name], "denied", peer, req)
+            return Response(ok: false, error: "filling \(name) was not approved")
+        }
+        let values = try store.values([name])
+        log("fill", [name], "approved (into a field on \(host))", peer, req)
+        return Response(ok: true, values: values)
     }
 
     /// Deletes one or many items with one approval. If any named item is missing nothing is deleted, so a typo
@@ -802,11 +823,12 @@ public final class Broker: @unchecked Sendable {
 
     /// Listens until the process exits. Accepts only connections from this user.
     /// Who may use a socket, and for what: the Safari extension's socket admits only Latchkey's signed extension, and
-    /// only to see item names and save a value (which asks, like any change).
+    /// only to see item names, save a value (which asks, like any change) and fill one item into the page you're on
+    /// (which asks every time, and only on sites the broker allows).
     public struct Gate: Sendable {
         public var identifier: String
         public var ops: Set<String>
-        public static let safariExtension = Gate(identifier: CodeIdentity.safariExtensionIdentifier, ops: ["status", "list", "set"])
+        public static let safariExtension = Gate(identifier: CodeIdentity.safariExtensionIdentifier, ops: ["status", "list", "set", "fill"])
     }
 
     /// `handle`, limited to what a gate allows.

@@ -46,7 +46,10 @@ command gets which value. This page says what it protects against, how, and wher
   stays in `latchkey run`; the command gets credentials that expire in 15 minutes by default.
 - **The Safari extension** is sandboxed and reaches the app through its own socket in the App Group container
   both share. The app admits only Latchkey's signed extension there (checked by code signature), and only to list
-  item names and save a value, which asks like any change. It can't read a stored value. The page's site it reports is
+  item names, save a value, which asks like any change, and fill one item into the page you're on. Fill asks every
+  time (no grant, recent approval or agent-safe setting stands in), works only on the item's service's own site and
+  on deployment platforms (decided by the app from the origin Safari reports, https only, never in a frame), and is
+  logged. Otherwise it can't read a stored value. The page's site it reports is
   shown in the approval as Safari reported it. Its key detection runs inside the page: a value goes to the app only
   when you press Save, and its toolbar panel gets a short preview, never the value. Password fields are not read. Fields that expect a key are recognized by their labels and attributes only.
   Detection covers the main page DOM, not embedded frames or shadow roots.

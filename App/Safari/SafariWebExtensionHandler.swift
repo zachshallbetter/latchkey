@@ -3,8 +3,9 @@ import LatchkeyCore
 import SafariServices
 
 /// Latchkey for Safari's native side. Safari hands it messages from the extension's background script; it passes
-/// them to the Latchkey app over the socket in the shared App Group container and returns the answer. It can do two
-/// things: list where items can go (names only), and save a value, which the app asks you to approve.
+/// them to the Latchkey app over the socket in the shared App Group container and returns the answer. It can list
+/// where items can go and which may be filled on this page (names only), save a value, and fill one item; the app
+/// asks you to approve each save and each fill, and decides itself which sites an item may be filled on.
 final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
     func beginRequest(with context: NSExtensionContext) {
         let message = (context.inputItems.first as? NSExtensionItem)?.userInfo?[SFExtensionMessageKey] as? [String: Any] ?? [:]
@@ -51,6 +52,19 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             guard let r = send(Request(op: "set", names: [id], value: value, kind: kind, note: note,
                                        service: message["service"] as? String, page: page)) else { return unreachable() }
             return r.ok ? ["ok": true, "id": id] : ["ok": false, "error": r.error ?? "Not saved."]
+
+        case "fillable":
+            // Items the app would let this page have: names, services and kinds, never values. The app checks again on fill.
+            guard let page, let r = send(Request(op: "list")), r.ok else { return unreachable() }
+            let items = (r.secrets ?? []).filter { Services.mayFill(origin: page, service: $0.service) }
+            return ["ok": true, "host": Services.fillHost(page) ?? "",
+                    "items": items.map { ["id": $0.name, "service": $0.service ?? "", "kind": $0.kind.rawValue] }]
+
+        case "fill":
+            guard let id = message["id"] as? String, Wire.isValidName(id) else { return ["ok": false, "error": "Choose an item to fill."] }
+            guard let r = send(Request(op: "fill", names: [id], page: page)) else { return unreachable() }
+            guard r.ok, let value = r.values?[id] else { return ["ok": false, "error": r.error ?? (r.missing != nil ? "\(id) isn't in Latchkey." : "Not filled.")] }
+            return ["ok": true, "value": value]
 
         default:
             return ["ok": false, "error": "Unknown request."]

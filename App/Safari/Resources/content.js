@@ -1,8 +1,9 @@
 // Finds keys and tokens on the page with Latchkey's detector (detector.js) and offers to save them. Confident finds
 // get a small "Save to Latchkey" button on the box that holds the key; less certain ones are listed in the toolbar
-// panel. It also notes fields that expect a key, token or certificate, by their labels, never their values. Values
-// stay in this page until you press Save, and then go only to the Latchkey app, which asks you first. The toolbar
-// panel sees previews, never values.
+// panel. It also notes fields that expect a key, token or certificate, by their labels, never their values, and can
+// fill one from Latchkey when you choose an item. Values stay in this page until you press Save, and then go only to
+// the Latchkey app, which asks you first; a filled value comes from the app only after you approve it, and goes only
+// into the field you chose. The toolbar panel sees previews, never values.
 (function () {
   "use strict";
   var D = window.LatchkeyDetector;
@@ -129,7 +130,7 @@
   }
 
   function consider(text, el, field) {
-    if (!text || text.length < 16 || el.matches("input[type=password], input[type=hidden]")) return;
+    if (!text || text.length < 16 || el.matches("input[type=password], input[type=hidden]") || filled.has(el)) return;
     prune();
     D.findAll(text, contextFor(el, field)).forEach(function (r) {
       var seen = byValue.get(r.value);
@@ -149,6 +150,7 @@
   // ---- Fields that expect a secret, as password managers spot password fields: by label, placeholder, name and
   // autocomplete hint. Their values are never read here (password-type fields included).
   var secretFields = [];     // { el, kind: { type, kind }, label }
+  var filled = new WeakSet(); // fields Latchkey filled: what's in them came from Latchkey, so it isn't offered back
   var MAX_FIELDS = 50;
   function noteField(el) {
     if (!D.fieldKind || secretFields.some(function (f) { return f.el === el; })) return;
@@ -210,7 +212,10 @@
       if (r.type === "childList") r.addedNodes.forEach(later); else later(r.target);
     });
   }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
-  document.addEventListener("focusin", function (e) { if (e.target.matches && e.target.matches(FIELDS)) { consider(e.target.value, e.target, true); report(); } }, true);
+  document.addEventListener("focusin", function (e) {
+    if (e.target.matches && e.target.matches(FIELDS)) { consider(e.target.value, e.target, true); report(); }
+    offerFill(e.target);
+  }, true);
   document.addEventListener("input", function (e) { if (e.target.matches && e.target.matches(FIELDS)) later(e.target); }, true);
 
   // ---- The button on a key's box
@@ -415,8 +420,131 @@
     setTimeout(function () { (offeredByPage ? save : name).focus(); placePanel(h); }, 0);
   }
 
+  // ---- Filling a field from Latchkey. Clicking into a field that expects a key shows a Latchkey badge in it; the
+  // badge lists the items the app allows on this site (names only), and choosing one asks for Touch ID. The value
+  // comes back only then, and goes straight into that field.
+  var fillBadge = null;
+  function fieldOf(el) { return secretFields.find(function (f) { return f.el === el; }); }
+  function empty(el) { return el.type === "password" ? true : !el.value; }   // never reads a password field
+  function hideFillBadge() { if (fillBadge) { fillBadge.remove(); fillBadge = null; } }
+  function placeFillBadge() {
+    if (!fillBadge) return;
+    var el = fillBadge._field.el, r = el.getBoundingClientRect();
+    if (!document.contains(el) || !r.width) { hideFillBadge(); return; }
+    var w = fillBadge.offsetWidth, ht = fillBadge.offsetHeight;
+    fillBadge.style.left = Math.round(r.right - w - 6) + "px";
+    fillBadge.style.top = Math.round(r.height < 48 ? r.top + (r.height - ht) / 2 : r.top + 6) + "px";
+    fillBadge.style.visibility = "visible";
+  }
+  function showFillBadge(f) {
+    if (fillBadge && fillBadge._field === f) return;
+    hideFillBadge();
+    var h = host(2147483646);
+    var root = h.attachShadow({ mode: "closed" });
+    root.innerHTML = "<style>" + STYLE + "</style><button class='pill icon' type='button'>" + MARK + "<span>Fill from Latchkey</span></button>";
+    var b = root.querySelector("button");
+    b.setAttribute("aria-label", "Fill this " + f.kind.type.toLowerCase() + " from Latchkey");
+    b.title = "Fill from Latchkey";
+    b.addEventListener("mousedown", function (e) { e.preventDefault(); });   // keep the field focused
+    b.addEventListener("click", function () { openFillPanel(f); });
+    h._field = f; fillBadge = h;
+    placeFillBadge();
+  }
+  function offerFill(el) {
+    if (!el || !el.matches || !el.matches("input, textarea")) return;
+    noteField(el);
+    var f = fieldOf(el);
+    if (f && !filled.has(el) && empty(el) && !(pills.size && found.some(function (d) { return d.element === el; }))) showFillBadge(f);
+  }
+  document.addEventListener("focusout", function (e) {
+    if (!fillBadge || e.target !== fillBadge._field.el) return;
+    setTimeout(function () { if (fillBadge && document.activeElement !== fillBadge._field.el && !(panelHost && panelHost._field)) hideFillBadge(); }, 150);
+  }, true);
+  window.addEventListener("scroll", function () { if (fillBadge) requestAnimationFrame(placeFillBadge); }, true);
+  window.addEventListener("resize", placeFillBadge);
+
+  function setValue(el, v) {
+    // Through the element's own setter, then the events a typed value fires, so the page's framework sees it.
+    var proto = el.tagName === "TEXTAREA" ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+    Object.getOwnPropertyDescriptor(proto, "value").set.call(el, v);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  // Items most like the field first: the same kind, then words its label shares with the item's name.
+  function rank(items, f) {
+    var words = (f.label || "").toLowerCase().split(/[^a-z0-9]+/).filter(function (w) { return w.length > 2; });
+    function score(i) {
+      var name = i.id.split("/").pop().toLowerCase(), s = i.kind === f.kind.kind ? 2 : 0;
+      words.forEach(function (w) { if (name.indexOf(w) >= 0 || (i.service || "").toLowerCase() === w) s += 1; });
+      return s;
+    }
+    return items.map(function (i) { return { i: i, s: score(i) }; }).sort(function (a, b) { return b.s - a.s || a.i.id.localeCompare(b.i.id); }).map(function (x) { return x.i; });
+  }
+
+  function openFillPanel(f) {
+    if (panelHost) panelHost.remove();
+    var h = host(2147483647);
+    h._d = null; h._anchor = f.el; h._field = f;
+    var root = h.attachShadow({ mode: "closed" });
+    root.innerHTML = "<style>" + STYLE +
+      ".list{max-height:220px;overflow:auto;margin:8px 0 0;padding:0;list-style:none}.list button{width:100%;text-align:left;display:block;padding:6px 8px;margin:0 0 4px;" +
+      "border:1px solid rgba(127,127,127,.3);border-radius:7px;background:transparent;color:inherit;font:13px -apple-system,sans-serif;cursor:pointer}" +
+      ".list button:hover{background:rgba(127,127,127,.12)}.list small{display:block;color:#8a94a2;font-size:11px}</style>" +
+      '<div class="b" role="dialog" aria-label="Fill from Latchkey">' +
+      '<b class="t">Fill from Latchkey</b><p class="m" id="what"></p>' +
+      '<input id="lk-q" placeholder="Search items" autocomplete="off" spellcheck="false" aria-label="Search items">' +
+      '<ul class="list" id="lk-items"></ul>' +
+      '<p class="s m" id="lk-status" aria-live="polite"></p>' +
+      '<div class="r"><button type="button" class="x" id="lk-no">Not now</button></div></div>';
+    h._panel = root.querySelector(".b");
+    var status = root.getElementById("lk-status"), list = root.getElementById("lk-items"), q = root.getElementById("lk-q");
+    root.getElementById("what").textContent = f.kind.type + (f.label ? " · " + f.label : "");
+    function close() { h.remove(); if (panelHost === h) panelHost = null; }
+    root.getElementById("lk-no").addEventListener("click", close);
+    h.addEventListener("keydown", function (e) { if (e.key === "Escape") { close(); f.el.focus(); } });
+    var items = [];
+    function draw() {
+      list.textContent = "";
+      var term = q.value.trim().toLowerCase();
+      items.filter(function (i) { return !term || (i.id + " " + i.service).toLowerCase().indexOf(term) >= 0; }).slice(0, 50).forEach(function (i) {
+        var li = document.createElement("li"), b = document.createElement("button"), small = document.createElement("small");
+        b.type = "button"; b.textContent = i.id.split("/").pop();
+        small.textContent = (i.id.indexOf("/") > 0 ? i.id.split("/").slice(0, 2).join("/") : "shared") + (i.service ? " · " + i.service : "");
+        b.append(small); li.append(b); list.append(li);
+        b.addEventListener("click", function () { fill(i, b); });
+      });
+      placePanel(h);
+    }
+    function fill(i, button) {
+      Array.from(list.querySelectorAll("button")).forEach(function (x) { x.disabled = true; });
+      status.textContent = "Touch ID on your Mac to fill " + i.id.split("/").pop() + ".";
+      browser.runtime.sendMessage({ op: "fill", id: i.id }).then(function (res) {
+        if (res && res.ok && typeof res.value === "string" && document.contains(f.el)) {
+          filled.add(f.el);
+          setValue(f.el, res.value);
+          res.value = null;
+          close(); hideFillBadge(); f.el.focus();
+        } else {
+          status.textContent = (res && res.error) || "Not filled.";
+          Array.from(list.querySelectorAll("button")).forEach(function (x) { x.disabled = false; });
+        }
+      }).catch(function () { status.textContent = UNREACHABLE; });
+    }
+    q.addEventListener("input", draw);
+    browser.runtime.sendMessage({ op: "fillable" }).then(function (res) {
+      if (!res || !res.ok) { status.textContent = (res && res.error) || UNREACHABLE; placePanel(h); return; }
+      items = rank(res.items || [], f);
+      if (!items.length) status.textContent = "Nothing in Latchkey can be filled on " + (res.host || "this site") + ". Latchkey fills an item only on its service's own site and where deployments keep their environment variables.";
+      draw();
+    }).catch(function () { status.textContent = UNREACHABLE; placePanel(h); });
+    panelHost = h;
+    placePanel(h);
+    setTimeout(function () { q.focus(); placePanel(h); }, 0);
+  }
+
   window.addEventListener("pagehide", function () {
-    found.forEach(retire); found = []; byValue.clear(); secretFields = [];
+    found.forEach(retire); found = []; byValue.clear(); secretFields = []; hideFillBadge();
     if (panelHost) { panelHost.remove(); panelHost = null; }
   });
   scan(document.body || document.documentElement);

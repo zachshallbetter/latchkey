@@ -102,7 +102,10 @@ The first release.
 - The Save to Latchkey button is placed from the box holding the key (inside a one-line field, or on a larger box's
   top edge) and appears once it has settled; the panel opens beside the box, not over the key.
 - Fields that expect a key, token, secret, private key, certificate or connection string are recognized by label and
-  attributes and listed in the toolbar panel. Certificates are offered as public items.
+  attributes and listed in the toolbar panel.
+- Fill from Latchkey: a badge in a recognized field lists the items allowed on that site; choose one and approve with
+  Touch ID to fill it. Items fill only on their service's own site and on deployment platforms, over https, in the
+  page itself (not frames), with approval every time. Certificates are offered as public items.
 - When a page says it shows a new key only once, the save panel opens from its button without a click; saving still takes
   your press and Touch ID.
 
