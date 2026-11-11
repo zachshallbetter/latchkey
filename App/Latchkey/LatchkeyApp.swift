@@ -91,7 +91,7 @@ enum SidebarFilter: Hashable {
         case .deleted: return "Recently Deleted"
         case .kind(let k): return k.label + "s"
         case .project(let p): return p
-        case .service(let s): return s
+        case .service(let s): return s.isEmpty ? "Other Services" : s
         }
     }
 }
@@ -298,7 +298,7 @@ final class AppModel {
         case .shared: return i.ref.isShared
         case .kind(let k): return i.kind == k
         case .project(let p): return i.ref.project == p
-        case .service(let s): return i.service == s
+        case .service(let s): return s.isEmpty ? i.service == nil : i.service == s
         }
     }
 
@@ -310,6 +310,23 @@ final class AppModel {
     var services: [String] {
         Array(Set(items.compactMap(\.service))).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
     }
+
+    /// Every environment any item is in, in their usual order.
+    var allEnvironments: [String] {
+        Array(Set(items.filter { !$0.ref.isShared }.map(\.ref.environment))).sorted(by: Environments.order)
+    }
+
+    /// Narrowing within the list, on top of what the sidebar shows: one environment, one kind, or by access.
+    var environmentFilter: String?
+    var kindFilter: ItemKind?
+    /// True: only items agents may read; false: only items that ask first.
+    var accessFilter: Bool?
+    var filtersActive: Bool { environmentFilter != nil || kindFilter != nil || accessFilter != nil }
+
+    func clearFilters() { environmentFilter = nil; kindFilter = nil; accessFilter = nil }
+
+    /// List sections (Projects, Shared) the person has folded away.
+    var collapsedSections: Set<String> = []
 
     func environments(in project: String) -> [String] {
         Array(Set(items.filter { $0.ref.project == project }.map(\.ref.environment))).sorted(by: Environments.order)
@@ -329,6 +346,9 @@ final class AppModel {
         let list = items.filter { matches(filter, $0) }
             .filter { q.isEmpty || $0.name.lowercased().contains(q) || $0.note.lowercased().contains(q)
                 || ($0.service ?? "").lowercased().contains(q) }
+            .filter { i in environmentFilter.map { !i.ref.isShared && i.ref.environment == $0 } ?? true }
+            .filter { i in kindFilter.map { i.kind == $0 } ?? true }
+            .filter { i in accessFilter.map { i.agentSafe == $0 } ?? true }
         switch sort {
         case .name: return list.sorted { $0.ref < $1.ref }
         case .updated: return list.sorted { $0.updatedAt > $1.updatedAt }
@@ -352,11 +372,11 @@ final class AppModel {
 
     /// Whether a list group is open. Groups start closed; while searching they start open. A click always wins.
     func isOpen(_ key: String) -> Bool {
-        searching ? !closedWhileSearching.contains(key) : expanded.contains(key)
+        searching || filtersActive ? !closedWhileSearching.contains(key) : expanded.contains(key)
     }
 
     func toggle(_ key: String) {
-        if searching {
+        if searching || filtersActive {
             if closedWhileSearching.contains(key) { closedWhileSearching.remove(key) } else { closedWhileSearching.insert(key) }
         } else {
             if expanded.contains(key) { expanded.remove(key) } else { expanded.insert(key) }

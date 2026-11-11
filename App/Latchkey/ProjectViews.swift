@@ -36,36 +36,7 @@ struct EnvBadge: View {
 }
 
 /// Projects in the sidebar. With many projects a filter field appears, so hundreds stay usable.
-struct ProjectsSection: View {
-    let model: AppModel
-    @State private var query = ""
-
-    var body: some View {
-        let all = model.projects
-        let q = query.trimmingCharacters(in: .whitespaces).lowercased()
-        let shown = q.isEmpty ? all : all.filter { $0.lowercased().contains(q) }
-        VStack(alignment: .leading, spacing: 2) {
-            SidebarHeading(title: "Projects")
-            if all.count > 8 {
-                TextField("Filter \(all.count) projects", text: $query)
-                    .textFieldStyle(.roundedBorder).controlSize(.small).padding(.horizontal, 4).padding(.bottom, 4)
-            }
-            ForEach(shown, id: \.self) { p in
-                NavRow(title: p, symbol: "folder", count: model.count(.project(p)), selected: model.filter == .project(p)) { model.filter = .project(p) }
-                    .contextMenu { ProjectMenu(model: model, project: p) }
-            }
-            if model.items.contains(where: { $0.ref.isShared }) {
-                NavRow(title: "Shared", symbol: "tray.full", count: model.count(.shared), selected: model.filter == .shared) { model.filter = .shared }
-            }
-            if all.isEmpty {
-                Text("Import a project's .env file, or move items into a project.")
-                    .font(.caption).foregroundStyle(.secondary).padding(.horizontal, 8).padding(.top, 2)
-            }
-        }
-    }
-}
-
-/// Actions on every item in a project, from its row in the sidebar or its header in a list.
+/// Actions on every item in a project, from its card in the list.
 struct ProjectMenu: View {
     let model: AppModel
     let project: String

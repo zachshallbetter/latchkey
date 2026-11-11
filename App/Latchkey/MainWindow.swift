@@ -124,22 +124,20 @@ extension MainWindow {
 
 struct Sidebar: View {
     @Bindable var model: AppModel
-    @State private var showsServices = false
 
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 10) {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.blue.gradient)
-                            .frame(width: 38, height: 38)
-                            .overlay(LogoMark(size: 22).foregroundStyle(.white))
+                        LogoMark(size: 30).foregroundStyle(.blue)
                         VStack(alignment: .leading, spacing: 1) {
-                            Text("Latchkey").font(.headline)
-                            Text("Development Credentials").font(.caption).foregroundStyle(.secondary)
+                            Text("Latchkey").font(.title3.weight(.semibold))
+                            Text("Development credentials").font(.callout).foregroundStyle(.secondary)
                         }
                     }
-                    .padding(.horizontal, 8).padding(.bottom, 14)
+                    .padding(.horizontal, 8).padding(.top, 2)
+                    Divider().padding(.vertical, 12).padding(.horizontal, 8)
 
                     nav(.overview, "square.grid.2x2")
                     nav(.all, "key", count: model.items.count)
@@ -147,21 +145,16 @@ struct Sidebar: View {
                     nav(.grants, "checkmark.shield", count: model.grants.isEmpty ? nil : model.grants.count)
                     if !model.deleted.isEmpty { nav(.deleted, "trash", count: model.deleted.count) }
 
-                    Divider().padding(.vertical, 10).padding(.horizontal, 8)
-                    ProjectsSection(model: model)
-
-                    if !model.services.isEmpty {
+                    if !model.items.isEmpty {
                         Divider().padding(.vertical, 10).padding(.horizontal, 8)
-                        NavRow(title: "Services", symbol: "square.stack.3d.up", selected: false) {
-                            withAnimation(.snappy) { showsServices.toggle() }
+                        SidebarHeading(title: "Services")
+                        ForEach(model.services, id: \.self) { s in
+                            ServiceRow(name: s, count: model.count(.service(s)), selected: model.filter == .service(s)) { model.filter = .service(s) }
                         }
-                        .overlay(alignment: .trailing) {
-                            Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
-                                .rotationEffect(.degrees(showsServices ? 90 : 0)).padding(.trailing, 10).allowsHitTesting(false)
-                        }
-                        if showsServices || { if case .service = model.filter { return true } else { return false } }() {
-                            ForEach(model.services, id: \.self) { s in
-                                nav(.service(s), "server.rack", count: model.count(.service(s))).padding(.leading, 14)
+                        let others = model.count(.service(""))
+                        if others > 0 {
+                            NavRow(title: "Other Services", symbol: "ellipsis", count: others, selected: model.filter == .service("")) {
+                                model.filter = .service("")
                             }
                         }
                     }
@@ -174,6 +167,33 @@ struct Sidebar: View {
 
     private func nav(_ filter: SidebarFilter, _ symbol: String, count: Int? = nil) -> some View {
         NavRow(title: filter.title, symbol: symbol, count: count, selected: model.filter == filter) { model.filter = filter }
+    }
+}
+
+/// A service in the sidebar: its initial in a small tile, its name, and how many items it issued.
+struct ServiceRow: View {
+    let name: String
+    let count: Int
+    let selected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .strokeBorder(selected ? Color.white.opacity(0.8) : Color.secondary.opacity(0.6), lineWidth: 1.2)
+                    .frame(width: 20, height: 20)
+                    .overlay(Text(String(name.prefix(1)).uppercased()).font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(selected ? Color.white : Color.secondary))
+                Text(name).lineLimit(1).foregroundStyle(selected ? Color.white : Color.primary)
+                Spacer(minLength: 4)
+                Text("\(count)").monospacedDigit().foregroundStyle(selected ? Color.white.opacity(0.85) : Color.secondary)
+            }
+            .padding(.horizontal, 10).padding(.vertical, 7)
+            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(selected ? AnyShapeStyle(Color.accentColor.gradient) : AnyShapeStyle(.clear)))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -272,12 +292,12 @@ struct ItemList: View {
                 } else {
                     let projects = groups.filter { !$0.project.isEmpty }
                     if !projects.isEmpty {
-                        ListSectionHeading(title: "Projects")
-                        ForEach(projects) { projectGroup($0) }
+                        ListSectionHeading(model: model, title: "Projects", symbol: "folder")
+                        if !model.collapsedSections.contains("Projects") { ForEach(projects) { projectGroup($0) } }
                     }
                     if let shared = groups.first(where: { $0.project.isEmpty }) {
-                        ListSectionHeading(title: "Shared")
-                        Group {
+                        ListSectionHeading(model: model, title: "Shared", symbol: "tray.full")
+                        if !model.collapsedSections.contains("Shared") {
                             let open = model.isOpen("shared")
                             GroupCard(open: open, symbol: "tray.full", tiled: true, title: "Shared", count: shared.count) { model.toggle("shared") }
                             if open {
@@ -354,7 +374,7 @@ struct ListHeader: View {
     var searching: FocusState<Bool>.Binding
 
     private var subtitle: String {
-        var parts = ["\(count) credential\(count == 1 ? "" : "s")"]
+        var parts = ["\(count) item\(count == 1 ? "" : "s")"]
         switch model.filter {
         case .project(let p):
             let envs = model.environments(in: p)
@@ -369,28 +389,14 @@ struct ListHeader: View {
         return parts.joined(separator: " · ")
     }
 
-    /// The tile beside the title: what kind of view this is.
-    private var icon: (String, Color) {
-        switch model.filter {
-        case .project: return ("folder.fill", .indigo)
-        case .shared: return ("tray.full.fill", .gray)
-        case .service: return ("server.rack", .gray)
-        case .kind(let k): return (k.symbol, k.tint)
-        case .agentSafe: return ("person.badge.shield.checkmark.fill", .green)
-        case .needsApproval: return ("hand.raised.fill", .red)
-        default: return ("key.fill", .blue)
-        }
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center, spacing: 12) {
-                IconTile(symbol: icon.0, tint: icon.1, size: 42)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(model.filter.title).font(.title2.weight(.semibold)).lineLimit(1)
                     ViewThatFits(in: .horizontal) {
                         Text(subtitle).fixedSize()
-                        Text("\(count) credential\(count == 1 ? "" : "s")")
+                        Text("\(count) item\(count == 1 ? "" : "s")")
                     }
                     .font(.callout).foregroundStyle(.secondary).lineLimit(1)
                 }
@@ -402,13 +408,6 @@ struct ListHeader: View {
                     Picker("Sort By", selection: $model.sort) {
                         ForEach(SortOrder.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                     }
-                    Menu("Show") {
-                        Button("All Credentials") { model.filter = .all }
-                        Button("No Approval") { model.filter = .agentSafe }
-                        Button("Ask First") { model.filter = .needsApproval }
-                        Divider()
-                        ForEach(ItemKind.allCases, id: \.self) { k in Button(k.label + "s") { model.filter = .kind(k) } }
-                    }
                     if !model.selection.isEmpty {
                         Divider()
                         Button("Move Selected to a Project…") { model.moveRequest = MoveRequest(ids: model.selection.sorted()) }
@@ -417,8 +416,9 @@ struct ListHeader: View {
                     Image(systemName: "ellipsis")
                 }
                 .menuStyle(.button).buttonStyle(.bordered).menuIndicator(.hidden).fixedSize().focusEffectDisabled()
-                .help("New, import, sort and show")
+                .help("New, import and sort")
             }
+            HStack(spacing: 8) {
             HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                 TextField("Search credentials…", text: $model.search).textFieldStyle(.plain).focused(searching)
@@ -434,8 +434,77 @@ struct ListHeader: View {
             .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.quaternary.opacity(0.3)))
             .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(.separator.opacity(0.8)))
             .background(Button("") { searching.wrappedValue = true }.keyboardShortcut("f").hidden())
+            FilterMenu(model: model)
+            }
+            if model.filtersActive {
+                HStack(spacing: 6) {
+                    if let e = model.environmentFilter { FilterChip(text: e) { model.environmentFilter = nil } }
+                    if let k = model.kindFilter { FilterChip(text: k.label + "s") { model.kindFilter = nil } }
+                    if let a = model.accessFilter { FilterChip(text: a ? "No approval" : "Ask first") { model.accessFilter = nil } }
+                    Spacer()
+                    Button("Clear") { model.clearFilters() }.buttonStyle(.link).font(.callout)
+                }
+            }
         }
         .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 10)
+    }
+}
+
+/// Narrows the list to one project, environment, kind, or access setting.
+struct FilterMenu: View {
+    @Bindable var model: AppModel
+
+    var body: some View {
+        Menu {
+            Picker("Project", selection: Binding(get: { () -> String? in
+                if case .project(let p) = model.filter { return p } else { return nil }
+            }, set: { model.filter = $0.map { .project($0) } ?? .all })) {
+                Text("All Projects").tag(String?.none)
+                ForEach(model.projects, id: \.self) { Text($0).tag(String?.some($0)) }
+            }
+            Picker("Environment", selection: $model.environmentFilter) {
+                Text("All Environments").tag(String?.none)
+                ForEach(model.allEnvironments, id: \.self) { Text($0).tag(String?.some($0)) }
+            }
+            Picker("Kind", selection: $model.kindFilter) {
+                Text("All Kinds").tag(ItemKind?.none)
+                ForEach(ItemKind.allCases, id: \.self) { Text($0.label + "s").tag(ItemKind?.some($0)) }
+            }
+            Picker("Access", selection: $model.accessFilter) {
+                Text("Any Access").tag(Bool?.none)
+                Text("No Approval").tag(Bool?.some(true))
+                Text("Ask First").tag(Bool?.some(false))
+            }
+            if model.filtersActive {
+                Divider()
+                Button("Clear Filters") { model.clearFilters() }
+            }
+        } label: {
+            Image(systemName: model.filtersActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease")
+                .foregroundStyle(model.filtersActive ? Color.accentColor : Color.secondary)
+                .frame(width: 38, height: 36)
+                .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.quaternary.opacity(0.3)))
+                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(.separator.opacity(0.8)))
+                .contentShape(RoundedRectangle(cornerRadius: 10))
+        }
+        .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize().focusEffectDisabled()
+        .help("Filter by project, environment, kind or access")
+    }
+}
+
+/// An active filter, with a button that removes it.
+struct FilterChip: View {
+    let text: String
+    let remove: () -> Void
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(text).font(.callout.weight(.medium))
+            Button(action: remove) { Image(systemName: "xmark").font(.caption2.weight(.bold)) }.buttonStyle(.plain)
+                .accessibilityLabel("Remove \(text) filter")
+        }
+        .padding(.horizontal, 8).padding(.vertical, 3)
+        .background(Capsule().fill(Color.accentColor.opacity(0.2)))
+        .foregroundStyle(Color.accentColor)
     }
 }
 
@@ -642,12 +711,32 @@ extension GroupCard {
 
 /// A heading over a group of cards in the list.
 struct ListSectionHeading: View {
+    let model: AppModel
     let title: String
+    let symbol: String
+
     var body: some View {
-        Text(title).font(.callout.weight(.medium)).foregroundStyle(.secondary).padding(.top, 8).padding(.leading, 4)
-            .selectionDisabled()
-            .listRowSeparator(.hidden)
-            .listRowInsets(EdgeInsets(top: 2, leading: 12, bottom: 0, trailing: 12))
+        let collapsed = model.collapsedSections.contains(title)
+        Button {
+            withAnimation(.snappy) {
+                if collapsed { model.collapsedSections.remove(title) } else { model.collapsedSections.insert(title) }
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: symbol).foregroundStyle(.secondary)
+                Text(title).font(.body.weight(.medium))
+                Spacer()
+                Image(systemName: "chevron.down").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                    .rotationEffect(.degrees(collapsed ? -90 : 0))
+            }
+            .padding(.top, 10).padding(.bottom, 2).padding(.horizontal, 2)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(title), \(collapsed ? "collapsed" : "expanded")")
+        .selectionDisabled()
+        .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(top: 2, leading: 12, bottom: 0, trailing: 12))
     }
 }
 

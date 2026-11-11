@@ -3,8 +3,9 @@
 ## Unreleased
 
 ### The window
-- A new layout: the sidebar has Overview, Credentials, Activity, Grants, projects and services; the list has its own
-  header, search (⌘F) and menu; each item shows its type; the detail pane is a set of cards with an **Edit** menu.
+- A new layout: the sidebar has Overview, Credentials, Activity, Grants and services; the list has its own header,
+  search (⌘F), a filter for project, environment, kind and access, and project cards under folding headings; each
+  item shows its type; the detail pane is a set of cards with an **Edit** menu.
 - **Edit Details…** changes kind, access, service, note and fill sites together, with one Touch ID.
 - The sheets share one header and footer.
 
