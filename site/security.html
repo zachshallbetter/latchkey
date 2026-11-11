@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Security · Latchkey</title>
+  <meta name="description" content="What Latchkey protects, how, and where its protection ends: keychain storage, caller identity from the kernel, approvals and grants, the key proxy, the access log, iCloud Keychain sync, and the limits of each.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:title" content="Security · Latchkey">
+  <meta property="og:description" content="Each mechanism, what it protects against, and what it doesn't guarantee.">
+  <meta name="twitter:card" content="summary">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="site.css">
+  <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="llms.txt">
+  <style>
+    /* Security: one reading column. Each boundary in plain words, then the table of mechanisms and their limits. */
+    main.sec { max-width: 800px; }
+    .sec .page-hero { padding: 56px 0 0; }
+    .sec .lede { font-size: 20px; color: var(--muted); }
+    .sec h2 { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line); scroll-margin-top: 76px; font-size: clamp(24px, 3vw, 30px); }
+    .sec h3 { margin-top: 28px; }
+    .sec ul { padding-left: 22px; }
+    .sec li { margin: 8px 0; }
+    .sec table { border-collapse: collapse; width: 100%; margin: 18px 0; font-size: 15px; display: block; overflow-x: auto; }
+    .sec th, .sec td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    .sec th { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); white-space: nowrap; }
+    .sec td:first-child { font-weight: 650; white-space: nowrap; }
+    .sec .toc ul { columns: 2 220px; }
+    .bounds { display: grid; gap: 10px; margin: 20px 0; padding: 0; list-style: none; }
+    .bounds li { margin: 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+    .bounds b { display: block; margin-bottom: 2px; }
+    .bounds span { color: var(--muted); font-size: 15.5px; }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site">
+    <nav class="top wrap" aria-label="Main">
+      <a class="brand" href="index.html"><img class="logo" src="logo.svg" alt="">Latchkey</a>
+      <ul>
+        <li><a href="features.html">Features</a></li>
+        <li><a href="index.html#how">How it works</a></li>
+        <li><a href="security.html" aria-current="page">Security</a></li>
+        <li><a href="developers/index.html">Docs</a></li>
+        <li><a class="button primary" href="index.html#install">Development preview</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main" class="wrap sec">
+    <section class="page-hero" aria-labelledby="title">
+      <p class="eyebrow">Security</p>
+      <h1 id="title">What Latchkey protects, and where it stops</h1>
+      <p class="lede">Latchkey keeps secret values out of files and transcripts, and makes you the one who decides which command gets which value. Every mechanism below has a boundary, and the boundaries matter as much as the mechanisms.</p>
+      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul>
+        <li><a href="#distinctions">Six distinctions</a></li><li><a href="#storage">Storage</a></li><li><a href="#sync">Sync between Macs</a></li>
+        <li><a href="#identity">Who's asking</a></li><li><a href="#release">Releasing values</a></li><li><a href="#paths">How a command gets a value</a></li>
+        <li><a href="#safari">Latchkey for Safari</a></li><li><a href="#log">The access log</a></li><li><a href="#table">Guarantees and limits</a></li>
+        <li><a href="#limits">Where protection ends</a></li><li><a href="#report">Reporting a problem</a></li></ul></nav>
+    </section>
+
+    <h2 id="distinctions">Six distinctions worth knowing first</h2>
+    <ul class="bounds">
+      <li><b>The keychain protects stored values, not released ones.</b><span>Once a command has a value, it's in that command's memory and environment, and Latchkey can't control what it does with it.</span></li>
+      <li><b>A reference names a secret; it doesn't grant access to it.</b><span><code>latchkey://shop/development/STRIPE_KEY</code> in a committed file reveals a name. Reading the item still needs it to be agent-safe, a grant covering the caller, or your approval.</span></li>
+      <li><b>A proxy hides a key without narrowing what it can do.</b><span>With <code>--proxy</code> the command never holds the OpenAI or Anthropic key, but it can still make any call that key allows through the proxy.</span></li>
+      <li><b>iCloud Keychain sync is separate from agent authorization.</b><span>Items and environment records sync to your Macs. Grants don't: each is kept on the Mac where you made it.</span></li>
+      <li><b>The access log records releases, not provider-side use.</b><span>It shows what Latchkey gave to which program, from where. What that program then did at the service is the service's record.</span></li>
+      <li><b>A shared credential means fewer copies of the same authority.</b><span>One shared item used by five projects is one value to rotate, and still one key that all five can use.</span></li>
+    </ul>
+
+    <h2 id="storage">Storage</h2>
+    <ul>
+      <li>Values are generic-password items in the data-protection keychain, in an access group only the signed Latchkey app can use. Versions, remote links, environment records and project links are keychain items too; records and links hold item IDs, remotes and plain settings, nothing secret. A plain setting that looks secret is refused.</li>
+      <li>One process holds values. The command-line tool never touches the keychain; it asks the app over a Unix socket readable and writable only by you, and the app accepts connections only from your user account.</li>
+      <li>Before sending anything, a signed <code>latchkey</code> checks that the program on the socket is the Latchkey app signed by the same team. A program that took the socket while the app wasn't running gets nothing, not even a value you're saving. An unsigned development build can't check, and falls back to the login keychain on one Mac.</li>
+      <li>Synced items use the "after first unlock" protection class, so scheduled jobs can read agent-safe items while the screen is locked.</li>
+    </ul>
+
+    <h2 id="sync">Sync between Macs</h2>
+    <p>Latchkey's items sync through iCloud Keychain, end to end encrypted, to each Mac signed in to your Apple Account that has Latchkey installed. There's no Latchkey server or account. That protection is Apple's: anyone who controls your Apple Account and a trusted device can reach synced items.</p>
+    <p>Grants, approvals and the access log stay on each Mac. A second Mac gets your items and environment records, not the permissions you gave agents on the first. <span class="avail pending">Second-Mac test pending</span></p>
+
+    <h2 id="identity">Who's asking</h2>
+    <ul>
+      <li>For each connection the app gets the caller's identity from the kernel, not from the request: its working folder, its command line, its parent processes, and whether it is Latchkey's own command-line tool, by code signature.</li>
+      <li>The approval panel and the log show those. Any other program talking to the socket is named by its path, with a warning. Grants are matched against the folder the caller really runs in.</li>
+      <li>The caller is checked by signature; its parents are named by their files, and file names can be faked. Judge a request by its folder and command as well.</li>
+    </ul>
+
+    <h2 id="release">Releasing values</h2>
+    <h3>Approvals</h3>
+    <p>Approvals use macOS LocalAuthentication: Touch ID, a paired Apple Watch, or your account password. Releasing values shows the panel first, with the caller's folder, command and process chain; Touch ID confirms. Changes ask with the system sheet alone, naming the item, the agent and the folder. A request over SSH, or from a program that isn't Latchkey's tool, always shows the panel and its warning first. Nothing unanswered is allowed: either prompt denies after 90 seconds. Allow Once authorizes one request; approvals are never cached.</p>
+    <h3>Grants</h3>
+    <p>A grant lets commands from one folder (and its repository's worktrees) read named items without asking, for up to 7 days, and can be narrowed to an agent's session, one command or one request. Grants are kept in a keychain item only Latchkey can read or change, on this Mac only. No file holds them, so no other program can write itself one. Grants an agent asks for through the MCP server cover only its own folder, last a day at most, and can't include production.</p>
+    <h3>Agent-safe items</h3>
+    <p>An item marked agent-safe is released to any program that asks, with no prompt. Use it for values that aren't really secret, such as <code>NEXT_PUBLIC_*</code> settings that ship to browsers anyway.</p>
+
+    <h2 id="paths">How a command gets a value</h2>
+    <p>The guarantee depends on which path a value takes into the command.</p>
+    <table>
+      <thead><tr><th>Path</th><th>What the command holds</th><th>What it protects</th></tr></thead>
+      <tbody>
+        <tr><td><code>lk run</code></td><td>The value, in its environment</td><td>Files and transcripts hold references; output that repeats an exact value of 6 characters or more is masked.</td></tr>
+        <tr><td><code>--proxy</code></td><td>A random placeholder and a base URL on 127.0.0.1</td><td>The OpenAI or Anthropic key stays in the signed <code>lk</code> process and goes only to the provider's own host. Requests without that run's placeholder are refused; upstream redirects aren't followed.</td></tr>
+        <tr><td><code>--aws-session</code></td><td>STS credentials that expire (15 minutes by default)</td><td>The long-lived AWS key stays in <code>lk run</code>. A leaked value soon stops working.</td></tr>
+        <tr><td><code>--file</code></td><td>The path of a temporary file</td><td>The file is in a new folder only you can open, readable only by you, and deleted when the command exits.</td></tr>
+        <tr><td><code>export --values</code></td><td>A plain-text file</td><td>Asks every time, naming the file; nothing stands in for that approval. Written readable only by you and renamed into place. Agents can't use it.</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="safari">Latchkey for Safari</h2>
+    <p>The extension is sandboxed and reaches the app through its own socket, which admits only Latchkey's signed extension and only to list item names, save a value (which asks like any change) and fill one item into the page you're on. Key detection runs inside the page: a value goes to the app only when you press Save. Password fields aren't read. Fill asks every time, works only on the item's fill sites (by default its service's own site and deployment platforms), over https only, never in a frame, and is logged. Otherwise it can't read a stored value.</p>
+
+    <h2 id="log">The access log</h2>
+    <p>Every read, change, grant, move, import and push is logged with the program chain and folder. Stored values aren't logged; likely secrets in command arguments are replaced with <code>&lt;redacted&gt;</code>, which is heuristic, so keep values out of command arguments. Each entry carries a keyed hash (HMAC-SHA256) of itself and the one before it, with the key kept in the keychain, so <code>lk log --verify</code> finds an entry that was changed, removed or added, or a log cut short. It can't stop a program running as you from deleting the file, only show that it happened.</p>
+
+    <h2 id="table">Guarantees and limits</h2>
+    <table>
+      <thead><tr><th>Mechanism</th><th>Protects against</th><th>Doesn't guarantee</th></tr></thead>
+      <tbody>
+        <tr><td>Keychain storage</td><td>Values in plaintext files, backups and synced folders; values readable on a lost Mac</td><td>Safety after a value is released to a command</td></tr>
+        <tr><td>References</td><td>Secrets copied into config files and commits</td><td>Permission to read the item</td></tr>
+        <tr><td>Approval panel</td><td>Reads you didn't approve; shows the caller as macOS sees it</td><td>Control over what an approved command does next</td></tr>
+        <tr><td>Grants</td><td>Repeated prompts for a folder, for a time</td><td>Telling programs apart within that folder: any program asking from there is covered</td></tr>
+        <tr><td>Masking</td><td>Exact copies of a value in a command's output</td><td>Catching values that were encoded or transformed</td></tr>
+        <tr><td>Key proxy</td><td>The OpenAI or Anthropic key reaching the command</td><td>Limits on which calls the command makes with it; protection for other credentials</td></tr>
+        <tr><td>STS credentials</td><td>The long-lived AWS key reaching the command</td><td>Least privilege, which depends on the role's policy</td></tr>
+        <tr><td>Access log</td><td>Undetected edits, removals or truncation</td><td>A record of what the service saw, or that the file can't be deleted</td></tr>
+        <tr><td>iCloud Keychain</td><td>Values exposed in transit or at rest between your Macs</td><td>Safety from someone with your Apple Account and a trusted device</td></tr>
+        <tr><td>Shared items</td><td>Many copies of the same value</td><td>Separate authority per project</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="limits">Where protection ends</h2>
+    <ul>
+      <li><b>Anything running as you can ask.</b> The socket is open to every process in your user account. Agent-safe items and grants are released to any program that asks from the right place, so keep them narrow and short.</li>
+      <li><b>A released value is out of Latchkey's hands.</b> A command can write it to a file, send it over the network or transform it. Masking only hides exact copies.</li>
+      <li><b><code>lk get</code> prints the value.</b> Keep agents away from it with your agent instructions or a hook that refuses it.</li>
+      <li><b>The same Mac account.</b> Malware running as you could ask for approvals until you click one, or read a temporary key file while the command runs. Latchkey raises the bar; it doesn't replace a clean machine.</li>
+      <li><b>History keeps old values</b> for up to 30 days after deletion, or until there are more than 10 versions. Use Forget History when an old value shouldn't linger, and rotate leaked keys at the service either way.</li>
+      <li><b>An exported file is a plain copy.</b> Delete it when you're done, and keep it out of Git.</li>
+    </ul>
+    <p>The full write-up is in the repository's <code>docs/security.md</code>, with the wire protocol and stored files described under <a href="developers/api.html">References and API</a>.</p>
+
+    <h2 id="report">Reporting a problem</h2>
+    <p>Report a vulnerability privately through GitHub: the repository's <b>Security</b> tab › <b>Report a vulnerability</b>. Please don't open a public issue for it. Include the Latchkey and macOS versions, what an attacker can do and what they need first, and steps to reproduce with example values only. Never send a real secret.</p>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="features.html">Features</a></li>
+        <li><a href="developers/index.html">Docs</a></li>
+        <li><a href="developers/api.html">References and API</a></li>
+      </ul>
+    </div>
+  </footer>
+  <script src="site.js"></script>
+</body>
+</html>

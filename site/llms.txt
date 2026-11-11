@@ -22,6 +22,8 @@
 
 ## Docs
 
+- [Features](features.html)
+- [Security](security.html)
 - [Developers overview](developers/index.html)
 - [Quickstart](developers/quickstart.html)
 - [CLI reference](developers/cli.html)
