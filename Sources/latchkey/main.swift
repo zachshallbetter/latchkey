@@ -17,6 +17,8 @@ Files refer to them as latchkey://ID.
       Secret values printed by COMMAND are concealed unless --no-masking is given.
       --proxy keeps OPENAI_API_KEY and ANTHROPIC_API_KEY out of COMMAND: it gets a placeholder and a local
       OPENAI_BASE_URL / ANTHROPIC_BASE_URL, and latchkey puts the real key on requests to the provider only.
+      --aws-session (or --aws-role ARN) gives COMMAND short-lived AWS credentials from STS instead of the long-lived
+      key; --aws-for sets how long they last (default 15m, at most 12h).
   latchkey check [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [ID,...] [--json] [-- COMMAND...]
       What `latchkey run` with the same options would get without asking (agent-safe, granted, recently
       approved), what would ask, and what's missing. Asks nothing and releases nothing. Give the COMMAND to
@@ -221,6 +223,7 @@ func runCommand(_ input: [String]) -> Never {
     var fileArgs: [(name: String, id: String)] = []
     var masking = true
     var proxy = false
+    var aws: (role: String?, duration: TimeInterval)?
     var rest = input
     var cmd: [String] = []
     while !rest.isEmpty {
@@ -241,6 +244,13 @@ func runCommand(_ input: [String]) -> Never {
             fileArgs.append((String(a[..<i]), String(a[a.index(after: i)...])))
         case "--no-masking": masking = false
         case "--proxy": proxy = true
+        case "--aws-session": aws = (aws?.role, aws?.duration ?? AWSSTS.shortest)
+        case "--aws-role":
+            guard !rest.isEmpty, rest[0].hasPrefix("arn:") else { fail("--aws-role takes a role ARN, such as arn:aws:iam::123456789012:role/dev", code: 64) }
+            aws = (rest.removeFirst(), aws?.duration ?? AWSSTS.shortest)
+        case "--aws-for":
+            guard !rest.isEmpty, let d = GrantStore.parseDuration(rest.removeFirst()) else { fail("--aws-for takes a time such as 15m or 1h", code: 64) }
+            aws = (aws?.role, d)
         default:
             if a.hasPrefix("--env-file=") { envFiles.append(String(a.dropFirst(11))) }
             else if a.hasPrefix("-") { fail("unknown option \(a)", code: 64) }
@@ -249,7 +259,7 @@ func runCommand(_ input: [String]) -> Never {
     }
     guard !cmd.isEmpty else { fail("usage: latchkey run [--env-file FILE] [--env PROJECT/ENV] [--file NAME=ID] -- COMMAND [ARGS...]", code: 64) }
 
-    let spec = RunSpec(envFiles: envFiles, scopes: scopes, fileArgs: fileArgs, cwd: currentDirectory())
+    let spec = RunSpec(envFiles: envFiles, scopes: scopes, fileArgs: fileArgs, cwd: currentDirectory(), aws: aws)
     let prepared: PreparedRun
     do {
         let planned = try plannedEnvironment(spec, base: ProcessInfo.processInfo.environment, call: call)

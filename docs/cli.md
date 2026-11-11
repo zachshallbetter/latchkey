@@ -19,6 +19,7 @@ Starts COMMAND with every `latchkey://ID` in its environment replaced by the ite
 | `--file NAME=ID` | Set NAME to the path of a temporary file holding the value. `NAME=latchkey-file://ID` in an env file does the same. The file is readable only by you and deleted when COMMAND exits. |
 | `--no-masking` | Don't hide values in COMMAND's output, and start it directly. |
 | `--proxy` | Keep `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` out of COMMAND entirely (see below). |
+| `--aws-session`, `--aws-role ARN`, `--aws-for TIME` | Give COMMAND short-lived AWS credentials instead of the long-lived key (see below). |
 
 Items that aren't agent-safe or covered by a grant ask for approval first. Values of secret kinds that are 6
 characters or longer are replaced with `<concealed by latchkey>` in COMMAND's output, including values split across
@@ -51,6 +52,18 @@ latchkey run --proxy --env shop/development -- npm test
 
 It works with programs that use the OpenAI or Anthropic SDKs (or read those base URL variables). If a base URL
 variable is already set, that provider's key is passed through as usual.
+
+### Short-lived AWS credentials
+
+With `--aws-session`, `latchkey run` signs a request to AWS STS with your long-lived access key (`AWS_ACCESS_KEY_ID`
+and `AWS_SECRET_ACCESS_KEY`, both `latchkey://` references) and gives COMMAND the temporary credentials STS returns:
+`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN` and `AWS_CREDENTIAL_EXPIRATION`. `--aws-role ARN`
+assumes that role instead. They last 15 minutes unless `--aws-for` says otherwise (at most 12 hours), so a leaked
+value soon stops working. The long-lived key never reaches COMMAND. No AWS CLI is needed. MFA isn't supported yet.
+
+```bash
+latchkey run --aws-role arn:aws:iam::123456789012:role/dev --aws-for 1h --env shop/development -- terraform plan
+```
 
 ### `latchkey get ID`
 

@@ -23,6 +23,8 @@ struct RunSpec {
     var fileArgs: [(name: String, id: String)] = []
     /// The folder relative env file paths are read from.
     var cwd: String
+    /// Swap the long-lived AWS key for short-lived credentials from STS: GetSessionToken, or AssumeRole with a role.
+    var aws: (role: String?, duration: TimeInterval)?
 }
 
 /// The command's environment with values filled in, the values to hide in its output, and the private folder
@@ -110,8 +112,28 @@ func prepareRun(_ spec: RunSpec, env planned: [String: String], masking: Bool, p
     }
     let masked = Set(r.masked ?? names)
     let secrets = masking ? values.filter { masked.contains($0.key) }.map(\.value) : []
+    var masks = secrets
+    if let aws = spec.aws {
+        // The long-lived key must come from Latchkey, so it never reaches the command.
+        guard let idRef = wholeReferences["AWS_ACCESS_KEY_ID"], let secretRef = wholeReferences["AWS_SECRET_ACCESS_KEY"],
+              let id = values[idRef], let secret = values[secretRef] else {
+            tempDir.map { try? FileManager.default.removeItem(at: $0) }
+            throw RunError.usage("short-lived AWS credentials need AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY as latchkey:// references")
+        }
+        switch AWSSTS.mint(accessKeyID: id, secret: secret, role: aws.role, duration: aws.duration) {
+        case .success(let c):
+            env["AWS_ACCESS_KEY_ID"] = c.accessKeyID
+            env["AWS_SECRET_ACCESS_KEY"] = c.secretAccessKey
+            env["AWS_SESSION_TOKEN"] = c.sessionToken
+            env["AWS_CREDENTIAL_EXPIRATION"] = c.expiration
+            masks += [secret, c.secretAccessKey, c.sessionToken]
+        case .failure(let f):
+            tempDir.map { try? FileManager.default.removeItem(at: $0) }
+            throw RunError.failed(f.description)
+        }
+    }
     let proxies = proxy ? holdBackProxiedKeys(&env, values: values, references: wholeReferences) : []
-    return PreparedRun(environment: env, secretValues: secrets, tempDir: tempDir, proxies: proxies)
+    return PreparedRun(environment: env, secretValues: masking ? masks : [], tempDir: tempDir, proxies: proxies)
 }
 
 /// Reads `pipe` to its end on a background queue, hiding `secrets`, and hands each masked chunk to `sink`.

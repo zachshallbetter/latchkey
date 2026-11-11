@@ -180,7 +180,10 @@ final class MCPServer: @unchecked Sendable {
         let command = Self.strings(args["command"])
         guard !command.isEmpty else { throw RunError.usage("command is required: an array such as [\"npm\", \"test\"]") }
         let timeout = min(max(args["timeout_seconds"] as? Double ?? Self.defaultTimeout, 1), Self.longestTimeout)
-        let cli = ["run"] + (args["proxy"] as? Bool == true ? ["--proxy"] : []) + (try sourceArguments(args)) + ["--"] + command
+        var options: [String] = args["proxy"] as? Bool == true ? ["--proxy"] : []
+        if let role = args["aws_role"] as? String, !role.isEmpty { options += ["--aws-role", role] }
+        else if args["aws_session"] as? Bool == true { options.append("--aws-session") }
+        let cli = ["run"] + options + (try sourceArguments(args)) + ["--"] + command
         let result = try latchkey(cli, in: try folder(args), timeout: timeout, id: id)
         // latchkey's own refusals end the run before the command starts, with a latchkey: line on standard error.
         if [64, 66, 69, 77].contains(result.code), result.stderr.text.hasPrefix("latchkey: ") { throw Self.failure(result) }
@@ -414,6 +417,9 @@ final class MCPServer: @unchecked Sendable {
                             "description": "The program and its arguments, such as [\"npm\", \"test\"]. Use [\"sh\", \"-c\", \"...\"] for pipes."],
                 "proxy": ["type": "boolean",
                           "description": "Keep OPENAI_API_KEY and ANTHROPIC_API_KEY out of the command: it gets a placeholder and a local base URL, and Latchkey adds the real key on requests to the provider. For programs using the OpenAI or Anthropic SDKs."],
+                "aws_session": ["type": "boolean",
+                                "description": "Give the command short-lived AWS credentials (15 minutes) from STS instead of the long-lived key."],
+                "aws_role": ["type": "string", "description": "Like aws_session, but assume this role ARN."],
                 "timeout_seconds": ["type": "number", "minimum": 1, "maximum": longestTimeout,
                                     "description": "Stop the command after this long. Default 600, at most 3600."],
             ]) { a, _ in a }],
