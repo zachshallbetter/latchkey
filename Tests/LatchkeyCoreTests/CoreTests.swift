@@ -36,7 +36,7 @@ final class CoreTests: XCTestCase {
         XCTAssertEqual(String(decoding: out, as: UTF8.self), "abc <concealed by latchkey>")
     }
 
-    func testEnvFileParsing() {
+    func testEnvFileParsing() throws {
         let text = """
         # comment
         export A=1
@@ -44,9 +44,8 @@ final class CoreTests: XCTestCase {
         C='single # kept'
         D=plain # trailing comment
         E=latchkey://gemini
-        bad line
         """
-        let parsed = Dictionary(uniqueKeysWithValues: EnvFile.parse(text).map { ($0.key, $0.value) })
+        let parsed = Dictionary(uniqueKeysWithValues: try EnvFile.parse(text).map { ($0.key, $0.value) })
         XCTAssertEqual(parsed, ["A": "1", "B": "two words", "C": "single # kept", "D": "plain", "E": "latchkey://gemini"])
     }
 

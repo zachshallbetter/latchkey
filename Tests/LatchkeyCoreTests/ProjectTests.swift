@@ -50,15 +50,15 @@ final class ImportPlacementTests: XCTestCase {
         XCTAssertTrue(ItemID.isValidPart(project))
     }
 
-    func testPlanPlacesItemsAndMapsKeys() {
-        let p = EnvImport.plan("PGHOST=h\nPGPASSWORD=pw\nDATABASE_URL_UNPOOLED=postgres://u:p@h/db\nREF=latchkey://X",
+    func testPlanPlacesItemsAndMapsKeys() throws {
+        let p = try EnvImport.plan("PGHOST=h\nPGPASSWORD=pw\nDATABASE_URL_UNPOOLED=postgres://u:p@h/db\nREF=latchkey://X",
                                source: ".env.local", location: "/r/.env.local", project: "acp", environment: "development")
         XCTAssertEqual(p.items.map(\.name), ["acp/development/DATABASE_URL_UNPOOLED", "acp/development/PGHOST", "acp/development/PGPASSWORD"])
         XCTAssertEqual(p.references["PGHOST"], "acp/development/PGHOST")
         XCTAssertEqual(p.items.first { $0.name.hasSuffix("PGPASSWORD") }?.kind, .password)
         XCTAssertEqual(p.items.first { $0.name.hasSuffix("UNPOOLED") }?.kind, .password)
         XCTAssertEqual(p.items.first?.usedIn, ["/r/.env.local"])
-        XCTAssertEqual(EnvImport.plan("A=1", source: "x").items.map(\.name), ["A"], "no project: shared")
+        XCTAssertEqual(try EnvImport.plan("A=1", source: "x").items.map(\.name), ["A"], "no project: shared")
     }
 }
 
@@ -137,7 +137,7 @@ final class ServiceTests: XCTestCase {
         XCTAssertEqual(try store.info("A")?.service, "Neon", "nil keeps")
         try store.save(name: "A", value: nil, kind: nil, agentSafe: nil, note: nil, usedIn: nil, service: "")
         XCTAssertNil(try store.info("A")?.service, "empty clears")
-        XCTAssertEqual(EnvImport.plan("STRIPE_SECRET=sk_test_1", source: "x").items.first?.service, "Stripe")
+        XCTAssertEqual(try EnvImport.plan("STRIPE_SECRET=sk_test_1", source: "x").items.first?.service, "Stripe")
     }
 }
 

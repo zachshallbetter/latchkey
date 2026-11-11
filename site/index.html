@@ -296,7 +296,7 @@
       <a class="brand" href="index.html"><img class="logo" src="logo.svg" alt="">Latchkey</a>
       <ul>
         <li><a href="developers/index.html">Docs</a></li>
-        <li><a class="button primary" href="#install">Download</a></li>
+        <li><a class="button primary" href="#install">Preview status</a></li>
       </ul>
     </nav>
   </header>
@@ -306,7 +306,7 @@
       <h1 id="title">API keys for commands and coding agents on your Mac</h1>
       <p class="lede">Latchkey keeps API keys and database URLs in iCloud Keychain. When a command starts, it fills them in, after you approve with Touch ID or under a limit you set ahead of time. Your project files keep only references.</p>
       <div class="cta">
-        <a class="button primary" href="#install">Download for Mac</a>
+        <a class="button primary" href="#install">Development preview</a>
         <a href="developers/quickstart.html">Quickstart for the command line</a>
       </div>
       <p class="fine">macOS 15 or later. The app and the <code>lk</code> command-line tool. No account or server.</p>
@@ -391,12 +391,12 @@ lk grant 'shop/development/*' --command "npm test" --for 2h</code></pre></figure
     <p>Through the MCP server, an agent can ask for a grant only on its own folder and for its own session, for a day at most, and never for production items.</p>
 
     <h2 id="app">The app</h2>
-    <p>Everything Latchkey keeps is in one window: items grouped by project and environment, which ones agents may read without asking, where each is used, every request in Activity, and the grants in effect. The window below works with example data. Whatever you chose in the panel at the top of the page is already in its Activity, and a grant you made is under Grants, where Revoke ends it. Showing a value or changing a setting asks for Touch ID, as it does in the app.</p>
+    <p>Everything Latchkey keeps is in one window: items grouped by project and environment, which ones agents may read without asking, where each is used, every request in Activity, and the grants in effect. The window below works with example data. Whatever you chose in the panel at the top of the page is already in its Activity, and a grant you made is under Grants, where Revoke stops future reads through that grant. Changes ask for Touch ID. Revealing a value asks unless its No Approval setting permits it.</p>
     <div class="appwrap"><div class="appwin" id="appwin" aria-label="The Latchkey window, with example data"></div></div>
     <p class="fine">Example data; the values are made up. The menu bar icon opens a smaller panel with search and recent activity, like the one above the terminal.</p>
 
     <h2 id="proxy">Keys an agent can use without reading</h2>
-    <p>A command that has a key in its environment can print it, encode it or send it somewhere, and masking only catches exact copies. For OpenAI and Anthropic keys, <code>lk run --proxy</code> keeps the key out of the command. The command gets a placeholder and a base URL on your Mac; Latchkey adds the real key to requests bound for <code>api.openai.com</code> or <code>api.anthropic.com</code> and refuses everything else.</p>
+    <p>A command that has a key in its environment can print it, encode it or send it somewhere, and masking only catches exact copies. For OpenAI and Anthropic keys, <code>lk run --proxy</code> keeps the key out of the command. The command gets a placeholder and a base URL on your Mac; Latchkey adds the real key to requests bound for <code>api.openai.com</code> or <code>api.anthropic.com</code> and refuses unauthenticated requests. Proxy mode refuses custom base URLs and additional variable or file deliveries of the protected key. Other credentials are still delivered normally.</p>
     <div class="scene proxy" id="proxy-demo">
       <div class="lanes">
         <div class="lane"><p class="label">In the command's environment</p><pre>OPENAI_API_KEY=lk-proxy-3f9c…8e4a
@@ -424,7 +424,7 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
 lk rotate --touched --since 4h --by claude --open --push</code></pre></figure>
 
     <h2 id="security">How it protects keys, and where it stops</h2>
-    <p>Values live in iCloud Keychain in an access group only the signed Latchkey app can read, and sync end to end encrypted to each Mac signed in to your Apple Account that has Latchkey installed. The <code>lk</code> tool checks the app's code signature before sending anything, and the app checks the tool's. Grants are kept where only Latchkey can change them. The access log records every release, change and refusal without values, and chains each entry to the last, so <code>lk log --verify</code> notices an entry that was edited or removed.</p>
+    <p>Values live in iCloud Keychain in an access group only the signed Latchkey app can read, and sync end to end encrypted to each Mac signed in to your Apple Account that has Latchkey installed. The <code>lk</code> tool checks the app's code signature before sending anything, and the app checks the tool's. Grants are kept where only Latchkey can change them. The access log records releases, changes and refusals, with likely secrets in command arguments redacted, and chains each entry to the last, so <code>lk log --verify</code> notices an entry that was edited or removed.</p>
     <p>Latchkey can't help with these:</p>
     <ul class="limits">
       <li>A command you allowed has the key, and Latchkey can't control what it does with it. <code>--proxy</code> is the exception, for OpenAI and Anthropic.</li>
@@ -438,19 +438,19 @@ lk rotate --touched --since 4h --by claude --open --push</code></pre></figure>
       <dt>Projects and environments</dt><dd>Items are <code>project/environment/NAME</code> or shared. Use names like <code>vercel.preview</code> when a service needs different values.</dd>
       <dt>History</dt><dd>The last 10 values of each item, and deleted items for 30 days.</dd>
       <dt>Remote locations</dt><dd>Link an environment to Vercel, GitHub Actions, Railway or Fly, check what's missing, and push with each service's own tool. Production needs a second confirmation.</dd>
-      <dt>MCP server</dt><dd><code>lk mcp</code> lets an agent list items, check what a run would get, run commands and ask for a grant. It never returns a value.</dd>
+      <dt>MCP server</dt><dd><code>lk mcp</code> lets an agent list items, check what a run would get, run commands and ask for a grant. It has no direct secret-read tool. Child output masks exact values; transformed secrets can still leak.</dd>
       <dt>Latchkey for Safari</dt><dd>When a page shows you a new key, the extension spots it and offers to save it to Latchkey, with your approval. Select anything it missed and save that. It can't read values.</dd>
-      <dt>Another Mac over SSH</dt><dd>Forward the app's socket with <code>ssh -R</code>; every request from the other Mac asks you here.</dd>
+      <dt>Another Mac over SSH</dt><dd>Forward the app's socket with <code>ssh -R</code>; each read without the No Approval setting asks you here; local grants do not apply.</dd>
     </dl>
 
     <h2 id="install">Install</h2>
     <ol class="install">
-      <li>Download the disk image, open it, and drag Latchkey to Applications.</li>
+      <li>From a source checkout, run <code>scripts/install.sh</code> to build and install Latchkey.</li>
       <li>Open Latchkey, then choose <b>Latchkey › Install Command Line Tool…</b> to add <code>latchkey</code> and <code>lk</code> to <code>~/.local/bin</code>.</li>
       <li>Run <code>lk status</code>. It should say <code>storage: iCloud Keychain</code>.</li>
     </ol>
-    <p class="placeholder">PLACEHOLDER: download link. There is no public release yet; add the link to the notarized disk image here, and the Homebrew command once the tap exists.</p>
-    <p class="fine">macOS 15 or later on Apple silicon or Intel. iCloud Keychain on for sync between Macs. <a href="developers/quickstart.html">Quickstart</a> · <a href="developers/cli.html">Command reference</a></p>
+    <p class="placeholder">Development preview: there is no public disk image or Homebrew release yet. If you have the source checkout, use <code>scripts/install.sh</code> with Xcode and XcodeGen installed; configure your signing team in <code>App/project.yml</code> for iCloud Keychain storage. See the <a href="developers/quickstart.html#install">source installation steps</a>.</p>
+    <p class="fine">macOS 15 or later. Intel release verification is pending. iCloud Keychain on for sync between Macs. <a href="developers/quickstart.html">Quickstart</a> · <a href="developers/cli.html">Command reference</a></p>
   </main>
 
   <footer class="site">

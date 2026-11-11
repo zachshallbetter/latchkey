@@ -6,8 +6,7 @@ import LatchkeyCore
 
 let env = ProcessInfo.processInfo.environment
 let store = KeychainStore.automatic(accessGroup: env["LATCHKEY_ACCESS_GROUP"])
-let window = env["LATCHKEY_APPROVAL_WINDOW"].flatMap(TimeInterval.init) ?? 120
-let broker = Broker(store: store, approver: SystemApprover(), readApprovalWindow: window, allowsPush: false)
+let broker = Broker(store: store, approver: SystemApprover(), allowsPush: false)
 
 FileHandle.standardError.write(Data("""
 latchkey-broker

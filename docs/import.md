@@ -25,9 +25,14 @@ latchkey import .env.local --rewrite
 
 - `--shared` imports every key as a shared item named after the key, with no project.
 - `--rewrite` replaces each imported value in the file with its `latchkey://` reference. Comments, order, blank lines,
-  `export`, indentation and line endings are kept, and so are the file's permissions.
+  `export`, indentation and line endings on untouched lines are kept, as are file permissions. Replaced assignments
+  lose their inline comments. A quoted multiline value is replaced in full.
 
-The whole import asks for approval once.
+The whole import asks for approval once. Quoted multiline values are supported; double quotes decode `\n`,
+`\r`, `\t`, `\"` and `\\`, while single quotes keep escapes literally. Values are literal: no shell
+interpolation or command substitution runs. Malformed syntax refuses the entire plan before values are saved.
+If a file changes while approval is pending, its saved values remain in Latchkey, but rewriting stops so your
+new edits are preserved; review and import the file again.
 
 ## What's left alone
 

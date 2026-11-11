@@ -12,6 +12,9 @@
   var nextID = 1;
   var pills = new Map();     // detection id → host element of its button
   var panelHost = null;
+  var pageURL = location.href;
+  var FIELDS = "input:not([type=password]):not([type=hidden]), textarea";
+  var MAX_FOUND = 100;
 
   // ---- Where to look, and the words around a value
   var SKIP = "script,style,noscript,svg,template,[contenteditable=true]";
@@ -37,12 +40,36 @@
     return { label: labelFor(el), nearby: nearbyFor(el), host: location.hostname, field: field };
   }
 
+  function live(d) {
+    var el = d.element;
+    if (!document.contains(el) || el.matches("input[type=password], input[type=hidden]")) return false;
+    var text = el.matches(FIELDS) ? el.value : (el.innerText || el.textContent || "");
+    return !!d.result.value && text.includes(d.result.value);
+  }
+  function retire(d) {
+    byValue.delete(d.result.value);
+    d.result.value = ""; // Panels may still close over this record; do not retain its old secret there.
+    var pill = pills.get(d.id);
+    if (pill) { pill.remove(); pills.delete(d.id); }
+  }
+  function prune() {
+    var navigated = pageURL !== location.href;
+    pageURL = location.href;
+    found = found.filter(function (d) {
+      if (!navigated && live(d)) return true;
+      retire(d); return false;
+    });
+    if (navigated && panelHost) { panelHost.remove(); panelHost = null; }
+  }
+
   function consider(text, el, field) {
-    if (!text || text.length < 16) return;
+    if (!text || text.length < 16 || el.matches("input[type=password], input[type=hidden]")) return;
+    prune();
     D.findAll(text, contextFor(el, field)).forEach(function (r) {
       if (byValue.has(r.value)) return;
       var d = { id: nextID++, result: r, element: el };
       byValue.set(r.value, d);
+      if (found.length >= MAX_FOUND) retire(found.shift());
       found.push(d);
       if (r.confidence === "high") showPill(d);
     });
@@ -51,7 +78,6 @@
   function scan(root) {
     if (!root || root.nodeType !== 1 || (panelHost && panelHost.contains(root))) return;
     // Fields, code and cells, where keys are shown on purpose.
-    var FIELDS = "input:not([type=password]):not([type=hidden]), textarea";
     var SHOWN = "code, pre, kbd, samp, td, [data-testid*=key i], [data-testid*=token i], [class*=secret i], [class*=token i], [class*=apikey i]";
     function within(sel) { var all = Array.from(root.querySelectorAll(sel)); if (root.matches(sel)) all.unshift(root); return all; }
     within(FIELDS).forEach(function (el) { consider(el.value, el, true); });
@@ -74,7 +100,8 @@
   }
 
   function report() {
-    var shown = found.filter(function (d) { return document.contains(d.element); });
+    prune();
+    var shown = found;
     try { browser.runtime.sendMessage({ op: "count", count: shown.length }); } catch (e) {}
   }
 
@@ -95,8 +122,8 @@
       if (r.type === "childList") r.addedNodes.forEach(later); else later(r.target);
     });
   }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
-  document.addEventListener("focusin", function (e) { if (e.target.matches && e.target.matches("input, textarea")) consider(e.target.value, e.target, true); }, true);
-  document.addEventListener("input", function (e) { if (e.target.matches && e.target.matches("input, textarea")) later(e.target); }, true);
+  document.addEventListener("focusin", function (e) { if (e.target.matches && e.target.matches(FIELDS)) { consider(e.target.value, e.target, true); report(); } }, true);
+  document.addEventListener("input", function (e) { if (e.target.matches && e.target.matches(FIELDS)) later(e.target); }, true);
 
   // ---- The button beside a key
   var STYLE =
@@ -146,6 +173,7 @@
     place(h, d.element, false);
   }
   function reposition() {
+    prune();
     pills.forEach(function (h, id) {
       var d = found.find(function (x) { return x.id === id; });
       if (!d || !document.contains(d.element)) { h.remove(); pills.delete(id); return; }
@@ -161,6 +189,8 @@
 
   // ---- Saving
   function openPanel(d, anchor) {
+    prune();
+    if (!live(d)) return;
     if (panelHost) panelHost.remove();
     var r = d.result;
     var h = host(2147483647);
@@ -180,7 +210,7 @@
       '<p class="ref"><code id="lk-ref"></code><button type="button" class="x" id="lk-copy">Copy</button></p>' +
       '<p class="m">Then run your project with <code>lk run --env-file .env -- &lt;your command&gt;</code>. If this replaces an older key, revoke the old one on this page.</p></div></div>';
     root.getElementById("what").textContent = label;
-    root.getElementById("conf").textContent = { high: "sure", medium: "likely", selected: "you chose it" }[r.confidence] || "likely";
+    root.getElementById("conf").textContent = { high: "strong match", medium: "possible secret", selected: "you chose it" }[r.confidence] || "likely";
     root.getElementById("prev").textContent = D.preview(r.value);
     var placeSel = root.getElementById("lk-place"), name = root.getElementById("lk-name"), hint = root.getElementById("lk-hint");
     var status = root.getElementById("lk-status"), save = root.getElementById("lk-save");
@@ -213,10 +243,13 @@
     function close() { h.remove(); if (panelHost === h) panelHost = null; }
     h.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
     save.addEventListener("click", function () {
+      prune();
+      if (!live(d)) { retire(d); save.disabled = true; status.textContent = "The value changed or left the page. Scan the current value again before saving."; return; }
       save.disabled = true;
       status.textContent = "Touch ID on your Mac to save it.";
       browser.runtime.sendMessage({ op: "save", id: id(), value: r.value, kind: r.kind, service: r.service }).then(function (res) {
         if (res && res.ok) {
+          retire(d);
           status.textContent = "Saved to Latchkey as " + res.id + ".";
           save.hidden = true; placeSel.disabled = true; name.disabled = true; hint.hidden = true;
           root.getElementById("lk-no").textContent = "Done";
@@ -237,12 +270,17 @@
     setTimeout(function () { name.focus(); place(h, h._anchor, true); }, 0);
   }
 
+  window.addEventListener("pagehide", function () {
+    found.forEach(retire); found = []; byValue.clear();
+    if (panelHost) { panelHost.remove(); panelHost = null; }
+  });
   scan(document.body || document.documentElement);
 
   // ---- From the toolbar panel and the context menu
   browser.runtime.onMessage.addListener(function (msg) {
+    prune();
     if (msg.op === "detections") {
-      return Promise.resolve(found.filter(function (d) { return document.contains(d.element); }).map(function (d) {
+      return Promise.resolve(found.map(function (d) {
         return { id: d.id, type: d.result.type, service: d.result.service, preview: D.preview(d.result.value), confidence: d.result.confidence };
       }));
     }

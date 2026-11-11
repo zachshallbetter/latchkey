@@ -151,9 +151,20 @@ public enum Redact {
                 }
             }
             if a.lowercased().hasPrefix("authorization:") || a.lowercased().hasPrefix("bearer ") { out.append(mask); continue }
-            out.append(looksSecret(a) ? mask : a)
+            out.append(looksSecret(a) ? mask : redactURLs(a))
         }
         return out
+    }
+
+    /// URL credentials can occur inside an assignment or a shell argument, so redact them wherever they appear.
+    private static let urlCredentials = try! NSRegularExpression(pattern: "([A-Za-z][A-Za-z0-9+.-]*://)[^\\s/@]*:[^\\s/@]*@")
+    private static let urlSecrets = try! NSRegularExpression(pattern: "(?i)([?&](?:token|access_token|api_key|apikey|secret|password)=)[^&#\\s]*")
+
+    private static func redactURLs(_ text: String) -> String {
+        let credentials = urlCredentials.stringByReplacingMatches(in: text, range: NSRange(text.startIndex..., in: text),
+                                                                  withTemplate: "$1<redacted>@")
+        return urlSecrets.stringByReplacingMatches(in: credentials, range: NSRange(credentials.startIndex..., in: credentials),
+                                                   withTemplate: "$1<redacted>")
     }
 
     /// A known token prefix, or 24+ characters of letters, digits and _-+/= with both letters and digits and no

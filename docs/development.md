@@ -91,6 +91,23 @@ Add a case to `RemoteTarget.Service`, then fill in `label`, `tool`, `problem` (r
 `pushCommands` (values on standard input only), `listCommand` and `names(fromListOutput:)` (keep names, drop values).
 Add tests in `RemoteTests.swift` with `FakeRunner`; no test should run a real tool.
 
+## Regression checks
+
+```bash
+swift test
+node --test App/Safari/*.test.js
+```
+
+The `LatchkeyRunTests` target tests command preparation without contacting the real app: proxy refusal,
+key-file isolation, permissions and cleanup, and malformed env-file handling. Core tests cover one-request
+approvals, command/session/use-limited grants and immediate revocation, multiline import/rewrite, changed-file
+protection, and URL redaction. Safari tests use detector fixtures and a small DOM fixture, not real pages or keys.
+The loopback proxy test needs permission to bind a local listener; real-keychain and AWS network tests remain
+opt-in. App compilation and these tests do not replace signed-app, real-Safari or cross-device sync verification.
+
+The wire response keeps the optional legacy `remembered` field for older clients; new brokers never return it.
+The old read-approval preference and `LATCHKEY_APPROVAL_WINDOW` have no effect. Explicit grants provide repeat access.
+
 ## Checking the UI without clicking
 
 Debug builds can draw their own UI to a PNG:
@@ -113,7 +130,8 @@ Applications folder). The menu bar icon and in-app mark are template copies of t
 
 ## Conventions
 
-- Values never appear in logs, errors, test output or CLI output (except `latchkey get`).
+- Never deliberately write stored values to logs, errors or test output. `latchkey get` prints values; child
+  output masks exact copies only. Command arguments use heuristic redaction, so keep values out of arguments.
 - Every change to items goes through the broker, so it's approved and logged.
 - Tests use `MemoryStore`, `MemoryVersionStore`, `MemoryRemoteStore`, `FixedApprover` and `FakeRunner`; nothing
   touches the real keychain unless `LATCHKEY_KEYCHAIN_TESTS=1`.

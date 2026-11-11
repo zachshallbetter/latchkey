@@ -63,7 +63,7 @@ enum SidebarFilter: Hashable {
     var title: String {
         switch self {
         case .all: return "All"
-        case .agentSafe: return "Agent-Safe"
+        case .agentSafe: return "No Approval"
         case .needsApproval: return "Ask First"
         case .activity: return "Activity"
         case .grants: return "Grants"
@@ -166,7 +166,6 @@ final class AppModel {
     var revealed: [String: String] = [:]
 
     private let me = PeerInfo(pid: getpid(), path: Bundle.main.bundlePath, cwd: "", chain: [Broker.appCaller])
-    static let approvalWindowKey = "readApprovalWindow"
 
     init() {
         let group = Bundle.main.object(forInfoDictionaryKey: "LatchkeyAccessGroup") as? String
@@ -180,12 +179,7 @@ final class AppModel {
                     + (r.skipped + r.failed.keys.sorted()).joined(separator: ", ")
             }
         }
-        if UserDefaults.standard.object(forKey: Self.approvalWindowKey) == nil,
-           let old = UserDefaults(suiteName: "io.latchkey.Latchkey")?.object(forKey: Self.approvalWindowKey) {
-            UserDefaults.standard.set(old, forKey: Self.approvalWindowKey)
-        }
-        let saved = UserDefaults.standard.object(forKey: Self.approvalWindowKey) as? Double ?? 120
-        broker = Broker(store: store, approver: PanelApprover(), readApprovalWindow: saved)
+        broker = Broker(store: store, approver: PanelApprover())
         refresh()
         #if DEBUG
         if Snapshot.requested {   // draw and exit; do not take the socket from the running copy
@@ -529,7 +523,7 @@ final class AppModel {
         return err
     }
 
-    /// Asks for approval unless the item is agent-safe or was approved moments ago.
+    /// Asks for approval unless the item is available without approval or covered by a grant.
     func value(of name: String) async -> String? {
         let r = await send(Request(op: "get", names: [name]))
         if let v = r.values?[name] { return v }
@@ -600,7 +594,9 @@ final class AppModel {
         }
         let project = EnvImport.project(forFile: url), environment = EnvImport.environment(forFile: url.lastPathComponent)
         // Plan as shared so each item's name is its key; the sheet places them.
-        let plan = EnvImport.plan(text, source: url.lastPathComponent, location: url.path)
+        let plan: EnvImport.Plan
+        do { plan = try EnvImport.plan(text, source: url.lastPathComponent, location: url.path) }
+        catch { notice = "Could not import \(url.lastPathComponent): \(error.localizedDescription)"; return }
         guard !plan.items.isEmpty else {
             notice = "Nothing to import in \(url.lastPathComponent)."
             return
@@ -679,14 +675,6 @@ final class AppModel {
     }
 
     // MARK: settings
-
-    var approvalWindow: Double {
-        get { broker.readApprovalWindow }
-        set {
-            broker.readApprovalWindow = newValue
-            UserDefaults.standard.set(newValue, forKey: Self.approvalWindowKey)
-        }
-    }
 
     var opensAtLogin: Bool { SMAppService.mainApp.status == .enabled }
 

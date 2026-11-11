@@ -4,12 +4,12 @@ import XCTest
 final class BrokerTests: XCTestCase {
     let peer = PeerInfo(pid: 1, path: "/usr/local/bin/latchkey", cwd: "/tmp/project", chain: ["zsh", "claude"])
 
-    func makeBroker(approve: Bool, window: TimeInterval = 0) throws -> (Broker, MemoryStore) {
+    func makeBroker(approve: Bool) throws -> (Broker, MemoryStore) {
         let store = MemoryStore()
         try store.save(name: "SAFE_TOKEN", value: "safe-value-123", kind: .token, agentSafe: true, note: "")
         try store.save(name: "DB_PASS", value: "db-password-456", kind: .password, agentSafe: false, note: "")
         try store.save(name: "HOST", value: "10.0.0.1", kind: .value, agentSafe: true, note: "")
-        return (Broker(store: store, approver: FixedApprover(approve), readApprovalWindow: window, logURL: nil), store)
+        return (Broker(store: store, approver: FixedApprover(approve), logURL: nil), store)
     }
 
     func testAgentSafeReleasedWithoutApproval() throws {
@@ -47,19 +47,6 @@ final class BrokerTests: XCTestCase {
         XCTAssertTrue(allow.handle(Request(op: "rm", names: ["DB_PASS"]), peer: peer).ok)
         XCTAssertNil(try store2.info("DB_PASS"))
         XCTAssertEqual(allow.handle(Request(op: "rm", names: ["DB_PASS"]), peer: peer).missing, ["DB_PASS"])
-    }
-
-    func testApprovalMemoryIsPerPlaceAndExpires() {
-        let m = ApprovalMemory()
-        let now = Date()
-        let k = ApprovalMemory.key(["A"], peer)
-        m.remember(k, for: 60, now: now)
-        XCTAssertTrue(m.covers(k, now: now.addingTimeInterval(30)))
-        XCTAssertFalse(m.covers(k, now: now.addingTimeInterval(61)))
-        var elsewhere = peer
-        elsewhere.cwd = "/tmp/other"
-        XCTAssertFalse(m.covers(ApprovalMemory.key(["A"], elsewhere), now: now))
-        XCTAssertFalse(m.covers(ApprovalMemory.key(["A", "B"], peer), now: now))
     }
 
     func testDescribeUsesTheKernelsViewNotTheRequest() {

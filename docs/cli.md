@@ -1,7 +1,7 @@
 # Command line
 
-`latchkey` (or `lk` for short) talks to the Latchkey app, starting it in the background if it isn't running. It never prints a value
-except with `latchkey get`. `latchkey help` prints a summary.
+`latchkey` (or `lk` for short) talks to the Latchkey app, starting it in the background if it isn't running. It has no direct value-printing command
+except `latchkey get`; child output uses exact-value masking, which transformed secrets can bypass. `latchkey help` prints a summary.
 
 IDs are `NAME` (shared) or `project/environment/NAME`. Where a command takes several, separate them with commas, and
 where it says PATTERN you can use `project/*` or `project/environment/*`.
@@ -29,8 +29,7 @@ COMMAND's exit status becomes `latchkey run`'s. If COMMAND is killed by a signal
 
 ### `latchkey check [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [IDS] [--json]`
 
-What `latchkey run` with the same options would get without asking (agent-safe, covered by a grant, or approved
-in the last few minutes), what would ask you, and what's missing. Asks nothing and releases nothing. Exits 66 if an
+What `latchkey run` with the same options would get without asking (agent-safe or covered by a grant), what would ask you, and what's missing. Asks nothing and releases nothing. Exits 66 if an
 item is missing, otherwise 0.
 
 ### `latchkey mcp`
@@ -50,8 +49,10 @@ anywhere else.
 latchkey run --proxy --env shop/development -- npm test
 ```
 
-It works with programs that use the OpenAI or Anthropic SDKs (or read those base URL variables). If a base URL
-variable is already set, that provider's key is passed through as usual.
+It works with programs that use the OpenAI or Anthropic SDKs (or read those base URL variables). Proxy mode
+refuses to start if a supported key is not a whole reference, its base URL is already set, or the key would also
+be delivered through another variable or key file. Unset custom base URLs before running. At least one supported
+key reference is required. Other credentials are delivered normally and are not protected by this proxy.
 
 ### Short-lived AWS credentials
 

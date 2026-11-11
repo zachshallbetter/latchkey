@@ -19,7 +19,7 @@
         var t = document.createElement("span"), c = document.createElement("code"), tag = document.createElement("span");
         b.type = "button"; w.className = "w"; tag.className = "tag";
         t.textContent = d.type; c.textContent = d.preview;
-        tag.textContent = d.confidence === "high" ? "sure" : "likely";
+        tag.textContent = d.confidence === "high" ? "strong match" : "possible secret";
         w.append(t, c); b.append(w, tag); li.append(b); list.append(li);
         b.addEventListener("click", function () {
           browser.tabs.sendMessage(tab.id, { op: "open", id: d.id }, { frameId: 0 }).then(function () { window.close(); });

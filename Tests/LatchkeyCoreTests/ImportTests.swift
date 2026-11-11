@@ -77,7 +77,7 @@ final class ImportTests: XCTestCase {
         XCTAssertEqual(Broker.shortFolder("/Users/x/Projects/_worktrees/latchkey/grants"), "…/latchkey/grants")
     }
 
-    func testRewriteKeepsEverythingElse() {
+    func testRewriteKeepsEverythingElse() throws {
         let text = """
         # database
         export DB_PASS="s3cret value"
@@ -86,7 +86,7 @@ final class ImportTests: XCTestCase {
         REF=latchkey://REF
 
         """
-        let out = EnvFile.rewrite(text, toReferences: ["DB_PASS": "DB_PASS", "API_KEY": "site/development/API_KEY"])
+        let out = try EnvFile.rewrite(text, toReferences: ["DB_PASS": "DB_PASS", "API_KEY": "site/development/API_KEY"])
         XCTAssertEqual(out, """
         # database
         export DB_PASS=latchkey://DB_PASS
@@ -95,12 +95,12 @@ final class ImportTests: XCTestCase {
         REF=latchkey://REF
 
         """)
-        XCTAssertEqual(EnvFile.rewrite("A=1\r\nB=2\r\n", toReferences: ["A": "A"]), "A=latchkey://A\r\nB=2\r\n")
+        XCTAssertEqual(try EnvFile.rewrite("A=1\r\nB=2\r\n", toReferences: ["A": "A"]), "A=latchkey://A\r\nB=2\r\n")
     }
 }
 
 final class EnvImportTests: XCTestCase {
-    func testPlan() {
+    func testPlan() throws {
         let text = """
         A=one
         A=two
@@ -112,7 +112,7 @@ final class EnvImportTests: XCTestCase {
         EMPTY=
         REF=latchkey://X
         """
-        let p = EnvImport.plan(text, source: ".env", kinds: ["HOST": .value], agentSafe: ["HOST"])
+        let p = try EnvImport.plan(text, source: ".env", kinds: ["HOST": .value], agentSafe: ["HOST"])
         let byName = Dictionary(uniqueKeysWithValues: p.items.map { ($0.name, $0) })
         XCTAssertEqual(p.items.map(\.name), ["A", "DATABASE_URL", "DB_PASSWORD", "HOST", "PEM", "PUBLIC_URL"])
         XCTAssertEqual(byName["A"]?.value, "two")
@@ -125,6 +125,6 @@ final class EnvImportTests: XCTestCase {
         XCTAssertEqual(byName["A"]?.agentSafe, false)
         XCTAssertEqual(byName["A"]?.note, "imported from .env")
         XCTAssertEqual(p.ignored, ["EMPTY": "empty", "REF": "already a reference"])
-        XCTAssertEqual(EnvImport.plan(text, source: "x", only: ["A"]).items.map(\.name), ["A"])
+        XCTAssertEqual(try EnvImport.plan(text, source: "x", only: ["A"]).items.map(\.name), ["A"])
     }
 }

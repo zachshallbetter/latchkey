@@ -84,20 +84,13 @@ struct SettingsView: View {
                     }
                 }
                 if !model.synced {
-                    Text("To sync through iCloud Keychain, sign in to Xcode with your Apple Account, set DEVELOPMENT_TEAM in App/project.yml, and run scripts/install.sh again. Every Mac needs a copy signed by the same team.")
+                    Text("This copy could not access iCloud Keychain. For a development build, check your signing team in App/project.yml and rebuild. Other Macs need Latchkey signed by the same team and iCloud Keychain enabled.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
             Section("Approval") {
                 LabeledContent("Method", value: model.broker.approver.method)
-                Picker("Remember a read approval for", selection: $model.approvalWindow) {
-                    Text("Don't remember").tag(0.0)
-                    Text("1 minute").tag(60.0)
-                    Text("2 minutes").tag(120.0)
-                    Text("5 minutes").tag(300.0)
-                    Text("15 minutes").tag(900.0)
-                }
-                Text("Applies to the same items asked for from the same folder by the same program. Changes always ask.")
+                Text("Allow Once authorizes one read request. Repeated reads need an explicit grant or an item set to allow reads without approval. Revoking a grant stops future reads through it; it cannot recall values already released.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section("General") {
@@ -105,7 +98,7 @@ struct SettingsView: View {
                     loginError = model.setOpensAtLogin(on)
                     atLogin = model.opensAtLogin
                 }))
-                Text("The command-line tool only works while Latchkey is running.").font(.caption).foregroundStyle(.secondary)
+                Text("The command-line tool starts Latchkey when needed.").font(.caption).foregroundStyle(.secondary)
                 if model.bundledTool != nil {
                     LabeledContent("Command-line tool") {
                         Button("Install") { model.installCommandLineTool() }

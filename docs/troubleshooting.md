@@ -34,7 +34,7 @@ deleted` lists it and `latchkey restore ID` brings it back.
 
 ## Values aren't syncing
 
-`latchkey status` should say `storage: iCloud Keychain (synced to your Macs)`.
+`latchkey status` should say `storage: iCloud Keychain storage (sync status not verified)`.
 
 - **It says "login keychain on this Mac only"**: the app isn't signed with a developer team. Set `DEVELOPMENT_TEAM`
   in `App/project.yml` and run `scripts/install.sh` again ([Getting started](getting-started.md#install-from-source)).

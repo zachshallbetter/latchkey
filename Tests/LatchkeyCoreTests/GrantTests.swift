@@ -47,7 +47,7 @@ final class BrokerGrantTests: XCTestCase {
         let store = MemoryStore()
         try store.save(name: "DB", value: "db-value-123", kind: .password, agentSafe: false, note: "")
         try store.save(name: "API", value: "api-value-456", kind: .token, agentSafe: false, note: "")
-        return Broker(store: store, approver: FixedApprover(decision), readApprovalWindow: 0, logURL: nil)
+        return Broker(store: store, approver: FixedApprover(decision), logURL: nil)
     }
 
     func testApprovalCanCreateAGrantThatLaterReadsUse() throws {
@@ -59,7 +59,7 @@ final class BrokerGrantTests: XCTestCase {
         XCTAssertEqual(b.grants.all().first?.createdBy, "zsh › claude")
 
         // Same folder or below: allowed by the grant even though the approver now says no.
-        let denyAll = Broker(store: b.store, approver: FixedApprover(false), readApprovalWindow: 0, logURL: nil, grants: b.grants)
+        let denyAll = Broker(store: b.store, approver: FixedApprover(false), logURL: nil, grants: b.grants)
         XCTAssertEqual(denyAll.handle(Request(op: "get", names: ["DB"]), peer: at("/tmp/site/sub")).values, ["DB": "db-value-123"])
         // Elsewhere, or another item: asks, and is denied.
         XCTAssertEqual(denyAll.handle(Request(op: "get", names: ["DB"]), peer: at("/tmp/other")).denied, ["DB"])
@@ -96,7 +96,7 @@ final class BrokerGrantTests: XCTestCase {
         let store = MemoryStore()
         try store.save(name: "DB", value: "db-value-123", kind: .password, agentSafe: false, note: "")
         try store.save(name: "API", value: "api-value-456", kind: .token, agentSafe: false, note: "")
-        let b = Broker(store: store, approver: GrantsOnlyApprover(), readApprovalWindow: 0, logURL: nil)
+        let b = Broker(store: store, approver: GrantsOnlyApprover(), logURL: nil)
         // Until the agent quits: covers programs under it, not elsewhere.
         let session = b.handle(Request(op: "grant", names: ["DB"], folder: "/tmp/site", session: true), peer: agentPeer)
         XCTAssertTrue(session.ok, session.error ?? "")
@@ -138,7 +138,7 @@ final class BrokerGrantTests: XCTestCase {
         let recorder = RecordingApprover()
         let store = MemoryStore()
         try store.save(name: "DB", value: "db-value-123", kind: .password, agentSafe: false, note: "")
-        let b = Broker(store: store, approver: recorder, readApprovalWindow: 120, logURL: nil)
+        let b = Broker(store: store, approver: recorder, logURL: nil)
         // A grant on the ssh client's folder must not cover requests from the other computer.
         b.grants.add(names: ["DB"], folder: "/tmp/site", duration: 3600, createdBy: "t")
         let claim = RemoteClaim(host: "devmac", cwd: "/Users/x/shop", command: "run -- npm test")
@@ -158,7 +158,7 @@ final class BrokerGrantTests: XCTestCase {
         let recorder = RecordingApprover()
         let store = MemoryStore()
         try store.save(name: "DB", value: "db-value-123", kind: .password, agentSafe: true, note: "")
-        let b = Broker(store: store, approver: recorder, readApprovalWindow: 0, logURL: nil)
+        let b = Broker(store: store, approver: recorder, logURL: nil)
         var ext = PeerInfo(pid: 1, path: "/Applications/Latchkey.app/Contents/PlugIns/LatchkeySafari.appex/Contents/MacOS/LatchkeySafari", cwd: "/", chain: [])
         ext.isSafariExtension = true
         let gate = Broker.Gate.safariExtension
@@ -182,7 +182,7 @@ final class BrokerGrantTests: XCTestCase {
         let store = MemoryStore()
         try store.save(name: "DB", value: "db-value-123", kind: .password, agentSafe: false, note: "")
         let b = Broker(store: store, approver: FixedApprover(.grant(GrantChoice(duration: 3600, untilAgentQuits: true, thisCommandOnly: true))),
-                       readApprovalWindow: 0, logURL: nil)
+                       logURL: nil)
         let caller = tool(["lk", "run", "--", "npm", "test"], ancestors: [ProcessStamp(pid: 2, started: 1), me])
         XCTAssertEqual(b.handle(Request(op: "get", names: ["DB"]), peer: caller).values, ["DB": "db-value-123"])
         let g = try XCTUnwrap(b.grants.all().first)
@@ -213,7 +213,7 @@ final class BrokerGrantTests: XCTestCase {
         let grants = GrantStore()
         let g = grants.add(names: ["DB"], folder: "/tmp/site", duration: 3600, createdBy: "t")
         let asked = CountingApprover(true)
-        let b = Broker(store: store, approver: asked, readApprovalWindow: 60, logURL: nil, grants: grants)
+        let b = Broker(store: store, approver: asked, logURL: nil, grants: grants)
 
         let r = b.handle(Request(op: "check", names: ["DB", "API", "HOST", "NOPE"]), peer: at("/tmp/site/sub"))
         XCTAssertTrue(r.ok, r.error ?? "")
@@ -226,12 +226,12 @@ final class BrokerGrantTests: XCTestCase {
         XCTAssertNil(r.values)
         XCTAssertEqual(asked.reasons.count, 0, "check never asks")
 
-        // After an approval, the same request from the same caller is covered for the approval window.
+        // A once-only approval never authorizes a later request.
         XCTAssertEqual(b.handle(Request(op: "get", names: ["API"]), peer: peer).values, ["API": "api-value-456"])
         XCTAssertEqual(asked.reasons.count, 1)
         let again = b.handle(Request(op: "check", names: ["API"]), peer: peer)
-        XCTAssertEqual(again.remembered, ["API"])
-        XCTAssertNil(again.needsApproval)
+        XCTAssertNil(again.remembered)
+        XCTAssertEqual(again.needsApproval, ["API"])
         // Outside the grant's folder, DB needs approval again.
         XCTAssertEqual(b.handle(Request(op: "check", names: ["DB"]), peer: at("/tmp/other")).needsApproval, ["DB"])
     }
@@ -241,7 +241,7 @@ final class BrokerGrantTests: XCTestCase {
         for id in ["shop/production/DB", "shop/development/DB", "shop/vercel.production/DB", "SHARED"] {
             try store.save(name: id, value: "value-\(id)", kind: .password, agentSafe: false, note: "")
         }
-        let b = Broker(store: store, approver: FixedApprover(.once), readApprovalWindow: 0, logURL: nil)
+        let b = Broker(store: store, approver: FixedApprover(.once), logURL: nil)
         func ask(_ names: [String], folder: String = "/tmp/site", duration: Double = 3600) -> Response {
             b.handle(Request(op: "grant", names: names, folder: folder, duration: duration, origin: "mcp", session: true), peer: agentPeer)
         }
@@ -282,7 +282,7 @@ final class BrokerGrantTests: XCTestCase {
         XCTAssertFalse(r.fromApp)
         XCTAssertFalse(ApprovalRequest(action: .add, names: ["A"], chain: ["zsh"], folder: "/tmp", reason: "x").canGrant)
         // Only a request from the app's own process counts as from the app, whatever a parent process is called.
-        let b = Broker(store: MemoryStore(), approver: RecordingApprover(), readApprovalWindow: 0, logURL: nil)
+        let b = Broker(store: MemoryStore(), approver: RecordingApprover(), logURL: nil)
         _ = b.handle(Request(op: "set", names: ["A"], value: "a-value"), peer: PeerInfo(pid: 4242, path: "/tmp/fake", cwd: "/tmp", chain: [Broker.appCaller]))
         _ = b.handle(Request(op: "set", names: ["B"], value: "b-value"), peer: PeerInfo(pid: getpid(), path: "/Applications/Latchkey.app", cwd: "", chain: [Broker.appCaller]))
         let seen = (b.approver as! RecordingApprover).requests

@@ -26,7 +26,7 @@
       <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
       <ul>
         <li><a href="index.html" aria-current="page">Docs</a></li>
-        <li><a class="button primary" href="../index.html#install">Download</a></li>
+        <li><a class="button primary" href="../index.html#install">Preview status</a></li>
       </ul>
     </nav>
   </header>
@@ -90,14 +90,14 @@ latchkey rotate --touched --since 4h --by claude --open --push</code></pre></fig
 <figure class="code"><figcaption><span>On the other Mac</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">export LATCHKEY_SOCKET=/tmp/latchkey-$USER.sock    # on the other Mac
 latchkey run --env shop/development -- npm test</code></pre></figure>
 <ul>
-<li>Every request asks. Your Mac sees only your <code>ssh</code> client, so grants and recent approvals don&rsquo;t apply, and grants can&rsquo;t be made over the connection. Agent-safe items still go through.</li>
+<li>Each read that is not agent-safe asks. Your Mac sees only your <code>ssh</code> client, so grants don&rsquo;t apply and can&rsquo;t be made over the connection.</li>
 <li>The approval panel says so, and shows what the tool on the other computer says it&rsquo;s running, marked as unchecked.</li>
 <li>The tool there can&rsquo;t check the app&rsquo;s signature through a forwarded socket; <code>latchkey status</code> says so.</li>
 <li>The other computer needs <code>latchkey</code> too; the tool is macOS only.</li>
 </ul>
 
 <h2 id="mcp">Latchkey&rsquo;s MCP server</h2>
-<p><code>latchkey mcp</code> gives agents Latchkey&rsquo;s tools over MCP: for clients without a shell, like Claude Desktop, and for structured refusals instead of exit codes. <strong>It never returns a value.</strong></p>
+<p><code>latchkey mcp</code> gives agents Latchkey&rsquo;s tools over MCP: for clients without a shell, like Claude Desktop, and for structured refusals instead of exit codes. <strong>It has no direct secret-read tool. Child output masks exact secret values; transformed secrets can still leak.</strong></p>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">claude mcp add latchkey -- ~/.local/bin/latchkey mcp</code></pre></figure>
 <figure class="code"><figcaption><span>Other clients</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="json">{
   &quot;mcpServers&quot;: {

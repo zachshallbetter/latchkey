@@ -10,6 +10,9 @@
 
 ## Install a release
 
+No public release is available yet. These steps apply when a signed disk image is published; use the source
+installation below for the development preview.
+
 1. Open `Latchkey-VERSION.dmg` and drag **Latchkey** to **Applications**.
 2. Open Latchkey from Applications.
 3. Choose **Latchkey › Install Command Line Tool…** (also in Settings). It links `~/.local/bin/latchkey`, and `lk`
@@ -20,7 +23,7 @@
    latchkey status
    ```
 
-   You should see `storage: iCloud Keychain (synced to your Macs)`.
+   You should see `storage: iCloud Keychain storage (sync status not verified)`.
 
 Install it the same way on each Mac signed in to your Apple Account; items sync between them.
 
@@ -48,7 +51,7 @@ needs your team:
    latchkey status
    ```
 
-   `storage: iCloud Keychain (synced to your Macs)` means you're set. `login keychain on this Mac only` means the
+   `storage: iCloud Keychain storage (sync status not verified)` means you're set. `login keychain on this Mac only` means the
    app isn't signed with a team; see [Troubleshooting](troubleshooting.md#values-arent-syncing).
 
 On each other Mac, sign in to Xcode with the same Apple Account and run `scripts/install.sh`. Every Mac must use a

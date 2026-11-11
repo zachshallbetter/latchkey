@@ -6,7 +6,17 @@ import Network
 // key stays in this process (the signed tool, which other programs can't read), and can only ever reach the
 // provider's own host.
 
-public enum ProxyError: Error { case notStarted }
+public enum ProxyError: Error, CustomStringConvertible {
+    case notStarted
+    case configuration(String)
+
+    public var description: String {
+        switch self {
+        case .notStarted: return "the key proxy could not start"
+        case .configuration(let message): return message
+        }
+    }
+}
 
 /// A provider whose SDKs take their address from an environment variable.
 public struct ProxyProvider: Sendable {
@@ -45,16 +55,34 @@ public struct ProxyRoute: Sendable {
     }
 }
 
-/// Swaps references to these providers' keys for placeholders. Returns the routes to serve; `env` keeps only the
-/// placeholders. A provider whose base URL variable is already set is left alone: its requests wouldn't come here.
-public func holdBackProxiedKeys(_ env: inout [String: String], values: [String: String], references: [String: String]) -> [ProxyRoute] {
+/// Replaces supported provider keys with placeholders, or refuses the whole configuration. A custom base URL,
+/// plaintext key, or a second delivery of a protected key must never silently fall back to releasing the key.
+public func holdBackProxiedKeys(_ env: inout [String: String], values: [String: String], references: [String: String]) throws -> [ProxyRoute] {
     var routes: [ProxyRoute] = []
-    for p in ProxyProvider.all {
-        guard let id = references[p.keyVariable], let key = values[id], env[p.baseVariable] == nil else { continue }
+    let fileRefs = References.fileReferences(in: env)
+    for p in ProxyProvider.all where env[p.keyVariable] != nil {
+        guard let id = references[p.keyVariable], let key = values[id], !key.isEmpty else {
+            throw ProxyError.configuration("--proxy requires \(p.keyVariable) to be a whole latchkey:// reference")
+        }
+        guard env[p.baseVariable] == nil else {
+            throw ProxyError.configuration("--proxy cannot use an existing \(p.baseVariable); unset it before running")
+        }
         let placeholder = "lk-proxy-" + UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
-        env[p.keyVariable] = placeholder
         routes.append(ProxyRoute(provider: p, placeholder: placeholder, key: key))
     }
+    guard !routes.isEmpty else {
+        throw ProxyError.configuration("--proxy needs an OPENAI_API_KEY or ANTHROPIC_API_KEY reference")
+    }
+    let protectedVariables = Set(routes.map { $0.provider.keyVariable })
+    for (name, value) in env where !protectedVariables.contains(name) {
+        for route in routes {
+            if value.contains(route.key) || fileRefs[name].flatMap({ values[$0] }) == route.key {
+                throw ProxyError.configuration("--proxy would also release a protected key through \(name); remove that delivery")
+            }
+        }
+    }
+    // Validate everything before changing the environment, so failure never leaves a partially protected run.
+    for route in routes { env[route.provider.keyVariable] = route.placeholder }
     return routes
 }
 
@@ -157,6 +185,13 @@ final class ResponseStreamer: NSObject, URLSessionDataDelegate, @unchecked Senda
 
     init(connection: NWConnection) { self.connection = connection }
 
+    /// Never let URLSession forward a provider credential to a redirect destination. The caller receives the
+    /// redirect response and can decide what to do, carrying only its placeholder.
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+        completionHandler(nil)
+    }
+
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse,
                     completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
         guard let http = response as? HTTPURLResponse else { completionHandler(.cancel); return }
@@ -221,7 +256,8 @@ struct HTTPRequest {
             while true {
                 guard let lineEnd = rest[i...].range(of: Data("\r\n".utf8)) else { return nil }
                 let sizeText = String(decoding: rest[i..<lineEnd.lowerBound], as: UTF8.self).split(separator: ";").first ?? ""
-                guard let size = Int(sizeText.trimmingCharacters(in: .whitespaces), radix: 16) else { return .invalid }
+                guard let size = Int(sizeText.trimmingCharacters(in: .whitespaces), radix: 16), size >= 0 else { return .invalid }
+                guard size <= KeyProxy.maxBody - body.count else { return .tooLarge }
                 let start = lineEnd.upperBound
                 if size == 0 { break }
                 guard rest.distance(from: start, to: rest.endIndex) >= size + 2 else { return nil }
@@ -230,6 +266,7 @@ struct HTTPRequest {
                 i = rest.index(start, offsetBy: size + 2)
             }
         } else if let length = headers["content-length"].flatMap({ Int($0) }) {
+            guard length >= 0 else { return .invalid }
             guard length <= KeyProxy.maxBody else { return .tooLarge }
             guard rest.count >= length else { return nil }
             body = Data(rest.prefix(length))

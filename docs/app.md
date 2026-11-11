@@ -7,7 +7,7 @@ to be running for `latchkey run` to work (the tool starts it if it isn't). Only 
 
 ### Sidebar
 
-- **All**, **Agent-Safe**, **Ask First** and **Activity**, each with a count.
+- **All**, **No Approval**, **Ask First** and **Activity**, each with a count.
 - **Kinds**: tokens, passwords, key files and plain values.
 - **Projects**: one row per project, with a filter field once you have more than eight. **Shared** holds items that
   belong to no project.
@@ -39,7 +39,7 @@ Right-clicking the selection offers the same.
 - **Value**: hidden. The eye shows it for 30 seconds; the copy button copies it and clears the clipboard after 60
   seconds (and marks the copy so clipboard managers skip it). Both ask unless the item is agent-safe.
 - **Reference**: the `latchkey://` text to paste into a file.
-- **Change Value…**, **Kind**, **Agents may read without asking**, **Project** (with **Move…**), **Service**,
+- **Change Value…**, **Kind**, **Allow reads without approval**, **Project** (with **Move…**), **Service**,
   **Note**.
 - **Remote**: where the item stands at each linked location.
 - **Readable Without Asking**: grants that cover it, with **Revoke**.
@@ -94,7 +94,7 @@ Click the key: search your items, copy a value, open an item in the window, open
 ## Settings
 
 - **Storage**: where values are kept, and **Move to iCloud Keychain** for items saved before the app was signed.
-- **Approval**: how you approve (Touch ID, Apple Watch, password), and how long a read approval is remembered.
+- **Approval**: how you approve (Touch ID, Apple Watch, password), and the difference between one-request approvals and explicit grants.
 - **General**: **Open Latchkey at login**, **Install Command Line Tool** (release builds; links `latchkey` and `lk`), and the activity log in
   Finder. **Latchkey › Install Command Line Tool…** in the menu bar does the same.
 
@@ -106,7 +106,7 @@ npm, Hugging Face and others), private keys, database URLs with a password, and 
 secret or token. It skips what isn't secret or isn't a real key: masked values, examples, publishable keys,
 certificates, commit hashes.
 
-- When it's sure, a **Save to Latchkey** button appears beside the key. Press it, choose where it goes (shared, or a
+- For stronger matches, a **Save to Latchkey** button appears beside the key. Press it, choose where it goes (shared, or a
   project's environment; a live or test key is matched to production or development when it can be) and its name,
   then **Save to Latchkey**.
 - Less certain finds aren't marked on the page: the toolbar button shows how many it spotted, and its panel lists them
@@ -123,6 +123,6 @@ button says whether it can reach Latchkey and lists what it found on the page. I
 there with a development build, turn on Safari › Settings › Advanced › **Show features for web developers**, then
 Develop › **Allow Unsigned Extensions**; a notarized release doesn't need this.
 
-The extension can't read any value, not even an agent-safe one. It reaches the app through its own socket, which
+The extension can't read any stored value, not even an agent-safe one. It reaches the app through its own socket, which
 admits only Latchkey's signed extension and only for listing item names and saving a value.
 

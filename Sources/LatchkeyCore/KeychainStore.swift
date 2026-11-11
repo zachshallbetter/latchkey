@@ -19,7 +19,7 @@ public enum StoreError: Error, CustomStringConvertible {
 
 /// Where values live. The broker is the only thing that talks to it; the CLI never does.
 public protocol SecretStore: AnyObject, Sendable {
-    /// One line for `latchkey status`, e.g. "iCloud Keychain (synced to your Macs)".
+    /// One line for `latchkey status`, e.g. "iCloud Keychain storage (sync status not verified)".
     var location: String { get }
     func list() throws -> [SecretInfo]
     /// Values for the names that exist. Missing names are absent from the result.
@@ -85,8 +85,8 @@ public final class KeychainStore: SecretStore, @unchecked Sendable {
 
     public var location: String {
         switch mode {
-        case .iCloud: return "iCloud Keychain (synced to your Macs)"
-        case .thisMac: return "login keychain on this Mac only (not synced: this build is not signed with a team)"
+        case .iCloud: return "iCloud Keychain storage (sync status not verified)"
+        case .thisMac: return "login keychain on this Mac only (local fallback; sync unavailable)"
         }
     }
 

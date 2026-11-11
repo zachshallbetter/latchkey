@@ -4,15 +4,12 @@ import XCTest
 
 /// The key proxy against a stand-in provider on this Mac that echoes what it was sent.
 final class ProxyTests: XCTestCase {
-    func testHoldsBackOnlyWholeReferencesToKnownKeys() {
-        var env = ["OPENAI_API_KEY": "real-openai", "ANTHROPIC_API_KEY": "real-anthropic", "ANTHROPIC_BASE_URL": "https://gateway.example",
-                   "OTHER": "x"]
-        let routes = holdBackProxiedKeys(&env, values: ["shop/development/OPENAI": "real-openai", "A": "real-anthropic"],
-                                         references: ["OPENAI_API_KEY": "shop/development/OPENAI", "ANTHROPIC_API_KEY": "A"])
-        XCTAssertEqual(routes.map(\.provider.name), ["OpenAI"], "a provider whose base URL is already set is left alone")
-        XCTAssertTrue(env["OPENAI_API_KEY"]!.hasPrefix("lk-proxy-"))
-        XCTAssertEqual(routes.first?.key, "real-openai")
-        XCTAssertEqual(env["ANTHROPIC_API_KEY"], "real-anthropic")
+    func testProxyRefusesCustomBaseURLsWithoutChangingTheEnvironment() {
+        var env = ["OPENAI_API_KEY": "fixture-openai", "ANTHROPIC_API_KEY": "fixture-anthropic", "ANTHROPIC_BASE_URL": "https://gateway.example"]
+        let original = env
+        XCTAssertThrowsError(try holdBackProxiedKeys(&env, values: ["O": "fixture-openai", "A": "fixture-anthropic"],
+                                                    references: ["OPENAI_API_KEY": "O", "ANTHROPIC_API_KEY": "A"]))
+        XCTAssertEqual(env, original, "a partial configuration must fail atomically")
     }
 
     func testSwapsThePlaceholderForTheKeyAndRefusesAnythingElse() throws {
@@ -39,6 +36,32 @@ final class ProxyTests: XCTestCase {
         guard case .complete(let r)? = HTTPRequest.parse(raw) else { return XCTFail("should parse") }
         XCTAssertEqual(String(decoding: r.body, as: UTF8.self), "hello world")
         XCTAssertNil(HTTPRequest.parse(Data("POST / HTTP/1.1\r\nContent-Length: 10\r\n\r\nabc".utf8)), "waits for the rest")
+    }
+
+    func testMalformedBodyLengthsAreRefusedBeforeSlicing() {
+        for header in ["Content-Length: -1", "Transfer-Encoding: chunked"] {
+            let body = header.hasPrefix("Transfer") ? "-1\r\n" : ""
+            guard case .invalid? = HTTPRequest.parse(Data(("POST / HTTP/1.1\r\n" + header + "\r\n\r\n" + body).utf8)) else {
+                return XCTFail("negative lengths must be rejected")
+            }
+        }
+        let huge = "POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n7fffffffffffffff\r\n"
+        guard case .tooLarge? = HTTPRequest.parse(Data(huge.utf8)) else { return XCTFail("oversized chunks must be rejected") }
+    }
+
+    func testUpstreamRedirectsAreNotFollowed() throws {
+        let connection = NWConnection(host: "127.0.0.1", port: 1, using: .tcp)
+        let streamer = ResponseStreamer(connection: connection)
+        let url = try XCTUnwrap(URL(string: "https://provider.example/v1"))
+        let response = try XCTUnwrap(HTTPURLResponse(url: url, statusCode: 302, httpVersion: nil,
+                                                   headerFields: ["Location": "https://other.example/"]))
+        var called = false
+        streamer.urlSession(.shared, task: URLSession.shared.dataTask(with: url), willPerformHTTPRedirection: response,
+                            newRequest: URLRequest(url: URL(string: "https://other.example/")!)) { request in
+            called = true
+            XCTAssertNil(request, "URLSession must never forward a provider credential to a redirect destination")
+        }
+        XCTAssertTrue(called)
     }
 
     private func send(_ port: UInt16, auth: String, body: String) throws -> (status: Int, body: String) {

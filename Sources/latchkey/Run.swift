@@ -85,23 +85,31 @@ func prepareRun(_ spec: RunSpec, env planned: [String: String], masking: Bool, p
     }
     let fileRefs = References.fileReferences(in: env)
     let names = referencedIDs(env)
+    if proxy && names.isEmpty { throw RunError.usage("--proxy needs an OPENAI_API_KEY or ANTHROPIC_API_KEY reference") }
     guard !names.isEmpty else { return PreparedRun(environment: env, secretValues: [], tempDir: nil) }
     let r = try call(Request(op: "get", names: names))
     guard r.ok else { throw RunError.failed(r.error ?? "the app refused the request") }
     if let m = r.missing, !m.isEmpty { throw RunError.missing(m) }
     if let d = r.denied, !d.isEmpty { throw RunError.refused(d) }
     let values = r.values ?? [:]
+    guard names.allSatisfy({ values[$0] != nil }) else { throw RunError.failed("the app did not return every requested value") }
     env = References.resolve(env: env, with: values)
+    let proxies: [ProxyRoute]
+    do { proxies = proxy ? try holdBackProxiedKeys(&env, values: values, references: wholeReferences) : [] }
+    catch { throw RunError.usage(String(describing: error)) }
     var tempDir: URL?
     if !fileRefs.isEmpty {
         // A private folder of owner-only files, removed when the command ends.
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("latchkey-run-\(UUID().uuidString)")
         do {
             try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
-            for (key, id) in fileRefs {
-                let file = dir.appendingPathComponent(ItemID(id)?.name ?? id)
-                guard FileManager.default.createFile(atPath: file.path, contents: Data((values[id] ?? "").utf8),
+            var filesByID: [String: URL] = [:]
+            for (key, id) in fileRefs.sorted(by: { $0.key < $1.key }) {
+                if let file = filesByID[id] { env[key] = file.path; continue }
+                let file = dir.appendingPathComponent(UUID().uuidString)
+                guard FileManager.default.createFile(atPath: file.path, contents: Data(values[id]!.utf8),
                                                      attributes: [.posixPermissions: 0o600]) else { throw CocoaError(.fileWriteUnknown) }
+                filesByID[id] = file
                 env[key] = file.path
             }
         } catch {
@@ -132,7 +140,6 @@ func prepareRun(_ spec: RunSpec, env planned: [String: String], masking: Bool, p
             throw RunError.failed(f.description)
         }
     }
-    let proxies = proxy ? holdBackProxiedKeys(&env, values: values, references: wholeReferences) : []
     return PreparedRun(environment: env, secretValues: masking ? masks : [], tempDir: tempDir, proxies: proxies)
 }
 

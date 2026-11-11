@@ -4,6 +4,25 @@
 
 The first release.
 
+### Security and reliability fixes
+- **Allow Once** authorizes one read request. Implicit approval caching is removed; repeat access needs an
+  explicit grant or the **No Approval** setting. Revoking a grant stops future reads through it immediately,
+  without recalling values already released or overriding other grants and No Approval settings.
+- Proxy mode refuses custom provider base URLs, plaintext supported keys, and additional variable or file
+  deliveries of a protected key. It refuses runs without a supported key reference and never follows upstream
+  redirects. Other credentials are delivered normally.
+- Quoted multiline `.env` values are imported and rewritten in full. Malformed files are refused before saving;
+  a rewrite stops if the file changed during approval. File permissions are preserved.
+- Temporary key files have distinct paths per full item ID, preventing collisions between environments.
+- Command-line redaction covers URL credentials and common secret query parameters. Arbitrary arguments still
+  need care: redaction is heuristic.
+- Safari discards stale detections after changes, removal or navigation, bounds retained candidates, and rechecks
+  values before saving. Password and hidden fields are excluded from focus and input handlers.
+- App, website and guides describe effective access, proxy limits, unverified sync delivery, and preview-only
+  installation. Regression coverage includes authorization, imports, file delivery, proxy configuration and
+  Safari capture lifecycle.
+
+
 ### Storage and sync
 - Values in iCloud Keychain, in Latchkey's own access group, synced to every Mac signed in to your Apple Account.
 - Kind, agent-safe, service, note and "used in" travel with each item.
@@ -24,9 +43,9 @@ The first release.
 - `latchkey run --aws-session` / `--aws-role`: short-lived AWS credentials from STS instead of the long-lived key.
 - `latchkey touched` and `latchkey rotate`: see what a session was given, and replace it, with history kept and
   linked environments pushed.
-- Use Latchkey from another Mac over SSH (`LATCHKEY_SOCKET`); every forwarded request asks.
-- `latchkey mcp`: an MCP server with status, list, check, run and request-grant tools. It never returns a value;
-  output is masked and capped, and grants an agent asks for are limited to its folder, a day, and non-production
+- Use Latchkey from another Mac over SSH (`LATCHKEY_SOCKET`); each read without No Approval asks; local grants do not apply.
+- `latchkey mcp`: an MCP server with status, list, check, run and request-grant tools. It exposes no direct secret-read tool;
+  output is masked and capped, but transformed secrets can still leak, and grants an agent asks for are limited to its folder, a day, and non-production
   environments.
 - `latchkey check` shows what a run would get without asking, what would ask, and what's missing.
 
@@ -76,7 +95,7 @@ The first release.
 - Latchkey for Safari spots keys on any page you allow it on: about twenty provider formats, private keys, database
   URLs with a password, and labelled random secrets, skipping masked values, examples, publishable keys and
   certificates. Confident finds get a Save to Latchkey button beside the key; others are listed in the toolbar panel,
-  with a count on its button. Save Selection to Latchkey saves anything it missed. It can't read values.
+  with a count on its button. Save Selection to Latchkey saves anything it missed. It can't read stored values.
 - After a save, the extension shows the reference to use; its toolbar button says whether it can reach Latchkey.
 
 ### Approvals
@@ -84,7 +103,7 @@ The first release.
 - Things you start yourself, in the window or in Safari, ask for Touch ID alone.
 - After an import or a new item, Latchkey shows the reference and the `lk run` command to use next.
 
-### Distribution
+### Distribution (release tooling; no public release yet)
 - Developer ID-signed and notarized, in a disk image, with the command-line tool inside the app
   (**Latchkey › Install Command Line Tool…**, which also adds `lk`).
 - A Homebrew cask, written by the release script.

@@ -245,6 +245,7 @@ public struct Response: Codable, Sendable {
     /// (the grants that cover `granted`) are filled in too.
     public var agentSafe: [String]?
     public var granted: [String]?
+    /// Legacy field for older clients; new brokers never cache approvals or return it.
     public var remembered: [String]?
     public var needsApproval: [String]?
 

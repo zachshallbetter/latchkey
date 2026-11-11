@@ -45,6 +45,7 @@ struct GrantRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(Broker.tilde(grant.folder)).font(.callout.monospaced().weight(.medium)).lineLimit(1).truncationMode(.head)
                 Text(grant.names.joined(separator: ", ")).font(.callout).lineLimit(2)
+                if grant.repo != nil { Text("Includes repository worktrees").font(.caption).foregroundStyle(.secondary) }
                 if !grant.limits.isEmpty { Text(grant.limits.prefix(1).capitalized + grant.limits.dropFirst()).font(.caption).foregroundStyle(.secondary) }
                 TimelineView(.periodic(from: .now, by: 30)) { _ in
                     Text("Ends \(grant.expires.formatted(.relative(presentation: .named))) · from \(grant.createdBy)")
@@ -90,7 +91,7 @@ struct NewGrantSheet: View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("New Grant").font(.title3.weight(.semibold))
-                Text("Commands run from the folder, or any folder inside it, can read the chosen items without asking until the grant ends.")
+                Text("Programs in this folder, its subfolders and its repository’s Git worktrees can read these items until the grant ends. Revoking stops future reads, not values already released.")
                     .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             HStack {

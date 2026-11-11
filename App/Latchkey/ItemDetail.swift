@@ -48,7 +48,7 @@ struct ItemDetail: View {
                         } label: {
                             Image(systemName: model.revealed[item.name] == nil ? "eye" : "eye.slash")
                         }
-                        .help(model.revealed[item.name] == nil ? "Show (asks for approval unless agent-safe)" : "Hide")
+                        .help(model.revealed[item.name] == nil ? "Show (asks unless a grant or No Approval setting permits it)" : "Hide")
                         Button { act { await model.copyValue(item.name) } } label: { Image(systemName: "doc.on.doc") }
                             .help("Copy value; the clipboard clears after 60 seconds")
                     }
@@ -67,17 +67,17 @@ struct ItemDetail: View {
 
             Section {
                 Picker("Kind", selection: Binding(get: { item.kind }, set: { k in
-                    act { _ = await model.save(name: item.name, value: nil, kind: k, agentSafe: nil, note: nil) }
+                    act { if let error = await model.save(name: item.name, value: nil, kind: k, agentSafe: nil, note: nil) { model.notice = error } }
                 })) {
                     ForEach(ItemKind.allCases, id: \.self) { Label($0.label, systemImage: $0.symbol).tag($0) }
                 }
                 Toggle(isOn: Binding(get: { item.agentSafe }, set: { on in
-                    act { _ = await model.save(name: item.name, value: nil, kind: nil, agentSafe: on, note: nil) }
+                    act { if let error = await model.save(name: item.name, value: nil, kind: nil, agentSafe: on, note: nil) { model.notice = error } }
                 })) {
-                    Text("Agents may read without asking")
+                    Text("Allow reads without approval")
                     Text(item.agentSafe
-                         ? "Any command run through latchkey gets this value."
-                         : "Each read asks for Touch ID, Apple Watch or your password.")
+                         ? "Any program in your Mac account may request this value."
+                         : "Reads ask for approval unless a grant covers them.")
                 }
                 LabeledContent("Project") {
                     HStack {
@@ -106,6 +106,8 @@ struct ItemDetail: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(Broker.tilde(g.folder)).font(.callout.monospaced())
+                                if g.repo != nil { Text("Includes repository worktrees").font(.caption).foregroundStyle(.secondary) }
+                                if !g.limits.isEmpty { Text(g.limits).font(.caption).foregroundStyle(.secondary) }
                                 Text("Until \(g.expires.formatted(date: .omitted, time: .shortened)) · from \(g.createdBy)")
                                     .font(.caption).foregroundStyle(.secondary)
                             }

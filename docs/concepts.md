@@ -60,14 +60,15 @@ Choose **Deny**, **Allow Once**, or **Allow from this folder for** 1 hour, 8 hou
 paired Apple Watch or your Mac password then confirms your choice. Requests you make in the Latchkey window go
 straight to Touch ID.
 
-A panel nobody answers counts as a denial after 90 seconds. After you allow a read, the same items asked for from the
-same folder by the same program are allowed again for a short time (2 minutes by default; change it in Settings).
+A panel nobody answers counts as a denial after 90 seconds. **Allow Once** authorizes one read request.
+Approvals are not cached; repeated access needs an explicit grant or an item set to allow reads without approval.
 
-Changes (saving, deleting, moving, importing) always ask, and are never remembered.
+Changes (saving, deleting, moving, importing) always ask.
 
 ## Agent-safe items
 
-An agent-safe item is released to any command run through Latchkey without asking. Use it for values that aren't
+The app calls this **No Approval**; the CLI option and protocol field remain `--agent-safe` and `agentSafe`.
+Any program in your Mac account can request these values without approval. Use it for values that aren't
 really secret or that end up public anyway: a public API URL, a `NEXT_PUBLIC_*` key that ships in a browser bundle.
 Everything else should ask.
 
@@ -77,7 +78,8 @@ A **grant** lets commands run from one folder read some items without asking, un
 
 - It covers the folder, the folders inside it, and that repository's git worktrees wherever they live.
 - It names items, or a whole environment (`shop/development/*`) or project (`shop/*`), including items added later.
-- It lasts at most 7 days, and you can revoke it any time.
+- It lasts at most 7 days. Revocation stops future reads through that grant immediately; another grant or
+  a No Approval setting may still permit access. Revocation cannot recall values a process already received.
 - It's kept on this Mac only.
 
 Make one from the approval panel (**Allow from this folder for…**), from **Grants** in the app, or with

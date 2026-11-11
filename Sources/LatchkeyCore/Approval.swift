@@ -142,25 +142,3 @@ public struct FixedApprover: Approver {
     public var method: String { "fixed (test)" }
     public func approve(_ request: ApprovalRequest) -> ApprovalDecision { answer }
 }
-
-/// Remembers recent read approvals so a test loop does not prompt on every run. Changes are never remembered.
-final class ApprovalMemory: @unchecked Sendable {
-    private var until: [String: Date] = [:]
-    private let lock = NSLock()
-
-    static func key(_ names: [String], _ peer: PeerInfo) -> String {
-        ([peer.cwd, peer.path] + peer.chain + ["|"] + names.sorted()).joined(separator: "\u{1F}")
-    }
-
-    func covers(_ key: String, now: Date = Date()) -> Bool {
-        lock.withLock { (until[key] ?? .distantPast) > now }
-    }
-
-    func remember(_ key: String, for seconds: TimeInterval, now: Date = Date()) {
-        guard seconds > 0 else { return }
-        lock.withLock {
-            until = until.filter { $0.value > now }
-            until[key] = now.addingTimeInterval(seconds)
-        }
-    }
-}

@@ -236,8 +236,8 @@ struct StorageBadge: View {
             Label(model.synced ? "iCloud Keychain" : "This Mac only", systemImage: model.synced ? "icloud.fill" : "desktopcomputer")
                 .font(.callout.weight(.medium))
             Text(model.synced
-                 ? "Items sync to your other Macs."
-                 : "Not syncing: this copy isn't signed with your team. See Settings.")
+                 ? "Uses iCloud Keychain; delivery to other Macs is not verified."
+                 : "Using the local keychain fallback. See Settings.")
                 .font(.caption).foregroundStyle(.secondary)
             if let p = model.problem {
                 Text(p).font(.caption).foregroundStyle(.red).textSelection(.enabled)
@@ -480,7 +480,7 @@ struct ItemRow: View {
             }
             if item.agentSafe {
                 Image(systemName: "person.badge.shield.checkmark.fill").foregroundStyle(.green)
-                    .help("Agents may read this without asking")
+                    .help("Any program in your Mac account may request this value without approval")
             }
         }
         .padding(.vertical, 4)

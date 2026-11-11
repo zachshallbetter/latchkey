@@ -11,7 +11,7 @@ command gets which value. This page says what it protects against, how, and wher
 | Secrets in an agent's transcript or context | The agent runs commands through `latchkey run`; it sees references and IDs, not values. Output that repeats a value is masked. |
 | A program reading a secret you didn't mean to give it | Every read of an item that isn't agent-safe or granted asks you, showing the program chain, folder and command. |
 | Losing a value by mistake | Replaced values are kept (last 10); deleted items are restorable for 30 days. |
-| Not knowing what read what | Every read, change, grant, move, import and push is logged with the program chain and folder. Values are never logged. |
+| Not knowing what read what | Every read, change, grant, move, import and push is logged with the program chain and folder. Stored values are not deliberately logged; arbitrary command arguments use heuristic redaction. |
 | Values stolen from a lost or synced device | Values are keychain items: encrypted at rest, and end-to-end encrypted in iCloud Keychain. |
 | A value pasted into the wrong dashboard, or a stale value deployed | Remote locations push from one place, ask every time, and need an extra confirmation for production. |
 
@@ -34,27 +34,32 @@ command gets which value. This page says what it protects against, how, and wher
   really runs in.
 - **Approvals** use macOS LocalAuthentication: Touch ID, a paired Apple Watch, or your account password. The panel
   shows context first and, with Touch ID, takes the fingerprint itself; a panel nobody answers is a denial after 90
-  seconds.
+  seconds. Allow Once authorizes one request; approvals are never cached.
 - **Grants** are kept in a keychain item only Latchkey can read or change, on this Mac only, and last at most 7 days.
   No file holds them, so no other program can write itself one.
 - **The key proxy** (`latchkey run --proxy`) keeps OpenAI and Anthropic keys in the signed `latchkey` process, which
   other programs can't read. The command gets a random placeholder; the proxy listens on 127.0.0.1 only, refuses
   requests without that run's placeholder, and sends the real key only to the provider's own host.
+  It refuses custom base URLs, plaintext supported keys and duplicate variable or file deliveries of a protected
+  key. It never follows upstream redirects. Other credentials are delivered normally.
 - **Short-lived AWS credentials** (`--aws-session`, `--aws-role`) are minted by STS with the long-lived key, which
   stays in `latchkey run`; the command gets credentials that expire in 15 minutes by default.
 - **The Safari extension** is sandboxed and reaches the app through its own socket in the App Group container
   both share. The app admits only Latchkey's signed extension there (checked by code signature), and only to list
-  item names and save a value, which asks like any change. It can't read a value. The page's site it reports is
+  item names and save a value, which asks like any change. It can't read a stored value. The page's site it reports is
   shown in the approval as Safari reported it. Its key detection runs inside the page: a value goes to the app only
   when you press Save, and its toolbar panel gets a short preview, never the value. Password fields are not read.
+  Detection covers the main page DOM, not embedded frames or shadow roots.
+  Use Safari’s website permissions to choose which sites the extension may inspect.
 - **Temporary key files** live in a new folder only you can open, are only readable by you, and are deleted when the
-  command exits.
+  command exits. Different item IDs use different temporary files, even when their final names match.
 - **Remote pushes** pass values to each service's tool on standard input, never as arguments, so they don't appear
   in process listings. No service tokens are stored.
-- **Logs and errors** never contain values. Tool errors are shortened and have any value replaced. Command lines in
+- **Logs and errors** avoid recording values from the store. Tool errors are shortened and have any value replaced. Command lines in
   the log, the approval panel and the system sheet have likely secrets replaced with `<redacted>` (values after
   `--token` and similar, `NAME=VALUE` where the name says it's secret, Authorization headers, known token prefixes,
-  long random-looking strings).
+  long random-looking strings, and credentials in URLs). This is heuristic redaction of arbitrary command lines,
+  not a guarantee: keep secret values out of command arguments.
 - **The log is tamper-evident.** Each entry carries a keyed hash (HMAC-SHA256) of itself and the one before it. The
   key, and the hash and count of the latest entry, are keychain items only Latchkey can read, so `latchkey log
   --verify` finds an entry that was changed, removed or added, or a log cut short. It can't stop a program running as

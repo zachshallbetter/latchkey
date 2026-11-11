@@ -55,7 +55,7 @@ latchkey push shop/production
 latchkey push shop/production --to <link> --only shop/production/DATABASE_URL
 ```
 
-- Every push asks, every time. No grant or remembered approval covers a push.
+- Every push asks, every time. No grant covers a push.
 - Production targets (Vercel production, a GitHub or Railway environment named like production, and Fly apps unless
   their name says staging, preview or dev) need **I mean to change production** ticked in the panel before you can
   approve.

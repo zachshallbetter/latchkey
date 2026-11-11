@@ -26,7 +26,7 @@
       <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
       <ul>
         <li><a href="index.html" aria-current="page">Docs</a></li>
-        <li><a class="button primary" href="../index.html#install">Download</a></li>
+        <li><a class="button primary" href="../index.html#install">Preview status</a></li>
       </ul>
     </nav>
   </header>
@@ -39,10 +39,11 @@
       <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#install">1. Install</a></li><li><a href="#import">2. Import an env file</a></li><li><a href="#run">3. Run a command</a></li><li><a href="#grant">4. Let an agent work</a></li></ul></nav>
 
 <h2 id="install">1. Install</h2>
-<p>Open the disk image, drag <strong>Latchkey</strong> to Applications and open it. Then choose <strong>Latchkey › Install Command Line Tool…</strong>, which links <code>~/.local/bin/latchkey</code>, and <code>lk</code> for short, to the copy inside the app so it updates with the app. Make sure <code>~/.local/bin</code> is on your <code>PATH</code>.</p>
+<p>There is no public disk image yet. In a source checkout, install Xcode and XcodeGen, set your signing team in <code>App/project.yml</code>, then run <code>scripts/install.sh</code>. The script builds and installs the app and CLI. Release builds will support choosing <strong>Latchkey › Install Command Line Tool…</strong>, which links <code>~/.local/bin/latchkey</code>, and <code>lk</code> for short, to the copy inside the app so it updates with the app. Make sure <code>~/.local/bin</code> is on your <code>PATH</code>.</p>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey status</code></pre></figure>
-<p>You should see <code>storage: iCloud Keychain (synced to your Macs)</code>.</p>
+<p>You should see <code>storage: iCloud Keychain storage (sync status not verified)</code>.</p>
 
+<p>Imports support quoted multiline values and refuse malformed syntax before saving anything. Rewriting replaces the complete assignment and stops if the file changed while approval was pending.</p>
 <h2 id="import">2. Import an env file</h2>
 <p>Look first. A dry run prints names and where each would go, never values:</p>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">cd ~/Projects/shop
@@ -56,7 +57,7 @@ STRIPE_KEY=latchkey://shop/development/STRIPE_KEY</code></pre></figure>
 <h2 id="run">3. Run a command</h2>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey run --env-file .env.local -- npm run dev
 latchkey run --env shop/development -- npm test      # no env file needed</code></pre></figure>
-<p>The first read asks. Values that reach the command&rsquo;s output are replaced with <code>&lt;concealed by latchkey&gt;</code>. The command&rsquo;s exit status becomes <code>latchkey run</code>&rsquo;s.</p>
+<p>Reads ask unless a grant or the No Approval setting permits them. Values that reach the command&rsquo;s output are replaced with <code>&lt;concealed by latchkey&gt;</code>. The command&rsquo;s exit status becomes <code>latchkey run</code>&rsquo;s.</p>
 
 <h2 id="grant">4. Let an agent work</h2>
 <p>Before you step away, allow the folder for a while. Commands run from it, its subfolders and the repository&rsquo;s worktrees read these items without asking until the grant ends.</p>

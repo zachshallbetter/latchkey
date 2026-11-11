@@ -38,9 +38,8 @@ belongs in both places. Every page shares the same header, sidebar and footer; c
 
 - A domain, then canonical URLs, `og:url`, an Open Graph image (the pages use a text-only `summary` card until then)
   and a sitemap.
-- The download link and Homebrew command in **Install** on the home page (marked PLACEHOLDER).
-- The **Download** buttons point at this repository's latest GitHub release, which only works once releases are
-  public, and the page says the app is signed and notarized: notarize the release first (`scripts/release.sh`).
+- Publish a signed and notarized release first (`scripts/release.sh`), then replace the **Preview status**
+  actions and source installation instructions with the public download and Homebrew command.
 - The page says Apple silicon and Intel: try the release on an Intel Mac.
 - The page says keys sync to every Mac: try it on a second Mac.
 - Hosting, with deploys run on request rather than on every push.

@@ -57,7 +57,7 @@
     "--verify": ["Check that no entry was changed, removed or added"],
     "--limit": ["How many", "a number"],
     "--kind": ["token, password, key or value", "a kind"],
-    "--agent-safe": ["Agents may read it without asking"]
+    "--agent-safe": ["Any program in your Mac account may request it without approval"]
   };
   var TIP = {
     program: "Latchkey's command-line tool (latchkey, or lk for short)",

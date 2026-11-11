@@ -34,7 +34,7 @@ struct AddItemSheet: View {
                     SecureField("Value", text: $value)
                 }
                 TextField("Note", text: $note, prompt: Text("Optional"))
-                Toggle("Agents may read without asking", isOn: $agentSafe)
+                Toggle("Allow reads without approval", isOn: $agentSafe)
                 if let error { Text(error).font(.caption).foregroundStyle(.red) }
             }
             .formStyle(.grouped)

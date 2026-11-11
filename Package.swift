@@ -14,5 +14,6 @@ let package = Package(
         .executableTarget(name: "latchkey", dependencies: ["LatchkeyCore"]),
         .executableTarget(name: "latchkey-broker", dependencies: ["LatchkeyCore"]),
         .testTarget(name: "LatchkeyCoreTests", dependencies: ["LatchkeyCore"]),
+        .testTarget(name: "LatchkeyRunTests", dependencies: ["latchkey"]),
     ]
 )

@@ -18,19 +18,16 @@ public final class Broker: @unchecked Sendable {
     /// Pushes run only in the app, where the approval panel can confirm production. The window-less broker refuses them.
     public let allowsPush: Bool
     public let approver: Approver
-    /// How long a read approval covers the same names from the same place. 0 asks every time.
-    public var readApprovalWindow: TimeInterval
     public let logURL: URL?
     /// Signs each log entry into a chain, when the log is kept.
     public let logKeys: LogKeyStore?
     /// Called after every logged decision (reads, changes, denials), off the main thread.
     public var onChange: (@Sendable () -> Void)?
-    private let memory = ApprovalMemory()
     /// One request at a time, so approval sheets never stack.
     private let serial = NSLock()
 
     /// Without a log (tests), grants are kept in memory too unless a store is passed.
-    public init(store: SecretStore, approver: Approver, readApprovalWindow: TimeInterval = 120,
+    public init(store: SecretStore, approver: Approver,
                 logURL: URL? = Paths.accessLog, grants: GrantStore? = nil, versions: VersionStore? = nil,
                 remotes: RemoteStore? = nil, runner: RemoteRunner = ProcessRunner(), allowsPush: Bool = true,
                 logKeys: LogKeyStore? = nil) {
@@ -59,7 +56,6 @@ public final class Broker: @unchecked Sendable {
             self.grants = GrantStore()
         }
         self.approver = approver
-        self.readApprovalWindow = readApprovalWindow
         self.logURL = logURL
         if let logKeys {
             self.logKeys = logKeys
@@ -124,7 +120,7 @@ public final class Broker: @unchecked Sendable {
     }
 
     /// What `get` would do with these names from this caller and folder, without asking or releasing anything:
-    /// which are agent-safe, covered by a grant, covered by a recent approval, need approval, or don't exist.
+    /// which are agent-safe, covered by a grant, need approval, or don't exist.
     func check(_ req: Request, peer: PeerInfo) throws -> Response {
         let names = Array(Set(req.names ?? [])).sorted()
         guard !names.isEmpty else { return Response(ok: false, error: "no names given") }
@@ -141,11 +137,9 @@ public final class Broker: @unchecked Sendable {
             if !covering.contains(g) { covering.append(g) }
         }
         let rest = present.filter { !infos[$0]!.agentSafe && !granted.contains($0) }
-        let remembered = !rest.isEmpty && !peer.isSSHForward && memory.covers(ApprovalMemory.key(rest, peer))
         func some(_ a: [String]) -> [String]? { a.isEmpty ? nil : a }
         return Response(ok: true, missing: some(missing), grants: covering.isEmpty ? nil : covering,
-                        agentSafe: some(safe), granted: some(granted), remembered: remembered ? rest : nil,
-                        needsApproval: remembered ? nil : some(rest))
+                        agentSafe: some(safe), granted: some(granted), needsApproval: some(rest))
     }
 
     func get(_ req: Request, peer: PeerInfo) throws -> Response {
@@ -157,7 +151,7 @@ public final class Broker: @unchecked Sendable {
         let cwd = peer.cwd
         let needApproval = present.filter { !(infos[$0]!.agentSafe) }
         var byGrant: [Grant: [String]] = [:]
-        // Over SSH this Mac sees only the ssh client, so no grant or recent approval can stand for the caller.
+        // Over SSH this Mac sees only the ssh client, so no grant can stand for the caller.
         for name in needApproval where !peer.isSSHForward {
             if let g = grants.covering(name, cwd: cwd, ancestors: peer.ancestors, command: peer.runCommand) { byGrant[g, default: []].append(name) }
         }
@@ -169,29 +163,22 @@ public final class Broker: @unchecked Sendable {
 
         var denied: [String] = []
         if !toAsk.isEmpty {
-            let key = ApprovalMemory.key(toAsk, peer)
-            if !peer.isSSHForward && memory.covers(key) {
-                log("get", toAsk, "allowed (remembered)", peer, req)
-            } else {
-                switch ask(.read, toAsk, peer, req, "release \(Self.count(toAsk)) to \(Self.describe(peer, req))") {
-                case .deny:
-                    denied = toAsk
-                    log("get", toAsk, "denied", peer, req)
-                case .once:
-                    if !peer.isSSHForward { memory.remember(key, for: readApprovalWindow) }
+            switch ask(.read, toAsk, peer, req, "release \(Self.count(toAsk)) to \(Self.describe(peer, req))") {
+            case .deny:
+                denied = toAsk
+                log("get", toAsk, "denied", peer, req)
+            case .once:
+                log("get", toAsk, "approved", peer, req)
+            case .grant(let choice):
+                if cwd.isEmpty || Grant.normalize(cwd) == "/" || peer.isSSHForward {
                     log("get", toAsk, "approved", peer, req)
-                case .grant(let choice):
-                    if !peer.isSSHForward { memory.remember(key, for: readApprovalWindow) }
-                    if cwd.isEmpty || Grant.normalize(cwd) == "/" || peer.isSSHForward {
-                        log("get", toAsk, "approved", peer, req)
-                    } else {
-                        let session = choice.untilAgentQuits ? peer.sessionProcess.map { GrantSession(process: $0.stamp, name: $0.name) } : nil
-                        let commands = choice.thisCommandOnly ? peer.runCommand.map { [$0] } : nil
-                        let g = grants.add(names: toAsk, folder: cwd, duration: choice.duration, createdBy: Self.who(peer),
-                                           session: session, commands: commands)
-                        let limits = g.limits.isEmpty ? "" : ", \(g.limits)"
-                        log("get", toAsk, "approved (grant \(g.id) for \(GrantStore.describe(choice.duration))\(limits))", peer, req)
-                    }
+                } else {
+                    let session = choice.untilAgentQuits ? peer.sessionProcess.map { GrantSession(process: $0.stamp, name: $0.name) } : nil
+                    let commands = choice.thisCommandOnly ? peer.runCommand.map { [$0] } : nil
+                    let g = grants.add(names: toAsk, folder: cwd, duration: choice.duration, createdBy: Self.who(peer),
+                                       session: session, commands: commands)
+                    let limits = g.limits.isEmpty ? "" : ", \(g.limits)"
+                    log("get", toAsk, "approved (grant \(g.id) for \(GrantStore.describe(choice.duration))\(limits))", peer, req)
                 }
             }
         }
@@ -556,7 +543,7 @@ public final class Broker: @unchecked Sendable {
     }
 
     /// Sends an environment's values to its links with the services' own tools. Always asks, every time: no
-    /// grant or remembered approval covers a push, production needs its own confirmation, and only the app does it.
+    /// grant covers a push, production needs its own confirmation, and only the app does it.
     func push(_ req: Request, peer: PeerInfo) throws -> Response {
         guard allowsPush else { return Response(ok: false, error: "pushes run in the Latchkey app, where production can be confirmed; open it and try again") }
         guard let scope = req.names?.first, RemoteLink.isValidScope(scope) else { return Response(ok: false, error: "push takes a project/environment") }

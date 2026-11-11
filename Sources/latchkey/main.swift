@@ -20,8 +20,7 @@ Files refer to them as latchkey://ID.
       --aws-session (or --aws-role ARN) gives COMMAND short-lived AWS credentials from STS instead of the long-lived
       key; --aws-for sets how long they last (default 15m, at most 12h).
   latchkey check [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [ID,...] [--json] [-- COMMAND...]
-      What `latchkey run` with the same options would get without asking (agent-safe, granted, recently
-      approved), what would ask, and what's missing. Asks nothing and releases nothing. Give the COMMAND to
+      What `latchkey run` with the same options would get without asking (agent-safe or granted), what would ask, and what's missing. Asks nothing and releases nothing. Give the COMMAND to
       count grants limited to it.
   latchkey mcp                    Serve Latchkey's tools to an agent over MCP (standard input and output).
   latchkey list [--project P] [--json]   IDs, kinds and whether agents may read them. Never values.
@@ -275,9 +274,6 @@ func runCommand(_ input: [String]) -> Never {
     var env = prepared.environment
     let secretValues = prepared.secretValues, tempDir = prepared.tempDir
     var proxies: [KeyProxy] = []
-    if proxy && prepared.proxies.isEmpty {
-        FileHandle.standardError.write(Data("latchkey: --proxy: no OPENAI_API_KEY or ANTHROPIC_API_KEY reference to hold back (or its base URL is already set)\n".utf8))
-    }
     for route in prepared.proxies {
         do {
             let p = try KeyProxy(route: route)
@@ -380,7 +376,6 @@ func checkCommand(_ input: [String]) -> Never {
         }
         show("agent-safe", r.agentSafe)
         show("granted", r.granted) { id in byID[id].map { "  (grant \($0.id), \(relative($0.expires)) left)" } ?? "" }
-        show("recently approved", r.remembered)
         show("asks", r.needsApproval)
         show("missing", r.missing)
     }
@@ -500,10 +495,12 @@ func importCommand(_ input: [String]) -> Never {
 
     let placeProject = shared ? "" : (project ?? EnvImport.project(forFile: url))
     let placeEnv = shared ? "" : (environment ?? EnvImport.environment(forFile: url.lastPathComponent))
-    let plan = EnvImport.plan(text, source: url.lastPathComponent, location: url.path, project: placeProject,
+    let plan: EnvImport.Plan
+    do { plan = try EnvImport.plan(text, source: url.lastPathComponent, location: url.path, project: placeProject,
                               environment: placeEnv, only: only, defaultKind: defaultKind,
                               kinds: kinds, agentSafe: agentSafe, allAgentSafe: allAgentSafe,
-                              skip: skip, agentSafePatterns: agentSafePatterns)
+                              skip: skip, agentSafePatterns: agentSafePatterns) }
+    catch { fail("cannot import \(url.lastPathComponent): \(error.localizedDescription)", code: 66) }
     let items = Dictionary(uniqueKeysWithValues: plan.items.map { ($0.name, $0) })
     let ignored = plan.ignored
     if let only {
@@ -568,9 +565,11 @@ func batchImport(_ paths: [String], project: String?, environment: String?, shar
         do { files.append((url, try String(contentsOf: url, encoding: .utf8))) }
         catch { fail("cannot read \(p): \(error.localizedDescription)", code: 66) }
     }
-    let plan = EnvImport.batch(files, project: project, environment: environment, shared: shared, shareIdentical: shareIdentical,
+    let plan: EnvImport.BatchPlan
+    do { plan = try EnvImport.batch(files, project: project, environment: environment, shared: shared, shareIdentical: shareIdentical,
                                defaultKind: defaultKind, kinds: kinds, agentSafe: agentSafe, allAgentSafe: allAgentSafe,
-                               skip: skip, agentSafePatterns: agentSafePatterns)
+                               skip: skip, agentSafePatterns: agentSafePatterns) }
+    catch { fail("cannot import: \(error.localizedDescription)", code: 66) }
     let existing = Set((send(Request(op: "list")).secrets ?? []).map(\.name))
 
     // The review: per file, then what's shared, skipped and in conflict. Names and counts only.

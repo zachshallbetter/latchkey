@@ -25,10 +25,10 @@ public enum EnvImport {
                             project: String = "", environment: String = "",
                             only: Set<String>? = nil, defaultKind: ItemKind = .token, kinds: [String: ItemKind] = [:],
                             agentSafe: Set<String> = [], allAgentSafe: Bool = false,
-                            skip: [String] = defaultSkip, agentSafePatterns: [String] = []) -> Plan {
+                            skip: [String] = defaultSkip, agentSafePatterns: [String] = []) throws -> Plan {
         var items: [String: ImportItem] = [:]
         var ignored: [String: String] = [:]
-        for (key, value) in EnvFile.parse(text) {
+        for (key, value) in try EnvFile.parse(text) {
             if let only, !only.contains(key) { continue }
             items[key] = nil
             ignored[key] = nil
@@ -78,13 +78,13 @@ public enum EnvImport {
                              shared allShared: Bool = false, shareIdentical: Bool = false,
                              defaultKind: ItemKind = .token, kinds: [String: ItemKind] = [:],
                              agentSafe: Set<String> = [], allAgentSafe: Bool = false,
-                             skip: [String] = defaultSkip, agentSafePatterns: [String] = []) -> BatchPlan {
+                             skip: [String] = defaultSkip, agentSafePatterns: [String] = []) throws -> BatchPlan {
         var filePlans: [FilePlan] = []
         var itemsByFile: [[String: ImportItem]] = []   // key → item, per file
         for f in files {
             let proj = allShared ? "" : (project ?? self.project(forFile: f.url))
             let env = allShared ? "" : (environment ?? self.environment(forFile: f.url.lastPathComponent))
-            let p = plan(f.text, source: f.url.lastPathComponent, location: f.url.path, project: proj, environment: env,
+            let p = try plan(f.text, source: f.url.lastPathComponent, location: f.url.path, project: proj, environment: env,
                          defaultKind: defaultKind, kinds: kinds, agentSafe: agentSafe, allAgentSafe: allAgentSafe,
                          skip: skip, agentSafePatterns: agentSafePatterns)
             var byKey: [String: ImportItem] = [:]

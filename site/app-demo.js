@@ -95,14 +95,14 @@
     }
     var services = Array.from(new Set(items.map(function (i) { return i.service; }))).sort();
     return '<div class="side">' +
-      '<div class="tiles">' + tile("all", "All", items.length, "t-all") + tile("safe", "Agent-Safe", count("safe"), "t-safe") +
+      '<div class="tiles">' + tile("all", "All", items.length, "t-all") + tile("safe", "No Approval", count("safe"), "t-safe") +
       tile("ask", "Ask First", count("ask"), "t-ask") + tile("activity", "Activity", activity.length, "t-act") + "</div>" +
       "<p class=\"sh\">Kinds</p><ul>" + Object.keys(KINDS).map(function (k) { return row("kind:" + k, KINDS[k][0], count("kind:" + k), kindIcon(k)); }).join("") + "</ul>" +
       '<p class="sh">Projects</p><ul>' + row("project:shop", "shop", count("project:shop"), '<span class="ki ki-proj"></span>') + "</ul>" +
       '<p class="sh">Services</p><ul>' + services.map(function (sv) { return row("service:" + sv, sv, count("service:" + sv), '<span class="ki ki-svc"></span>'); }).join("") + "</ul>" +
       '<p class="sh">Access</p><ul>' + row("grants", "Grants", grants.length, '<span class="ki ki-grant"></span>') +
       row("deleted", "Recently Deleted", 0, '<span class="ki ki-del"></span>') + "</ul>" +
-      '<p class="sync"><b>iCloud Keychain</b>Items sync to your other Macs.</p></div>';
+      '<p class="sync"><b>iCloud Keychain</b>iCloud Keychain storage; delivery is not verified.</p></div>';
   }
 
   function list() {
@@ -140,7 +140,7 @@
     return html + "</div>";
   }
   function title(f) {
-    return { all: "All", safe: "Agent-Safe", ask: "Ask First" }[f] || (f.indexOf("kind:") === 0 ? KINDS[f.slice(5)][0] : f.split(":")[1]);
+    return { all: "All", safe: "No Approval", ask: "Ask First" }[f] || (f.indexOf("kind:") === 0 ? KINDS[f.slice(5)][0] : f.split(":")[1]);
   }
   function itemRow(i) {
     var p = parts(i.id);
@@ -166,8 +166,8 @@
       '<button type="button" class="ib" data-reveal="' + esc(i.id) + '" aria-label="' + (shown ? "Hide the value" : "Show the value") + '">' + (shown ? "Hide" : "Show") + "</button></div>" +
       '<div class="kv"><span>Reference</span><code>latchkey://' + esc(i.id) + '</code><button type="button" class="ib" data-copy="latchkey://' + esc(i.id) + '">Copy</button></div></div>' +
       '<div class="card"><div class="kv"><span>Kind</span><em>' + KINDS[i.kind][1] + "</em></div>" +
-      '<div class="kv"><span>Agents may read without asking<small>' + (i.safe ? "Any program can read it from Latchkey." : "Each read asks for Touch ID, Apple Watch or your password.") +
-      '</small></span><button type="button" class="switch" role="switch" aria-checked="' + i.safe + '" data-safe="' + esc(i.id) + '" aria-label="Agents may read without asking"><i></i></button></div>' +
+      '<div class="kv"><span>Allow reads without approval<small>' + (i.safe ? "Any program in your Mac account may request this value." : "Reads ask unless a grant covers them.") +
+      '</small></span><button type="button" class="switch" role="switch" aria-checked="' + i.safe + '" data-safe="' + esc(i.id) + '" aria-label="Allow reads without approval"><i></i></button></div>' +
       '<div class="kv"><span>Project</span><em>' + (p.project ? esc(p.project) + " / " + esc(p.env) : "Shared") + "</em></div>" +
       '<div class="kv"><span>Service</span><em>' + esc(i.service) + "</em></div>" +
       (i.note ? '<div class="kv"><span>Note</span><em>' + esc(i.note) + "</em></div>" : "") + "</div>" +
@@ -210,15 +210,16 @@
     if (b.dataset.reveal) {
       var id = b.dataset.reveal, p = parts(id);
       if (state.revealed[id]) { delete state.revealed[id]; render(); return; }
-      if (await touchID("Latchkey is trying to release " + p.name + (p.project ? " from " + p.project + "/" + p.env : "") + " to the Latchkey app.")) {
-        state.revealed[id] = true; log("get", [id], "approved"); render();
+      var unrestricted = items.some(function (item) { return item.id === id && item.safe; });
+      if (unrestricted || await touchID("Latchkey is trying to release " + p.name + (p.project ? " from " + p.project + "/" + p.env : "") + " to the Latchkey app.")) {
+        state.revealed[id] = true; log("get", [id], unrestricted ? "allowed (No Approval)" : "approved"); render();
         setTimeout(function () { delete state.revealed[id]; render(); }, 15000);
       } else { log("get", [id], "denied"); render(); }
       return;
     }
     if (b.dataset.safe) {
       var item = items.filter(function (x) { return x.id === b.dataset.safe; })[0], want = !item.safe, q = parts(item.id);
-      if (await touchID("Latchkey is trying to " + (want ? "let agents read " : "make agents ask before reading ") + q.name + (q.project ? " from " + q.project + "/" + q.env : "") + ".")) {
+      if (await touchID("Latchkey is trying to " + (want ? "allow reads without approval for " : "require approval unless granted for ") + q.name + (q.project ? " from " + q.project + "/" + q.env : "") + ".")) {
         item.safe = want; log("update", [item.id], "approved"); render();
       }
       return;

@@ -4,7 +4,8 @@ import LatchkeyCore
 /// `latchkey mcp`: Latchkey's tools for agents over the Model Context Protocol, as newline-delimited JSON-RPC 2.0
 /// on standard input and output (logs go to standard error).
 ///
-/// It never returns a value. Agents get item metadata, a check of what a run would get without asking, commands
+/// There is no direct secret-read tool. Child output masks exact values, but transformed values can leak.
+/// Agents get item metadata, a check of what a run would get without asking, commands
 /// run with values filled in and their output masked, and a way to ask the owner for a limited grant. Every
 /// request reaches the app like any other `latchkey` call, marked as coming from an agent.
 final class MCPServer: @unchecked Sendable {
@@ -167,8 +168,7 @@ final class MCPServer: @unchecked Sendable {
         let runsWithoutAsking = list("needsApproval").isEmpty && list("missing").isEmpty
         detail["runsWithoutAsking"] = runsWithoutAsking
         var lines: [String] = []
-        for (label, key) in [("agent-safe", "agentSafe"), ("granted", "granted"), ("recently approved", "remembered"),
-                             ("will ask the owner", "needsApproval"), ("missing", "missing")] where !list(key).isEmpty {
+        for (label, key) in [("agent-safe", "agentSafe"), ("granted", "granted"),        ("will ask the owner", "needsApproval"), ("missing", "missing")] where !list(key).isEmpty {
             lines.append("\(label): \(list(key).joined(separator: ", "))")
         }
         lines.append(runsWithoutAsking ? "latchkey_run would start without asking." :
@@ -356,7 +356,7 @@ final class MCPServer: @unchecked Sendable {
     }
 
     static let instructions = """
-    Latchkey keeps this person's secrets (API keys, database URLs) in iCloud Keychain. You never see a value. \
+    Latchkey keeps this person's secrets (API keys, database URLs) in iCloud Keychain. There is no direct secret-read tool. Child output masks exact secret values, but transformed values can still leak; never print or encode secrets. \
     Env files hold latchkey:// references instead of values. To run a command that needs secrets, call \
     latchkey_run; the values reach the command, and its output is masked. Call latchkey_check first to see whether \
     it would start without asking. If the owner refuses or an item is missing, stop and tell them; you may ask once \
@@ -400,7 +400,7 @@ final class MCPServer: @unchecked Sendable {
         [
             "name": "latchkey_check",
             "title": "Check before running",
-            "description": "What latchkey_run with the same options would get without asking (agent-safe, granted, recently approved), what would ask the owner, and what's missing. Asks nothing and releases nothing.",
+            "description": "What latchkey_run with the same options would get without asking (agent-safe or granted), what would ask the owner, and what's missing. Asks nothing and releases nothing.",
             "inputSchema": ["type": "object", "properties": sourceProperties.merging([
                 "ids": ["type": "array", "items": ["type": "string"], "description": "More item IDs to check."],
                 "command": ["type": "array", "items": ["type": "string"],
