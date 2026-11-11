@@ -25,6 +25,17 @@ two chunks of output; multi-line values are hidden line by line.
 
 COMMAND's exit status becomes `latchkey run`'s. If COMMAND is killed by a signal, the status is 128 plus the signal.
 
+### `latchkey check [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [IDS] [--json]`
+
+What `latchkey run` with the same options would get without asking (agent-safe, covered by a grant, or approved
+in the last few minutes), what would ask you, and what's missing. Asks nothing and releases nothing. Exits 66 if an
+item is missing, otherwise 0.
+
+### `latchkey mcp`
+
+Serves Latchkey's tools to an agent over MCP, on standard input and output. See
+[Latchkey's MCP server](agents.md#latchkeys-mcp-server).
+
 ### `latchkey get ID`
 
 Prints one value. Asks unless the item is agent-safe or covered by a grant.

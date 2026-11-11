@@ -15,6 +15,10 @@ Files refer to them as latchkey://ID.
       environment's files use. --file NAME=ID (or NAME=latchkey-file://ID in an env file) gives COMMAND the
       path of a temporary file holding the value, readable only by you and deleted when COMMAND exits.
       Secret values printed by COMMAND are concealed unless --no-masking is given.
+  latchkey check [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [ID,...] [--json]
+      What `latchkey run` with the same options would get without asking (agent-safe, granted, recently
+      approved), what would ask, and what's missing. Asks nothing and releases nothing.
+  latchkey mcp                    Serve Latchkey's tools to an agent over MCP (standard input and output).
   latchkey list [--project P] [--json]   IDs, kinds and whether agents may read them. Never values.
   latchkey get ID                 Print one value.
   latchkey set ID [--kind token|password|key|value] [--agent-safe] [--note TEXT] [--service NAME]
@@ -116,14 +120,13 @@ func launchApp() -> Bool {
     return appAnswers(within: 10)
 }
 
-func send(_ request: Request) -> Response {
+/// Sends one request to the app, starting it if it isn't running. Returns the response as is, `ok` or not.
+func call(_ request: Request) throws -> Response {
     var launched = false
     var retries = 0
     while true {
         do {
-            let r = try BrokerClient.send(request)
-            if !r.ok { fail(r.error ?? "the app refused the request") }
-            return r
+            return try BrokerClient.send(request)
         } catch let e as SocketError {
             if case .sys(let what, _) = e, what == "connect", !launched, launchApp() {
                 launched = true
@@ -135,10 +138,34 @@ func send(_ request: Request) -> Response {
                 usleep(500_000)
                 continue
             }
-            fail("cannot reach the Latchkey app (\(e)). Open Latchkey and try again.", code: 69)
+            throw RunError.unreachable("cannot reach the Latchkey app (\(e)). Open Latchkey and try again.")
         } catch {
-            fail("\(error)")
+            throw RunError.failed("\(error)")
         }
+    }
+}
+
+/// `call`, exiting on any failure.
+func send(_ request: Request) -> Response {
+    do {
+        let r = try call(request)
+        if !r.ok { fail(r.error ?? "the app refused the request") }
+        return r
+    } catch {
+        failRun(error)
+    }
+}
+
+/// Exits with the code and message for a RunError.
+func failRun(_ error: Error) -> Never {
+    switch error as? RunError {
+    case .usage(let m): fail(m, code: 64)
+    case .unreadable(let m): fail(m, code: 66)
+    case .missing(let ids): failMissing(ids)
+    case .refused(let ids): failRefused(ids)
+    case .unreachable(let m): fail(m, code: 69)
+    case .failed(let m): fail(m)
+    case nil: fail("\(error)")
     }
 }
 
@@ -202,58 +229,13 @@ func runCommand(_ input: [String]) -> Never {
     }
     guard !cmd.isEmpty else { fail("usage: latchkey run [--env-file FILE] [--env PROJECT/ENV] [--file NAME=ID] -- COMMAND [ARGS...]", code: 64) }
 
-    var env = ProcessInfo.processInfo.environment
-    for path in envFiles {
-        do { for (k, v) in try EnvFile.load(path) { env[k] = v } }
-        catch { fail("cannot read \(path): \(error.localizedDescription)", code: 66) }
-    }
-
-    if !scopes.isEmpty {
-        let all = send(Request(op: "list")).secrets ?? []
-        for scope in scopes {
-            let inScope = all.filter { $0.name.hasPrefix(scope + "/") }
-            if inScope.isEmpty { failMissing(["\(scope)/*"]) }
-            for item in inScope { env[item.ref.name] = References.scheme + item.name }
-            // Shared items this environment's files use (recorded on import), unless something already set them.
-            let folders = Set(inScope.flatMap { $0.usedIn ?? [] }.map { Repo.mainCheckout(for: $0) ?? URL(fileURLWithPath: $0).deletingLastPathComponent().path })
-            for item in all where item.ref.isShared && env[item.name] == nil {
-                let used = (item.usedIn ?? []).contains { path in folders.contains { path.hasPrefix($0 + "/") } }
-                if used { env[item.name] = References.scheme + item.name }
-            }
-        }
-    }
-    for f in fileArgs { env[f.name] = References.fileScheme + f.id }
-
-    let fileRefs = References.fileReferences(in: env)
-    let names = Array(Set(References.names(in: env) + fileRefs.values)).sorted()
-    var secretValues: [String] = []
-    var tempDir: URL?
-    if !names.isEmpty {
-        let r = send(Request(op: "get", names: names, cwd: currentDirectory(), command: cmd.joined(separator: " ")))
-        if let m = r.missing, !m.isEmpty { failMissing(m) }
-        if let d = r.denied, !d.isEmpty { failRefused(d) }
-        let values = r.values ?? [:]
-        env = References.resolve(env: env, with: values)
-        if !fileRefs.isEmpty {
-            // A private folder of owner-only files, removed when the command ends.
-            let dir = FileManager.default.temporaryDirectory.appendingPathComponent("latchkey-run-\(UUID().uuidString)")
-            do {
-                try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
-                for (key, id) in fileRefs {
-                    let file = dir.appendingPathComponent(ItemID(id)?.name ?? id)
-                    guard FileManager.default.createFile(atPath: file.path, contents: Data((values[id] ?? "").utf8),
-                                                         attributes: [.posixPermissions: 0o600]) else { throw CocoaError(.fileWriteUnknown) }
-                    env[key] = file.path
-                }
-            } catch {
-                try? FileManager.default.removeItem(at: dir)
-                fail("couldn't write a temporary file for \(fileRefs.keys.sorted().joined(separator: ", ")): \(error.localizedDescription)")
-            }
-            tempDir = dir
-        }
-        let masked = Set(r.masked ?? names)
-        secretValues = masking ? values.filter { masked.contains($0.key) }.map(\.value) : []
-    }
+    let spec = RunSpec(envFiles: envFiles, scopes: scopes, fileArgs: fileArgs, cwd: currentDirectory())
+    let prepared: PreparedRun
+    do {
+        let planned = try plannedEnvironment(spec, base: ProcessInfo.processInfo.environment, call: call)
+        prepared = try prepareRun(spec, env: planned, command: cmd.joined(separator: " "), masking: masking, call: call)
+    } catch { failRun(error) }
+    let env = prepared.environment, secretValues = prepared.secretValues, tempDir = prepared.tempDir
 
     // Exec in place when there's nothing to mask and nothing to clean up afterwards.
     if secretValues.isEmpty && tempDir == nil {
@@ -276,35 +258,99 @@ func runCommand(_ input: [String]) -> Never {
     let lock = NSLock()
     let group = DispatchGroup()
     func pump(_ pipe: Pipe, to target: FileHandle) {
-        group.enter()
-        DispatchQueue.global().async {
-            var masker = Masker(secrets: secretValues)
-            let handle = pipe.fileHandleForReading
-            while true {
-                let chunk = handle.availableData
-                if chunk.isEmpty { break }
-                let out = masker.feed(chunk)
-                if !out.isEmpty { lock.lock(); target.write(out); lock.unlock() }
-            }
-            let tail = masker.flush()
-            if !tail.isEmpty { lock.lock(); target.write(tail); lock.unlock() }
-            group.leave()
-        }
+        pumpMasked(pipe, secrets: secretValues, group: group) { out in lock.lock(); target.write(out); lock.unlock() }
     }
 
     signal(SIGTERM) { _ in if childPID > 0 { kill(childPID, SIGTERM) } }
     signal(SIGHUP) { _ in if childPID > 0 { kill(childPID, SIGHUP) } }
     signal(SIGINT) { _ in }   // the terminal already sent it to the child; wait for the child to finish
 
-    do { try process.run() } catch { fail("cannot start \(cmd[0]): \(error.localizedDescription)", code: 127) }
+    do { try process.run() } catch { prepared.cleanUp(); fail("cannot start \(cmd[0]): \(error.localizedDescription)", code: 127) }
     childPID = process.processIdentifier
     pump(outPipe, to: FileHandle.standardOutput)
     pump(errPipe, to: FileHandle.standardError)
     process.waitUntilExit()
     group.wait()
-    if let tempDir { try? FileManager.default.removeItem(at: tempDir) }
+    prepared.cleanUp()
     if process.terminationReason == .uncaughtSignal { exit(128 + process.terminationStatus) }
     exit(process.terminationStatus)
+}
+
+// MARK: - check
+
+func checkCommand(_ input: [String]) -> Never {
+    var spec = RunSpec(cwd: currentDirectory())
+    var ids: [String] = []
+    var json = false
+    var rest = input
+    while !rest.isEmpty {
+        let a = rest.removeFirst()
+        switch a {
+        case "--env-file":
+            guard !rest.isEmpty else { fail("--env-file takes a path", code: 64) }
+            spec.envFiles.append(rest.removeFirst())
+        case "--env":
+            guard !rest.isEmpty, RemoteLink.isValidScope(rest[0]) else { fail("--env takes PROJECT/ENV, such as shop/development", code: 64) }
+            spec.scopes.append(rest.removeFirst())
+        case "--file":
+            guard !rest.isEmpty, let eq = rest[0].firstIndex(of: "="), Wire.isValidName(String(rest[0][rest[0].index(after: eq)...])) else {
+                fail("--file takes NAME=ID", code: 64)
+            }
+            let f = rest.removeFirst(), i = f.firstIndex(of: "=")!
+            spec.fileArgs.append((String(f[..<i]), String(f[f.index(after: i)...])))
+        case "--json": json = true
+        default:
+            if a.hasPrefix("-") { fail("unknown option \(a)", code: 64) }
+            ids += a.split(separator: ",").map(String.init)
+        }
+    }
+    let names: [String]
+    do {
+        let planned = try plannedEnvironment(spec, base: ProcessInfo.processInfo.environment, call: call)
+        names = Array(Set(referencedIDs(planned) + ids)).sorted()
+    } catch { failRun(error) }
+    guard !names.isEmpty else { fail("nothing to check: give IDs, --env-file, --env or --file", code: 64) }
+    let r = send(Request(op: "check", names: names, cwd: spec.cwd))
+    if json {
+        let report = CheckReport(r)
+        let enc = Wire.encoder()
+        enc.outputFormatting = [.prettyPrinted, .sortedKeys]
+        print(String(decoding: try! enc.encode(report), as: UTF8.self))
+    } else {
+        let byID = Dictionary((r.grants ?? []).flatMap { g in (r.granted ?? []).filter { g.covers($0, cwd: spec.cwd) }.map { ($0, g) } },
+                              uniquingKeysWith: { a, _ in a })
+        func show(_ label: String, _ list: [String]?, _ detail: (String) -> String = { _ in "" }) {
+            for id in list ?? [] { print("\(label.padding(toLength: 18, withPad: " ", startingAt: 0))\(id)\(detail(id))") }
+        }
+        show("agent-safe", r.agentSafe)
+        show("granted", r.granted) { id in byID[id].map { "  (grant \($0.id), \(relative($0.expires)) left)" } ?? "" }
+        show("recently approved", r.remembered)
+        show("asks", r.needsApproval)
+        show("missing", r.missing)
+    }
+    exit((r.missing ?? []).isEmpty ? 0 : 66)
+}
+
+/// What `latchkey check --json` prints and the MCP check tool returns.
+struct CheckReport: Encodable {
+    var agentSafe: [String]
+    var granted: [String]
+    var remembered: [String]
+    var needsApproval: [String]
+    var missing: [String]
+    var grants: [Grant]
+
+    init(_ r: Response) {
+        agentSafe = r.agentSafe ?? []
+        granted = r.granted ?? []
+        remembered = r.remembered ?? []
+        needsApproval = r.needsApproval ?? []
+        missing = r.missing ?? []
+        grants = r.grants ?? []
+    }
+
+    /// True when `latchkey run` would start without asking.
+    var runsWithoutAsking: Bool { needsApproval.isEmpty && missing.isEmpty }
 }
 
 // MARK: - import
@@ -876,6 +922,12 @@ case "update":
 
 case "run":
     runCommand(args)
+
+case "check":
+    checkCommand(args)
+
+case "mcp":
+    MCPServer().serve()
 
 case "import":
     importCommand(args)

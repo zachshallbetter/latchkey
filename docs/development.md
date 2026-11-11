@@ -66,13 +66,18 @@ keys). `op` is one of:
 | op | |
 |---|---|
 | `status`, `list` | Status and item list (never values) |
+| `check` | What `get` would do for names, without asking or releasing anything |
 | `get` | Values for names, after approval, grants or agent-safe |
 | `set`, `update`, `rm`, `move`, `import` | Changes; each asks once |
 | `history`, `deleted`, `version`, `restore`, `forget` | Version history |
 | `grants`, `grant`, `revoke` | Grants |
 | `links`, `link`, `unlink`, `remote-status`, `push` | Remote locations |
 
-New fields are optional so older CLIs keep working. Unknown `op` values are refused.
+New fields are optional so older CLIs keep working. Unknown `op` values are refused. `origin: "mcp"` marks requests
+from `latchkey mcp`: approval panels say an agent asked, and grants it asks for are limited (`Broker.grant`).
+
+The CLI target holds `main.swift` (commands), `Run.swift` (filling in an environment and masking output, shared by
+`run`, `check` and the MCP server) and `MCP.swift` (`latchkey mcp`: JSON-RPC over standard input and output).
 
 ## Adding a remote service
 

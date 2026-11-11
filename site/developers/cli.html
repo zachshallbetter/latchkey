@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>CLI reference · Latchkey</title>
-  <meta name="description" content="Reference for the latchkey command-line tool: run, get, list, set, update, rm, mv, import, history, restore, grant, remote, push and status, with environment variables and exit codes.">
+  <meta name="description" content="Reference for the latchkey command-line tool: run, check, mcp, get, list, set, update, rm, mv, import, history, restore, grant, remote, push and status, with environment variables and exit codes.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Latchkey">
   <meta property="og:title" content="CLI reference · Latchkey">
-  <meta property="og:description" content="Reference for the latchkey command-line tool: run, get, list, set, update, rm, mv, import, history, restore, grant, remote, push and status, with environment variables and exit codes.">
+  <meta property="og:description" content="Reference for the latchkey command-line tool: run, check, mcp, get, list, set, update, rm, mv, import, history, restore, grant, remote, push and status, with environment variables and exit codes.">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
@@ -55,6 +55,17 @@
 <figure class="code"><figcaption><span>Examples</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey run --env-file .env.local -- npm run dev
 latchkey run --env shop/development --env shop/vercel.preview -- npm test
 latchkey run --file ASC_KEY_PATH=shop/production/ASC_P8 -- fastlane beta</code></pre></figure>
+
+<h3 id="check"><code>latchkey check</code></h3>
+<figure class="code"><figcaption><span>Synopsis</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">latchkey check [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [IDS] [--json]</code></pre></figure>
+<p>What <code>latchkey run</code> with the same options would get without asking (agent-safe, covered by a grant, or approved in the last few minutes), what would ask you, and what&rsquo;s missing. Asks nothing and releases nothing. Exits 66 if an item is missing, otherwise 0.</p>
+<figure class="code"><figcaption><span>Example</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">$ latchkey check --env-file .env.local
+agent-safe        shop/development/PGHOST
+granted           shop/development/DATABASE_URL  (grant k3v9q2, 1 hour, 12 minutes left)
+asks              shop/development/STRIPE_KEY</code></pre></figure>
+
+<h3 id="mcp-command"><code>latchkey mcp</code></h3>
+<p>Serves Latchkey&rsquo;s tools to an agent over MCP, on standard input and output. See <a href="agents.html#mcp">Latchkey&rsquo;s MCP server</a>.</p>
 
 <h3 id="get"><code>latchkey get</code></h3>
 <figure class="code"><figcaption><span>Synopsis</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">latchkey get ID</code></pre></figure>

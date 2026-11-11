@@ -21,6 +21,8 @@ public struct ApprovalRequest: Sendable {
     public var targets: [String] = []
     /// push: at least one target is production, which needs its own confirmation.
     public var production = false
+    /// Asked through `latchkey mcp`, by an agent rather than a command.
+    public var byAgent = false
 
     public init(action: Action, names: [String], chain: [String], folder: String, command: String? = nil,
                 duration: TimeInterval? = nil, reason: String) {

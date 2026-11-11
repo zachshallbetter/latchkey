@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Agents and MCP · Latchkey</title>
-  <meta name="description" content="Use Latchkey with coding agents and MCP servers: instructions to give an agent, grants for unattended work, exit codes to act on, and MCP servers launched through latchkey run.">
+  <meta name="description" content="Use Latchkey with coding agents: instructions to give an agent, grants for unattended work, exit codes to act on, Latchkey&#x27;s own MCP server, and other MCP servers launched through latchkey run.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Latchkey">
   <meta property="og:title" content="Agents and MCP · Latchkey">
-  <meta property="og:description" content="Use Latchkey with coding agents and MCP servers: instructions to give an agent, grants for unattended work, exit codes to act on, and MCP servers launched through latchkey run.">
+  <meta property="og:description" content="Use Latchkey with coding agents: instructions to give an agent, grants for unattended work, exit codes to act on, Latchkey&#x27;s own MCP server, and other MCP servers launched through latchkey run.">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
@@ -36,7 +36,7 @@
       <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><a href="index.html">Developers</a></li><li><span aria-current="page">Agents and MCP</span></li></ol></nav>
       <h1>Agents and MCP</h1>
       <p class="lede">Coding agents need your keys to run tests and dev servers. With Latchkey they get them through <code>latchkey run</code>: the values reach the command, not the agent&rsquo;s files, and you decide what an agent may use without asking.</p>
-      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#pattern">The pattern</a></li><li><a href="#instructions">Instructions for agents</a></li><li><a href="#exit-codes">Exit codes to act on</a></li><li><a href="#unattended">Leaving an agent working</a></li><li><a href="#mcp">MCP servers</a></li><li><a href="#key-files">Key files</a></li><li><a href="#limits">What Latchkey can&rsquo;t do for you</a></li></ul></nav>
+      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#pattern">The pattern</a></li><li><a href="#instructions">Instructions for agents</a></li><li><a href="#exit-codes">Exit codes to act on</a></li><li><a href="#unattended">Leaving an agent working</a></li><li><a href="#mcp">Latchkey&rsquo;s MCP server</a></li><li><a href="#other-mcp">Other MCP servers</a></li><li><a href="#key-files">Key files</a></li><li><a href="#limits">What Latchkey can&rsquo;t do for you</a></li></ul></nav>
 
 <h2 id="pattern">The pattern</h2>
 <ol>
@@ -64,8 +64,37 @@ write values in .env files. If latchkey exits with 77 (refused) or 66
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey grant &#x27;shop/development/*&#x27; --folder ~/Projects/shop --for 2h</code></pre></figure>
 <p>The agent&rsquo;s reads go through without asking until the grant ends, and each one is in the app&rsquo;s Activity. End it early from <strong>Grants</strong> in the app or with <code>latchkey revoke ID</code>.</p>
 
-<h2 id="mcp">MCP servers</h2>
-<p>Latchkey doesn&rsquo;t run an MCP server of its own; agents use the command-line tool. An MCP server that your agent starts as a command can get its keys through Latchkey: wrap the command, and keep references in its environment.</p>
+<h2 id="mcp">Latchkey&rsquo;s MCP server</h2>
+<p><code>latchkey mcp</code> gives agents Latchkey&rsquo;s tools over MCP: for clients without a shell, like Claude Desktop, and for structured refusals instead of exit codes. <strong>It never returns a value.</strong></p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">claude mcp add latchkey -- ~/.local/bin/latchkey mcp</code></pre></figure>
+<figure class="code"><figcaption><span>Other clients</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="json">{
+  &quot;mcpServers&quot;: {
+    &quot;latchkey&quot;: { &quot;command&quot;: &quot;/Users/you/.local/bin/latchkey&quot;, &quot;args&quot;: [&quot;mcp&quot;] }
+  }
+}</code></pre></figure>
+<table><thead><tr><th>Tool</th><th>What it does</th><th>Asks you?</th></tr></thead><tbody><tr><td><code>latchkey_status</code></td><td>Where values are kept, how you approve, item and grant counts</td><td>No</td></tr><tr><td><code>latchkey_list</code></td><td>Item IDs with kind, service and agent-safe, by <code>project</code> or <code>environment</code>. Never values</td><td>No</td></tr><tr><td><code>latchkey_check</code></td><td>What a run would get without asking, what would ask, and what&rsquo;s missing, for <code>env_files</code>, <code>environments</code>, <code>files</code> or <code>ids</code></td><td>No</td></tr><tr><td><code>latchkey_run</code></td><td>Runs <code>command</code> (an argument array) in <code>cwd</code> with references filled in. Returns the exit code and the output, masked</td><td>When an item isn&rsquo;t agent-safe or granted</td></tr><tr><td><code>latchkey_request_grant</code></td><td>Asks you for a grant on <code>ids</code> in the agent&rsquo;s folder for <code>duration</code></td><td>Always</td></tr></tbody></table>
+<ul>
+<li><strong>Output</strong> is always masked, and only the last 64 KB of each stream is returned, with a flag when it was cut. Standard input is empty.</li>
+<li><strong>Commands stop</strong> after <code>timeout_seconds</code>: 600 by default, at most 3600. Use it for tests, builds and scripts; run dev servers in a shell with <code>latchkey run</code>. A cancelled request stops its command.</li>
+<li><strong>Grants an agent asks for</strong> cover only the folder it runs in (and that repository&rsquo;s worktrees), last at most a day, and can&rsquo;t include production environments or a whole project. Grant those yourself with <code>latchkey grant</code>.</li>
+<li><strong>Approval panels</strong> for requests through the MCP server say they come from an agent.</li>
+<li><strong>Not offered:</strong> reading values, changing or deleting items, earlier values, remote locations and pushes.</li>
+</ul>
+<figure class="code"><figcaption><span>A latchkey_run result</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="json">{
+  &quot;content&quot;: [{ &quot;type&quot;: &quot;text&quot;, &quot;text&quot;: &quot;exit code 0
+--- stdout ---
+12 passing&quot; }],
+  &quot;structuredContent&quot;: {
+    &quot;exitCode&quot;: 0, &quot;timedOut&quot;: false,
+    &quot;stdout&quot;: &quot;12 passing&quot;, &quot;stdoutTruncated&quot;: false,
+    &quot;stderr&quot;: &quot;&quot;, &quot;stderrTruncated&quot;: false
+  },
+  &quot;isError&quot;: false
+}</code></pre></figure>
+<p>A refusal is a tool error (<code>isError: true</code>) whose <code>structuredContent</code> has <code>error</code> (<code>refused</code>, <code>missing</code>, <code>unreachable</code>, <code>usage</code>), the <code>ids</code>, and for a refusal the <code>grantCommand</code> for the person to run.</p>
+
+<h2 id="other-mcp">Other MCP servers</h2>
+<p>An MCP server that your agent starts as a command can get its keys through Latchkey: wrap the command, and keep references in its environment.</p>
 <figure class="code"><figcaption><span>.mcp.json</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="json">{
   &quot;mcpServers&quot;: {
     &quot;some-server&quot;: {

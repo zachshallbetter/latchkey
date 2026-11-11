@@ -1,0 +1,413 @@
+import Foundation
+import LatchkeyCore
+
+/// `latchkey mcp`: Latchkey's tools for agents over the Model Context Protocol, as newline-delimited JSON-RPC 2.0
+/// on standard input and output (logs go to standard error).
+///
+/// It never returns a value. Agents get item metadata, a check of what a run would get without asking, commands
+/// run with values filled in and their output masked, and a way to ask the owner for a limited grant. Every
+/// request reaches the app like any other `latchkey` call, marked as coming from an agent.
+final class MCPServer: @unchecked Sendable {
+    /// Keep in step with MARKETING_VERSION in App/project.yml.
+    static let version = "0.1.0"
+    static let protocolVersions = ["2025-06-18", "2025-03-26", "2024-11-05"]
+    static let defaultTimeout: TimeInterval = 600
+    static let longestTimeout: TimeInterval = 3600
+    /// The most output kept per stream; the end is kept, where failures show.
+    static let outputCap = 64 * 1024
+
+    private let writeLock = NSLock()
+    private let runLock = NSLock()
+    /// Running commands by request id, so a cancelled request stops its command.
+    private var running: [String: Process] = [:]
+    /// Requests the client cancelled: they get no response.
+    private var cancelled: Set<String> = []
+    private let home = FileManager.default.currentDirectoryPath
+
+    enum Outcome {
+        case result([String: Any])
+        case error(Int, String)
+    }
+
+    // MARK: transport
+
+    func serve() -> Never {
+        signal(SIGPIPE, SIG_IGN)
+        let calls = DispatchGroup()
+        while let line = readLine(strippingNewline: true) {
+            guard !line.trimmingCharacters(in: .whitespaces).isEmpty else { continue }
+            guard let data = line.data(using: .utf8),
+                  let message = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+                write(["jsonrpc": "2.0", "id": NSNull(), "error": ["code": -32700, "message": "parse error"]])
+                continue
+            }
+            let method = message["method"] as? String ?? ""
+            let params = message["params"] as? [String: Any] ?? [:]
+            guard message.keys.contains("id") else { notify(method, params); continue }
+            let id = message["id"] ?? NSNull()
+            if method == "tools/call" {
+                // Commands can take minutes; keep answering pings and cancellations meanwhile.
+                calls.enter()
+                DispatchQueue.global().async {
+                    let key = Self.key(id)
+                    let outcome = self.callTool(params, id: key)
+                    self.runLock.lock()
+                    let dropped = self.cancelled.remove(key) != nil
+                    self.runLock.unlock()
+                    if !dropped { self.reply(id, outcome) }
+                    calls.leave()
+                }
+            } else {
+                reply(id, handle(method, params))
+            }
+        }
+        calls.wait()
+        exit(0)
+    }
+
+    private func handle(_ method: String, _ params: [String: Any]) -> Outcome {
+        switch method {
+        case "initialize":
+            let asked = params["protocolVersion"] as? String ?? ""
+            return .result([
+                "protocolVersion": Self.protocolVersions.contains(asked) ? asked : Self.protocolVersions[0],
+                "capabilities": ["tools": ["listChanged": false]],
+                "serverInfo": ["name": "latchkey", "title": "Latchkey", "version": Self.version],
+                "instructions": Self.instructions,
+            ])
+        case "ping":
+            return .result([:])
+        case "tools/list":
+            return .result(["tools": Self.tools])
+        default:
+            return .error(-32601, "method not found: \(method)")
+        }
+    }
+
+    private func notify(_ method: String, _ params: [String: Any]) {
+        guard method == "notifications/cancelled", let id = params["requestId"] else { return }
+        let key = Self.key(id)
+        runLock.lock()
+        let process = running[key]
+        if process != nil { cancelled.insert(key) }
+        runLock.unlock()
+        if let process, process.isRunning { process.terminate() }
+    }
+
+    private func reply(_ id: Any, _ outcome: Outcome) {
+        switch outcome {
+        case .result(let r): write(["jsonrpc": "2.0", "id": id, "result": r])
+        case .error(let code, let message): write(["jsonrpc": "2.0", "id": id, "error": ["code": code, "message": message]])
+        }
+    }
+
+    private func write(_ message: [String: Any]) {
+        guard var data = try? JSONSerialization.data(withJSONObject: message, options: [.withoutEscapingSlashes, .sortedKeys]) else { return }
+        data.append(0x0A)
+        writeLock.lock()
+        FileHandle.standardOutput.write(data)
+        writeLock.unlock()
+    }
+
+    static func key(_ id: Any) -> String {
+        if let s = id as? String { return "s:" + s }
+        return "n:\(id)"
+    }
+
+    // MARK: tools
+
+    private func callTool(_ params: [String: Any], id: String) -> Outcome {
+        let name = params["name"] as? String ?? ""
+        let args = params["arguments"] as? [String: Any] ?? [:]
+        do {
+            switch name {
+            case "latchkey_status": return try status()
+            case "latchkey_list": return try list(args)
+            case "latchkey_check": return try check(args)
+            case "latchkey_run": return try run(args, id: id)
+            case "latchkey_request_grant": return try requestGrant(args)
+            default: return .error(-32602, "unknown tool: \(name)")
+            }
+        } catch {
+            let (text, detail) = Self.describe(error, folder: (try? folder(args)) ?? home)
+            return Self.toolResult(text, detail, isError: true)
+        }
+    }
+
+    private func status() throws -> Outcome {
+        let r = try ask(Request(op: "status"))
+        let info = r.info ?? [:]
+        return Self.toolResult(info.sorted { $0.key < $1.key }.map { "\($0.key): \($0.value)" }.joined(separator: "\n"), info)
+    }
+
+    private func list(_ args: [String: Any]) throws -> Outcome {
+        let project = args["project"] as? String
+        let environment = args["environment"] as? String
+        let items = (try ask(Request(op: "list")).secrets ?? []).filter { i in
+            (project == nil || i.ref.project == project) && (environment == nil || i.ref.environment == environment)
+        }
+        let lines = items.map { i in
+            "\(i.name)  \(i.kind.rawValue)\(i.agentSafe ? ", agent-safe" : "")\(i.service.map { "  \($0)" } ?? "")"
+        }
+        return Self.toolResult(lines.isEmpty ? "No items." : lines.joined(separator: "\n"), ["items": Self.json(items)])
+    }
+
+    private func check(_ args: [String: Any]) throws -> Outcome {
+        let spec = try runSpec(args)
+        let planned = try plannedEnvironment(spec, base: ProcessInfo.processInfo.environment, call: call)
+        let names = Array(Set(referencedIDs(planned) + Self.strings(args["ids"]))).sorted()
+        guard !names.isEmpty else { throw RunError.usage("nothing to check: give ids, env_files, environments or files") }
+        let report = CheckReport(try ask(Request(op: "check", names: names, cwd: spec.cwd, origin: "mcp")))
+        var lines: [String] = []
+        func add(_ label: String, _ ids: [String]) { if !ids.isEmpty { lines.append("\(label): \(ids.joined(separator: ", "))") } }
+        add("agent-safe", report.agentSafe)
+        add("granted", report.granted)
+        add("recently approved", report.remembered)
+        add("will ask the owner", report.needsApproval)
+        add("missing", report.missing)
+        lines.append(report.runsWithoutAsking ? "latchkey_run would start without asking." :
+                        report.missing.isEmpty ? "latchkey_run would ask the owner first." : "latchkey_run would fail: items are missing.")
+        var detail = Self.json(report) as? [String: Any] ?? [:]
+        detail["runsWithoutAsking"] = report.runsWithoutAsking
+        return Self.toolResult(lines.joined(separator: "\n"), detail)
+    }
+
+    private func run(_ args: [String: Any], id: String) throws -> Outcome {
+        let command = Self.strings(args["command"])
+        guard !command.isEmpty else { throw RunError.usage("command is required: an array such as [\"npm\", \"test\"]") }
+        let timeout = min(max(args["timeout_seconds"] as? Double ?? Self.defaultTimeout, 1), Self.longestTimeout)
+        let spec = try runSpec(args)
+        let planned = try plannedEnvironment(spec, base: ProcessInfo.processInfo.environment, call: call)
+        let prepared = try prepareRun(spec, env: planned, command: command.joined(separator: " "), masking: true, call: call)
+        defer { prepared.cleanUp() }
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = command
+        process.environment = prepared.environment
+        process.currentDirectoryURL = URL(fileURLWithPath: spec.cwd, isDirectory: true)
+        process.standardInput = FileHandle.nullDevice
+        let outPipe = Pipe(), errPipe = Pipe()
+        process.standardOutput = outPipe
+        process.standardError = errPipe
+        let stdout = Tail(cap: Self.outputCap), stderr = Tail(cap: Self.outputCap)
+        let pumps = DispatchGroup()
+        do { try process.run() } catch { throw RunError.failed("cannot start \(command[0]): \(error.localizedDescription)") }
+        runLock.lock(); running[id] = process; runLock.unlock()
+        defer { runLock.lock(); running[id] = nil; runLock.unlock() }
+        pumpMasked(outPipe, secrets: prepared.secretValues, group: pumps) { stdout.add($0) }
+        pumpMasked(errPipe, secrets: prepared.secretValues, group: pumps) { stderr.add($0) }
+
+        let timedOut = Flag()
+        DispatchQueue.global().asyncAfter(deadline: .now() + timeout) {
+            guard process.isRunning else { return }
+            timedOut.set()
+            process.terminate()
+            DispatchQueue.global().asyncAfter(deadline: .now() + 5) { if process.isRunning { kill(process.processIdentifier, SIGKILL) } }
+        }
+        process.waitUntilExit()
+        // A program that left a child holding its output open shouldn't keep the tool waiting.
+        if pumps.wait(timeout: .now() + 5) == .timedOut {
+            try? outPipe.fileHandleForReading.close()
+            try? errPipe.fileHandleForReading.close()
+        }
+        let code = process.terminationReason == .uncaughtSignal ? 128 + process.terminationStatus : process.terminationStatus
+        let out = stdout.text, err = stderr.text
+        var text = "exit code \(code)"
+        if timedOut.isSet { text += " (stopped after \(Int(timeout)) seconds)" }
+        if !out.text.isEmpty { text += "\n--- stdout\(out.truncated ? " (last \(Self.outputCap / 1024) KB)" : "") ---\n" + out.text }
+        if !err.text.isEmpty { text += "\n--- stderr\(err.truncated ? " (last \(Self.outputCap / 1024) KB)" : "") ---\n" + err.text }
+        return Self.toolResult(text, [
+            "exitCode": Int(code), "timedOut": timedOut.isSet,
+            "stdout": out.text, "stdoutTruncated": out.truncated,
+            "stderr": err.text, "stderrTruncated": err.truncated,
+        ])
+    }
+
+    private func requestGrant(_ args: [String: Any]) throws -> Outcome {
+        let ids = Self.strings(args["ids"])
+        guard !ids.isEmpty else { throw RunError.usage("ids is required: item IDs or project/environment/* patterns") }
+        let text = args["duration"] as? String ?? "1h"
+        guard let duration = GrantStore.parseDuration(text) else { throw RunError.usage("duration is like 30m, 2h or 1d") }
+        let cwd = try folder(args)
+        let r = try call(Request(op: "grant", names: ids, cwd: cwd, folder: cwd, duration: duration, origin: "mcp"))
+        if let m = r.missing, !m.isEmpty { throw RunError.missing(m) }
+        guard r.ok, let g = r.grants?.first else { throw RunError.failed(r.error ?? "the grant was not approved") }
+        let left = GrantStore.describe(g.expires.timeIntervalSince(g.created))
+        let summary = "Granted \(g.names.joined(separator: ", ")) to programs in \(Broker.tilde(g.folder))\(g.repo == nil ? "" : " and its worktrees") for \(left) (grant \(g.id))."
+        return Self.toolResult(summary, ["grant": Self.json(g)])
+    }
+
+    // MARK: helpers
+
+    /// The folder a tool works in: `cwd` if given (absolute, or starting with ~), else where the server started.
+    private func folder(_ args: [String: Any]) throws -> String {
+        guard let given = args["cwd"] as? String, !given.isEmpty else { return home }
+        let path = (given as NSString).expandingTildeInPath
+        var isDir: ObjCBool = false
+        guard path.hasPrefix("/"), FileManager.default.fileExists(atPath: path, isDirectory: &isDir), isDir.boolValue else {
+            throw RunError.usage("cwd must be an absolute path to a folder: \(given)")
+        }
+        return URL(fileURLWithPath: path).standardizedFileURL.path
+    }
+
+    private func runSpec(_ args: [String: Any]) throws -> RunSpec {
+        var spec = RunSpec(cwd: try folder(args), origin: "mcp")
+        spec.envFiles = Self.strings(args["env_files"])
+        spec.scopes = Self.strings(args["environments"])
+        if let bad = spec.scopes.first(where: { !RemoteLink.isValidScope($0) }) {
+            throw RunError.usage("environments are project/environment, such as shop/development: \(bad)")
+        }
+        for (name, id) in (args["files"] as? [String: String] ?? [:]).sorted(by: { $0.key < $1.key }) {
+            guard Wire.isValidName(id) else { throw RunError.usage("files maps a variable name to an item ID: \(name)=\(id)") }
+            spec.fileArgs.append((name, id))
+        }
+        return spec
+    }
+
+    private func ask(_ request: Request) throws -> Response {
+        let r = try call(request)
+        guard r.ok else { throw RunError.failed(r.error ?? "the app refused the request") }
+        return r
+    }
+
+    static func strings(_ v: Any?) -> [String] {
+        if let a = v as? [String] { return a }
+        if let s = v as? String, !s.isEmpty { return [s] }
+        return []
+    }
+
+    static func json<T: Encodable>(_ value: T) -> Any {
+        guard let data = try? Wire.encoder().encode(value) else { return NSNull() }
+        return (try? JSONSerialization.jsonObject(with: data)) ?? NSNull()
+    }
+
+    static func toolResult(_ text: String, _ detail: [String: Any], isError: Bool = false) -> Outcome {
+        .result(["content": [["type": "text", "text": text]], "structuredContent": detail, "isError": isError])
+    }
+
+    /// The message an agent sees when a tool can't go ahead, with what to do next.
+    static func describe(_ error: Error, folder: String) -> (String, [String: Any]) {
+        switch error as? RunError {
+        case .refused(let ids):
+            let grant = "latchkey grant \(ids.joined(separator: ",")) --folder \(Broker.tilde(folder)) --for 2h"
+            return ("Refused: \(ids.joined(separator: ", ")) (not agent-safe, not approved, no grant). Ask the owner to approve it when Latchkey asks, or to run `\(grant)`. You can ask once with latchkey_request_grant. Don't retry the same command.",
+                    ["error": "refused", "ids": ids, "grantCommand": grant])
+        case .missing(let ids):
+            return ("No item named: \(ids.joined(separator: ", ")). Ask the owner to add it in Latchkey or check the name. Don't retry.",
+                    ["error": "missing", "ids": ids])
+        case .unreachable(let m):
+            return (m + " Ask the owner to open Latchkey.", ["error": "unreachable"])
+        case .usage(let m): return (m, ["error": "usage"])
+        case .unreadable(let m): return (m, ["error": "unreadable"])
+        case .failed(let m): return (m, ["error": "failed"])
+        case nil: return ("\(error)", ["error": "failed"])
+        }
+    }
+
+    static let instructions = """
+    Latchkey keeps this person's secrets (API keys, database URLs) in iCloud Keychain. You never see a value. \
+    Env files hold latchkey:// references instead of values. To run a command that needs secrets, call \
+    latchkey_run; the values reach the command, and its output is masked. Call latchkey_check first to see whether \
+    it would start without asking. If the owner refuses or an item is missing, stop and tell them; you may ask once \
+    with latchkey_request_grant. Never try to read values another way.
+    """
+
+    // MARK: tool definitions
+
+    private static let cwdProperty: [String: Any] = [
+        "type": "string",
+        "description": "Absolute path of the folder the command runs in (grants are matched against it). Defaults to the folder the server started in.",
+    ]
+    private static let sourceProperties: [String: Any] = [
+        "cwd": cwdProperty,
+        "env_files": ["type": "array", "items": ["type": "string"],
+                      "description": "Env files to load first, relative to cwd, such as [\".env.local\"]. Their latchkey:// references are filled in."],
+        "environments": ["type": "array", "items": ["type": "string"],
+                         "description": "Latchkey environments to load without a file, as project/environment, such as [\"shop/development\"]."],
+        "files": ["type": "object", "additionalProperties": ["type": "string"],
+                  "description": "Variables to set to the path of a temporary file holding an item's value, as {\"NAME\": \"project/environment/ITEM\"}."],
+    ]
+
+    static let tools: [[String: Any]] = [
+        [
+            "name": "latchkey_status",
+            "title": "Latchkey status",
+            "description": "Where Latchkey keeps values, how the owner approves, and how many items and grants there are.",
+            "inputSchema": ["type": "object", "properties": [String: Any]()],
+            "annotations": ["readOnlyHint": true, "openWorldHint": false],
+        ],
+        [
+            "name": "latchkey_list",
+            "title": "List items",
+            "description": "Item IDs with their kind, service and whether agents may read them without asking. Never values.",
+            "inputSchema": ["type": "object", "properties": [
+                "project": ["type": "string", "description": "Only this project."],
+                "environment": ["type": "string", "description": "Only this environment, such as development."],
+            ]],
+            "annotations": ["readOnlyHint": true, "openWorldHint": false],
+        ],
+        [
+            "name": "latchkey_check",
+            "title": "Check before running",
+            "description": "What latchkey_run with the same options would get without asking (agent-safe, granted, recently approved), what would ask the owner, and what's missing. Asks nothing and releases nothing.",
+            "inputSchema": ["type": "object", "properties": sourceProperties.merging([
+                "ids": ["type": "array", "items": ["type": "string"], "description": "More item IDs to check."],
+            ]) { a, _ in a }],
+            "annotations": ["readOnlyHint": true, "openWorldHint": false],
+        ],
+        [
+            "name": "latchkey_run",
+            "title": "Run with secrets",
+            "description": "Run a command with latchkey:// references in its environment filled in. Returns the exit code and the command's output, with secret values replaced by <concealed by latchkey> and only the last 64 KB of each stream kept. Items that aren't agent-safe or granted ask the owner first. For tests, builds and scripts that finish; not for dev servers. Standard input is empty.",
+            "inputSchema": ["type": "object", "required": ["command"], "properties": sourceProperties.merging([
+                "command": ["type": "array", "items": ["type": "string"], "minItems": 1,
+                            "description": "The program and its arguments, such as [\"npm\", \"test\"]. Use [\"sh\", \"-c\", \"...\"] for pipes."],
+                "timeout_seconds": ["type": "number", "minimum": 1, "maximum": longestTimeout,
+                                    "description": "Stop the command after this long. Default 600, at most 3600."],
+            ]) { a, _ in a }],
+            "annotations": ["readOnlyHint": false, "destructiveHint": true, "openWorldHint": true],
+        ],
+        [
+            "name": "latchkey_request_grant",
+            "title": "Ask for a grant",
+            "description": "Ask the owner to let commands in this folder (and its repository's worktrees) read these items without asking, for a while. The owner sees the request marked as coming from an agent and decides. Production items and whole projects can't be requested; at most 1 day. Ask once; don't repeat a refused request.",
+            "inputSchema": ["type": "object", "required": ["ids"], "properties": [
+                "ids": ["type": "array", "items": ["type": "string"], "minItems": 1,
+                        "description": "Item IDs or project/environment/* patterns, such as [\"shop/development/*\"]."],
+                "duration": ["type": "string", "description": "How long, such as 30m, 2h or 1d. Default 1h."],
+                "cwd": cwdProperty,
+            ]],
+            "annotations": ["readOnlyHint": false, "destructiveHint": false, "openWorldHint": false],
+        ],
+    ]
+}
+
+/// The last `cap` bytes of a stream, and whether anything before them was dropped.
+final class Tail: @unchecked Sendable {
+    private let cap: Int
+    private let lock = NSLock()
+    private var data = Data()
+    private var total = 0
+
+    init(cap: Int) { self.cap = cap }
+
+    func add(_ chunk: Data) {
+        lock.lock(); defer { lock.unlock() }
+        total += chunk.count
+        data.append(chunk)
+        if data.count > cap * 2 { data = data.suffix(cap) }
+    }
+
+    var text: (text: String, truncated: Bool) {
+        lock.lock(); defer { lock.unlock() }
+        return (String(decoding: data.suffix(cap), as: UTF8.self), total > cap)
+    }
+}
+
+final class Flag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value = false
+    func set() { lock.lock(); value = true; lock.unlock() }
+    var isSet: Bool { lock.lock(); defer { lock.unlock() }; return value }
+}

@@ -63,6 +63,7 @@ public final class Broker: @unchecked Sendable {
             switch req.op {
             case "status": return status()
             case "list": return Response(ok: true, secrets: try store.list())
+            case "check": return try check(req, peer: peer)
             case "get": return try get(req, peer: peer)
             case "set": return try set(req, peer: peer)
             case "rm": return try remove(req, peer: peer)
@@ -100,6 +101,31 @@ public final class Broker: @unchecked Sendable {
             "grants": String(grants.all().count),
             "socket": Paths.socket,
         ])
+    }
+
+    /// What `get` would do with these names from this caller and folder, without asking or releasing anything:
+    /// which are agent-safe, covered by a grant, covered by a recent approval, need approval, or don't exist.
+    func check(_ req: Request, peer: PeerInfo) throws -> Response {
+        let names = Array(Set(req.names ?? [])).sorted()
+        guard !names.isEmpty else { return Response(ok: false, error: "no names given") }
+        let infos = Dictionary(uniqueKeysWithValues: try store.list().map { ($0.name, $0) })
+        let missing = names.filter { infos[$0] == nil }
+        let present = names.filter { infos[$0] != nil }
+        let cwd = req.cwd ?? peer.cwd
+        let safe = present.filter { infos[$0]!.agentSafe }
+        var granted: [String] = []
+        var covering: [Grant] = []
+        for name in present where !infos[name]!.agentSafe {
+            guard let g = grants.covering(name, cwd: cwd) else { continue }
+            granted.append(name)
+            if !covering.contains(g) { covering.append(g) }
+        }
+        let rest = present.filter { !infos[$0]!.agentSafe && !granted.contains($0) }
+        let remembered = !rest.isEmpty && memory.covers(ApprovalMemory.key(rest, peer))
+        func some(_ a: [String]) -> [String]? { a.isEmpty ? nil : a }
+        return Response(ok: true, missing: some(missing), grants: covering.isEmpty ? nil : covering,
+                        agentSafe: some(safe), granted: some(granted), remembered: remembered ? rest : nil,
+                        needsApproval: remembered ? nil : some(rest))
     }
 
     func get(_ req: Request, peer: PeerInfo) throws -> Response {
@@ -285,8 +311,18 @@ public final class Broker: @unchecked Sendable {
         guard missing.isEmpty else { return Response(ok: false, missing: missing) }
         let folder = Grant.normalize(req.folder ?? req.cwd ?? peer.cwd)
         guard !folder.isEmpty, folder != "/" else { return Response(ok: false, error: "a grant needs a folder other than /") }
-        let duration = min(req.duration ?? 3600, GrantStore.longest)
+        var duration = min(req.duration ?? 3600, GrantStore.longest)
         guard duration > 0 else { return Response(ok: false, error: "the duration must be positive") }
+        if req.origin == "mcp" {
+            // An agent asking for itself: only its own folder, nothing in production or a whole project, a day at most.
+            if let entry = names.first(where: Self.reachesProduction) {
+                return Response(ok: false, error: "an agent can't ask for \(entry): grants it asks for can't include production or a whole project. The owner can grant it with latchkey grant.")
+            }
+            guard folder == Grant.normalize(req.cwd ?? peer.cwd) else {
+                return Response(ok: false, error: "an agent can only ask for a grant on the folder it runs in")
+            }
+            duration = min(duration, Self.longestAgentGrant)
+        }
         var r = req
         r.cwd = folder
         let worktrees = Repo.commonDir(for: folder) != nil ? " (and its worktrees)" : ""
@@ -565,7 +601,22 @@ public final class Broker: @unchecked Sendable {
                                       folder: folder.isEmpty ? "" : Grant.normalize(folder),
                                       command: req.command, duration: duration, reason: reason)
         request.targets = targets
+        request.byAgent = req.origin == "mcp"
         return approver.approve(request)
+    }
+
+    /// The longest grant an agent can ask for through `latchkey mcp`.
+    public static let longestAgentGrant: TimeInterval = 24 * 3600
+
+    /// A grant entry that reaches a production environment: `project/*` (every environment) or an item or
+    /// environment pattern whose environment is production. Shared items don't say, so they don't count.
+    static func reachesProduction(_ entry: String) -> Bool {
+        let parts = entry.split(separator: "/", omittingEmptySubsequences: false)
+        switch parts.count {
+        case 2: return true
+        case 3: return Environments.isProduction(String(parts[1]))
+        default: return false
+        }
     }
 
     /// "zsh › claude" or "the Latchkey app".

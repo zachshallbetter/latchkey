@@ -73,6 +73,12 @@ public struct ItemID: Hashable, Sendable, Comparable {
 public enum Environments {
     public static let known = ["development", "preview", "staging", "production", "test"]
 
+    /// `production`, `prod`, or a service's production (`vercel.production`).
+    public static func isProduction(_ environment: String) -> Bool {
+        let e = environment.lowercased()
+        return e == "production" || e == "prod" || e.hasSuffix(".production") || e.hasSuffix(".prod")
+    }
+
     public static func order(_ a: String, _ b: String) -> Bool {
         let ia = known.firstIndex(of: a) ?? known.count, ib = known.firstIndex(of: b) ?? known.count
         return ia != ib ? ia < ib : a < b
@@ -131,7 +137,7 @@ public struct ImportItem: Codable, Sendable, Hashable {
 
 /// One line of JSON from the CLI to the broker.
 public struct Request: Codable, Sendable {
-    public var op: String            // status | list | get | set | rm | import | grants | grant | revoke | move | update
+    public var op: String            // status | list | check | get | set | rm | import | grants | grant | revoke | move | update
                                      // | history | deleted | version | restore | forget
                                      // | links | link | unlink | remote-status | push
     public var names: [String]?
@@ -153,13 +159,15 @@ public struct Request: Codable, Sendable {
     public var target: RemoteTarget? // link: where the environment's values go
     public var link: String?         // push: only this link
     public var only: [String]?       // push: only these item ids
+    public var origin: String?       // "mcp" when an agent asks through `latchkey mcp`: shown in approvals, and
+                                     // grants it asks for are limited (see Broker.grant)
 
     public init(op: String, names: [String]? = nil, value: String? = nil, kind: ItemKind? = nil,
                 agentSafe: Bool? = nil, note: String? = nil, cwd: String? = nil, command: String? = nil,
                 items: [ImportItem]? = nil, replace: Bool? = nil, source: String? = nil,
                 folder: String? = nil, duration: Double? = nil, project: String? = nil, environment: String? = nil,
                 service: String? = nil, version: String? = nil, target: RemoteTarget? = nil, link: String? = nil,
-                only: [String]? = nil) {
+                only: [String]? = nil, origin: String? = nil) {
         self.op = op
         self.names = names
         self.value = value
@@ -180,6 +188,7 @@ public struct Request: Codable, Sendable {
         self.target = target
         self.link = link
         self.only = only
+        self.origin = origin
     }
 }
 
@@ -206,13 +215,20 @@ public struct Response: Codable, Sendable {
     public var links: [RemoteLink]?
     public var remoteStatus: [RemoteStatus]?
     public var pushResults: [PushResult]?
+    /// check: what `get` would do with each name, without asking or releasing anything. `missing` and `grants`
+    /// (the grants that cover `granted`) are filled in too.
+    public var agentSafe: [String]?
+    public var granted: [String]?
+    public var remembered: [String]?
+    public var needsApproval: [String]?
 
     public init(ok: Bool, error: String? = nil, secrets: [SecretInfo]? = nil, values: [String: String]? = nil,
                 masked: [String]? = nil, denied: [String]? = nil, missing: [String]? = nil,
                 info: [String: String]? = nil, added: [String]? = nil, replaced: [String]? = nil,
                 skipped: [String]? = nil, grants: [Grant]? = nil, moved: [String: String]? = nil,
                 versions: [Version]? = nil, links: [RemoteLink]? = nil, remoteStatus: [RemoteStatus]? = nil,
-                pushResults: [PushResult]? = nil) {
+                pushResults: [PushResult]? = nil, agentSafe: [String]? = nil, granted: [String]? = nil,
+                remembered: [String]? = nil, needsApproval: [String]? = nil) {
         self.ok = ok
         self.error = error
         self.secrets = secrets
@@ -230,6 +246,10 @@ public struct Response: Codable, Sendable {
         self.links = links
         self.remoteStatus = remoteStatus
         self.pushResults = pushResults
+        self.agentSafe = agentSafe
+        self.granted = granted
+        self.remembered = remembered
+        self.needsApproval = needsApproval
     }
 }
 

@@ -106,7 +106,7 @@ struct ApprovalView: View {
             }
             Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 8) {
                 row("Items", request.names.joined(separator: ", "), mono: true)
-                row("Asked by", request.chain.prefix(4).joined(separator: " › "))
+                row("Asked by", request.chain.prefix(4).joined(separator: " › ") + (request.byAgent ? "\nan agent, through Latchkey's MCP server" : ""))
                 if !request.folder.isEmpty { row("Folder", Broker.tilde(request.folder), mono: true) }
                 if let c = request.command, !c.isEmpty { row("Command", c, mono: true) }
                 if let d = request.duration { row("For", GrantStore.describe(d)) }

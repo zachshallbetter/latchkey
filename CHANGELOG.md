@@ -16,6 +16,12 @@ The first release.
 - Documented exit codes; refusals and missing items say what to do.
 - The command-line tool starts the app when it isn't running.
 
+### Agents
+- `latchkey mcp`: an MCP server with status, list, check, run and request-grant tools. It never returns a value;
+  output is masked and capped, and grants an agent asks for are limited to its folder, a day, and non-production
+  environments.
+- `latchkey check` shows what a run would get without asking, what would ask, and what's missing.
+
 ### Approvals and grants
 - An approval panel with the program chain, folder and command, then Touch ID, Apple Watch or your password.
 - Grants for a folder, its subfolders and its repository's worktrees, for up to 7 days; for items, environments or
