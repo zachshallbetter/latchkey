@@ -721,13 +721,17 @@ public final class Broker: @unchecked Sendable {
         let items = try store.list().filter { $0.kind.isSecret }
         guard !items.isEmpty else { return Response(ok: true, groups: []) }
         let names = items.map(\.name)
-        guard ask(.read, names, peer, req, "compare the values of \(Self.count(names)) to find duplicates (no value leaves Latchkey), asked by \(Self.describe(peer, req))").allowed else {
+        guard ask(.compare, names, peer, req, "compare the values of \(Self.count(names)) to find duplicates (no value leaves Latchkey), asked by \(Self.describe(peer, req))").allowed else {
             log("duplicates", [], "denied", peer, req)
             return Response(ok: false, error: "finding duplicates was not approved")
         }
-        let groups = Duplicates.groups(values: try store.values(names), items: items)
+        let values = try store.values(names)
+        let groups = Duplicates.groups(values: values, items: items)
+        let identifiers = groups.joined().filter { id in
+            values[id].map { Duplicates.looksLikeIdentifier(name: ItemID(id)?.name ?? id, value: $0) } ?? false
+        }
         log("duplicates", groups.flatMap { $0 }, "approved (\(groups.count) group\(groups.count == 1 ? "" : "s"))", peer, req)
-        return Response(ok: true, groups: groups)
+        return Response(ok: true, groups: groups, identifiers: identifiers)
     }
 
     /// Makes items holding one value into one shared item, `into`: it's created from them (or must already hold the same
@@ -737,8 +741,10 @@ public final class Broker: @unchecked Sendable {
         guard req.origin != "mcp" else { return Response(ok: false, error: "an agent can't combine items; ask the owner to run lk combine") }
         let ids = Array(Set(req.names ?? [])).sorted()
         guard ids.count >= 2 || (ids.count == 1 && req.into != ids.first) else { return Response(ok: false, error: "give the items to combine") }
-        guard let into = req.into, let target = ItemID(into), target.isShared else {
-            return Response(ok: false, error: "combine needs a shared item name to combine into, such as OPENAI_API_KEY")
+        // Into a shared item, or into one item of the environment they're all in (two names for one value there).
+        guard let into = req.into, let target = ItemID(into), Wire.isValidName(into),
+              target.isShared || ids.allSatisfy({ ItemID($0).map { $0.project == target.project && $0.environment == target.environment } ?? false }) else {
+            return Response(ok: false, error: "combine needs a shared item name, such as OPENAI_API_KEY, or an item in the environment they're all in")
         }
         let infos = Dictionary(uniqueKeysWithValues: try store.list().map { ($0.name, $0) })
         let missing = ids.filter { infos[$0] == nil }
@@ -751,7 +757,7 @@ public final class Broker: @unchecked Sendable {
             return Response(ok: false, error: "\(into) already exists with a different value; choose another name")
         }
         let sources = ids.filter { $0 != into }
-        let what = "combine \(Self.count(ids)) into the shared item \(into)\(infos[into] != nil ? "" : " (new)")"
+        let what = "combine \(Self.count(ids)) into \(target.isShared ? "the shared item " : "")\(into)\(infos[into] != nil ? "" : " (new)")"
         guard ask(.move, ids, peer, req, "\(what); the others are deleted and references follow, asked by \(Self.who(peer))").allowed else {
             log("combine", ids, "denied", peer, req)
             return Response(ok: false, error: "combining was not approved")

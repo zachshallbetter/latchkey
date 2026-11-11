@@ -208,15 +208,18 @@ extension AppModel {
                                items: open))
         }
         let byName = Dictionary(items.map { ($0.name, $0) }) { a, _ in a }
-        for group in duplicateGroups ?? [] {
+        let groups = (duplicateGroups ?? []).map { $0.filter { byName[$0] != nil } }.filter { $0.count > 1 }
+        let shared = Set(items.filter(\.ref.isShared).map(\.name))
+        for (group, advice) in zip(groups, Duplicates.advice(for: groups, identifiers: duplicateIdentifiers, existing: shared)) {
             let members = group.compactMap { byName[$0] }
-            guard members.count > 1 else { continue }
-            let advice = Duplicates.advice(for: members.map(\.name))
-            let production = advice == .separateProduction
-            out.append(Finding(id: "dup-\(group[0])", area: .duplicates, symbol: production ? "exclamationmark.triangle" : "doc.on.doc",
-                               tint: production ? .red : .teal,
-                               title: production ? "Production key used elsewhere" : "Same key in \(count(members.count, "place"))",
-                               summary: "\(members.first.map { $0.ref.name } ?? "") · \(places(members))",
+            let (symbol, tint, title): (String, Color, String) = switch advice {
+            case .separateProduction: ("exclamationmark.triangle", .red, "Production key used elsewhere")
+            case .plain: ("number", .gray, "Identifiers saved as secrets")
+            case .alias: ("link", .indigo, "\(members.count) names for one value")
+            default: ("doc.on.doc", .teal, "Same key in \(count(members.count, "place"))")
+            }
+            out.append(Finding(id: "dup-\(group[0])", area: .duplicates, symbol: symbol, tint: tint, title: title,
+                               summary: "\(members.map(\.ref.name).first ?? "") · \(places(members))",
                                why: advice.summary, items: members, advice: advice))
         }
         let stale = items.filter { remoteStates[$0.name] == .outOfDate }
@@ -362,7 +365,11 @@ struct FindingDetail: View {
             .padding(16)
         }
         .disabled(working)
-        .sheet(isPresented: $combining) { CombineSheet(model: model, items: finding.items, suggested: finding.advice?.into ?? "") }
+        .sheet(isPresented: $combining) {
+            let into = finding.advice?.into.flatMap(ItemID.init)
+            CombineSheet(model: model, items: finding.items, scope: into.flatMap { $0.isShared ? nil : "\($0.project)/\($0.environment)" },
+                         name: into?.name ?? "")
+        }
     }
 
     @ViewBuilder
@@ -375,6 +382,16 @@ struct FindingDetail: View {
                     Label("Show Production Item", systemImage: "arrow.right.circle")
                 }
                 .buttonStyle(.borderedProminent)
+            }
+        case _ where finding.advice == .plain:
+            recommended("Mark them plain values. They're shown instead of masked and left out of Find Duplicates; access doesn't change.") {
+                Button { act { await model.makePlain(finding.items.map(\.name)) } } label: { Label("Mark as Plain Values…", systemImage: "number") }
+                    .buttonStyle(.borderedProminent)
+            }
+        case _ where { if case .alias = finding.advice { return true }; return false }():
+            recommended("Keep one item and delete the others. Every variable in the environment, and the files they were imported from, point at the one you keep; the others go to Recently Deleted.") {
+                Button { combining = true } label: { Label("Keep One Item…", systemImage: "link") }
+                    .buttonStyle(.borderedProminent)
             }
         case _ where finding.advice != nil:
             recommended("Combine them into one shared item. Environments and the files they were imported from will point at it, and the originals go to Recently Deleted.") {
@@ -427,34 +444,40 @@ struct FindingDetail: View {
 struct CombineSheet: View {
     let model: AppModel
     let items: [SecretInfo]
-    @State var suggested: String
+    /// project/environment when they're all in one environment and one is kept there; nil for a shared item.
+    let scope: String?
+    @State var name: String
     @State private var saving = false
     @State private var error: String?
     @Environment(\.dismiss) private var dismiss
 
+    private var target: String { scope.map { "\($0)/\(name)" } ?? name }
+
     private var problem: String? {
-        guard let id = ItemID(suggested), Wire.isValidName(suggested), id.isShared else { return "A shared item name: letters, digits, _ - . and no slashes." }
+        guard ItemID.isValidPart(name), Wire.isValidName(target) else { return "A name of letters, digits, _ - . and no slashes." }
         return nil
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            SheetHeader(symbol: "arrow.triangle.merge", tint: .teal, title: "Combine into Shared", subtitle: "\(items.count) items hold the same value")
+            SheetHeader(symbol: scope == nil ? "arrow.triangle.merge" : "link", tint: scope == nil ? .teal : .indigo,
+                        title: scope == nil ? "Combine into Shared" : "Keep One Item",
+                        subtitle: "\(items.count) items hold the same value\(scope.map { " in \($0)" } ?? "")")
             Card {
-                FieldRow(label: "Shared item") { TextField("Name", text: $suggested, prompt: Text("OPENAI_API_KEY")) }
+                FieldRow(label: scope == nil ? "Shared item" : "Keep") { TextField("Name", text: $name, prompt: Text("OPENAI_API_KEY")) }
                 ForEach(Array(items.enumerated()), id: \.element.id) { i, item in
                     CardRow(label: i == 0 ? "Replaces" : "", last: i == items.count - 1) { Text(item.name).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle) }
                 }
             }
-            Text("Agents can read it without approval only if they could read every one of these. References in environments and in the files these were imported from point at the new name.")
+            Text("A new item can be read by agents without approval only if every one of these could. References in environments and in the files these were imported from point at the new name.")
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            if let error = error ?? (suggested.isEmpty ? nil : problem) { Text(error).font(.callout).foregroundStyle(.red) }
+            if let error = error ?? (name.isEmpty ? nil : problem) { Text(error).font(.callout).foregroundStyle(.red) }
             SheetFooter(note: "Combining asks for Touch ID once.", noteSymbol: "touchid") {
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
                 Button("Combine") {
                     saving = true
                     Task {
-                        error = await model.combine(items.map(\.name), into: suggested)
+                        error = await model.combine(items.map(\.name), into: target)
                         saving = false
                         if error == nil { dismiss() }
                     }

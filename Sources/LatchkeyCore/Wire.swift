@@ -278,6 +278,8 @@ public struct Response: Codable, Sendable {
     public var logEntries: [Broker.LogEntry]?
     /// duplicates: groups of item IDs holding the same value. Never the values.
     public var groups: [[String]]?
+    /// duplicates: the IDs in `groups` whose values look like identifiers (IDs, hosts, public addresses), not secrets.
+    public var identifiers: [String]?
 
     public init(ok: Bool, error: String? = nil, secrets: [SecretInfo]? = nil, values: [String: String]? = nil,
                 masked: [String]? = nil, denied: [String]? = nil, missing: [String]? = nil,
@@ -286,8 +288,9 @@ public struct Response: Codable, Sendable {
                 versions: [Version]? = nil, links: [RemoteLink]? = nil, remoteStatus: [RemoteStatus]? = nil,
                 pushResults: [PushResult]? = nil, agentSafe: [String]? = nil, granted: [String]? = nil,
                 remembered: [String]? = nil, needsApproval: [String]? = nil,
-                environments: [EnvironmentRecord]? = nil, projects: [ProjectRecord]? = nil, logEntries: [Broker.LogEntry]? = nil, groups: [[String]]? = nil) {
+                environments: [EnvironmentRecord]? = nil, projects: [ProjectRecord]? = nil, logEntries: [Broker.LogEntry]? = nil, groups: [[String]]? = nil, identifiers: [String]? = nil) {
         self.groups = groups
+        self.identifiers = identifiers
         self.logEntries = logEntries
         self.ok = ok
         self.error = error

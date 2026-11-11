@@ -74,10 +74,12 @@ Files refer to them as latchkey://ID.
       references at the new IDs in the files each item was imported from, in --file files, and
       in the --from-file file. --from-file moves the shared items that FILE refers to.
   latchkey duplicates [--json]   Items holding the same value, and what to do about each group: give production its
-      own key, or combine them into one shared item. Values are compared inside Latchkey and never shown; it asks
+      own key, keep one item when one environment has several names for it, combine them into one shared item, or
+      mark identifiers as plain values. Values are compared inside Latchkey and never shown; it asks
       every time, and agents can't ask.
-  latchkey combine ID[,ID...] --into NAME [--file FILE]...
-      Make items holding one value into one shared item NAME (new, or already holding that value) with one approval.
+  latchkey combine ID[,ID...] --into NAME|ID [--file FILE]...
+      Make items holding one value into one shared item NAME (new, or already holding that value) with one approval,
+      or into one item of the environment they're all in (ID), when one value has several names there.
       The others go to Recently Deleted; environments and the files each was imported from (and --file files) follow.
   latchkey history ID             Earlier values of an item: when and by whom they were replaced. Never values.
   latchkey restore ID [--version N]
@@ -960,9 +962,10 @@ func duplicatesCommand(_ input: [String]) -> Never {
     if let other = input.first(where: { $0 != "--json" }) { fail("unknown option \(other)", code: 64) }
     let r = send(Request(op: "duplicates"))
     guard r.ok, let groups = r.groups else { fail(r.error ?? "finding duplicates failed", code: 1) }
+    let shared = Set((send(Request(op: "list")).secrets ?? []).filter { $0.ref.isShared }.map(\.name))
+    let advice = Duplicates.advice(for: groups, identifiers: Set(r.identifiers ?? []), existing: shared)
     if json {
-        let rows: [[String: Any]] = groups.map { g in
-            let a = Duplicates.advice(for: g)
+        let rows: [[String: Any]] = zip(groups, advice).map { g, a in
             var row: [String: Any] = ["items": g, "advice": a.code, "summary": a.summary]
             if let into = a.into { row["into"] = into }
             return row
@@ -972,13 +975,20 @@ func duplicatesCommand(_ input: [String]) -> Never {
         exit(0)
     }
     guard !groups.isEmpty else { print("No two items hold the same value."); exit(0) }
-    for (i, g) in groups.enumerated() {
-        let a = Duplicates.advice(for: g)
-        if i > 0 { print("") }
-        print("\(g.count) items hold the same value:")
-        for id in g { print("  \(id)") }
-        print(a.summary)
-        if let into = a.into { print("  latchkey combine \(g.filter { $0 != into }.joined(separator: ",")) --into \(into)") }
+    let counts = Dictionary(advice.map { ($0.code, 1) }, uniquingKeysWith: +)
+    let order: [(String, String)] = [("separate-production", "production shared with another environment"), ("alias", "names for one value in one environment"),
+                                     ("use-shared", "already shared"), ("share", "same name across projects"), ("share-renamed", "different names across projects"),
+                                     ("plain", "identifiers, not secrets")]
+    print("\(groups.count) groups of items hold the same value: " + order.compactMap { code, label in counts[code].map { "\($0) \(label)" } }.joined(separator: ", ") + ".")
+    for (code, _) in order {
+        for (g, a) in zip(groups, advice) where a.code == code {
+            print("")
+            print("\(g.count) items hold the same value:")
+            for id in g { print("  \(id)") }
+            print(a.summary)
+            if a == .plain { print("  latchkey update \(g.joined(separator: ",")) --kind value") }
+            if let into = a.into { print("  latchkey combine \(g.filter { $0 != into }.joined(separator: ",")) --into \(into)") }
+        }
     }
     exit(0)
 }
@@ -1004,7 +1014,7 @@ func combineCommand(_ input: [String]) -> Never {
             ids += a.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         }
     }
-    guard let into, !ids.isEmpty else { fail("usage: latchkey combine ID[,ID...] --into NAME [--file FILE]...", code: 64) }
+    guard let into, !ids.isEmpty else { fail("usage: latchkey combine ID[,ID...] --into NAME|ID [--file FILE]...", code: 64) }
     guard ids.allSatisfy(Wire.isValidName) else { fail("no valid item IDs given", code: 64) }
     let existing = send(Request(op: "list")).secrets ?? []
     let usedIn = existing.filter { ids.contains($0.name) }.flatMap { $0.usedIn ?? [] }

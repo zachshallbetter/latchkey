@@ -340,6 +340,8 @@ final class AppModel {
     /// Groups of items holding the same value, from the last Find Duplicates. Only IDs: kept in memory, never saved,
     /// and nil until asked for.
     var duplicateGroups: [[String]]?
+    /// The IDs among them whose values look like identifiers rather than secrets.
+    var duplicateIdentifiers: Set<String> = []
     var selectedLog: String?
     var selectedVersion: String?
     var selectedGrant: String?
@@ -613,11 +615,20 @@ final class AppModel {
         let r = await send(Request(op: "duplicates"))
         guard r.ok, let groups = r.groups else { notice = r.error ?? "Finding duplicates failed."; return }
         duplicateGroups = groups
+        duplicateIdentifiers = Set(r.identifiers ?? [])
         notice = groups.isEmpty ? "No two items hold the same value." : "Found \(groups.count) group\(groups.count == 1 ? "" : "s") of items holding the same value."
         selectedFinding = groups.first.map { "dup-\($0[0])" } ?? selectedFinding
     }
 
-    /// Makes `ids` one shared item, `into`, then points references at it in each file they're recorded as used in.
+    /// Marks items as plain values: shown instead of masked, and left out of Find Duplicates.
+    func makePlain(_ ids: [String]) async {
+        if let err = await run(Request(op: "update", names: ids, kind: .value)) { notice = err; return }
+        duplicateGroups = duplicateGroups?.filter { Set($0).isDisjoint(with: ids) }
+        selectedFinding = nil
+        notice = "Marked \(ids.count) item\(ids.count == 1 ? "" : "s") as plain values."
+    }
+
+    /// Makes `ids` one item, `into` (shared, or in the environment they're all in), then points references at it in each file they're recorded as used in.
     func combine(_ ids: [String], into: String) async -> String? {
         let usedIn = items.filter { ids.contains($0.name) }.flatMap { $0.usedIn ?? [] }.map { URL(fileURLWithPath: $0) }
         for url in usedIn {

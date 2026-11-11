@@ -5,6 +5,8 @@ import LocalAuthentication
 public struct ApprovalRequest: Sendable {
     public enum Action: String, Sendable {
         case read, add, change, delete, importItems, grant, move, readVersion, restore, link, push
+        /// Compare values inside Latchkey without releasing them (finding duplicates).
+        case compare
     }
     public var action: Action
     public var names: [String]
@@ -76,7 +78,7 @@ public struct ApprovalRequest: Sendable {
     public var sheetFirst: Bool {
         guard !overSSH, program == nil, !production else { return false }
         switch action {
-        case .add, .change, .delete, .importItems, .move, .restore, .link: return true
+        case .add, .change, .delete, .importItems, .move, .restore, .link, .compare: return true
         case .read, .readVersion, .grant, .push: return false
         }
     }

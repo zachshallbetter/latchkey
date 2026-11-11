@@ -103,15 +103,24 @@ nothing moves.
 
 ### `latchkey duplicates [--json]`
 
-Lists groups of items holding the same value, and what to do about each: give production its own key when it shares
-a value with another environment, point the rest at a shared item that already holds it, or combine them into one
-shared item (with the `latchkey combine` command to run). Values are compared inside Latchkey and never shown; plain
-values and values shorter than 8 characters are left out. It asks for approval every time (grants and agent-safe
-settings don't stand in), and agents can't ask. `--json` gives `items`, `advice`, `summary` and `into` for each group.
+Lists groups of items holding the same value, counted by kind at the top, and what to do about each, with the
+command to run:
 
-### `latchkey combine IDS --into NAME [--file FILE]...`
+- production shares a value with another environment: give production its own key;
+- several names for one value in one environment (`PGHOST` and `POSTGRES_HOST`): keep one item there;
+- a shared item already holds it: point the rest at it;
+- the same key across projects: combine into one shared item. A suggested name that another group also suggests, or
+  that a shared item already has, gets the first project as a prefix (`MANAGER_DATABASE_URL`);
+- identifiers rather than secrets (IDs, hosts, public keys, web addresses without credentials): mark them plain values.
 
-Makes items holding one value into one shared item NAME, with one approval. NAME is created from them (agent-safe only
+Values are compared inside Latchkey and never shown; plain values and values shorter than 8 characters are left out.
+It asks for approval every time (grants and agent-safe settings don't stand in), and agents can't ask. `--json` gives
+`items`, `advice`, `summary` and `into` for each group.
+
+### `latchkey combine IDS --into NAME|ID [--file FILE]...`
+
+Makes items holding one value into one shared item NAME, or into one item ID of the environment they're all in, with
+one approval. NAME is created from them (agent-safe only
 if every one was; the service if they agree; where they were used, combined), or must already hold the same value.
 The others go to Recently Deleted, environment records point at NAME, and references are updated in the files the
 items were imported from and in each `--file`. If the values differ, nothing changes. Agents can't combine.

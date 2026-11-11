@@ -23,6 +23,32 @@ final class DuplicatesTests: XCTestCase {
         XCTAssertEqual(Duplicates.advice(for: ["a/dev/OPENAI_API_KEY", "b/dev/OPENAI_API_KEY"]), .share("OPENAI_API_KEY"))
         XCTAssertEqual(Duplicates.advice(for: ["a/dev/OPENAI", "b/dev/OPENAI", "c/dev/LLM_KEY"]), .shareRenamed(suggested: "OPENAI"))
         XCTAssertEqual(Duplicates.advice(for: ["a/production/K", "b/production/K"]), .share("K"), "all production: sharing is still an option")
+        XCTAssertEqual(Duplicates.advice(for: ["shop/development/POSTGRES_HOST", "shop/development/PGHOST"]), .alias(keep: "shop/development/PGHOST"),
+                       "two names in one environment stay in it")
+        XCTAssertEqual(Duplicates.advice(for: ["s/development/NEON_PROJECT_ID", "s/production/NEON_PROJECT_ID"],
+                                         identifiers: ["s/development/NEON_PROJECT_ID", "s/production/NEON_PROJECT_ID"]), .plain)
+        XCTAssertEqual(Duplicates.advice(for: ["s/development/DB_URL", "s/production/DB_URL"], identifiers: ["s/development/DB_URL"]), .separateProduction)
+    }
+
+    func testSharedNamesNeverCollide() {
+        let groups = [["manager/development/DATABASE_URL", "viewer/development/DATABASE_URL"],
+                      ["boot/development/DATABASE_URL", "site/development/DATABASE_URL"],
+                      ["a/development/STRIPE_KEY", "b/development/STRIPE_KEY"],
+                      ["c/development/GEMINI", "d/development/GEMINI"]]
+        XCTAssertEqual(Duplicates.advice(for: groups, existing: ["GEMINI"]),
+                       [.shareRenamed(suggested: "MANAGER_DATABASE_URL"), .shareRenamed(suggested: "BOOT_DATABASE_URL"),
+                        .share("STRIPE_KEY"), .shareRenamed(suggested: "C_GEMINI")])
+    }
+
+    func testIdentifiersAreIDsHostsAndPlainAddresses() {
+        XCTAssertTrue(Duplicates.looksLikeIdentifier(name: "RAILWAY_PROJECT_ID", value: "4c1d8a9e-0000-4000-8000-000000000000"))
+        XCTAssertTrue(Duplicates.looksLikeIdentifier(name: "IMAGE_RUNTIME_URL", value: "https://images.example.com"))
+        XCTAssertTrue(Duplicates.looksLikeIdentifier(name: "BLOB_WEBHOOK_PUBLIC_KEY", value: "MFkwEwYHKoZIzj0CAQYI"))
+        XCTAssertFalse(Duplicates.looksLikeIdentifier(name: "DATABASE_URL", value: "postgres://u:p@db.example.com/x"))
+        XCTAssertFalse(Duplicates.looksLikeIdentifier(name: "HOOK_URL", value: "https://hooks.example.com/services/T00/B00/XyZ123abcDEF456ghiJKL"))
+        XCTAssertFalse(Duplicates.looksLikeIdentifier(name: "CALLBACK_URL", value: "https://x.example.com/cb?token=abc"))
+        XCTAssertFalse(Duplicates.looksLikeIdentifier(name: "CLIENT_SECRET_ID", value: "abcdefgh12"))
+        XCTAssertFalse(Duplicates.looksLikeIdentifier(name: "OPENAI_API_KEY", value: "sk-shared-123456"))
     }
 
     func makeBroker(_ approver: Approver = CountingApprover(true)) throws -> (Broker, MemoryStore, MemoryEnvironmentStore) {
@@ -38,6 +64,8 @@ final class DuplicatesTests: XCTestCase {
         let (b, _, _) = try makeBroker(approver)
         let r = b.handle(Request(op: "duplicates"), peer: peer)
         XCTAssertEqual(r.groups, [["a/development/OPENAI_API_KEY", "b/development/OPENAI_API_KEY"]])
+        XCTAssertEqual(r.identifiers, [])
+        XCTAssertEqual(approver.actions, [.compare])
         XCTAssertNil(r.values)
         XCTAssertEqual(approver.reasons.count, 1)
         XCTAssertTrue(approver.reasons[0].contains("no value leaves Latchkey"), approver.reasons[0])
@@ -63,6 +91,20 @@ final class DuplicatesTests: XCTestCase {
         XCTAssertNil(try store.info("a/development/OPENAI_API_KEY"))
         XCTAssertEqual(try records.environments().first?.variables["OPENAI_API_KEY"], .credential("OPENAI_API_KEY"))
         XCTAssertEqual(Set(try b.versions.deleted(existing: Set(store.list().map(\.name))).map(\.item)), Set(ids), "the originals can be restored")
+    }
+
+    func testCombiningTwoNamesInOneEnvironmentKeepsOne() throws {
+        let (b, store, records) = try makeBroker()
+        try store.save(name: "b/development/LLM_KEY", value: "sk-shared-123456", kind: .token, agentSafe: false, note: "")
+        try records.save(EnvironmentRecord(scope: "b/development", variables: ["LLM_KEY": .credential("b/development/LLM_KEY"),
+                                                                                "OPENAI_API_KEY": .credential("b/development/OPENAI_API_KEY")]))
+        let r = b.handle(Request(op: "combine", names: ["b/development/LLM_KEY", "b/development/OPENAI_API_KEY"], into: "b/development/OPENAI_API_KEY"), peer: peer)
+        XCTAssertTrue(r.ok, r.error ?? "")
+        XCTAssertEqual(r.moved, ["b/development/LLM_KEY": "b/development/OPENAI_API_KEY"])
+        XCTAssertNil(try store.info("b/development/LLM_KEY"))
+        XCTAssertEqual(try records.environments().first?.variables["LLM_KEY"], .credential("b/development/OPENAI_API_KEY"))
+        XCTAssertFalse(b.handle(Request(op: "combine", names: ["a/development/OPENAI_API_KEY", "b/development/OPENAI_API_KEY"], into: "b/development/OPENAI_API_KEY"), peer: peer).ok,
+                       "an environment item only takes items from its own environment")
     }
 
     func testCombiningRefusesDifferentValuesAndAgents() throws {

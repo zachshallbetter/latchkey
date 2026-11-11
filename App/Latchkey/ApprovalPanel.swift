@@ -133,6 +133,7 @@ struct ApprovalView: View {
         case .restore: return "restore \(items())"
         case .link: return "link \(items())"
         case .push: return "push \(items("value"))"
+        case .compare: return "compare \(items()) to find duplicates"
         }
     }
 
@@ -170,6 +171,9 @@ struct ApprovalView: View {
             }
             Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 8) {
                 row("Items", request.names.joined(separator: ", "), mono: true)
+                if request.action == .compare {
+                    row("Purpose", "Compare their values inside Latchkey to find items holding the same key. Only which items match is shown; no value leaves Latchkey.")
+                }
                 if request.fromSafari {
                     row("Asked by", "Latchkey's Safari extension")
                     if let page = request.page { row("Page", page + "\n(as Safari reported it)", mono: true) }
@@ -234,6 +238,7 @@ struct ApprovalView: View {
     private var allowLabel: String {
         switch request.action {
         case .push: return "Push"
+        case .compare: return "Compare"
         case .read where choice.grant: return "Allow from Folder"
         case .read: return "Allow Once"
         default: return "Allow"
