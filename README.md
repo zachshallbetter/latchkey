@@ -56,6 +56,3 @@ Requires macOS 15 or later. See [Getting started](docs/getting-started.md) to in
 | [Website](docs/site.md) | The product site and developer docs in `site/` |
 | [Changelog](CHANGELOG.md) | What changed in each release |
 
-## Logo
-
-The key is a Font Awesome Pro glyph used under a commercial license; the notice is kept in each copy of the SVG.

@@ -10,7 +10,7 @@ Sources/latchkey-broker/   the broker without a window, for development
 Tests/LatchkeyCoreTests/   unit tests
 App/project.yml            the app's XcodeGen project (the .xcodeproj is generated, not committed)
 App/Latchkey/              the SwiftUI app
-App/Branding/key.svg       the logo source (Font Awesome Pro, commercial license)
+App/Branding/logo.svg      the logo source: a key with a tag
 scripts/install.sh         build and install the app and CLI (development)
 scripts/release.sh         Developer ID build, notarized, in a disk image (see docs/releasing.md)
 docs/                      user and developer documentation
@@ -104,9 +104,10 @@ whole window when started from a shell).
 
 ## The logo and icon
 
-`App/Branding/key.svg` is the source. The app icon is `App/Latchkey/AppIcon.icon`, an Icon Composer document with
-light and dark appearances; edit it in Icon Composer (in Xcode's Applications folder). The menu bar icon and in-app mark
-are copies of the SVG in `Assets.xcassets` (`MenuBarIcon`, `Logo`).
+`App/Branding/logo.svg` is the source, a key with a tag. The app icon is `App/Latchkey/AppIcon.icon`, an Icon Composer
+document with light and dark appearances that colours the mark itself; edit it in Icon Composer (in Xcode's
+Applications folder). The menu bar icon and in-app mark are template copies of the SVG in `Assets.xcassets`
+(`MenuBarIcon`, `Logo`), and the website uses `site/logo.svg`.
 
 ## Conventions
 
