@@ -16,7 +16,7 @@ Synced items use `kSecAttrAccessibleAfterFirstUnlock`. Synced items can't be dev
 
 ## What the platform does not allow
 
-**Items don't show up in the Passwords app.** The Passwords app shows items in Apple's own access group, which third-party apps can't read or write. Latchkey's items sit in its own access group (`<TEAM>.io.latchkey.shared`) inside iCloud Keychain. They get the same end-to-end encryption, sync and account recovery. You can see them in Keychain Access as "Latchkey: ID".
+**Items don't show up in the Passwords app.** The Passwords app shows items in Apple's own access group, which third-party apps can't read or write. Latchkey's items sit in its own access group (`<TEAM>.io.snackstud.latchkey`) inside iCloud Keychain. They get the same end-to-end encryption, sync and account recovery. You can see them in Keychain Access as "Latchkey: ID".
 
 **Latchkey can't read existing Passwords entries.** No API lets an app or a command-line tool pull a saved password out of the Passwords app. The only path is AutoFill into a login form. To use a token you already keep in Passwords, copy it into Latchkey once (`latchkey set ID`).
 

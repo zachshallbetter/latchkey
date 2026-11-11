@@ -4,6 +4,7 @@
 <dict>
 	<key>keychain-access-groups</key>
 	<array>
+		<string>$(AppIdentifierPrefix)io.snackstud.latchkey</string>
 		<string>$(AppIdentifierPrefix)io.latchkey.shared</string>
 	</array>
 </dict>

@@ -169,6 +169,19 @@ final class AppModel {
     init() {
         let group = Bundle.main.object(forInfoDictionaryKey: "LatchkeyAccessGroup") as? String
         store = KeychainStore.automatic(accessGroup: group)
+        // 0.1.0 development builds were io.latchkey.Latchkey with items in another access group: bring both over.
+        if let previous = Bundle.main.object(forInfoDictionaryKey: "LatchkeyPreviousAccessGroup") as? String {
+            let r = StoreMigration.adopt(from: previous, into: store)
+            if !r.moved.isEmpty { notice = "Moved \(r.moved.count) keychain item(s) to Latchkey's new access group." }
+            if !r.skipped.isEmpty || !r.failed.isEmpty {
+                problem = "\(r.skipped.count + r.failed.count) item(s) are still in the old access group: "
+                    + (r.skipped + r.failed.keys.sorted()).joined(separator: ", ")
+            }
+        }
+        if UserDefaults.standard.object(forKey: Self.approvalWindowKey) == nil,
+           let old = UserDefaults(suiteName: "io.latchkey.Latchkey")?.object(forKey: Self.approvalWindowKey) {
+            UserDefaults.standard.set(old, forKey: Self.approvalWindowKey)
+        }
         let saved = UserDefaults.standard.object(forKey: Self.approvalWindowKey) as? Double ?? 120
         broker = Broker(store: store, approver: PanelApprover(), readApprovalWindow: saved)
         refresh()

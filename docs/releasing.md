@@ -54,4 +54,9 @@ SUBMISSION_ID --keychain-profile latchkey-notary` shows Apple's reasons.
 The bundle ID (`PRODUCT_BUNDLE_IDENTIFIER`) and the keychain access group (`keychain-access-groups` and
 `LatchkeyAccessGroup` in `App/project.yml`), together with the team ID, decide which app can read people's stored
 items. Changing any of them after a release leaves existing items unreadable by the new build unless the release
-also ships a migration that reads the old group. Settle them before the first public release.
+also ships a migration that reads the old group.
+
+They are `io.snackstud.latchkey` and `<TEAM>.io.snackstud.latchkey`. Development builds before 0.1.0 used
+`io.latchkey.Latchkey` and `<TEAM>.io.latchkey.shared`; the app keeps the old group in its entitlements
+(`LatchkeyPreviousAccessGroup`) and moves anything still there into the new one when it starts
+(`StoreMigration.adopt`).

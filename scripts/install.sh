@@ -37,7 +37,7 @@ if pgrep -f '/latchkey-broker$' >/dev/null; then
   echo "latchkey-broker is running and answers on the same socket; stop it, then run this again." >&2
   exit 1
 fi
-osascript -e 'tell application id "io.latchkey.Latchkey" to quit' >/dev/null 2>&1 || true
+osascript -e 'tell application id "io.snackstud.latchkey" to quit' >/dev/null 2>&1 || true
 # Wait for the old copy to be gone, or `open` below just wakes the one that is quitting.
 for _ in {1..20}; do pgrep -x Latchkey >/dev/null || break; sleep 0.5; done
 if pgrep -x Latchkey >/dev/null; then

@@ -99,7 +99,7 @@ func appAnswers(within seconds: Double) -> Bool {
 /// launch, so first give a starting copy a moment, and never launch while one is listed as running.
 func launchApp() -> Bool {
     if ProcessInfo.processInfo.environment["LATCHKEY_NO_LAUNCH"] == "1" { return false }
-    let bundleID = "io.latchkey.Latchkey"
+    let bundleID = "io.snackstud.latchkey"
     if appAnswers(within: 1.5) { return true }
     if !NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty {
         return appAnswers(within: 10)

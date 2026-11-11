@@ -75,7 +75,7 @@ APP="$OUT/export/Latchkey.app"
 step "Embedding and signing the command-line tool"
 mkdir -p "$APP/Contents/Helpers"
 cp "$CLI" "$APP/Contents/Helpers/latchkey"
-codesign --force --options runtime --timestamp --identifier io.latchkey.cli --sign "$IDENTITY" "$APP/Contents/Helpers/latchkey"
+codesign --force --options runtime --timestamp --identifier io.snackstud.latchkey.cli --sign "$IDENTITY" "$APP/Contents/Helpers/latchkey"
 codesign -d --entitlements - --xml "$APP" > "$OUT/entitlements.plist" 2>/dev/null
 codesign --force --options runtime --timestamp --entitlements "$OUT/entitlements.plist" --sign "$IDENTITY" "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP" 2>&1 | tail -1
