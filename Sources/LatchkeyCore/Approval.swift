@@ -4,7 +4,7 @@ import LocalAuthentication
 /// What the broker is asking the person at the Mac to allow.
 public struct ApprovalRequest: Sendable {
     public enum Action: String, Sendable {
-        case read, add, change, delete, importItems, grant
+        case read, add, change, delete, importItems, grant, move
     }
     public var action: Action
     public var names: [String]

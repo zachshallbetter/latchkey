@@ -83,6 +83,7 @@ struct ApprovalView: View {
         case .delete: return "Delete \(request.names.first ?? "item")?"
         case .importItems: return "Import \(request.names.count) item\(request.names.count == 1 ? "" : "s")?"
         case .grant: return "Allow reads without asking?"
+        case .move: return "Move \(request.names.count) item\(request.names.count == 1 ? "" : "s")?"
         }
     }
 

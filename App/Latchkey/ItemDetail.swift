@@ -1,3 +1,4 @@
+import AppKit
 import LatchkeyCore
 import SwiftUI
 
@@ -5,6 +6,7 @@ struct ItemDetail: View {
     let model: AppModel
     let item: SecretInfo
     @State private var noteDraft = ""
+    @State private var serviceDraft = ""
     @State private var changingValue = false
     @State private var confirmingDelete = false
     @State private var working = false
@@ -15,7 +17,13 @@ struct ItemDetail: View {
                 HStack(spacing: 14) {
                     KindIcon(kind: item.kind, size: 52)
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(item.name).font(.title2.weight(.semibold)).textSelection(.enabled)
+                        Text(item.ref.name).font(.title2.weight(.semibold)).textSelection(.enabled)
+                        if !item.ref.isShared {
+                            HStack(spacing: 6) {
+                                Text(item.ref.project).font(.callout.weight(.medium))
+                                EnvBadge(environment: item.ref.environment)
+                            }
+                        }
                         Text("Changed \(item.updatedAt.formatted(date: .abbreviated, time: .shortened))")
                             .font(.callout).foregroundStyle(.secondary)
                     }
@@ -69,6 +77,15 @@ struct ItemDetail: View {
                          ? "Any command run through latchkey gets this value."
                          : "Each read asks for Touch ID, Apple Watch or your password.")
                 }
+                LabeledContent("Project") {
+                    HStack {
+                        Text(item.ref.isShared ? "Shared" : "\(item.ref.project) / \(item.ref.environment)")
+                        Spacer()
+                        Button("Move…") { model.moveRequest = MoveRequest(ids: [item.name]) }
+                    }
+                }
+                TextField("Service", text: $serviceDraft, prompt: Text("Stripe, Neon, GitHub…"))
+                    .onSubmit { saveService() }
                 TextField("Note", text: $noteDraft, prompt: Text("What it's for, where it came from"))
                     .onSubmit { saveNote() }
             } footer: {
@@ -93,6 +110,25 @@ struct ItemDetail: View {
                 }
             }
 
+            if let paths = item.usedIn, !paths.isEmpty {
+                Section("Used In") {
+                    ForEach(paths, id: \.self) { path in
+                        HStack {
+                            Text(Broker.tilde(path)).font(.callout.monospaced()).lineLimit(1).truncationMode(.head)
+                            Spacer()
+                            if FileManager.default.fileExists(atPath: path) {
+                                Button { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)]) } label: {
+                                    Image(systemName: "folder")
+                                }
+                                .buttonStyle(.borderless).help("Show in Finder")
+                            } else {
+                                Text("missing").font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+            }
+
             Section("Recent Activity") {
                 let entries = model.activity(for: item.name)
                 if entries.isEmpty {
@@ -108,14 +144,30 @@ struct ItemDetail: View {
         }
         .formStyle(.grouped)
         .disabled(working)
-        .onAppear { noteDraft = item.note }
+        .onAppear { noteDraft = item.note; serviceDraft = item.service ?? "" }
+        .onChange(of: item.service) { _, s in serviceDraft = s ?? "" }
         .onChange(of: item.note) { _, n in noteDraft = n }
         .onDisappear { if noteDraft != item.note { saveNote() } }
         .sheet(isPresented: $changingValue) { ChangeValueSheet(model: model, item: item) }
         .confirmationDialog("Delete \(item.name)?", isPresented: $confirmingDelete) {
             Button("Delete", role: .destructive) { act { _ = await model.remove(item.name) } }
         } message: {
-            Text("It is removed from the keychain\(model.synced ? " on all your Macs" : ""). Files that reference it will stop working.")
+            if let files = item.usedIn, !files.isEmpty {
+                Text("It is removed from the keychain\(model.synced ? " on all your Macs" : ""). These files still refer to it and will stop working: \(files.map(Broker.tilde).joined(separator: ", ")). If they hold only the reference, this deletes the value for good.")
+            } else {
+                Text("It is removed from the keychain\(model.synced ? " on all your Macs" : ""). Any file that refers to latchkey://\(item.name) will stop working, and if a file holds only the reference, this deletes the value for good.")
+            }
+        }
+    }
+
+    private func saveService() {
+        guard serviceDraft != (item.service ?? "") else { return }
+        let s = serviceDraft
+        act {
+            if let err = await model.setService(item.name, s) {
+                model.notice = err
+                serviceDraft = item.service ?? ""
+            }
         }
     }
 

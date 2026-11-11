@@ -36,8 +36,10 @@ struct LatchkeyApp: App {
 // MARK: - Model
 
 enum SidebarFilter: Hashable {
-    case all, agentSafe, needsApproval, activity, grants
+    case all, agentSafe, needsApproval, activity, grants, shared
     case kind(ItemKind)
+    case project(String)
+    case service(String)
 
     var title: String {
         switch self {
@@ -46,9 +48,18 @@ enum SidebarFilter: Hashable {
         case .needsApproval: return "Ask First"
         case .activity: return "Activity"
         case .grants: return "Grants"
+        case .shared: return "Shared"
         case .kind(let k): return k.label + "s"
+        case .project(let p): return p
+        case .service(let s): return s
         }
     }
+}
+
+/// Items picked for the Move sheet.
+struct MoveRequest: Identifiable {
+    let id = UUID()
+    var ids: [String]
 }
 
 enum SortOrder: String, CaseIterable {
@@ -58,16 +69,26 @@ enum SortOrder: String, CaseIterable {
 
 struct ImportDraft: Identifiable {
     struct Row: Identifiable {
+        /// The .env key; the item id comes from the draft's project and environment.
+        let key: String
         var item: ImportItem
         var include = true
-        var exists: Bool
-        var id: String { item.name }
+        var id: String { key }
     }
     let id = UUID()
     let url: URL
     let text: String
     var rows: [Row]
     var ignored: [String: String]
+    var project: String
+    var environment: String
+    var shared = false
+
+    func itemID(_ key: String) -> String {
+        shared ? key : ItemID(project: project, environment: environment, name: key).string
+    }
+
+    var placeIsValid: Bool { shared || (ItemID.isValidPart(project) && ItemID.isValidPart(environment)) }
 }
 
 @Observable @MainActor
@@ -88,6 +109,7 @@ final class AppModel {
     var sort: SortOrder = .name
     var showingAdd = false
     var importDraft: ImportDraft?
+    var moveRequest: MoveRequest?
     /// Values currently shown in the detail pane; each hides itself after a short while.
     var revealed: [String: String] = [:]
 
@@ -101,7 +123,10 @@ final class AppModel {
         broker = Broker(store: store, approver: PanelApprover(), readApprovalWindow: saved)
         refresh()
         #if DEBUG
-        if Snapshot.requested { return }   // draw and exit; do not take the socket from the running copy
+        if Snapshot.requested {   // draw and exit; do not take the socket from the running copy
+            Snapshot.startParts(self)
+            return
+        }
         #endif
         broker.onChange = { [weak self] in Task { @MainActor in self?.refresh() } }
         let broker = broker
@@ -132,8 +157,24 @@ final class AppModel {
         case .all, .activity, .grants: return true
         case .agentSafe: return i.agentSafe
         case .needsApproval: return !i.agentSafe
+        case .shared: return i.ref.isShared
         case .kind(let k): return i.kind == k
+        case .project(let p): return i.ref.project == p
+        case .service(let s): return i.service == s
         }
+    }
+
+    /// Every project with items, in name order.
+    var projects: [String] {
+        Array(Set(items.map(\.ref.project).filter { !$0.isEmpty })).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+    }
+
+    var services: [String] {
+        Array(Set(items.compactMap(\.service))).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+    }
+
+    func environments(in project: String) -> [String] {
+        Array(Set(items.filter { $0.ref.project == project }.map(\.ref.environment))).sorted(by: Environments.order)
     }
 
     func count(_ f: SidebarFilter) -> Int {
@@ -147,9 +188,10 @@ final class AppModel {
     var visibleItems: [SecretInfo] {
         let q = search.trimmingCharacters(in: .whitespaces).lowercased()
         let list = items.filter { matches(filter, $0) }
-            .filter { q.isEmpty || $0.name.lowercased().contains(q) || $0.note.lowercased().contains(q) }
+            .filter { q.isEmpty || $0.name.lowercased().contains(q) || $0.note.lowercased().contains(q)
+                || ($0.service ?? "").lowercased().contains(q) }
         switch sort {
-        case .name: return list.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        case .name: return list.sorted { $0.ref < $1.ref }
         case .updated: return list.sorted { $0.updatedAt > $1.updatedAt }
         }
     }
@@ -164,7 +206,33 @@ final class AppModel {
 
     func item(_ name: String?) -> SecretInfo? { items.first { $0.name == name } }
 
-    func grants(for name: String) -> [Grant] { grants.filter { $0.names.contains(name) } }
+    func grants(for name: String) -> [Grant] { grants.filter { $0.names.contains { Grant.entry($0, matches: name) } } }
+
+    func setService(_ name: String, _ service: String) async -> String? {
+        await run(Request(op: "set", names: [name], service: service))
+    }
+
+    /// Moves items, then points `latchkey://` references at their new ids in each file they're recorded as
+    /// used in and in `files`.
+    func moveItems(_ ids: [String], project: String, environment: String, files: [URL]) async -> String? {
+        let usedIn = items.filter { ids.contains($0.name) }.flatMap { $0.usedIn ?? [] }.map { URL(fileURLWithPath: $0) }
+        let r = await send(Request(op: "move", names: ids, project: project, environment: environment))
+        guard r.ok else { return r.error ?? (r.missing.map { "No item named \($0.joined(separator: ", "))." } ?? "Move failed.") }
+        let moved = r.moved ?? [:]
+        var updated = 0, failed: [String] = []
+        var seen = Set<String>()
+        for url in files + usedIn where seen.insert(url.path).inserted && FileManager.default.fileExists(atPath: url.path) {
+            do { if try EnvFile.renameReferences(in: url, moved) { updated += 1 } } catch { failed.append(url.lastPathComponent) }
+        }
+        let place = project.isEmpty ? "shared items" : "\(project)/\(environment)"
+        var text = "Moved \(moved.count) item\(moved.count == 1 ? "" : "s") to \(place)"
+        if updated > 0 { text += "; updated references in \(updated) file\(updated == 1 ? "" : "s")" }
+        if !failed.isEmpty { text += "; couldn't update \(failed.joined(separator: ", "))" }
+        notice = text + "."
+        if let s = selection, let new = moved[s] { selection = new }
+        if !project.isEmpty { filter = .project(project) }
+        return nil
+    }
 
     func createGrant(names: [String], folder: String, duration: TimeInterval) async -> String? {
         let err = await run(Request(op: "grant", names: names, folder: folder, duration: duration))
@@ -261,19 +329,29 @@ final class AppModel {
             notice = "Could not read \(url.lastPathComponent)."
             return
         }
-        let plan = EnvImport.plan(text, source: url.lastPathComponent)
+        let project = EnvImport.project(forFile: url), environment = EnvImport.environment(forFile: url.lastPathComponent)
+        // Plan as shared so each item's name is its key; the sheet places them.
+        let plan = EnvImport.plan(text, source: url.lastPathComponent, location: url.path)
         guard !plan.items.isEmpty else {
             notice = "Nothing to import in \(url.lastPathComponent)."
             return
         }
+        var draft = ImportDraft(url: url, text: text, rows: plan.items.map { .init(key: $0.name, item: $0) },
+                                ignored: plan.ignored, project: project, environment: environment)
         let existing = Set(items.map(\.name))
-        importDraft = ImportDraft(url: url, text: text,
-                                  rows: plan.items.map { .init(item: $0, include: !existing.contains($0.name), exists: existing.contains($0.name)) },
-                                  ignored: plan.ignored)
+        for i in draft.rows.indices { draft.rows[i].include = !existing.contains(draft.itemID(draft.rows[i].key)) }
+        importDraft = draft
     }
 
     func runImport(_ draft: ImportDraft, replace: Bool, rewrite: Bool) async -> String? {
-        let chosen = draft.rows.filter(\.include).map(\.item)
+        guard draft.placeIsValid else { return "The project and environment can use letters, digits, _ - . only." }
+        var references: [String: String] = [:]
+        let chosen = draft.rows.filter(\.include).map { row -> ImportItem in
+            var item = row.item
+            item.name = draft.itemID(row.key)
+            references[row.key] = item.name
+            return item
+        }
         guard !chosen.isEmpty else { return "Nothing selected." }
         let r = await send(Request(op: "import", items: chosen, replace: replace, source: draft.url.path))
         guard r.ok else { return r.error ?? "Import failed." }
@@ -282,13 +360,14 @@ final class AppModel {
         if let s = r.skipped, !s.isEmpty { parts.append("skipped \(s.count) that already existed") }
         if rewrite, !saved.isEmpty {
             do {
-                try EnvFile.rewriteFile(at: draft.url, original: draft.text, toReferences: saved)
+                try EnvFile.rewriteFile(at: draft.url, original: draft.text, toReferences: references.filter { saved.contains($0.value) })
                 parts.append("\(draft.url.lastPathComponent) now uses latchkey:// references")
             } catch {
                 parts.append("but \(draft.url.lastPathComponent) could not be rewritten: \(error.localizedDescription)")
             }
         }
         notice = parts.joined(separator: ", ") + "."
+        if !draft.shared { filter = .project(draft.project) }
         return nil
     }
 

@@ -6,22 +6,33 @@ import LatchkeyCore
 let usage = """
 latchkey: read secrets from the Latchkey app without keeping them in files.
 
+Items are shared (ID = NAME) or belong to a project's environment (ID = project/environment/NAME).
+Files refer to them as latchkey://ID.
+
   latchkey run [--env-file FILE]... [--no-masking] -- COMMAND [ARGS...]
-      Start COMMAND with every latchkey://NAME in its environment replaced by the real value.
+      Start COMMAND with every latchkey://ID in its environment replaced by the real value.
       Secret values printed by COMMAND are concealed unless --no-masking is given.
-  latchkey list [--json]          Names, kinds and whether agents may read them. Never values.
-  latchkey get NAME               Print one value.
-  latchkey set NAME [--kind token|password|key|value] [--agent-safe] [--note TEXT]
+  latchkey list [--project P] [--json]   IDs, kinds and whether agents may read them. Never values.
+  latchkey get ID                 Print one value.
+  latchkey set ID [--kind token|password|key|value] [--agent-safe] [--note TEXT] [--service NAME]
       Value is read from standard input, or prompted for when run in a terminal.
-  latchkey rm NAME
-  latchkey import FILE [--rewrite] [--replace] [--dry-run] [--only NAME,...]
-                  [--kind KIND | --kind NAME=KIND]... [--agent-safe NAME,...|all]
-      Add every KEY=VALUE in a .env file with one approval. Prints names, never values.
-      --rewrite replaces each imported value in FILE with latchkey://KEY.
+  latchkey rm ID
+  latchkey import FILE [--project P] [--env E | --shared] [--rewrite] [--replace] [--dry-run]
+                  [--only KEY,...] [--kind KIND | --kind KEY=KIND]... [--agent-safe KEY,...|all]
+      Add every KEY=VALUE in a .env file with one approval. Prints IDs, never values.
+      The project defaults to the repository's folder name and the environment to what the file
+      name says (.env and .env.local: development; .env.production: production). --shared
+      imports them as shared items named after their keys.
+      --rewrite replaces each imported value in FILE with its latchkey://ID.
       Existing items are left alone unless --replace is given.
-  latchkey grant NAME[,NAME...] [--folder DIR] [--for 2h]
+  latchkey mv ID[,ID...] | --from-file FILE   --to PROJECT/ENV | --shared   [--file FILE]...
+      Move items into a project's environment (or back to shared) with one approval, then point
+      references at the new IDs in the files each item was imported from, in --file files, and
+      in the --from-file file. --from-file moves the shared items that FILE refers to.
+  latchkey grant ID[,ID...] [--folder DIR] [--for 2h]
       Let commands run from DIR (default: here) and the folders inside it read these items
       without asking, until the time is up (30m, 2h, 1d; at most 7d). Asks for approval once.
+      PROJECT/* or PROJECT/ENV/* covers a whole project or environment, including items added later.
   latchkey grants                 Grants that are in effect.
   latchkey revoke ID|all
   latchkey status
@@ -210,11 +221,19 @@ func importCommand(_ input: [String]) -> Never {
     var kinds: [String: ItemKind] = [:]
     var agentSafe: Set<String> = []
     var allAgentSafe = false
+    var project: String?, environment: String?, shared = false
     var rest = input
     func names(_ s: String) -> Set<String> { Set(s.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }) }
     while !rest.isEmpty {
         let a = rest.removeFirst()
         switch a {
+        case "--project":
+            guard !rest.isEmpty, ItemID.isValidPart(rest[0]) else { fail("--project takes a name (letters, digits, _ - .)", code: 64) }
+            project = rest.removeFirst()
+        case "--env":
+            guard !rest.isEmpty, ItemID.isValidPart(rest[0]) else { fail("--env takes a name such as development or production", code: 64) }
+            environment = rest.removeFirst()
+        case "--shared": shared = true
         case "--rewrite": rewrite = true
         case "--replace": replace = true
         case "--dry-run": dryRun = true
@@ -248,18 +267,23 @@ func importCommand(_ input: [String]) -> Never {
     do { text = try String(contentsOf: url, encoding: .utf8) }
     catch { fail("cannot read \(file): \(error.localizedDescription)", code: 66) }
 
-    let plan = EnvImport.plan(text, source: url.lastPathComponent, only: only, defaultKind: defaultKind,
+    if shared && (project != nil || environment != nil) { fail("--shared can't be combined with --project or --env", code: 64) }
+    let placeProject = shared ? "" : (project ?? EnvImport.project(forFile: url))
+    let placeEnv = shared ? "" : (environment ?? EnvImport.environment(forFile: url.lastPathComponent))
+    let plan = EnvImport.plan(text, source: url.lastPathComponent, location: url.path, project: placeProject,
+                              environment: placeEnv, only: only, defaultKind: defaultKind,
                               kinds: kinds, agentSafe: agentSafe, allAgentSafe: allAgentSafe)
     let items = Dictionary(uniqueKeysWithValues: plan.items.map { ($0.name, $0) })
     let ignored = plan.ignored
     if let only {
-        let unknown = only.subtracting(items.keys).subtracting(ignored.keys)
+        let unknown = only.subtracting(plan.references.keys).subtracting(ignored.keys)
         if !unknown.isEmpty { fail("not in \(file): \(unknown.sorted().joined(separator: ", "))", code: 66) }
     }
-    for name in Set(kinds.keys).union(agentSafe) where items[name] == nil && ignored[name] == nil {
-        fail("\(name) is named in an option but is not in \(file)", code: 64)
+    for key in Set(kinds.keys).union(agentSafe) where plan.references[key] == nil && ignored[key] == nil {
+        fail("\(key) is named in an option but is not in \(file)", code: 64)
     }
-    for (name, why) in ignored.sorted(by: { $0.key < $1.key }) { print("ignore   \(name)  (\(why))") }
+    print(placeProject.isEmpty ? "into shared items" : "into project \(placeProject), environment \(placeEnv)")
+    for (key, why) in ignored.sorted(by: { $0.key < $1.key }) { print("ignore   \(key)  (\(why))") }
     guard !items.isEmpty else { print("Nothing to import."); exit(0) }
 
     func describe(_ i: ImportItem) -> String {
@@ -285,8 +309,8 @@ func importCommand(_ input: [String]) -> Never {
     let saved = Set((r.added ?? []) + (r.replaced ?? []))
     if rewrite && !saved.isEmpty {
         do {
-            try EnvFile.rewriteFile(at: url, original: text, toReferences: saved)
-            print("rewrote \(file): \(saved.count) value\(saved.count == 1 ? "" : "s") now latchkey://NAME")
+            try EnvFile.rewriteFile(at: url, original: text, toReferences: plan.references.filter { saved.contains($0.value) })
+            print("rewrote \(file): \(saved.count) value\(saved.count == 1 ? "" : "s") now latchkey://ID")
         } catch {
             fail("items were saved, but \(file) could not be rewritten: \(error.localizedDescription)", code: 73)
         }
@@ -329,14 +353,74 @@ func grantCommand(_ input: [String]) -> Never {
             names += a.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         }
     }
-    guard !names.isEmpty, names.allSatisfy(Wire.isValidName) else {
-        fail("usage: latchkey grant NAME[,NAME...] [--folder DIR] [--for 2h]", code: 64)
+    guard !names.isEmpty, names.allSatisfy({ Wire.isValidName($0) || Grant.isPattern($0) }) else {
+        fail("usage: latchkey grant ID[,ID...] [--folder DIR] [--for 2h]   (or PROJECT/* or PROJECT/ENV/*)", code: 64)
     }
     if duration > GrantStore.longest { fail("the longest grant is 7 days", code: 64) }
     let r = send(Request(op: "grant", names: names, cwd: currentDirectory(), folder: folder ?? currentDirectory(), duration: duration))
     if let m = r.missing, !m.isEmpty { fail("no item named: \(m.joined(separator: ", "))", code: 66) }
     for g in r.grants ?? [] {
         print("granted \(g.id): \(g.names.joined(separator: ", ")) readable from \(Broker.tilde(g.folder)) for \(GrantStore.describe(duration))")
+    }
+    exit(0)
+}
+
+// MARK: - move
+
+func moveCommand(_ input: [String]) -> Never {
+    var ids: [String] = []
+    var fromFile: URL?
+    var files: [URL] = []
+    var target: (project: String, environment: String)?
+    var rest = input
+    while !rest.isEmpty {
+        let a = rest.removeFirst()
+        switch a {
+        case "--to":
+            guard !rest.isEmpty else { fail("--to takes PROJECT/ENV", code: 64) }
+            let parts = rest.removeFirst().split(separator: "/").map(String.init)
+            guard parts.count == 2, parts.allSatisfy(ItemID.isValidPart) else { fail("--to takes PROJECT/ENV, such as site/production", code: 64) }
+            target = (parts[0], parts[1])
+        case "--shared": target = ("", "")
+        case "--file":
+            guard !rest.isEmpty else { fail("--file takes a path", code: 64) }
+            files.append(URL(fileURLWithPath: rest.removeFirst()).standardizedFileURL)
+        case "--from-file":
+            guard !rest.isEmpty else { fail("--from-file takes a path", code: 64) }
+            fromFile = URL(fileURLWithPath: rest.removeFirst()).standardizedFileURL
+        default:
+            if a.hasPrefix("-") { fail("unknown option \(a)", code: 64) }
+            ids += a.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        }
+    }
+    guard let target else { fail("usage: latchkey mv ID[,ID...] | --from-file FILE  --to PROJECT/ENV | --shared  [--file FILE]...", code: 64) }
+    let existing = send(Request(op: "list")).secrets ?? []
+    if let fromFile {
+        let refs: [String]
+        do { refs = References.names(in: Dictionary(try EnvFile.load(fromFile.path).map { ($0.key, $0.value) }) { $1 }) }
+        catch { fail("cannot read \(fromFile.path): \(error.localizedDescription)", code: 66) }
+        let sharedIDs = Set(existing.filter { $0.ref.isShared }.map(\.name))
+        ids += refs.filter { sharedIDs.contains($0) }
+        files.append(fromFile)
+        if ids.isEmpty { print("\(fromFile.lastPathComponent) refers to no shared items; nothing to move."); exit(0) }
+    }
+    guard !ids.isEmpty, ids.allSatisfy(Wire.isValidName) else { fail("no valid item IDs given", code: 64) }
+    let usedIn = existing.filter { ids.contains($0.name) }.flatMap { $0.usedIn ?? [] }
+
+    let r = send(Request(op: "move", names: ids, cwd: currentDirectory(), command: "latchkey mv",
+                         project: target.project, environment: target.environment))
+    if let m = r.missing, !m.isEmpty { fail("no item named: \(m.joined(separator: ", "))", code: 66) }
+    let moved = r.moved ?? [:]
+    for (old, new) in moved.sorted(by: { $0.key < $1.key }) { print("moved    \(old) → \(new)") }
+    if moved.isEmpty { print("Nothing to move: already there."); exit(0) }
+    var seen = Set<String>()
+    for url in files + usedIn.map({ URL(fileURLWithPath: $0) }) where seen.insert(url.path).inserted {
+        guard FileManager.default.fileExists(atPath: url.path) else { print("missing  \(Broker.tilde(url.path)) (not updated)"); continue }
+        do {
+            if try EnvFile.renameReferences(in: url, moved) { print("updated  \(Broker.tilde(url.path))") }
+        } catch {
+            print("failed   \(Broker.tilde(url.path)): \(error.localizedDescription)")
+        }
     }
     exit(0)
 }
@@ -359,25 +443,39 @@ case "status":
     for (k, v) in (r.info ?? [:]).sorted(by: { $0.key < $1.key }) { print("\(k): \(v)") }
 
 case "list":
+    var only: String?
+    if let i = args.firstIndex(of: "--project") {
+        guard i + 1 < args.count else { fail("--project takes a name", code: 64) }
+        only = args[i + 1]
+    }
     let r = send(Request(op: "list"))
-    let items = r.secrets ?? []
+    let items = (r.secrets ?? []).filter { only == nil || $0.ref.project == only }.sorted { $0.ref < $1.ref }
     if args.contains("--json") {
         let enc = Wire.encoder()
         enc.outputFormatting = [.prettyPrinted, .sortedKeys]
         print(String(decoding: try! enc.encode(items), as: UTF8.self))
     } else if items.isEmpty {
-        print("No items yet. Add one in the app or with `latchkey set NAME`.")
+        print(only.map { "No items in project \($0)." } ?? "No items yet. Add one in the app or with `latchkey set NAME`.")
     } else {
-        let width = max(4, items.map(\.name.count).max() ?? 4)
-        for i in items.sorted(by: { $0.name < $1.name }) {
-            let name = i.name.padding(toLength: width, withPad: " ", startingAt: 0)
+        // One heading per project and environment, then the items' names under it.
+        let width = max(4, items.map(\.ref.name.count).max() ?? 4)
+        var heading: String?
+        for i in items {
+            let h = i.ref.isShared ? "shared" : "\(i.ref.project)/\(i.ref.environment)"
+            if h != heading {
+                if heading != nil { print("") }
+                print(h)
+                heading = h
+            }
+            let name = i.ref.name.padding(toLength: width, withPad: " ", startingAt: 0)
             let kind = i.kind.rawValue.padding(toLength: 8, withPad: " ", startingAt: 0)
-            print("\(name)  \(kind)  \(i.agentSafe ? "agents: yes" : "agents: no ")  \(i.note)")
+            let svc = (i.service ?? "").padding(toLength: 12, withPad: " ", startingAt: 0)
+            print("  \(name)  \(kind)  \(svc)  \(i.agentSafe ? "agents: yes" : "agents: no ")  \(i.note)")
         }
     }
 
 case "get":
-    guard let name = args.first, Wire.isValidName(name) else { fail("usage: latchkey get NAME", code: 64) }
+    guard let name = args.first, Wire.isValidName(name) else { fail("usage: latchkey get ID", code: 64) }
     let r = send(Request(op: "get", names: [name], cwd: currentDirectory()))
     if let m = r.missing, !m.isEmpty { fail("no item named \(name)", code: 66) }
     if let d = r.denied, !d.isEmpty { fail("refused: \(name) is not marked agent-safe and was not approved", code: 77) }
@@ -391,6 +489,7 @@ case "set":
     var kind: ItemKind? = nil
     var agentSafe: Bool? = nil
     var note: String? = nil
+    var service: String? = nil
     var i = 1
     while i < args.count {
         switch args[i] {
@@ -403,13 +502,18 @@ case "set":
             i += 1
             guard i < args.count else { fail("--note takes text", code: 64) }
             note = args[i]
+        case "--service":
+            i += 1
+            guard i < args.count else { fail("--service takes a name, such as Stripe", code: 64) }
+            service = args[i]
         default: fail("unknown option \(args[i])", code: 64)
         }
         i += 1
     }
     let value = readValue(prompt: "Value for \(name): ")
     guard !value.isEmpty else { fail("empty value; nothing saved") }
-    _ = send(Request(op: "set", names: [name], value: value, kind: kind, agentSafe: agentSafe, note: note, cwd: currentDirectory()))
+    _ = send(Request(op: "set", names: [name], value: value, kind: kind, agentSafe: agentSafe, note: note, cwd: currentDirectory(),
+                     service: service))
     print("saved \(name)")
 
 case "rm":
@@ -426,6 +530,9 @@ case "import":
 
 case "grant":
     grantCommand(args)
+
+case "mv":
+    moveCommand(args)
 
 case "grants":
     printGrants(send(Request(op: "grants")).grants ?? [])

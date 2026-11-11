@@ -116,7 +116,9 @@ struct ImportSheet: View {
         _draft = State(initialValue: draft)
     }
 
-    var chosen: Int { draft.rows.filter { $0.include && (!$0.exists || replace) }.count }
+    func exists(_ row: ImportDraft.Row) -> Bool { model.item(draft.itemID(row.key)) != nil }
+
+    var chosen: Int { draft.rows.filter { $0.include && (!exists($0) || replace) }.count }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -125,15 +127,36 @@ struct ImportSheet: View {
                 Text(Broker.tilde(draft.url.path)).font(.caption.monospaced()).foregroundStyle(.secondary)
                     .lineLimit(1).truncationMode(.head)
             }
+            HStack(spacing: 10) {
+                Picker("", selection: $draft.shared) {
+                    Text("Project").tag(false)
+                    Text("Shared").tag(true)
+                }
+                .pickerStyle(.segmented).labelsHidden().fixedSize()
+                if !draft.shared {
+                    TextField("Project", text: $draft.project).frame(width: 160)
+                    TextField("Environment", text: $draft.environment).frame(width: 140)
+                    Menu {
+                        ForEach(Environments.known, id: \.self) { e in Button(e) { draft.environment = e } }
+                    } label: { Image(systemName: "chevron.down") }
+                    .menuStyle(.borderlessButton).fixedSize()
+                }
+                Spacer()
+            }
+            .textFieldStyle(.roundedBorder)
+            Text(draft.shared ? "Items are named after their keys, e.g. latchkey://\(draft.rows.first?.key ?? "KEY")."
+                 : "Items become latchkey://\(draft.itemID(draft.rows.first?.key ?? "KEY")). The project is the repository's folder; the environment comes from the file name.")
+                .font(.caption).foregroundStyle(.secondary)
             Table($draft.rows) {
                 TableColumn("") { $row in
                     Toggle("", isOn: $row.include).labelsHidden()
                 }
                 .width(24)
-                TableColumn("Name") { $row in
+                TableColumn("Key") { $row in
                     HStack(spacing: 6) {
-                        Text(row.item.name).font(.body.monospaced())
-                        if row.exists {
+                        Text(row.key).font(.body.monospaced())
+                        if let s = row.item.service { Text(s).font(.caption).foregroundStyle(.secondary) }
+                        if exists(row) {
                             Text("exists").font(.caption2.weight(.semibold)).padding(.horizontal, 5).padding(.vertical, 1)
                                 .background(Capsule().fill(.yellow.opacity(0.3)))
                         }
@@ -174,7 +197,7 @@ struct ImportSheet: View {
                     }
                 }
                 .keyboardShortcut(.defaultAction)
-                .disabled(chosen == 0 || working)
+                .disabled(chosen == 0 || working || !draft.placeIsValid)
             }
         }
         .padding(20)

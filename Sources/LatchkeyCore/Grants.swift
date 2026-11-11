@@ -34,8 +34,20 @@ public struct Grant: Codable, Identifiable, Hashable, Sendable {
         return p
     }
 
+    /// An entry is an item id, or a pattern for a whole project (`site/*`) or one environment of it
+    /// (`site/production/*`), which also covers items added to it later.
+    public static func isPattern(_ entry: String) -> Bool {
+        guard entry.hasSuffix("/*") else { return false }
+        let parts = entry.dropLast(2).split(separator: "/", omittingEmptySubsequences: false).map(String.init)
+        return (parts.count == 1 || parts.count == 2) && parts.allSatisfy(ItemID.isValidPart)
+    }
+
+    public static func entry(_ entry: String, matches id: String) -> Bool {
+        isPattern(entry) ? id.hasPrefix(String(entry.dropLast())) : entry == id
+    }
+
     public func covers(_ name: String, cwd: String, now: Date = Date()) -> Bool {
-        guard expires > now, names.contains(name), !cwd.isEmpty else { return false }
+        guard expires > now, names.contains(where: { Grant.entry($0, matches: name) }), !cwd.isEmpty else { return false }
         let c = Grant.normalize(cwd)
         return c == folder || c.hasPrefix(folder == "/" ? "/" : folder + "/")
     }

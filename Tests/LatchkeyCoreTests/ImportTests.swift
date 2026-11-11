@@ -80,16 +80,16 @@ final class ImportTests: XCTestCase {
         REF=latchkey://REF
 
         """
-        let out = EnvFile.rewrite(text, toReferences: ["DB_PASS", "API_KEY"])
+        let out = EnvFile.rewrite(text, toReferences: ["DB_PASS": "DB_PASS", "API_KEY": "site/development/API_KEY"])
         XCTAssertEqual(out, """
         # database
         export DB_PASS=latchkey://DB_PASS
-          API_KEY=latchkey://API_KEY
+          API_KEY=latchkey://site/development/API_KEY
         KEEP=unchanged
         REF=latchkey://REF
 
         """)
-        XCTAssertEqual(EnvFile.rewrite("A=1\r\nB=2\r\n", toReferences: ["A"]), "A=latchkey://A\r\nB=2\r\n")
+        XCTAssertEqual(EnvFile.rewrite("A=1\r\nB=2\r\n", toReferences: ["A": "A"]), "A=latchkey://A\r\nB=2\r\n")
     }
 }
 

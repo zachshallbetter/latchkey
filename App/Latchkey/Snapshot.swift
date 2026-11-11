@@ -16,12 +16,23 @@ enum Snapshot {
 
     static var requested: Bool { arg("--snapshot") != nil }
 
-    /// Call once the window is on screen.
+    private static var started = false
+
+    /// Off-screen parts don't need the window, so they start from launch rather than wait for it to appear.
+    static func startParts(_ model: AppModel) {
+        guard arg("--part") != nil else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { runIfRequested(model) }
+    }
+
+    /// Call once the window is on screen (or from `startParts`). Runs once.
     static func runIfRequested(_ model: AppModel) {
-        guard let path = arg("--snapshot") else { return }
+        guard let path = arg("--snapshot"), !started else { return }
+        started = true
+        if CommandLine.arguments.contains("--sample") { model.items = sampleItems }
         if let name = arg("--select") { model.selection = name }
         if arg("--filter") == "activity" { model.filter = .activity }
         if arg("--filter") == "grants" { model.filter = .grants }
+        if let f = arg("--filter"), f.hasPrefix("project:") { model.filter = .project(String(f.dropFirst(8))) }
         if arg("--part") == "approval" {
             let sample = ApprovalRequest(action: .read, names: ["DATABASE_URL", "STRIPE_KEY"], chain: ["zsh", "claude", "Terminal"],
                                          folder: NSHomeDirectory() + "/Projects/site", command: "npm test -- --watch=false",
@@ -32,6 +43,10 @@ enum Snapshot {
         if let f = arg("--import") { model.beginImport(URL(fileURLWithPath: f)) }
         if arg("--part") == "sidebar" {
             drawOffscreen(Sidebar(model: model).frame(width: 260, height: 640), to: path)
+            return
+        }
+        if arg("--part") == "move" {
+            drawOffscreen(MoveSheet(model: model, preselected: model.selection.map { [$0] } ?? []), to: path)
             return
         }
         if arg("--part") == "menubar" {
@@ -47,6 +62,28 @@ enum Snapshot {
             try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
             exit(0)
         }
+    }
+
+    /// Example projects for screenshots: nothing here is a real value or a real project.
+    static var sampleItems: [SecretInfo] {
+        let now = Date()
+        func i(_ id: String, _ kind: ItemKind, _ service: String?, safe: Bool = false, used: [String]? = nil) -> SecretInfo {
+            SecretInfo(name: id, kind: kind, agentSafe: safe, note: used == nil ? "" : "imported from .env.local",
+                       updatedAt: now, usedIn: used, service: service)
+        }
+        let acpDev = [NSHomeDirectory() + "/Projects/acp/.env.local"]
+        return [
+            i("acp/development/DATABASE_URL", .password, "Neon", used: acpDev),
+            i("acp/development/PGHOST", .value, "Neon", safe: true, used: acpDev),
+            i("acp/development/ACP_GATEWAY_TOKEN", .token, nil, used: acpDev),
+            i("acp/production/DATABASE_URL", .password, "Neon"),
+            i("acp/production/STRIPE_SECRET_KEY", .token, "Stripe"),
+            i("acp/preview/DATABASE_URL", .password, "Neon"),
+            i("site/production/RESEND_API_KEY", .token, "Resend"),
+            i("site/development/NEXT_PUBLIC_API_HOST", .value, nil, safe: true),
+            i("GEMINI_API_KEY", .token, "Google"),
+            i("GITHUB_TOKEN", .token, "GitHub"),
+        ]
     }
 
     /// For views the window snapshot cannot capture (the floating glass sidebar, the menu bar panel).

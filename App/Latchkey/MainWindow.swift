@@ -71,6 +71,7 @@ struct MainWindow: View {
         .sheet(isPresented: $model.showingAdd) { AddItemSheet(model: model) }
         .sheet(item: $model.importDraft) { ImportSheet(model: model, draft: $0) }
         .sheet(isPresented: $model.showingNewGrant) { NewGrantSheet(model: model) }
+        .sheet(item: $model.moveRequest) { MoveSheet(model: model, preselected: $0.ids) }
         .dropDestination(for: URL.self) { urls, _ in
             guard let url = urls.first else { return false }
             model.beginImport(url)
@@ -107,6 +108,15 @@ struct Sidebar: View {
                     Text("Kinds").font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.leading, 8)
                     ForEach(ItemKind.allCases, id: \.self) { k in
                         SidebarRow(model: model, filter: .kind(k), kind: k)
+                    }
+                }
+                ProjectsSection(model: model)
+                if !model.services.isEmpty {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Services").font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.leading, 8)
+                        ForEach(model.services, id: \.self) { s in
+                            SidebarRow(model: model, filter: .service(s), symbol: "server.rack", tint: .gray)
+                        }
                     }
                 }
                 VStack(alignment: .leading, spacing: 2) {
@@ -213,9 +223,26 @@ struct ItemList: View {
     var body: some View {
         let list = model.visibleItems
         List(selection: $model.selection) {
-            ForEach(list) { item in
-                ItemRow(item: item).tag(item.name)
-                    .contextMenu { ItemMenu(model: model, item: item) }
+            if case .project(let p) = model.filter, model.sort == .name {
+                // One section per environment, in their usual order.
+                ForEach(model.environments(in: p), id: \.self) { env in
+                    let rows = list.filter { $0.ref.environment == env }
+                    if !rows.isEmpty {
+                        Section {
+                            ForEach(rows) { item in
+                                ItemRow(item: item, showsProject: false).tag(item.name)
+                                    .contextMenu { ItemMenu(model: model, item: item) }
+                            }
+                        } header: {
+                            HStack { EnvBadge(environment: env); Text("\(rows.count)").foregroundStyle(.secondary) }
+                        }
+                    }
+                }
+            } else {
+                ForEach(list) { item in
+                    ItemRow(item: item).tag(item.name)
+                        .contextMenu { ItemMenu(model: model, item: item) }
+                }
             }
         }
         .overlay {
@@ -247,6 +274,8 @@ struct ItemList: View {
                 Menu {
                     Button("New Item…") { model.showingAdd = true }
                     Button("Import .env File…") { model.chooseImportFile() }
+                    Divider()
+                    Button("Move Items to a Project…") { model.moveRequest = MoveRequest(ids: model.selection.map { [$0] } ?? []) }
                 } label: { Label("Add", systemImage: "plus") }
             }
         }
@@ -255,14 +284,25 @@ struct ItemList: View {
 
 struct ItemRow: View {
     let item: SecretInfo
+    var showsProject = true
 
     var body: some View {
         HStack(spacing: 10) {
             KindIcon(kind: item.kind)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(item.name).font(.body.weight(.medium)).lineLimit(1)
-                Text(item.note.isEmpty ? item.kind.label : item.note)
-                    .font(.callout).foregroundStyle(.secondary).lineLimit(1)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(item.ref.name).font(.body.weight(.medium)).lineLimit(1)
+                HStack(spacing: 5) {
+                    // Inside a project's environment sections both are already in the heading.
+                    if !item.ref.isShared && showsProject {
+                        Text(item.ref.project).font(.caption.weight(.medium))
+                        EnvBadge(environment: item.ref.environment, compact: true)
+                    }
+                    if let s = item.service { Text(s).font(.caption).foregroundStyle(.secondary) }
+                    if (item.ref.isShared || !showsProject) && item.service == nil {
+                        Text(item.note.isEmpty ? item.kind.label : item.note).font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                .lineLimit(1)
             }
             Spacer()
             if item.agentSafe {
@@ -281,6 +321,8 @@ struct ItemMenu: View {
     var body: some View {
         Button("Copy Value") { Task { await model.copyValue(item.name) } }
         Button("Copy Reference") { model.copyReference(item.name) }
+        Divider()
+        Button("Move to a Project…") { model.moveRequest = MoveRequest(ids: [item.name]) }
         Divider()
         Button(item.agentSafe ? "Require Approval" : "Mark Agent-Safe") {
             Task { _ = await model.save(name: item.name, value: nil, kind: nil, agentSafe: !item.agentSafe, note: nil) }
@@ -363,7 +405,7 @@ struct EmptyDetail: View {
             ContentUnavailableView {
                 Label { Text("No Item Selected") } icon: { LogoMark() }
             } description: {
-                Text("Files keep latchkey://NAME references; Latchkey keeps the values.")
+                Text("Files keep latchkey://ID references; Latchkey keeps the values.")
             }
         }
     }

@@ -12,14 +12,15 @@ command starts. Agents get only the items marked agent-safe; everything else nee
 | `LatchkeyCore` library: references, `.env` parsing, output masking, wire protocol, caller identification | Built |
 | Keychain storage: iCloud Keychain when signed, login keychain otherwise | Built |
 | Broker: agent-safe policy, approval panel then Touch ID / Apple Watch / password, grants, access log | Built |
-| `latchkey` command-line tool: `run`, `list`, `get`, `set`, `rm`, `import`, `grant`, `grants`, `revoke`, `status`; starts the app if needed | Built |
+| Projects, environments and services: item IDs `project/environment/NAME`, import placement, moving items, project-wide grants | Built |
+| `latchkey` command-line tool: `run`, `list`, `get`, `set`, `rm`, `import`, `mv`, `grant`, `grants`, `revoke`, `status`; starts the app if needed | Built |
 | `latchkey-broker`: the broker without a window, for development | Built |
 | App: window with sidebar, item list and detail; reveal and copy behind Touch ID; .env import sheet; activity log; menu bar panel; settings; open at login. Hosts the broker | Built; needs a team set to sync |
 | Key-file delivery, expiry reminders | Not built |
 | Browser extension or AutoFill provider | Not built |
 | SSH agent (Secure Enclave keys) | Not built |
 
-Tests: 28 (`swift test`; add `LATCHKEY_KEYCHAIN_TESTS=1` to include a real keychain round trip).
+Tests: 39 (`swift test`; add `LATCHKEY_KEYCHAIN_TESTS=1` to include a real keychain round trip).
 
 See [docs/apple-passwords-and-passkeys.md](docs/apple-passwords-and-passkeys.md) for how this uses iCloud Keychain
 and LocalAuthentication, why items don't appear in the Passwords app, and where passkeys fit.
@@ -55,14 +56,41 @@ agent working:
 Grants are kept on this Mac only (`~/Library/Application Support/Latchkey/grants.json`), last at most 7 days,
 and show up in Activity when they're made, used and revoked.
 
+## Projects, environments and services
+
+An item is either **shared** (ID `GEMINI_API_KEY`) or belongs to one **environment** of a **project**
+(ID `acp/production/DATABASE_URL`). Files refer to items by ID: `latchkey://acp/production/DATABASE_URL`. The
+same name can hold a different value in each environment, and two projects never collide.
+
+- **Environments** are free-form names. development, preview, staging, production and test get their own colours and
+  sort first; anything else (`pr-123`, `eu-west`) works too.
+- **Service** is the provider that issued a value (Neon, Stripe, GitHub…). It's metadata, not part of the ID, so
+  changing it never breaks a reference. Import fills it in from the value's shape (`sk_live_`, `ghp_`), the host in
+  a connection string (`neon.tech`) or the key's name (`STRIPE_`), and you can edit it.
+- **Used in** records the files an item was imported from, so moving it can update their references.
+
+The project and environment, and whether an item is shared, are part of its ID and nothing else, so grouping
+can't drift from the references. Service and "used in" travel with the item in iCloud Keychain.
+
+    latchkey import apps/web/.env.local --dry-run       # project = repo folder, environment = development
+    latchkey import .env.production --project acp --rewrite
+    latchkey list --project acp
+    latchkey mv --from-file ~/Projects/acp/.env.local --to acp/development   # move shared items a file refers to
+    latchkey grant 'acp/production/*' --folder ~/Projects/acp --for 2h
+
 ## Using the app
 
-- **Sidebar:** All, Agent-Safe, Ask First and Activity, plus a count per kind.
+- **Sidebar:** All, Agent-Safe, Ask First and Activity, a count per kind, then **Projects** (with a filter once there
+  are many), **Shared** and **Services**.
+- **Project view:** items grouped by environment.
 - **Detail:** reveal (hides again after 30 seconds) and copy (the clipboard clears after 60 seconds) ask for
   Touch ID unless the item is agent-safe. Kind, agent-safe, note, change value and delete are there too, along
   with the item's recent activity.
-- **Import:** use **File > Import .env File…** (⇧⌘I) or drop a file on the window. Review each item's kind and
-  agent-safe setting, then approve once.
+- **Import:** use **File > Import .env File…** (⇧⌘I) or drop a file on the window. The sheet proposes the project
+  (the repository's folder) and environment (from the file name); change them, or import as shared items. Review
+  each item's kind and agent-safe setting, then approve once.
+- **Move to a Project…** (item menu, the detail pane, or the **+** menu): pick items, a project and an environment,
+  and the files whose references should follow; one approval.
 - **Grants:** what each grant covers and when it ends; revoke one or all, or make a new one.
 - **Menu bar:** search, copy a value, or jump to an item.
 
@@ -86,10 +114,10 @@ Debug builds can draw their own UI to a PNG without clicking:
 
 ## Moving a project's secrets in
 
-`latchkey import` adds everything in a `.env` file with one approval, and `--rewrite` swaps each value in the
-file for its reference:
+`latchkey import` adds everything in a `.env` file with one approval, into the project and environment the file
+implies (see above), and `--rewrite` swaps each value in the file for its reference:
 
-    latchkey import .env --dry-run                 # names and what would happen; never values
+    latchkey import .env --dry-run                 # IDs and what would happen; never values
     latchkey import .env --rewrite \
         --kind DATABASE_URL=password --kind API_HOST=value --agent-safe API_HOST
 

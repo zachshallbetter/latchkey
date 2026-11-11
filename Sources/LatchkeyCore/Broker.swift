@@ -45,6 +45,7 @@ public final class Broker: @unchecked Sendable {
             case "grants": return Response(ok: true, grants: grants.all())
             case "grant": return try grant(req, peer: peer)
             case "revoke": return revoke(req, peer: peer)
+            case "move": return try move(req, peer: peer)
             default: return Response(ok: false, error: "unknown op \(req.op)")
             }
         } catch {
@@ -119,7 +120,8 @@ public final class Broker: @unchecked Sendable {
             log("set", [name], "denied", peer, req)
             return Response(ok: false, error: "change to \(name) was not approved")
         }
-        try store.save(name: name, value: req.value, kind: req.kind, agentSafe: req.agentSafe, note: req.note)
+        try store.save(name: name, value: req.value, kind: req.kind, agentSafe: req.agentSafe, note: req.note, usedIn: nil,
+                       service: req.service)
         log("set", [name], "approved", peer, req)
         return Response(ok: true)
     }
@@ -166,7 +168,8 @@ public final class Broker: @unchecked Sendable {
         for name in writing {
             let i = byName[name]!
             do {
-                try store.save(name: name, value: i.value, kind: i.kind, agentSafe: i.agentSafe, note: i.note)
+                try store.save(name: name, value: i.value, kind: i.kind, agentSafe: i.agentSafe, note: i.note, usedIn: i.usedIn,
+                               service: i.service)
                 done.append(name)
             } catch {
                 log("import", done, "approved (stopped at \(name))", peer, req)
@@ -182,8 +185,11 @@ public final class Broker: @unchecked Sendable {
     func grant(_ req: Request, peer: PeerInfo) throws -> Response {
         let names = Array(Set(req.names ?? [])).sorted()
         guard !names.isEmpty else { return Response(ok: false, error: "no names given") }
-        let existing = Set(try store.list().map(\.name))
-        let missing = names.filter { !existing.contains($0) }
+        let existing = try store.list().map(\.name)
+        let missing = names.filter { entry in
+            if Grant.isPattern(entry) { return !existing.contains { Grant.entry(entry, matches: $0) } }
+            return !Wire.isValidName(entry) || !existing.contains(entry)
+        }
         guard missing.isEmpty else { return Response(ok: false, missing: missing) }
         let folder = Grant.normalize(req.folder ?? req.cwd ?? peer.cwd)
         guard !folder.isEmpty, folder != "/" else { return Response(ok: false, error: "a grant needs a folder other than /") }
@@ -199,6 +205,54 @@ public final class Broker: @unchecked Sendable {
         let g = grants.add(names: names, folder: folder, duration: duration, createdBy: Self.who(peer))
         log("grant", names, "approved (grant \(g.id) for \(GrantStore.describe(duration)))", peer, r)
         return Response(ok: true, grants: [g])
+    }
+
+    /// Moves items into a project and environment (or back to shared), keeping value and metadata. All or
+    /// nothing up front: every target id must be free before anything moves. Files that reference the old ids
+    /// are the caller's to update, from `moved` and each item's `usedIn`.
+    func move(_ req: Request, peer: PeerInfo) throws -> Response {
+        let ids = Array(Set(req.names ?? [])).sorted()
+        guard !ids.isEmpty else { return Response(ok: false, error: "no names given") }
+        let project = req.project ?? "", environment = project.isEmpty ? "" : (req.environment ?? "")
+        let infos = Dictionary(uniqueKeysWithValues: try store.list().map { ($0.name, $0) })
+        let missing = ids.filter { infos[$0] == nil }
+        guard missing.isEmpty else { return Response(ok: false, missing: missing) }
+        var targets: [String: String] = [:]
+        for id in ids {
+            let target = ItemID(project: project, environment: environment, name: infos[id]!.ref.name)
+            guard target.isValid else {
+                return Response(ok: false, error: "\(project)/\(environment) is not a valid project and environment")
+            }
+            if target.string != id { targets[id] = target.string }
+        }
+        guard !targets.isEmpty else { return Response(ok: true, moved: [:]) }
+        let taken = targets.values.filter { infos[$0] != nil }.sorted()
+        guard taken.isEmpty else { return Response(ok: false, error: "already exists: \(taken.joined(separator: ", "))") }
+        guard Set(targets.values).count == targets.count else { return Response(ok: false, error: "two items would get the same id") }
+
+        let moving = targets.keys.sorted()
+        let place = project.isEmpty ? "shared items" : "\(project)/\(environment)"
+        guard ask(.move, moving, peer, req, "move \(Self.count(moving)) to \(place), asked by \(Self.who(peer))").allowed else {
+            log("move", moving, "denied", peer, req)
+            return Response(ok: false, error: "the move was not approved")
+        }
+        let values = try store.values(moving)
+        var done: [String: String] = [:]
+        for id in moving {
+            let info = infos[id]!, to = targets[id]!
+            do {
+                guard let value = values[id] else { throw StoreError.notFound(id) }
+                try store.save(name: to, value: value, kind: info.kind, agentSafe: info.agentSafe, note: info.note,
+                               usedIn: info.usedIn, service: info.service ?? "")
+                _ = try store.remove(id)
+                done[id] = to
+            } catch {
+                log("move", done.keys.sorted(), "approved (stopped at \(id))", peer, req)
+                return Response(ok: false, error: "moved \(done.count) of \(moving.count), then \(id) failed: \(error)", moved: done)
+            }
+        }
+        log("move", moving, "approved (to \(place))", peer, req)
+        return Response(ok: true, moved: done)
     }
 
     /// Taking access away never needs approval.
