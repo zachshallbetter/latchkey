@@ -37,6 +37,8 @@ public struct ApprovalRequest: Sendable {
     /// From Latchkey's Safari extension, and the site the value was found on (as Safari reported it).
     public var fromSafari = false
     public var page: String?
+    /// Releasing values to a command, where the approval can also become a grant for its folder. Only `get` sets it.
+    public var offersGrant = false
 
     public init(action: Action, names: [String], chain: [String], folder: String, command: String? = nil,
                 duration: TimeInterval? = nil, reason: String) {
@@ -49,16 +51,38 @@ public struct ApprovalRequest: Sendable {
         self.reason = reason
     }
 
-    /// The short line for the Touch ID sheet, which macOS shows as "Latchkey is trying to …": what's asked, and for
-    /// which agent, without the caller chain, folder and command the approval panel already shows above it.
+    /// Who's asking, in a word: the agent the caller runs under ("Claude"), else the nearest program that isn't a shell.
+    /// Nil for the Latchkey window and Safari, and over SSH, where nothing on the other computer can be seen.
+    public var asker: String? {
+        guard !fromApp, !fromSafari, !overSSH else { return nil }
+        let name = sessionName ?? chain.first { !PeerInfo.launchers.contains($0.lowercased()) }
+        guard let name, !name.isEmpty else { return nil }
+        return name.prefix(1).uppercased() + name.dropFirst()
+    }
+
+    /// The line for the Touch ID sheet, which macOS shows as "Latchkey is trying to …": what's asked, by whom and from
+    /// which folder. The full process chain and command are in the panel, for anyone who wants them.
     public var touchIDReason: String {
         let what = reason.range(of: ", asked by ").map { String(reason[..<$0.lowerBound]) } ?? reason
-        guard let agent = sessionName, !fromApp, !fromSafari else { return what }
-        return "\(what) for \(agent)"
+        guard let who = asker else { return what }
+        let place = folder.isEmpty || folder == "/" ? "" : " in \(Broker.tilde(folder))"
+        if action == .read, what.hasPrefix("release ") { return "give \(what.dropFirst(8)) to \(who)\(place)" }
+        return "\(what), asked by \(who)\(place)"
+    }
+
+    /// Changes are confirmed by the system's Touch ID sheet alone; the panel with every detail appears only if that's
+    /// cancelled. Releasing values, grants, earlier values and pushes have choices to make, and a request from another
+    /// computer or from a program that isn't Latchkey's tool has a warning to read, so those show the panel first.
+    public var sheetFirst: Bool {
+        guard !overSSH, program == nil, !production else { return false }
+        switch action {
+        case .add, .change, .delete, .importItems, .move, .restore, .link: return true
+        case .read, .readVersion, .grant, .push: return false
+        }
     }
 
     /// Reads from a folder can be turned into a grant from the approval itself.
-    public var canGrant: Bool { action == .read && !folder.isEmpty && folder != "/" && remote == nil && !overSSH }
+    public var canGrant: Bool { offersGrant && action == .read && !folder.isEmpty && folder != "/" && remote == nil && !overSSH }
 }
 
 public enum ApprovalDecision: Sendable, Equatable {
@@ -122,23 +146,36 @@ public final class SystemApprover: Approver, @unchecked Sendable {
         return confirm(request.reason) ? .once : .deny
     }
 
+    /// How a Touch ID sheet ended.
+    public enum Outcome: Sendable, Equatable {
+        case passed
+        /// The person pressed the sheet's cancel button.
+        case cancelled
+        /// Nobody answered in time, authentication failed, or it couldn't be shown.
+        case failed
+    }
+
     /// Touch ID / Watch / password with this reason. True if the person passed it.
-    public func confirm(_ reason: String) -> Bool {
+    public func confirm(_ reason: String) -> Bool { evaluate(reason) == .passed }
+
+    /// Touch ID / Watch / password with this reason, telling a deliberate cancel from no answer.
+    public func evaluate(_ reason: String, cancelTitle: String = "Deny") -> Outcome {
         let ctx = LAContext()
-        ctx.localizedCancelTitle = "Deny"
+        ctx.localizedCancelTitle = cancelTitle
         var err: NSError?
-        guard ctx.canEvaluatePolicy(.deviceOwnerAuthentication, error: &err) else { return false }
+        guard ctx.canEvaluatePolicy(.deviceOwnerAuthentication, error: &err) else { return .failed }
         let done = DispatchSemaphore(value: 0)
-        nonisolated(unsafe) var ok = false
-        ctx.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { success, _ in
-            ok = success
+        nonisolated(unsafe) var outcome = Outcome.failed
+        ctx.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { success, error in
+            outcome = success ? .passed : (error as? LAError)?.code == .userCancel ? .cancelled : .failed
             done.signal()
         }
         if done.wait(timeout: .now() + timeout) == .timedOut {
             ctx.invalidate()
             done.wait()
+            outcome = .failed
         }
-        return ok
+        return outcome
     }
 }
 

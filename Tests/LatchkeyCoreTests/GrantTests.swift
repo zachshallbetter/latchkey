@@ -367,7 +367,9 @@ final class BrokerGrantTests: XCTestCase {
     }
 
     func testApprovalRequestCarriesContext() {
-        let r = ApprovalRequest(action: .read, names: ["A"], chain: ["zsh"], folder: "/tmp", reason: "x")
+        var r = ApprovalRequest(action: .read, names: ["A"], chain: ["zsh"], folder: "/tmp", reason: "x")
+        XCTAssertFalse(r.canGrant, "only a release offers a grant")
+        r.offersGrant = true
         XCTAssertTrue(r.canGrant)
         XCTAssertFalse(r.fromApp)
         XCTAssertFalse(ApprovalRequest(action: .add, names: ["A"], chain: ["zsh"], folder: "/tmp", reason: "x").canGrant)

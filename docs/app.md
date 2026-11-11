@@ -77,11 +77,20 @@ and **Add a Location…**. See [Remote locations](remote.md).
 
 ## The approval panel
 
-Appears when a program needs your approval. It shows the items, the program asking, its folder and command. On a Mac
-with Touch ID it's one step: touch the sensor to allow once, or tick **Allow from this folder** (for a time, until the
-agent quits, or only for this command) first; **Deny** refuses. Without Touch ID, choose with the buttons and confirm
-with your password. Pushes always use the buttons, since production needs **I mean to change production** ticked
-first. Things you start yourself, in the window or in Latchkey for Safari, skip the panel and ask for Touch ID alone.
+One prompt at a time:
+
+- **Changes** (add, change, delete, import, move, restore, link) ask with the macOS Touch ID sheet alone, which says
+  what, who and where: "Latchkey is trying to add shop/development/DB, asked by Claude in ~/Projects/shop." Its
+  **Details…** button opens the panel with everything (the items, the agent and the programs it runs through, the
+  folder and the command), where **Allow** asks for Touch ID again and **Deny** refuses.
+- **Releasing values to a command** shows the panel first, titled like "Claude wants to use 2 items". Choose
+  **Allow Once**, or tick **Allow from this folder** (for a time, until the agent quits, or only for this command);
+  Touch ID or your password confirms. So do earlier values, grants asked for ahead of time and pushes, where
+  production needs **I mean to change production** ticked first.
+- A request from another computer over SSH, or from a program that isn't Latchkey's command-line tool, always shows
+  the panel first, with its warning.
+- A sheet or panel nobody answers is a denial after 90 seconds. Things you start yourself, in the window or in
+  Latchkey for Safari, ask for Touch ID alone.
 See [Concepts](concepts.md#approvals).
 
 After an import or a new item, Latchkey shows what to do next: the reference to put in your env file and the

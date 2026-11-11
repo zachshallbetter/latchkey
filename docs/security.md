@@ -33,9 +33,11 @@ command gets which value. This page says what it protects against, how, and wher
   Latchkey's own command-line tool, by code signature. The approval panel and the log show those. Any other program
   talking to the socket is named by its path, with a warning. Grants are matched against the folder the caller
   really runs in.
-- **Approvals** use macOS LocalAuthentication: Touch ID, a paired Apple Watch, or your account password. The panel
-  shows context first and, with Touch ID, takes the fingerprint itself; a panel nobody answers is a denial after 90
-  seconds. Allow Once authorizes one request; approvals are never cached.
+- **Approvals** use macOS LocalAuthentication: Touch ID, a paired Apple Watch, or your account password. Releasing values
+  shows the panel with the caller's folder, command and process chain before Touch ID. A change asks with the system
+  sheet alone, naming the item, the agent and the folder; its Details… button shows the rest. A request over SSH or
+  from a program that isn't Latchkey's tool always shows the panel and its warning first. Nothing unanswered is
+  allowed: either prompt denies after 90 seconds. Allow Once authorizes one request; approvals are never cached.
 - **Grants** are kept in a keychain item only Latchkey can read or change, on this Mac only, and last at most 7 days.
   No file holds them, so no other program can write itself one.
 - **The key proxy** (`latchkey run --proxy`) keeps OpenAI and Anthropic keys in the signed `latchkey` process, which

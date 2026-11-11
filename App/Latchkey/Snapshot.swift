@@ -47,10 +47,12 @@ enum Snapshot {
         if arg("--filter") == "grants" { model.filter = .grants }
         if let f = arg("--filter"), f.hasPrefix("project:") { model.filter = .project(String(f.dropFirst(8))) }
         if arg("--part") == "approval" {
-            let sample = ApprovalRequest(action: .read, names: ["DATABASE_URL", "STRIPE_KEY"], chain: ["zsh", "claude", "Terminal"],
+            var sample = ApprovalRequest(action: .read, names: ["DATABASE_URL", "STRIPE_KEY"], chain: ["zsh", "claude", "Terminal"],
                                          folder: NSHomeDirectory() + "/Projects/site", command: "npm test -- --watch=false",
-                                         reason: "release DATABASE_URL, STRIPE_KEY")
-            drawOffscreen(ApprovalView(request: sample) { _, _ in }, to: path)
+                                         reason: "release DATABASE_URL and STRIPE_KEY")
+            sample.sessionName = "claude"
+            sample.offersGrant = true
+            drawOffscreen(ApprovalView(request: sample) { _ in }, to: path)
             return
         }
         if let f = arg("--import") { model.beginImport(URL(fileURLWithPath: f)) }
@@ -76,7 +78,7 @@ enum Snapshot {
                                     chain: ["the Latchkey app"], folder: "", reason: "push 2 items")
             r.targets = ["Vercel shop · production", "GitHub Actions me/shop · environment production"]
             r.production = true
-            drawOffscreen(ApprovalView(request: r) { _, _ in }, to: path)
+            drawOffscreen(ApprovalView(request: r) { _ in }, to: path)
             return
         }
         if arg("--part") == "list" {

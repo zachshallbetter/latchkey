@@ -191,7 +191,7 @@ public final class Broker: @unchecked Sendable {
 
         var denied: [String] = []
         if !toAsk.isEmpty {
-            switch ask(.read, toAsk, peer, req, "release \(Self.count(toAsk)), asked by \(Self.describe(peer, req))") {
+            switch ask(.read, toAsk, peer, req, "release \(Self.count(toAsk)), asked by \(Self.describe(peer, req))", offersGrant: true) {
             case .deny:
                 denied = toAsk
                 log("get", toAsk, "denied", peer, req)
@@ -917,9 +917,11 @@ public final class Broker: @unchecked Sendable {
     }
 
     private func ask(_ action: ApprovalRequest.Action, _ names: [String], _ peer: PeerInfo, _ req: Request,
-                     _ reason: String, duration: TimeInterval? = nil, folder: String? = nil, targets: [String] = []) -> ApprovalDecision {
+                     _ reason: String, duration: TimeInterval? = nil, folder: String? = nil, targets: [String] = [],
+                     offersGrant: Bool = false) -> ApprovalDecision {
         var request = approvalRequest(action, names, peer, req, reason, duration: duration, folder: folder)
         request.targets = targets
+        request.offersGrant = offersGrant
         return approver.approve(request)
     }
 
