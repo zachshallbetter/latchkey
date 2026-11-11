@@ -29,13 +29,19 @@ struct ItemType {
         let looksLikeDatabase = ["DATABASE", "POSTGRES", "MYSQL", "REDIS", "MONGO", "_DSN"].contains { name.contains($0) }
         switch item.kind {
         case .key: self.init("Key File", "key.horizontal.fill", .purple)
-        case .value where name.hasSuffix("_URL") || name.hasSuffix("_URI"): self.init("URL", "globe", .teal)
+        case .value where Self.namesAddress(name), .token where Self.namesAddress(name): self.init("URL", "globe", .teal)
         case .value: self.init("Plain Value", "tag.fill", .gray)
         case .password where looksLikeDatabase: self.init("Database", "cylinder.split.1x2.fill", .orange)
         case .password: self.init("Password", "lock.fill", .orange)
         case .token where name.hasSuffix("API_KEY") || name.hasSuffix("_KEY"): self.init("API Key", "chevron.left.forwardslash.chevron.right", .indigo)
         case .token: self.init("Token", "key.fill", .blue)
         }
+    }
+
+    /// A name that says it holds an address: `…_URL`, `…_URI`, `…_ENDPOINT`. A password-kind value with such a name is
+    /// a connection string with a password, so it stays a database or password.
+    static func namesAddress(_ name: String) -> Bool {
+        ["_URL", "_URI", "_ENDPOINT"].contains { name.hasSuffix($0) } || name == "URL"
     }
 
     private init(_ label: String, _ symbol: String, _ tint: Color) {

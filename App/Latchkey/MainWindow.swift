@@ -62,7 +62,7 @@ struct MainWindow: View {
                     ItemList(model: model)
                 }
             }
-            .navigationSplitViewColumnWidth(min: 280, ideal: 330)
+            .navigationSplitViewColumnWidth(min: 300, ideal: 360)
         } detail: {
             if model.filter.listsItems, let item = model.selectedItem {
                 ItemDetail(model: model, item: item).id(item.name)
@@ -260,7 +260,7 @@ struct ItemList: View {
                     if inProject && group.environments.count == 1 {
                         // One environment: its items directly; the header names the environment.
                         ForEach(group.environments[0].items) { item in
-                            ItemRow(item: item, showsProject: false, remote: model.remoteStates[item.name]).tag(item.name)
+                            ItemRow(model: model, item: item, showsProject: false, remote: model.remoteStates[item.name]).tag(item.name)
                         }
                     } else if inProject {
                         ForEach(group.environments) { env in
@@ -273,17 +273,29 @@ struct ItemList: View {
                         }
                         if open {
                             ForEach(group.environments.flatMap(\.items)) { item in
-                                ItemRow(item: item, showsProject: false).padding(.leading, 18).tag(item.name)
+                                ItemRow(model: model, item: item, showsProject: false).padding(.leading, 18).tag(item.name)
                             }
                         }
                     } else {
                         let open = model.isOpen(group.project)
+                        // One environment: its items sit right under the project, which shows the environment's badge.
+                        let only = group.environments.count == 1 ? group.environments[0] : nil
                         TreeHeader(open: open, toggle: { model.toggle(group.project) }) {
                             GroupHeader(symbol: "folder", title: group.project, count: group.count,
                                         environments: group.environments.map { ($0.name, $0.items.count) })
                         }
-                        .contextMenu { ProjectMenu(model: model, project: group.project) }
-                        if open {
+                        .contextMenu {
+                            if let env = only {
+                                GroupMenu(model: model, title: "\(group.project)/\(env.name)", ids: env.items.map(\.name), pattern: "\(group.project)/\(env.name)/*")
+                            } else {
+                                ProjectMenu(model: model, project: group.project)
+                            }
+                        }
+                        if open, let env = only {
+                            ForEach(env.items) { item in
+                                ItemRow(model: model, item: item, showsProject: false, remote: model.remoteStates[item.name]).padding(.leading, 18).tag(item.name)
+                            }
+                        } else if open {
                             ForEach(group.environments) { env in
                                 EnvironmentGroup(model: model, project: group.project, env: env, indent: 18)
                             }
@@ -292,7 +304,7 @@ struct ItemList: View {
                 }
             } else {
                 ForEach(list) { item in
-                    ItemRow(item: item).tag(item.name)
+                    ItemRow(model: model, item: item).tag(item.name)
                 }
             }
         }
@@ -326,9 +338,16 @@ struct ListHeader: View {
 
     private var subtitle: String {
         var parts = ["\(count) credential\(count == 1 ? "" : "s")"]
-        if case .project(let p) = model.filter {
+        switch model.filter {
+        case .project(let p):
             let envs = model.environments(in: p)
-            if envs.count == 1 { parts.append(envs[0]) }
+            parts.append(envs.count == 1 ? envs[0] : "\(envs.count) environments")
+        case .all where model.search.isEmpty:
+            let projects = model.projects.count, shared = model.count(.shared)
+            parts.append("\(projects) project\(projects == 1 ? "" : "s")")
+            if shared > 0 { parts.append("\(shared) shared") }
+        default:
+            break
         }
         return parts.joined(separator: " · ")
     }
@@ -362,7 +381,7 @@ struct ListHeader: View {
                 } label: {
                     Image(systemName: "ellipsis")
                 }
-                .menuStyle(.button).buttonStyle(.bordered).menuIndicator(.hidden).fixedSize()
+                .menuStyle(.button).buttonStyle(.bordered).menuIndicator(.hidden).fixedSize().focusEffectDisabled()
                 .help("New, import, sort and show")
             }
             HStack(spacing: 6) {
@@ -515,7 +534,7 @@ struct EnvironmentGroup: View {
         }
         if open {
             ForEach(env.items) { item in
-                ItemRow(item: item, showsProject: false, remote: model.remoteStates[item.name]).padding(.leading, indent + 18).tag(item.name)
+                ItemRow(model: model, item: item, showsProject: false, remote: model.remoteStates[item.name]).padding(.leading, indent + 18).tag(item.name)
             }
         }
     }
@@ -530,12 +549,12 @@ struct GroupHeader: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: symbol).foregroundStyle(.secondary).frame(width: 18)
-            Text(title).font(.body.weight(.semibold)).lineLimit(1)
-            Text("\(count)").foregroundStyle(.secondary).monospacedDigit()
+            Text(title).font(.body.weight(.semibold)).lineLimit(1).truncationMode(.middle)
+            Text("\(count)").foregroundStyle(.secondary).monospacedDigit().fixedSize()
             Spacer(minLength: 4)
             // Which environments the project has, at a glance, while it's collapsed.
-            HStack(spacing: 3) {
-                ForEach(environments.prefix(4), id: \.0) { EnvBadge(environment: $0.0, compact: true) }
+            HStack(spacing: 6) {
+                ForEach(environments.prefix(4), id: \.0) { EnvBadge(environment: $0.0, compact: true).fixedSize() }
                 if environments.count > 4 { Text("+\(environments.count - 4)").font(.caption2).foregroundStyle(.secondary) }
             }
         }
@@ -544,18 +563,20 @@ struct GroupHeader: View {
 }
 
 struct ItemRow: View {
+    var model: AppModel? = nil
     let item: SecretInfo
     var showsProject = true
     var showsEnvironment = false
     /// Out of date or never pushed somewhere this item's environment is linked.
     var remote: RemoteState? = nil
+    @State private var hovering = false
 
     var body: some View {
         let type = ItemType(item)
         HStack(spacing: 12) {
             Image(systemName: type.symbol).font(.system(size: 17, weight: .medium)).foregroundStyle(type.tint).frame(width: 24)
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.ref.name).font(.body.weight(.medium)).lineLimit(1)
+                Text(item.ref.name).font(.body.weight(.medium)).lineLimit(1).truncationMode(.middle)
                 HStack(spacing: 5) {
                     // Headings already name the project (and, in a project view, the environment).
                     if !item.ref.isShared && (showsProject || showsEnvironment) {
@@ -566,7 +587,11 @@ struct ItemRow: View {
                 }
                 .lineLimit(1)
             }
-            Spacer()
+            Spacer(minLength: 6)
+            if hovering, let model {
+                Button { model.copyReference(item.name) } label: { Image(systemName: "link") }
+                    .buttonStyle(.borderless).help("Copy latchkey://\(item.name)")
+            }
             if remote == .outOfDate {
                 Image(systemName: "arrow.triangle.2.circlepath").foregroundStyle(.orange)
                     .help("Changed since it was last pushed to a remote location")
@@ -579,7 +604,10 @@ struct ItemRow: View {
                     .help("Any program in your Mac account may request this value without approval")
             }
         }
-        .padding(.vertical, 5)
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .onHover { hovering = $0 }
+        .help(item.name)
     }
 }
 
@@ -825,11 +853,11 @@ struct PlaceLabel: View {
         if !services.isEmpty {
             Label(services.map { $0.label.replacingOccurrences(of: " Actions", with: "") }.joined(separator: ", "), systemImage: "icloud")
                 .font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                .help("Linked: \(links.map(\.target.label).joined(separator: "; "))")
+            .help("Linked: \(links.map(\.target.label).joined(separator: "; "))")
         } else if local {
             Label("Local", systemImage: "laptopcomputer")
                 .font(.caption).foregroundStyle(.secondary)
-                .help("Used from files on this Mac; not linked to Vercel, GitHub Actions, Railway or Fly")
+            .help("Used from files on this Mac; not linked to Vercel, GitHub Actions, Railway or Fly")
         } else {
             Text("Not linked").font(.caption).foregroundStyle(.tertiary)
         }

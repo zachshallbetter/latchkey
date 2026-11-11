@@ -19,7 +19,8 @@ to be running for `latchkey run` to work (the tool starts it if it isn't). Only 
 
 The list's header names what's shown and how many, with a search field (⌘F) and a **…** menu: New Item, Import,
 sort order, and **Show** (no approval, ask first, or one kind). Each item shows its type (token, API key, database,
-URL, password, key file, plain value) and service.
+URL, password, key file, plain value) and service; long names are shortened in the middle, with the full ID on hover,
+and hovering a row shows a button that copies its `latchkey://` reference.
 
 Items are shown as a tree: project, then environment, then items. In a project's own view the tree starts at its
 environments; a project with one environment lists its items directly. Groups start closed; a closed project shows how many items it has and which environments, and a closed
