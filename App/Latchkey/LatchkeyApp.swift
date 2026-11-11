@@ -86,6 +86,12 @@ struct GrantRequest: Identifiable {
     var pattern: String?
 }
 
+/// The environment whose remote locations sheet is open.
+struct RemoteRequest: Identifiable {
+    let id = UUID()
+    var scope: String
+}
+
 /// Items waiting for the delete confirmation.
 struct DeleteRequest: Identifiable {
     let id = UUID()
@@ -133,6 +139,10 @@ final class AppModel {
     /// Earlier values currently shown; each hides itself after a short while.
     var revealedVersions: [String: String] = [:]
     var grantRequest: GrantRequest?
+    var remoteRequest: RemoteRequest?
+    var links: [RemoteLink] = []
+    /// Each item's worst state across the links covering it; absent when nothing covers it.
+    var remoteStates: [String: RemoteState] = [:]
     var deleteRequest: DeleteRequest?
     var problem: String?
     /// One-line confirmation shown at the bottom of the window, e.g. after an import.
@@ -185,6 +195,8 @@ final class AppModel {
         log = Broker.readLog(limit: 300).reversed()
         grants = broker.grants.all()
         deleted = (try? broker.versions.deleted(existing: Set(items.map(\.name)))) ?? []
+        links = (try? broker.remotes.all()) ?? []
+        remoteStates = computeRemoteStates()
         let names = Set(items.map(\.name))
         if !selection.isSubset(of: names) { selection = selection.intersection(names) }
     }
@@ -283,6 +295,52 @@ final class AppModel {
     func files(for ids: [String]) -> [String] {
         var seen = Set<String>()
         return items.filter { ids.contains($0.name) }.flatMap { $0.usedIn ?? [] }.filter { seen.insert($0).inserted }
+    }
+
+    // MARK: remote locations
+
+    func links(for scope: String) -> [RemoteLink] { links.filter { $0.scope == scope } }
+
+    private func computeRemoteStates() -> [String: RemoteState] {
+        guard !links.isEmpty else { return [:] }
+        let changed = Dictionary(grouping: (try? broker.versions.list(item: nil)) ?? [], by: \.item).mapValues { $0.map(\.savedAt).max() }
+        var out: [String: RemoteState] = [:]
+        for item in items {
+            let states = links.filter { $0.covers(item.name) }.map { $0.state(of: item.name, valueChangedAt: changed[item.name] ?? nil) }
+            if states.contains(.outOfDate) { out[item.name] = .outOfDate }
+            else if states.contains(.notPushed) { out[item.name] = .notPushed }
+            else if !states.isEmpty { out[item.name] = .current }
+        }
+        return out
+    }
+
+    /// Per-link state of one item.
+    func remoteStates(of item: SecretInfo) -> [(link: RemoteLink, state: RemoteState)] {
+        let changed = history(for: item.name).first?.savedAt
+        return links.filter { $0.covers(item.name) }.map { ($0, $0.state(of: item.name, valueChangedAt: changed)) }
+    }
+
+    func addLink(_ scope: String, _ target: RemoteTarget) async -> String? {
+        let err = await run(Request(op: "link", names: [scope], target: target))
+        if err == nil { notice = "Linked \(scope) to \(target.label)." }
+        return err
+    }
+
+    func unlink(_ link: RemoteLink) async {
+        if let err = await run(Request(op: "unlink", names: [link.id])) { notice = err } else { notice = "Unlinked \(link.target.label)." }
+    }
+
+    func remoteStatus(_ scope: String) async -> [RemoteStatus] {
+        (await send(Request(op: "remote-status", names: [scope]))).remoteStatus ?? []
+    }
+
+    /// Pushes, then reports per target. Returns the results for the sheet to show.
+    func push(_ scope: String, link: String? = nil, only: [String]? = nil) async -> [PushResult] {
+        let r = await send(Request(op: "push", names: [scope], link: link, only: only))
+        let results = r.pushResults ?? []
+        let ok = results.filter(\.ok).count, failed = results.count - ok
+        notice = results.isEmpty ? (r.error ?? "Nothing pushed.") : "Pushed \(ok) value\(ok == 1 ? "" : "s")\(failed > 0 ? "; \(failed) failed" : "")."
+        return results
     }
 
     // MARK: history

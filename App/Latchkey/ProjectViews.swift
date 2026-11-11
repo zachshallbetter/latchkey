@@ -7,8 +7,16 @@ struct EnvBadge: View {
     let environment: String
     var compact = false
 
+    /// `vercel.preview` → ("Vercel", "preview"): values kept for one service's instance.
+    var parts: (service: String?, instance: String) {
+        let bits = environment.split(separator: ".", maxSplits: 1).map(String.init)
+        if bits.count == 2, let s = RemoteTarget.Service(rawValue: bits[0]) { return (s.label.replacingOccurrences(of: " Actions", with: ""), bits[1]) }
+        if bits.count == 2, bits[0] == "local" { return ("Local", bits[1]) }
+        return (nil, environment)
+    }
+
     var tint: Color {
-        switch environment {
+        switch parts.instance {
         case "development": return .blue
         case "preview": return .purple
         case "staging": return .orange
@@ -19,7 +27,7 @@ struct EnvBadge: View {
     }
 
     var body: some View {
-        Text(environment)
+        Text(parts.service.map { "\($0) · \(parts.instance)" } ?? environment)
             .font(compact ? .caption2.weight(.semibold) : .caption.weight(.semibold))
             .padding(.horizontal, compact ? 5 : 7).padding(.vertical, compact ? 1 : 2)
             .foregroundStyle(tint)
@@ -84,6 +92,9 @@ struct GroupMenu: View {
         Button("Require Approval for All") { Task { await model.updateItems(ids, agentSafe: false) } }
         Button("Let Agents Read All Without Asking") { Task { await model.updateItems(ids, agentSafe: true) } }
         Button("Grant Access to \(title)…") { model.grantRequest = GrantRequest(pattern: pattern) }
+        if !isProject {
+            Button("Remote Locations…") { model.remoteRequest = RemoteRequest(scope: title) }
+        }
         Divider()
         Button(isProject ? "Move or Rename Project…" : "Move to Another Environment…") { model.moveRequest = MoveRequest(ids: ids) }
         Button(isProject ? "Delete Project…" : "Delete \(title)…", role: .destructive) { model.deleteRequest = DeleteRequest(ids: ids) }

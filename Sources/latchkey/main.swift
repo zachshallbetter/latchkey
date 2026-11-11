@@ -38,6 +38,20 @@ Files refer to them as latchkey://ID.
       is kept as a version first. Asks for approval.
   latchkey deleted                Items deleted in the last 30 days, which restore can bring back.
   latchkey forget ID[,ID...]      Delete the earlier values of items for good. Asks for approval.
+  latchkey remote list [PROJECT/ENV]
+  latchkey remote link PROJECT/ENV vercel|github|railway|fly KEY=VALUE...
+      Link an environment to a place that holds its values. Keys: project, environment, repo, service, app,
+      branch, dir (a folder linked with `vercel link` or `railway link`). For example:
+        latchkey remote link acp/vercel.preview vercel project=acp environment=preview
+        latchkey remote link acp/production github repo=me/acp environment=production
+        latchkey remote link acp/railway.production railway environment=production service=api dir=~/Projects/acp
+        latchkey remote link acp/production fly app=acp-api
+  latchkey remote unlink LINK
+  latchkey remote status PROJECT/ENV   Names missing on each side and values changed since the last push.
+  latchkey push PROJECT/ENV [--to LINK] [--only ID,...] [--dry-run]
+      Send the environment's values to its links with each service's own tool, signed in as you. Asks every
+      time; production needs its own confirmation in the app. Nothing is deployed: Railway and Fly changes are
+      staged until your next deploy.
   latchkey grant ID[,ID...] [--folder DIR] [--for 2h]
       Let commands run from DIR (default: here) and the folders inside it read these items
       without asking, until the time is up (30m, 2h, 1d; at most 7d). Asks for approval once.
@@ -374,6 +388,106 @@ func grantCommand(_ input: [String]) -> Never {
     exit(0)
 }
 
+// MARK: - remote locations
+
+func printLinks(_ links: [RemoteLink]) {
+    guard !links.isEmpty else { print("No links. Add one with `latchkey remote link PROJECT/ENV SERVICE KEY=VALUE...`."); return }
+    var scope: String?
+    for l in links.sorted(by: { ($0.scope, $0.target.label) < ($1.scope, $1.target.label) }) {
+        if l.scope != scope { if scope != nil { print("") }; print(l.scope); scope = l.scope }
+        let last = l.pushed.values.max().map { "last pushed \($0.formatted(date: .abbreviated, time: .shortened))" } ?? "never pushed"
+        print("  \(l.id)  \(l.target.label)\(l.target.isProduction ? "  [production]" : "")  (\(last))")
+    }
+}
+
+func remoteCommand(_ args: [String]) -> Never {
+    guard let sub = args.first else { fail("usage: latchkey remote list|link|unlink|status ... (see latchkey help)", code: 64) }
+    let rest = Array(args.dropFirst())
+    switch sub {
+    case "list":
+        printLinks(send(Request(op: "links", names: rest.first.map { [$0] })).links ?? [])
+    case "link":
+        guard rest.count >= 2, RemoteLink.isValidScope(rest[0]), let service = RemoteTarget.Service(rawValue: rest[1]) else {
+            fail("usage: latchkey remote link PROJECT/ENV vercel|github|railway|fly KEY=VALUE...", code: 64)
+        }
+        var t = RemoteTarget(service: service)
+        for pair in rest.dropFirst(2) {
+            guard let eq = pair.firstIndex(of: "=") else { fail("\(pair) isn't KEY=VALUE", code: 64) }
+            let key = String(pair[..<eq]), value = String(pair[pair.index(after: eq)...])
+            switch key {
+            case "project": t.project = value
+            case "environment", "env": t.environment = value
+            case "repo": t.repo = value
+            case "service": t.serviceName = value
+            case "app": t.app = value
+            case "branch": t.branch = value
+            case "dir": t.directory = URL(fileURLWithPath: (value as NSString).expandingTildeInPath).standardizedFileURL.path
+            default: fail("unknown key \(key) (project, environment, repo, service, app, branch, dir)", code: 64)
+            }
+        }
+        if let problem = t.problem { fail(problem, code: 64) }
+        let r = send(Request(op: "link", names: [rest[0]], cwd: currentDirectory(), target: t))
+        if let l = r.links?.first { print("linked \(l.scope) → \(l.target.label) (\(l.id))") }
+        if ItemID(rest[0] + "/X")?.environment.contains(".") == false, rest[0].split(separator: "/").last.map(String.init) != t.suggestedEnvironment {
+            print("tip: values that differ by service can live in their own environment, e.g. \(rest[0].split(separator: "/")[0])/\(t.suggestedEnvironment)")
+        }
+    case "unlink":
+        guard let id = rest.first else { fail("usage: latchkey remote unlink LINK", code: 64) }
+        let r = send(Request(op: "unlink", names: [id]))
+        if let m = r.missing, !m.isEmpty { fail("no link \(id)", code: 66) }
+        print("unlinked \(id)")
+    case "status":
+        guard let scope = rest.first, RemoteLink.isValidScope(scope) else { fail("usage: latchkey remote status PROJECT/ENV", code: 64) }
+        let statuses = send(Request(op: "remote-status", names: [scope])).remoteStatus ?? []
+        if statuses.isEmpty { print("\(scope) isn't linked anywhere.") }
+        for s in statuses {
+            print(s.label)
+            if let e = s.error { print("  couldn't check: \(e)") }
+            if !s.missing.isEmpty { print("  not there:  \(s.missing.joined(separator: ", "))") }
+            if !s.outOfDate.isEmpty { print("  changed since last push: \(s.outOfDate.joined(separator: ", "))") }
+            if !s.extra.isEmpty { print("  only there: \(s.extra.joined(separator: ", "))") }
+            if s.error == nil && s.missing.isEmpty && s.outOfDate.isEmpty && s.extra.isEmpty { print("  in step") }
+        }
+    default:
+        fail("unknown: remote \(sub)", code: 64)
+    }
+    exit(0)
+}
+
+func pushCommand(_ args: [String]) -> Never {
+    guard let scope = args.first, RemoteLink.isValidScope(scope) else { fail("usage: latchkey push PROJECT/ENV [--to LINK] [--only ID,...] [--dry-run]", code: 64) }
+    var link: String?, only: [String]?, dryRun = false
+    var rest = Array(args.dropFirst())
+    while !rest.isEmpty {
+        let a = rest.removeFirst()
+        switch a {
+        case "--to": guard !rest.isEmpty else { fail("--to takes a link id", code: 64) }; link = rest.removeFirst()
+        case "--only": guard !rest.isEmpty else { fail("--only takes item IDs", code: 64) }; only = expandIDs([rest.removeFirst()])
+        case "--dry-run": dryRun = true
+        default: fail("unknown option \(a)", code: 64)
+        }
+    }
+    if dryRun {
+        let links = (send(Request(op: "links", names: [scope])).links ?? []).filter { link == nil || $0.id == link }
+        let items = (send(Request(op: "list")).secrets ?? []).filter { $0.name.hasPrefix(scope + "/") && (only == nil || only!.contains($0.name)) }
+        if links.isEmpty { fail("\(scope) isn't linked anywhere", code: 66) }
+        for l in links {
+            print("\(l.target.label)\(l.target.isProduction ? "  [production: confirm in the app]" : "")")
+            for i in items { print("  \(i.ref.name)") }
+        }
+        print("Nothing sent. Run without --dry-run to push; the app asks first.")
+        exit(0)
+    }
+    let r: Response
+    do { r = try BrokerClient.send(Request(op: "push", names: [scope], cwd: currentDirectory(), command: "latchkey push \(scope)", link: link, only: only)) }
+    catch { fail("cannot reach the Latchkey app (\(error))", code: 69) }
+    for p in (r.pushResults ?? []).sorted(by: { ($0.link, $0.item) < ($1.link, $1.item) }) {
+        print("\(p.ok ? "pushed " : "FAILED ") \(ItemID(p.item)?.name ?? p.item)  → \(p.link)\(p.error.map { "  \($0)" } ?? "")")
+    }
+    if !r.ok { fail(r.error ?? "push failed") }
+    exit(0)
+}
+
 // MARK: - several items
 
 /// IDs from arguments: comma-separated IDs, or PROJECT/* and PROJECT/ENV/* patterns matched against the items
@@ -594,6 +708,12 @@ case "import":
 
 case "grant":
     grantCommand(args)
+
+case "remote":
+    remoteCommand(args)
+
+case "push":
+    pushCommand(args)
 
 case "mv":
     moveCommand(args)

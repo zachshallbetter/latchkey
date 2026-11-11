@@ -75,6 +75,7 @@ struct MainWindow: View {
         .sheet(isPresented: $model.showingAdd) { AddItemSheet(model: model) }
         .sheet(item: $model.importDraft) { ImportSheet(model: model, draft: $0) }
         .sheet(item: $model.grantRequest) { NewGrantSheet(model: model, request: $0) }
+        .sheet(item: $model.remoteRequest) { RemoteSheet(model: model, scope: $0.scope) }
         .confirmationDialog(deleteTitle, isPresented: Binding(get: { model.deleteRequest != nil },
                                                               set: { if !$0 { model.deleteRequest = nil } }),
                             presenting: model.deleteRequest) { request in
@@ -412,7 +413,7 @@ struct EnvironmentGroup: View {
         }
         if open {
             ForEach(env.items) { item in
-                ItemRow(item: item, showsProject: false).padding(.leading, indent + 18).tag(item.name)
+                ItemRow(item: item, showsProject: false, remote: model.remoteStates[item.name]).padding(.leading, indent + 18).tag(item.name)
             }
         }
     }
@@ -444,6 +445,8 @@ struct ItemRow: View {
     let item: SecretInfo
     var showsProject = true
     var showsEnvironment = false
+    /// Out of date or never pushed somewhere this item's environment is linked.
+    var remote: RemoteState? = nil
 
     var body: some View {
         HStack(spacing: 10) {
@@ -464,6 +467,13 @@ struct ItemRow: View {
                 .lineLimit(1)
             }
             Spacer()
+            if remote == .outOfDate {
+                Image(systemName: "arrow.triangle.2.circlepath").foregroundStyle(.orange)
+                    .help("Changed since it was last pushed to a remote location")
+            } else if remote == .notPushed {
+                Image(systemName: "icloud.slash").foregroundStyle(.secondary)
+                    .help("Not pushed yet to a remote location its environment is linked to")
+            }
             if item.agentSafe {
                 Image(systemName: "person.badge.shield.checkmark.fill").foregroundStyle(.green)
                     .help("Agents may read this without asking")

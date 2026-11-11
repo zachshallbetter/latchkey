@@ -31,6 +31,11 @@ enum Snapshot {
         if CommandLine.arguments.contains("--sample") {
             model.items = sampleItems
             model.deleted = sampleVersions.filter { $0.reason == .deleted }
+            model.links = [
+                RemoteLink(id: "a1b2c3", scope: "acp/production", target: RemoteTarget(service: .vercel, project: "acp", environment: "production"),
+                           pushed: ["acp/production/DATABASE_URL": Date().addingTimeInterval(-86400)]),
+                RemoteLink(id: "d4e5f6", scope: "acp/production", target: RemoteTarget(service: .github, environment: "production", repo: "me/acp")),
+            ]
         }
         if let names = arg("--select") {
             model.selection = Set(names.split(separator: ",").map(String.init))
@@ -58,6 +63,18 @@ enum Snapshot {
         }
         if arg("--part") == "deleted" {
             drawOffscreen(DeletedList(model: model).frame(width: 440, height: 260), to: path)
+            return
+        }
+        if arg("--part") == "remote" {
+            drawOffscreen(RemoteSheet(model: model, scope: arg("--scope") ?? "acp/production"), to: path)
+            return
+        }
+        if arg("--part") == "pushapproval" {
+            var r = ApprovalRequest(action: .push, names: ["acp/production/DATABASE_URL", "acp/production/STRIPE_SECRET_KEY"],
+                                    chain: ["the Latchkey app"], folder: "", reason: "push 2 items")
+            r.targets = ["Vercel acp · production", "GitHub Actions me/acp · environment production"]
+            r.production = true
+            drawOffscreen(ApprovalView(request: r) { _ in }, to: path)
             return
         }
         if arg("--part") == "list" {

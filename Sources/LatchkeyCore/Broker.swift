@@ -12,6 +12,11 @@ public final class Broker: @unchecked Sendable {
     /// Earlier values: kept when a value is replaced or an item deleted, pruned to `Versions.keep` per item and
     /// `Versions.deletedFor` after a delete.
     public let versions: VersionStore
+    /// Environments linked to Vercel, GitHub Actions, Railway or Fly.
+    public let remotes: RemoteStore
+    let runner: RemoteRunner
+    /// Pushes run only in the app, where the approval panel can confirm production. The window-less broker refuses them.
+    public let allowsPush: Bool
     public let approver: Approver
     /// How long a read approval covers the same names from the same place. 0 asks every time.
     public var readApprovalWindow: TimeInterval
@@ -24,8 +29,18 @@ public final class Broker: @unchecked Sendable {
 
     /// Without a log (tests), grants are kept in memory too unless a store is passed.
     public init(store: SecretStore, approver: Approver, readApprovalWindow: TimeInterval = 120,
-                logURL: URL? = Paths.accessLog, grants: GrantStore? = nil, versions: VersionStore? = nil) {
+                logURL: URL? = Paths.accessLog, grants: GrantStore? = nil, versions: VersionStore? = nil,
+                remotes: RemoteStore? = nil, runner: RemoteRunner = ProcessRunner(), allowsPush: Bool = true) {
         self.store = store
+        self.runner = runner
+        self.allowsPush = allowsPush
+        if let remotes {
+            self.remotes = remotes
+        } else if logURL != nil, let keychain = store as? KeychainStore {
+            self.remotes = KeychainRemoteStore(mode: keychain.mode)
+        } else {
+            self.remotes = MemoryRemoteStore()
+        }
         if let versions {
             self.versions = versions
         } else if logURL != nil, let keychain = store as? KeychainStore {
@@ -62,6 +77,13 @@ public final class Broker: @unchecked Sendable {
             case "version": return try versionValue(req, peer: peer)
             case "restore": return try restore(req, peer: peer)
             case "forget": return try forget(req, peer: peer)
+            case "links":
+                let scope = req.names?.first
+                return Response(ok: true, links: try remotes.all().filter { scope == nil || $0.scope == scope })
+            case "link": return try link(req, peer: peer)
+            case "unlink": return try unlink(req, peer: peer)
+            case "remote-status": return try remoteStatus(req)
+            case "push": return try push(req, peer: peer)
             default: return Response(ok: false, error: "unknown op \(req.op)")
             }
         } catch {
@@ -395,6 +417,132 @@ public final class Broker: @unchecked Sendable {
         return Response(ok: true)
     }
 
+    // MARK: remote locations
+
+    func link(_ req: Request, peer: PeerInfo) throws -> Response {
+        guard let scope = req.names?.first, RemoteLink.isValidScope(scope) else {
+            return Response(ok: false, error: "link takes a project/environment, such as acp/production")
+        }
+        guard let target = req.target else { return Response(ok: false, error: "no target given") }
+        if let problem = target.problem { return Response(ok: false, error: problem) }
+        if try remotes.all().contains(where: { $0.scope == scope && $0.target == target }) {
+            return Response(ok: false, error: "\(scope) is already linked to \(target.label)")
+        }
+        guard ask(.link, [scope], peer, req, "link \(scope) to \(target.label), asked by \(Self.who(peer))", targets: [target.label]).allowed else {
+            log("link", [scope], "denied", peer, req)
+            return Response(ok: false, error: "the link was not approved")
+        }
+        let link = RemoteLink(scope: scope, target: target)
+        try remotes.save(link)
+        log("link", [scope], "approved (\(target.label))", peer, req)
+        return Response(ok: true, links: [link])
+    }
+
+    /// Removing a link takes nothing away from you, so it doesn't ask.
+    func unlink(_ req: Request, peer: PeerInfo) throws -> Response {
+        guard let id = req.names?.first else { return Response(ok: false, error: "unlink takes a link id") }
+        guard let link = try remotes.all().first(where: { $0.id == id }) else { return Response(ok: true, missing: [id]) }
+        try remotes.remove(id)
+        log("unlink", [link.scope], "unlinked \(link.target.label)", peer, req)
+        return Response(ok: true)
+    }
+
+    /// When an item's current value was set: its newest version is the value it replaced.
+    func valueChangedAt(_ item: String) -> Date? { try? versions.list(item: item).first?.savedAt }
+
+    /// Compares names with each link's target. Reads names only; never sends or keeps a value.
+    func remoteStatus(_ req: Request) throws -> Response {
+        guard let scope = req.names?.first, RemoteLink.isValidScope(scope) else { return Response(ok: false, error: "status takes a project/environment") }
+        let items = try store.list().filter { $0.name.hasPrefix(scope + "/") }
+        let expected = Set(items.map(\.ref.name))
+        var out: [RemoteStatus] = []
+        for link in try remotes.all() where link.scope == scope {
+            let r = runner.run(link.target.listCommand, timeout: 60)
+            let stale = items.filter { link.state(of: $0.name, valueChangedAt: valueChangedAt($0.name)) == .outOfDate }.map(\.ref.name).sorted()
+            guard r.status == 0, let names = link.target.names(fromListOutput: r.stdout) else {
+                out.append(RemoteStatus(link: link.id, label: link.target.label, error: Self.toolError(r, link.target), outOfDate: stale))
+                continue
+            }
+            let there = Set(names)
+            out.append(RemoteStatus(link: link.id, label: link.target.label, missing: expected.subtracting(there).sorted(),
+                                    extra: there.subtracting(expected).sorted(), outOfDate: stale))
+        }
+        return Response(ok: true, remoteStatus: out)
+    }
+
+    /// Sends an environment's values to its links with the services' own tools. Always asks, every time: no
+    /// grant or remembered approval covers a push, production needs its own confirmation, and only the app does it.
+    func push(_ req: Request, peer: PeerInfo) throws -> Response {
+        guard allowsPush else { return Response(ok: false, error: "pushes run in the Latchkey app, where production can be confirmed; open it and try again") }
+        guard let scope = req.names?.first, RemoteLink.isValidScope(scope) else { return Response(ok: false, error: "push takes a project/environment") }
+        let links = try remotes.all().filter { $0.scope == scope && (req.link == nil || $0.id == req.link) }
+        guard !links.isEmpty else { return Response(ok: false, error: req.link == nil ? "\(scope) isn't linked anywhere" : "no such link for \(scope)") }
+        var items = try store.list().filter { $0.name.hasPrefix(scope + "/") }
+        if let only = req.only { items = items.filter { only.contains($0.name) } }
+        guard !items.isEmpty else { return Response(ok: false, error: "no items to push in \(scope)") }
+
+        let labels = links.map(\.target.label)
+        let names = items.map(\.name)
+        var request = ApprovalRequest(action: .push, names: names, chain: peer.chain,
+                                      folder: (req.cwd ?? peer.cwd).isEmpty ? "" : Grant.normalize(req.cwd ?? peer.cwd), command: req.command,
+                                      reason: "push \(Self.count(names.map { ItemID($0)?.name ?? $0 })) to \(labels.joined(separator: ", ")), asked by \(Self.who(peer))")
+        request.targets = labels
+        request.production = links.contains { $0.target.isProduction }
+        guard approver.approve(request).allowed else {
+            log("push", names, "denied", peer, req)
+            return Response(ok: false, error: "the push was not approved")
+        }
+
+        let values = try store.values(names)
+        var results: [PushResult] = []
+        for var link in links {
+            var batch: [(name: String, value: String, secret: Bool)] = []
+            var ids: [String] = []
+            for item in items {
+                guard let value = values[item.name] else { results.append(PushResult(link: link.id, item: item.name, ok: false, error: "no value")); continue }
+                if link.target.service == .fly && value.contains("\n") {
+                    results.append(PushResult(link: link.id, item: item.name, ok: false, error: "Fly secrets import takes one line per value"))
+                    continue
+                }
+                batch.append((item.ref.name, value, item.kind.isSecret))
+                ids.append(item.name)
+            }
+            let commands = link.target.pushCommands(batch)
+            // One command per item, except Fly, where one command carries them all.
+            let groups: [[String]] = commands.count == ids.count ? ids.map { [$0] } : [ids]
+            for (command, group) in zip(commands, groups) {
+                let r = runner.run(command, timeout: 120)
+                let secrets = group.compactMap { values[$0] }
+                for id in group {
+                    if r.status == 0 {
+                        link.pushed[id] = Date()
+                        results.append(PushResult(link: link.id, item: id, ok: true))
+                    } else {
+                        results.append(PushResult(link: link.id, item: id, ok: false, error: Self.redact(Self.toolError(r, link.target), secrets)))
+                    }
+                }
+            }
+            try remotes.save(link)
+            let ok = results.filter { $0.link == link.id && $0.ok }.count, failed = results.filter { $0.link == link.id && !$0.ok }.count
+            log("push", ids, "approved (\(link.target.label): \(ok) pushed\(failed > 0 ? ", \(failed) failed" : ""))", peer, req)
+        }
+        let anyFailed = results.contains { !$0.ok }
+        return Response(ok: !anyFailed, error: anyFailed ? "some values didn't reach their target" : nil, pushResults: results)
+    }
+
+    /// A tool's complaint, shortened, or why it couldn't run.
+    static func toolError(_ r: (status: Int32, stdout: String, stderr: String), _ target: RemoteTarget) -> String {
+        if r.status == 127 { return r.stderr }
+        let text = (r.stderr.isEmpty ? r.stdout : r.stderr).trimmingCharacters(in: .whitespacesAndNewlines)
+        let line = text.split(separator: "\n").last.map(String.init) ?? "exit status \(r.status)"
+        return "\(target.service.tool): \(line.prefix(300))"
+    }
+
+    /// Belt and braces: no value appears in an error message, even if a tool echoed it.
+    static func redact(_ text: String, _ secrets: [String]) -> String {
+        secrets.filter { $0.count >= 4 }.reduce(text) { $0.replacingOccurrences(of: $1, with: "<value>") }
+    }
+
     /// Taking access away never needs approval.
     func revoke(_ req: Request, peer: PeerInfo) -> Response {
         guard let id = req.names?.first else { return Response(ok: false, error: "revoke takes a grant id or all") }
@@ -406,11 +554,13 @@ public final class Broker: @unchecked Sendable {
     }
 
     private func ask(_ action: ApprovalRequest.Action, _ names: [String], _ peer: PeerInfo, _ req: Request,
-                     _ reason: String, duration: TimeInterval? = nil) -> ApprovalDecision {
+                     _ reason: String, duration: TimeInterval? = nil, targets: [String] = []) -> ApprovalDecision {
         let folder = req.cwd ?? peer.cwd
-        return approver.approve(ApprovalRequest(action: action, names: names, chain: peer.chain,
-                                                folder: folder.isEmpty ? "" : Grant.normalize(folder),
-                                                command: req.command, duration: duration, reason: reason))
+        var request = ApprovalRequest(action: action, names: names, chain: peer.chain,
+                                      folder: folder.isEmpty ? "" : Grant.normalize(folder),
+                                      command: req.command, duration: duration, reason: reason)
+        request.targets = targets
+        return approver.approve(request)
     }
 
     /// "zsh › claude" or "the Latchkey app".

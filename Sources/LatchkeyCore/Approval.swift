@@ -4,7 +4,7 @@ import LocalAuthentication
 /// What the broker is asking the person at the Mac to allow.
 public struct ApprovalRequest: Sendable {
     public enum Action: String, Sendable {
-        case read, add, change, delete, importItems, grant, move, readVersion, restore
+        case read, add, change, delete, importItems, grant, move, readVersion, restore, link, push
     }
     public var action: Action
     public var names: [String]
@@ -17,6 +17,10 @@ public struct ApprovalRequest: Sendable {
     public var duration: TimeInterval?
     /// Completes the system sentence "<App> is trying to …".
     public var reason: String
+    /// push, link: where values are going, as labels.
+    public var targets: [String] = []
+    /// push: at least one target is production, which needs its own confirmation.
+    public var production = false
 
     public init(action: Action, names: [String], chain: [String], folder: String, command: String? = nil,
                 duration: TimeInterval? = nil, reason: String) {
@@ -31,7 +35,8 @@ public struct ApprovalRequest: Sendable {
 
     /// Reads from a folder can be turned into a grant from the approval itself.
     public var canGrant: Bool { action == .read && !folder.isEmpty }
-    /// Requests made in the Latchkey window: the person is already there, so Touch ID alone is enough.
+    /// Requests made in the Latchkey window: the person is already there, so Touch ID alone is enough, except for
+    /// pushes, which always show the panel.
     public var fromApp: Bool { chain.first == Broker.appCaller }
 }
 
@@ -78,7 +83,9 @@ public final class SystemApprover: Approver, @unchecked Sendable {
     }
 
     public func approve(_ request: ApprovalRequest) -> ApprovalDecision {
-        confirm(request.reason) ? .once : .deny
+        // The system sheet has no way to ask "are you sure this is production?", so it doesn't approve that.
+        if request.production { return .deny }
+        return confirm(request.reason) ? .once : .deny
     }
 
     /// Touch ID / Watch / password with this reason. True if the person passed it.

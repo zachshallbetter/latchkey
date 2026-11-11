@@ -133,6 +133,7 @@ public struct ImportItem: Codable, Sendable, Hashable {
 public struct Request: Codable, Sendable {
     public var op: String            // status | list | get | set | rm | import | grants | grant | revoke | move | update
                                      // | history | deleted | version | restore | forget
+                                     // | links | link | unlink | remote-status | push
     public var names: [String]?
     public var value: String?
     public var kind: ItemKind?
@@ -149,12 +150,16 @@ public struct Request: Codable, Sendable {
     public var environment: String?  // move: target environment
     public var service: String?      // set: the issuing service ("" clears it)
     public var version: String?      // restore, version: a version id
+    public var target: RemoteTarget? // link: where the environment's values go
+    public var link: String?         // push: only this link
+    public var only: [String]?       // push: only these item ids
 
     public init(op: String, names: [String]? = nil, value: String? = nil, kind: ItemKind? = nil,
                 agentSafe: Bool? = nil, note: String? = nil, cwd: String? = nil, command: String? = nil,
                 items: [ImportItem]? = nil, replace: Bool? = nil, source: String? = nil,
                 folder: String? = nil, duration: Double? = nil, project: String? = nil, environment: String? = nil,
-                service: String? = nil, version: String? = nil) {
+                service: String? = nil, version: String? = nil, target: RemoteTarget? = nil, link: String? = nil,
+                only: [String]? = nil) {
         self.op = op
         self.names = names
         self.value = value
@@ -172,6 +177,9 @@ public struct Request: Codable, Sendable {
         self.environment = environment
         self.service = service
         self.version = version
+        self.target = target
+        self.link = link
+        self.only = only
     }
 }
 
@@ -195,12 +203,16 @@ public struct Response: Codable, Sendable {
     public var moved: [String: String]?
     /// history, deleted: version records, newest first. Never values.
     public var versions: [Version]?
+    public var links: [RemoteLink]?
+    public var remoteStatus: [RemoteStatus]?
+    public var pushResults: [PushResult]?
 
     public init(ok: Bool, error: String? = nil, secrets: [SecretInfo]? = nil, values: [String: String]? = nil,
                 masked: [String]? = nil, denied: [String]? = nil, missing: [String]? = nil,
                 info: [String: String]? = nil, added: [String]? = nil, replaced: [String]? = nil,
                 skipped: [String]? = nil, grants: [Grant]? = nil, moved: [String: String]? = nil,
-                versions: [Version]? = nil) {
+                versions: [Version]? = nil, links: [RemoteLink]? = nil, remoteStatus: [RemoteStatus]? = nil,
+                pushResults: [PushResult]? = nil) {
         self.ok = ok
         self.error = error
         self.secrets = secrets
@@ -215,6 +227,9 @@ public struct Response: Codable, Sendable {
         self.grants = grants
         self.moved = moved
         self.versions = versions
+        self.links = links
+        self.remoteStatus = remoteStatus
+        self.pushResults = pushResults
     }
 }
 

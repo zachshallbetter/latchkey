@@ -14,14 +14,15 @@ command starts. Agents get only the items marked agent-safe; everything else nee
 | Broker: agent-safe policy, approval panel then Touch ID / Apple Watch / password, grants, access log | Built |
 | Projects, environments and services: item IDs `project/environment/NAME`, import placement, moving items, project-wide grants | Built |
 | Version history: earlier values kept on change and delete, restore, Recently Deleted for 30 days | Built |
-| `latchkey` command-line tool: `run`, `list`, `get`, `set`, `rm`, `update`, `import`, `mv`, `history`, `restore`, `deleted`, `forget`, `grant`, `grants`, `revoke`, `status`; starts the app if needed | Built |
+| Remote locations: link an environment to Vercel, GitHub Actions, Railway or Fly; names-only status; push | Built (Fly untested: `flyctl` not installed here) |
+| `latchkey` command-line tool: `run`, `list`, `get`, `set`, `rm`, `update`, `import`, `mv`, `history`, `restore`, `deleted`, `forget`, `remote`, `push`, `grant`, `grants`, `revoke`, `status`; starts the app if needed | Built |
 | `latchkey-broker`: the broker without a window, for development | Built |
 | App: window with sidebar, item list and detail; reveal and copy behind Touch ID; .env import sheet; activity log; menu bar panel; settings; open at login. Hosts the broker | Built; needs a team set to sync |
 | Key-file delivery, expiry reminders | Not built |
 | Browser extension or AutoFill provider | Not built |
 | SSH agent (Secure Enclave keys) | Not built |
 
-Tests: 46 (`swift test`; add `LATCHKEY_KEYCHAIN_TESTS=1` to include a real keychain round trip).
+Tests: 52 (`swift test`; add `LATCHKEY_KEYCHAIN_TESTS=1` to include a real keychain round trip).
 
 See [docs/apple-passwords-and-passkeys.md](docs/apple-passwords-and-passkeys.md) for how this uses iCloud Keychain
 and LocalAuthentication, why items don't appear in the Passwords app, and where passkeys fit.
@@ -96,6 +97,32 @@ Restoring keeps the current value as a version first.
     latchkey deleted
     latchkey forget acp/production/DATABASE_URL      # earlier values gone for good
 
+## Remote locations
+
+Link an environment to the places that hold its values, then push from Latchkey instead of pasting into each
+dashboard:
+
+    latchkey remote link acp/vercel.preview vercel project=acp environment=preview
+    latchkey remote link acp/production github repo=me/acp environment=production
+    latchkey remote link acp/railway.production railway environment=production service=api dir=~/Projects/acp
+    latchkey remote link acp/production fly app=acp-api
+    latchkey remote status acp/production      # names missing on each side, values changed since the last push
+    latchkey push acp/production --dry-run
+    latchkey push acp/production
+
+- A link covers the whole environment, including items added later.
+- **Values that differ by service** live in their own environment: `acp/vercel.preview` beside `acp/preview` (used
+  locally). The app shows `vercel.preview` as "Vercel · preview".
+- Pushes use each service's own tool, signed in as you (`vercel env add`, `gh secret set`, `railway variable set
+  --stdin --skip-deploys`, `flyctl secrets import --stage`). Values go on standard input, never in arguments.
+  Nothing is deployed: new values apply on the next deploy, which you start.
+- Every push asks, every time; no grant or remembered approval covers it. Production (Vercel production, a
+  GitHub or Railway environment named like production, a Fly app) needs an extra confirmation in the panel on top of
+  Touch ID. Pushes run only in the app; `latchkey-broker` refuses them.
+- Status reads names only. Railway's listing includes values; Latchkey keeps the names and drops the rest.
+- Links are synced with your items. Each records when each item was last pushed, so items changed since show as out
+  of date.
+
 ## Using the app
 
 - **Sidebar:** All, Agent-Safe, Ask First and Activity, a count per kind, then **Projects** (with a filter once there
@@ -119,6 +146,8 @@ Restoring keeps the current value as a version first.
 - **Grants:** what each grant covers and when it ends; revoke one or all, or make a new one.
 - **History:** each item's earlier values in its detail pane, with show and restore; **Recently Deleted** under
   Access brings deleted items back.
+- **Remote:** right-click an environment for **Remote Locations…** (link, check status, push). Items show where they
+  stand in the detail pane, and a badge in the list when they changed since the last push.
 - **Menu bar:** search, copy a value, or jump to an item.
 
 ## Build

@@ -3,7 +3,8 @@ import LatchkeyCore
 import SwiftUI
 
 /// Shows who is asking, from where and for what, then confirms the choice with Touch ID.
-/// Requests made in the Latchkey window skip the panel: the person is already looking at what they clicked.
+/// Requests made in the Latchkey window skip the panel (the person is already looking at what they clicked),
+/// except pushes, which always show it.
 final class PanelApprover: Approver, @unchecked Sendable {
     let system = SystemApprover()
     /// How long the panel waits before counting as a denial.
@@ -12,7 +13,8 @@ final class PanelApprover: Approver, @unchecked Sendable {
     var method: String { system.method }
 
     func approve(_ request: ApprovalRequest) -> ApprovalDecision {
-        if request.fromApp { return system.approve(request) }
+        // Pushes always show the panel, even from the window: it's where production is confirmed.
+        if request.fromApp && request.action != .push { return system.approve(request) }
         let done = DispatchSemaphore(value: 0)
         nonisolated(unsafe) var choice = ApprovalDecision.deny
         DispatchQueue.main.async {
@@ -74,6 +76,8 @@ struct ApprovalView: View {
     let request: ApprovalRequest
     let decide: (ApprovalDecision) -> Void
     @State private var grantFor: TimeInterval = 3600
+    /// Production pushes need this ticked, on top of Touch ID.
+    @State private var confirmedProduction = false
 
     var title: String {
         switch request.action {
@@ -86,6 +90,8 @@ struct ApprovalView: View {
         case .move: return "Move \(request.names.count) item\(request.names.count == 1 ? "" : "s")?"
         case .readVersion: return "Show an earlier value of \(request.names.first ?? "item")?"
         case .restore: return "Restore \(request.names.first ?? "item")?"
+        case .link: return "Link \(request.names.first ?? "environment")?"
+        case .push: return "Push \(request.names.count) value\(request.names.count == 1 ? "" : "s")?"
         }
     }
 
@@ -104,6 +110,18 @@ struct ApprovalView: View {
                 if !request.folder.isEmpty { row("Folder", Broker.tilde(request.folder), mono: true) }
                 if let c = request.command, !c.isEmpty { row("Command", c, mono: true) }
                 if let d = request.duration { row("For", GrantStore.describe(d)) }
+                if !request.targets.isEmpty { row(request.action == .push ? "To" : "Target", request.targets.joined(separator: "\n")) }
+            }
+            if request.production {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label("This sends values to production.", systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange).font(.callout.weight(.semibold))
+                    Toggle("I mean to change production", isOn: $confirmedProduction)
+                    Text("Nothing is deployed; the new values apply on the next deploy.").font(.caption).foregroundStyle(.secondary)
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(RoundedRectangle(cornerRadius: 8).fill(.orange.opacity(0.12)))
             }
             if request.canGrant {
                 HStack {
@@ -126,7 +144,9 @@ struct ApprovalView: View {
                 Text("Touch ID confirms your choice.").font(.caption).foregroundStyle(.secondary)
                 Spacer()
                 Button("Deny", role: .cancel) { decide(.deny) }.keyboardShortcut(.cancelAction)
-                Button(request.action == .read ? "Allow Once" : "Allow") { decide(.once) }.keyboardShortcut(.defaultAction)
+                Button(request.action == .read ? "Allow Once" : request.action == .push ? "Push" : "Allow") { decide(.once) }
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(request.production && !confirmedProduction)
             }
         }
         .padding(20)

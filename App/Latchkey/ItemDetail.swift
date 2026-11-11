@@ -131,6 +131,38 @@ struct ItemDetail: View {
                 }
             }
 
+            if !item.ref.isShared {
+                let remote = model.remoteStates(of: item)
+                Section {
+                    if remote.isEmpty {
+                        Text("\(item.ref.project)/\(item.ref.environment) isn't linked to Vercel, GitHub Actions, Railway or Fly.")
+                            .foregroundStyle(.secondary)
+                    }
+                    ForEach(remote, id: \.link.id) { r in
+                        HStack {
+                            Text(r.link.target.label).lineLimit(1)
+                            Spacer()
+                            switch r.state {
+                            case .current:
+                                Text("Pushed \(r.link.pushed[item.name]!.formatted(.relative(presentation: .named)))").foregroundStyle(.secondary)
+                            case .outOfDate:
+                                Label("Changed since last push", systemImage: "arrow.triangle.2.circlepath").foregroundStyle(.orange)
+                            case .notPushed:
+                                Text("Not pushed").foregroundStyle(.secondary)
+                            }
+                        }
+                        .font(.callout)
+                    }
+                } header: {
+                    HStack {
+                        Text("Remote")
+                        Spacer()
+                        Button("Manage…") { model.remoteRequest = RemoteRequest(scope: "\(item.ref.project)/\(item.ref.environment)") }
+                            .buttonStyle(.link).font(.caption)
+                    }
+                }
+            }
+
             Section {
                 if versions.isEmpty {
                     Text("No earlier values yet. When this value changes, the old one is kept here.")
