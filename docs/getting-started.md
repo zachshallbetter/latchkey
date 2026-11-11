@@ -98,6 +98,38 @@ then replaces each value in the file with its `latchkey://` reference. The file 
 Have many projects? `latchkey import --batch` takes a list of files and imports them all with one approval. See
 [Importing](import.md).
 
+## Uninstall
+
+1. If you want your items gone too, delete them first: they're in iCloud Keychain, not in the app, and stay there
+   (synced to your other Macs) after the app is removed. In the window, select them, **Delete…**, then in
+   **Recently Deleted** use **Forget for Good…** on each. Remove remote links with **Remote Locations…** › **Unlink…**,
+   or `latchkey remote unlink`.
+2. Turn off **Open at login** in Settings.
+3. Quit Latchkey from the menu bar icon › **Quit**.
+4. Remove the app, the command-line tool, its folder and its settings:
+
+   ```bash
+   rm -rf /Applications/Latchkey.app
+   ```
+
+   ```bash
+   rm -f ~/.local/bin/latchkey
+   ```
+
+   ```bash
+   rm -rf ~/Library/Application\ Support/Latchkey
+   ```
+
+   ```bash
+   defaults delete io.snackstud.latchkey
+   ```
+
+   The folder holds your grants, the access log and the broker socket.
+
+Items left in iCloud Keychain show in Keychain Access as "Latchkey: ID", "Latchkey history: ID" and "Latchkey link:
+…", and come back if you install Latchkey again with the same Apple Account. Delete them there to remove them
+without the app. Removing Latchkey doesn't change the values at your services or in your remote locations.
+
 ## Next
 
 - [Using with agents](agents.md): let a coding agent run your project without holding your secrets.

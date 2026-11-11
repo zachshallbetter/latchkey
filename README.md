@@ -40,7 +40,7 @@ Requires macOS 15 or later. See [Getting started](docs/getting-started.md) to in
 
 | | |
 |---|---|
-| [Getting started](docs/getting-started.md) | Install, first item, first command, first import |
+| [Getting started](docs/getting-started.md) | Install, first item, first command, first import, uninstall |
 | [Concepts](docs/concepts.md) | Items and IDs, projects and environments, approvals, grants, history, sync |
 | [The app](docs/app.md) | The window, the menu bar, approvals and settings |
 | [Command line](docs/cli.md) | Every command and option, and exit codes |
@@ -48,6 +48,7 @@ Requires macOS 15 or later. See [Getting started](docs/getting-started.md) to in
 | [Importing](docs/import.md) | Moving `.env` files into Latchkey, one or many at a time |
 | [Remote locations](docs/remote.md) | Vercel, GitHub Actions, Railway and Fly |
 | [Security](docs/security.md) | What Latchkey protects against, and what it doesn't |
+| [Security policy](SECURITY.md) | Reporting a vulnerability |
 | [Apple Passwords and passkeys](docs/apple-passwords-and-passkeys.md) | How Latchkey relates to the Passwords app |
 | [Troubleshooting](docs/troubleshooting.md) | Common problems and fixes |
 | [Development](docs/development.md) | Building, testing and how it fits together |

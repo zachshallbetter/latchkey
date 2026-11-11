@@ -60,4 +60,4 @@ Be clear about these before you rely on Latchkey:
 
 ## Reporting a problem
 
-Report security issues privately to the maintainer rather than in a public issue.
+Report security issues privately, as [SECURITY.md](../SECURITY.md) describes, rather than in a public issue.
