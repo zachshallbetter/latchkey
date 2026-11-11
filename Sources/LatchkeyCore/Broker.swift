@@ -158,7 +158,7 @@ public final class Broker: @unchecked Sendable {
             if memory.covers(key) {
                 log("get", toAsk, "allowed (remembered)", peer, req)
             } else {
-                switch ask(.read, toAsk, peer, req, "release \(toAsk.joined(separator: ", ")) to \(Self.describe(peer, req))") {
+                switch ask(.read, toAsk, peer, req, "release \(Self.count(toAsk)) to \(Self.describe(peer, req))") {
                 case .deny:
                     denied = toAsk
                     log("get", toAsk, "denied", peer, req)
@@ -642,9 +642,36 @@ public final class Broker: @unchecked Sendable {
     }
 
     /// "3 items (A, B, C)", shortened past a handful so the system sheet stays readable.
+    /// Items as the system authentication sheet can show them, which cuts long text off: a few names from one
+    /// place ("DATABASE_URL and STRIPE_KEY from shop/development"), or a count by place ("17 items from
+    /// acp-gateway/development", "5 items from shop/development and shop/preview"). The approval panel lists them all.
     static func count(_ names: [String]) -> String {
-        let shown = names.count > 6 ? names.prefix(5).joined(separator: ", ") + ", …" : names.joined(separator: ", ")
-        return "\(names.count) item\(names.count == 1 ? "" : "s") (\(shown))"
+        var places: [String] = []
+        var byPlace: [String: [String]] = [:]
+        for n in names {
+            let id = ItemID(n)
+            let place = id.map { $0.isShared ? "shared" : "\($0.project)/\($0.environment)" } ?? "shared"
+            if byPlace[place] == nil { places.append(place) }
+            byPlace[place, default: []].append(id?.name ?? n)
+        }
+        func items(_ k: Int) -> String { "\(k) item\(k == 1 ? "" : "s")" }
+        func from(_ place: String) -> String { place == "shared" ? "shared" : "from \(place)" }
+        if places.count == 1, let place = places.first, let short = byPlace[place], short.count <= 3 {
+            let list = short.count < 3 ? short.joined(separator: " and ") : "\(short[0]), \(short[1]) and \(short[2])"
+            return place == "shared" ? list : "\(list) \(from(place))"
+        }
+        switch places.count {
+        case 1: return places[0] == "shared" ? "\(items(names.count)), shared" : "\(items(names.count)) \(from(places[0]))"
+        case 2: return "\(items(names.count)) from \(places[0]) and \(places[1])"
+        default: return "\(items(names.count)) from \(places[0]) and \(places.count - 1) other places"
+        }
+    }
+
+    /// A folder short enough for the system sheet: the last two parts of a long path ("…/latchkey/grants").
+    static func shortFolder(_ path: String) -> String {
+        let t = tilde(path)
+        let parts = t.split(separator: "/")
+        return t.count > 32 && parts.count > 2 ? "…/" + parts.suffix(2).joined(separator: "/") : t
     }
 
     public static func tilde(_ path: String) -> String {
@@ -655,10 +682,10 @@ public final class Broker: @unchecked Sendable {
     /// "zsh › claude in ~/Projects/site (running npm test)"
     static func describe(_ peer: PeerInfo, _ req: Request) -> String {
         let who = peer.chain.prefix(3).joined(separator: " › ")
-        let cwd = tilde(peer.cwd)
+        let cwd = shortFolder(peer.cwd)
         var s = (who.isEmpty ? "a process" : who) + (cwd.isEmpty ? "" : " in \(cwd)")
         let c = peer.commandLine
-        if !c.isEmpty { s += " (running \(c.count > 60 ? String(c.prefix(57)) + "…" : c))" }
+        if !c.isEmpty { s += " (running \(c.count > 48 ? String(c.prefix(45)) + "…" : c))" }
         return s
     }
 

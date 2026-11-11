@@ -12,8 +12,8 @@
 
 1. Open `Latchkey-VERSION.dmg` and drag **Latchkey** to **Applications**.
 2. Open Latchkey from Applications.
-3. Choose **Latchkey › Install Command Line Tool…** (also in Settings). It links `~/.local/bin/latchkey` to the copy
-   inside the app, so it updates when the app does. Make sure `~/.local/bin` is on your `PATH`.
+3. Choose **Latchkey › Install Command Line Tool…** (also in Settings). It links `~/.local/bin/latchkey`, and `lk`
+   for short, to the copy inside the app, so it updates when the app does. Make sure `~/.local/bin` is on your `PATH`.
 4. Check it:
 
    ```bash
@@ -39,7 +39,7 @@ needs your team:
    scripts/install.sh
    ```
 
-   It builds the command-line tool and the app, installs `/Applications/Latchkey.app` and `~/.local/bin/latchkey`,
+   It builds the command-line tool and the app, installs `/Applications/Latchkey.app` and `~/.local/bin/latchkey` (and `lk`),
    and starts the app. Make sure `~/.local/bin` is on your `PATH` (the script says so if it isn't).
 
 4. Check it:
@@ -113,7 +113,7 @@ Have many projects? `latchkey import --batch` takes a list of files and imports 
    ```
 
    ```bash
-   rm -f ~/.local/bin/latchkey
+   rm -f ~/.local/bin/latchkey ~/.local/bin/lk
    ```
 
    ```bash

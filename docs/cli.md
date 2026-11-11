@@ -1,6 +1,6 @@
 # Command line
 
-`latchkey` talks to the Latchkey app, starting it in the background if it isn't running. It never prints a value
+`latchkey` (or `lk` for short) talks to the Latchkey app, starting it in the background if it isn't running. It never prints a value
 except with `latchkey get`. `latchkey help` prints a summary.
 
 IDs are `NAME` (shared) or `project/environment/NAME`. Where a command takes several, separate them with commas, and

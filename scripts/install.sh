@@ -1,6 +1,6 @@
 #!/bin/zsh
 # Builds Latchkey and installs it:
-#   app → /Applications/Latchkey.app      CLI → ~/.local/bin/latchkey  (override with LATCHKEY_BIN_DIR)
+#   app → /Applications/Latchkey.app      CLI → ~/.local/bin/latchkey, and lk for short  (override with LATCHKEY_BIN_DIR)
 #
 # With DEVELOPMENT_TEAM set in App/project.yml the app is signed with your team and keeps values in
 # iCloud Keychain. Without it, the app is signed ad hoc and keeps values in this Mac's login keychain.
@@ -49,6 +49,8 @@ rm -rf /Applications/Latchkey.app
 ditto "$DERIVED/Build/Products/Release/Latchkey.app" /Applications/Latchkey.app
 mkdir -p "$BIN_DIR"
 install -m 0755 .build/release/latchkey "$BIN_DIR/latchkey"
+# `lk` for short, unless something else already has the name.
+if [[ -L "$BIN_DIR/lk" || ! -e "$BIN_DIR/lk" ]]; then ln -sf "$BIN_DIR/latchkey" "$BIN_DIR/lk"; fi
 # The app tells its own tool from any other program on its socket by this signature, and the tool checks the app's.
 if [[ -n "$TEAM" ]]; then
   IDENTITY=$(security find-identity -v -p codesigning | awk -v t="($TEAM)\"" '/"(Apple Development|Developer ID Application):/ && index($0, t) {print $2; exit}')

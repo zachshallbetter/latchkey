@@ -325,31 +325,41 @@ final class AppModel {
         return FileManager.default.isExecutableFile(atPath: url.path) ? url : nil
     }
 
-    static var toolLink: URL { URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".local/bin/latchkey") }
+    /// `latchkey`, and `lk` for short, in ~/.local/bin.
+    static var toolLinks: [URL] {
+        ["latchkey", "lk"].map { URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".local/bin/\($0)") }
+    }
 
-    /// Links ~/.local/bin/latchkey to the tool inside the app, so updating the app updates the tool. Replaces an
-    /// older link, never a file someone put there.
+    /// Links ~/.local/bin/latchkey and ~/.local/bin/lk to the tool inside the app, so it updates with the app. Replaces
+    /// only links; a file of either name is left alone and reported.
     func installCommandLineTool() {
         guard let tool = bundledTool else {
             notice = "This copy of Latchkey doesn't include the command-line tool; scripts/install.sh installs it."
             return
         }
-        let link = Self.toolLink, fm = FileManager.default
+        let fm = FileManager.default
+        var installed: [String] = [], inTheWay: [String] = []
         do {
-            try fm.createDirectory(at: link.deletingLastPathComponent(), withIntermediateDirectories: true)
-            if let dest = try? fm.destinationOfSymbolicLink(atPath: link.path) {
-                if dest == tool.path { notice = "The command-line tool is already installed at ~/.local/bin/latchkey."; return }
-                try fm.removeItem(at: link)
-            } else if fm.fileExists(atPath: link.path) {
-                notice = "~/.local/bin/latchkey already exists and isn't a link to Latchkey; remove it, then try again."
-                return
+            try fm.createDirectory(at: Self.toolLinks[0].deletingLastPathComponent(), withIntermediateDirectories: true)
+            for link in Self.toolLinks {
+                let name = "~/.local/bin/" + link.lastPathComponent
+                if let dest = try? fm.destinationOfSymbolicLink(atPath: link.path) {
+                    if dest == tool.path { installed.append(name); continue }
+                    try fm.removeItem(at: link)
+                } else if fm.fileExists(atPath: link.path) {
+                    inTheWay.append(name)
+                    continue
+                }
+                try fm.createSymbolicLink(at: link, withDestinationURL: tool)
+                installed.append(name)
             }
-            try fm.createSymbolicLink(at: link, withDestinationURL: tool)
-            let onPath = (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":").contains { $0 == link.deletingLastPathComponent().path }
-            notice = "Installed ~/.local/bin/latchkey." + (onPath ? "" : " Add ~/.local/bin to your PATH to use it.")
         } catch {
             notice = "Couldn't install the command-line tool: \(error.localizedDescription)"
+            return
         }
+        var text = installed.isEmpty ? "" : "Installed \(installed.joined(separator: " and ")). Make sure ~/.local/bin is on your PATH."
+        if !inTheWay.isEmpty { text += (text.isEmpty ? "" : " ") + "\(inTheWay.joined(separator: " and ")) already exists and isn't a link to Latchkey; left as is." }
+        notice = text
     }
 
     // MARK: remote locations

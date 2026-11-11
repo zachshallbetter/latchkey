@@ -28,7 +28,7 @@ final class ImportTests: XCTestCase {
         XCTAssertEqual(r.skipped, ["OLD"])
         XCTAssertEqual(r.replaced, [])
         XCTAssertEqual(approver.reasons.count, 1)
-        XCTAssertTrue(approver.reasons[0].hasPrefix("add 2 items (A, B) from /tmp/project/.env"), approver.reasons[0])
+        XCTAssertTrue(approver.reasons[0].hasPrefix("add A and B from /tmp/project/.env"), approver.reasons[0])
         XCTAssertEqual(try store.values(["A", "OLD"]), ["A": "value-of-A", "OLD": "old-value"])
     }
 
@@ -40,7 +40,7 @@ final class ImportTests: XCTestCase {
             .handle(Request(op: "import", items: items("OLD", "NEW"), replace: true), peer: peer)
         XCTAssertEqual(r.added, ["NEW"])
         XCTAssertEqual(r.replaced, ["OLD"])
-        XCTAssertTrue(approver.reasons[0].hasPrefix("add 1 item (NEW) and overwrite 1 item (OLD)"), approver.reasons[0])
+        XCTAssertTrue(approver.reasons[0].hasPrefix("add NEW and overwrite OLD"), approver.reasons[0])
         XCTAssertEqual(try store.values(["OLD"]), ["OLD": "value-of-OLD"])
     }
 
@@ -67,8 +67,14 @@ final class ImportTests: XCTestCase {
     }
 
     func testCountShortensLongLists() {
-        XCTAssertEqual(Broker.count(["A"]), "1 item (A)")
-        XCTAssertEqual(Broker.count(["A", "B", "C", "D", "E", "F", "G"]), "7 items (A, B, C, D, E, …)")
+        XCTAssertEqual(Broker.count(["A"]), "A")
+        XCTAssertEqual(Broker.count(["shop/development/DB", "shop/development/KEY"]), "DB and KEY from shop/development")
+        XCTAssertEqual(Broker.count(["a/dev/A", "a/dev/B", "a/dev/C"]), "A, B and C from a/dev")
+        XCTAssertEqual(Broker.count((1...17).map { "acp-gateway/development/K\($0)" }), "17 items from acp-gateway/development")
+        XCTAssertEqual(Broker.count(["shop/development/A", "shop/development/B", "shop/preview/A", "shop/preview/C"]), "4 items from shop/development and shop/preview")
+        XCTAssertEqual(Broker.count(["s/d/A", "s/p/A", "s/q/A", "B"]), "4 items from s/d and 3 other places")
+        XCTAssertEqual(Broker.count(["A", "B", "C", "D"]), "4 items, shared")
+        XCTAssertEqual(Broker.shortFolder("/Users/x/Projects/_worktrees/latchkey/grants"), "…/latchkey/grants")
     }
 
     func testRewriteKeepsEverythingElse() {

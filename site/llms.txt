@@ -4,7 +4,7 @@
 > the values live in iCloud Keychain; Latchkey fills them in when a command starts, after the owner approves with
 > Touch ID, Apple Watch or their password, or under a grant they made.
 
-- Platform: macOS 15 or later (app); the command-line tool `latchkey` ships inside the app.
+- Platform: macOS 15 or later (app); the command-line tool `latchkey` (`lk` for short) ships inside the app.
 - Storage: iCloud Keychain, in Latchkey's own access group, synced to the owner's Macs. No Latchkey server or account.
 - Made by Snack Studio.
 
