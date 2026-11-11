@@ -6,6 +6,14 @@ import SwiftUI
 @main
 struct LatchkeyApp: App {
     init() {
+        if CommandLine.arguments.contains("--sandbox-self-test") {
+            #if DEBUG && LATCHKEY_APP_STORE
+            SandboxSelfTest.runAndExit()
+            #else
+            FileHandle.standardError.write(Data("Sandbox probes require a development-signed sandbox Debug build.\n".utf8))
+            exit(64)
+            #endif
+        }
         // A second copy started outside Launch Services (from a shell, another build) hands over to the one
         // already running and quits, before it touches the keychain or the broker socket.
         #if DEBUG
@@ -165,6 +173,12 @@ final class AppModel {
     /// Values currently shown in the detail pane; each hides itself after a short while.
     var revealed: [String: String] = [:]
 
+    #if LATCHKEY_APP_STORE
+    private static let fileAccessKey = "securityScopedFileAccess"
+    var fileAccess: SecurityScopedAccess?
+    var authorizedResources: [SecurityScopedAccess.Record] = []
+    #endif
+
     private let me = PeerInfo(pid: getpid(), path: Bundle.main.bundlePath, cwd: "", chain: [Broker.appCaller])
 
     init() {
@@ -180,6 +194,17 @@ final class AppModel {
             }
         }
         broker = Broker(store: store, approver: PanelApprover())
+        #if LATCHKEY_APP_STORE
+        do {
+            let access = try SecurityScopedAccess(saved: UserDefaults.standard.data(forKey: Self.fileAccessKey)) {
+                UserDefaults.standard.set($0, forKey: Self.fileAccessKey)
+            }
+            fileAccess = access
+            let failed = access.restore()
+            authorizedResources = access.records
+            if !failed.isEmpty { notice = "Some file access needs attention in Settings. Unavailable folders remain remembered." }
+        } catch { problem = "File permissions could not be loaded. Choose files or folders again in Settings." }
+        #endif
         refresh()
         #if DEBUG
         if Snapshot.requested {   // draw and exit; do not take the socket from the running copy
@@ -336,6 +361,9 @@ final class AppModel {
     /// Links ~/.local/bin/latchkey and ~/.local/bin/lk to the tool inside the app, so it updates with the app. Replaces
     /// only links; a file of either name is left alone and reported.
     func installCommandLineTool() {
+        #if LATCHKEY_APP_STORE
+        notice = "Command-line installation is not yet validated for the App Store sandbox experiment. Use the direct build for production CLI work."
+        #else
         guard let tool = bundledTool else {
             notice = "This copy of Latchkey doesn't include the command-line tool; scripts/install.sh installs it."
             return
@@ -363,6 +391,7 @@ final class AppModel {
         var text = installed.isEmpty ? "" : "Installed \(installed.joined(separator: " and ")). Make sure ~/.local/bin is on your PATH."
         if !inTheWay.isEmpty { text += (text.isEmpty ? "" : " ") + "\(inTheWay.joined(separator: " and ")) already exists and isn't a link to Latchkey; left as is." }
         notice = text
+        #endif
     }
 
     // MARK: remote locations
@@ -478,6 +507,9 @@ final class AppModel {
     /// used in and in `files`.
     func moveItems(_ ids: [String], project: String, environment: String, files: [URL]) async -> String? {
         let usedIn = items.filter { ids.contains($0.name) }.flatMap { $0.usedIn ?? [] }.map { URL(fileURLWithPath: $0) }
+        for url in files + usedIn {
+            guard requestRewriteAccess(for: url) else { return "File access was cancelled. No items were moved." }
+        }
         let r = await send(Request(op: "move", names: ids, project: project, environment: environment))
         guard r.ok else { return r.error ?? (r.missing.map { "No item named \($0.joined(separator: ", "))." } ?? "Move failed.") }
         let moved = r.moved ?? [:]
@@ -588,6 +620,8 @@ final class AppModel {
     }
 
     func beginImport(_ url: URL) {
+        do { try rememberSelectedURL(url, isDirectory: false) }
+        catch { notice = error.localizedDescription; return }
         guard let text = try? String(contentsOf: url, encoding: .utf8) else {
             notice = "Could not read \(url.lastPathComponent)."
             return
@@ -618,6 +652,7 @@ final class AppModel {
             return item
         }
         guard !chosen.isEmpty else { return "Nothing selected." }
+        guard !rewrite || requestRewriteAccess(for: draft.url) else { return "File access was cancelled. Nothing was imported." }
         let r = await send(Request(op: "import", items: chosen, replace: replace, source: draft.url.path))
         guard r.ok else { return r.error ?? "Import failed." }
         let saved = Set((r.added ?? []) + (r.replaced ?? []))
@@ -673,6 +708,75 @@ final class AppModel {
         refresh()
         checkLegacy()
     }
+
+    // MARK: user-selected files
+
+    /// The direct build needs no persistent sandbox extension. The store experiment retains only resources
+    /// the user explicitly chose, following the same Foundation bookmark lifecycle as Peel's FolderAccess.
+    func rememberSelectedURL(_ url: URL, isDirectory: Bool) throws {
+        #if LATCHKEY_APP_STORE
+        let container = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL.path
+        let path = url.standardizedFileURL.path
+        if path == container || path.hasPrefix(container + "/") { return }
+        guard let fileAccess else { throw SecurityScopedAccess.AccessError.unavailable }
+        try fileAccess.remember(url, isDirectory: isDirectory)
+        authorizedResources = fileAccess.records
+        #endif
+    }
+
+    /// Atomic replacement needs access to the parent folder, not only the selected .env file.
+    func requestRewriteAccess(for file: URL) -> Bool {
+        #if LATCHKEY_APP_STORE
+        let folder = file.deletingLastPathComponent().standardizedFileURL
+        let path = folder.path
+        let container = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL.path
+        if path == container || path.hasPrefix(container + "/") { return true }
+        if authorizedResources.contains(where: {
+            $0.isDirectory && fileAccess?.isActive($0.id) == true &&
+            (path == $0.path || path.hasPrefix($0.path == "/" ? "/" : $0.path + "/"))
+        }) { return true }
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.canCreateDirectories = false
+        panel.directoryURL = folder
+        panel.prompt = "Allow"
+        panel.message = "Choose this file’s folder, or a parent folder, so Latchkey can replace the file safely. Secret access still requires separate approval."
+        guard panel.runModal() == .OK, let chosen = panel.url else { return false }
+        let selected = chosen.standardizedFileURL.path
+        guard path == selected || path.hasPrefix(selected == "/" ? "/" : selected + "/") else {
+            notice = "Choose the file’s folder or one of its parents."
+            return false
+        }
+        do { try rememberSelectedURL(chosen, isDirectory: true); return true }
+        catch { notice = error.localizedDescription; return false }
+        #else
+        return true
+        #endif
+    }
+
+    #if LATCHKEY_APP_STORE
+    func chooseProjectFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.canCreateDirectories = false
+        panel.prompt = "Allow"
+        panel.message = "Choose a project folder Latchkey may read and update. Secret access still requires separate approval."
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do { try rememberSelectedURL(url, isDirectory: true) }
+        catch { notice = error.localizedDescription }
+    }
+
+    func forgetFileAccess(_ id: UUID) {
+        do {
+            try fileAccess?.forget(id)
+            authorizedResources = fileAccess?.records ?? []
+        } catch { notice = "Could not remove file access: \(error.localizedDescription)" }
+    }
+    #endif
 
     // MARK: settings
 

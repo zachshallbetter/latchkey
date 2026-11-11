@@ -1,0 +1,44 @@
+# Experimental sandbox configuration. This does not establish functional parity or submission readiness.
+# Generate/build through scripts/build-appstore-sandbox.py, which snapshots source before XcodeGen runs.
+include:
+  - project.yml
+name: LatchkeyAppStoreSandbox
+
+targets:
+  Latchkey:
+    sources:
+      - path: Privacy/App/PrivacyInfo.xcprivacy
+        buildPhase: resources
+    entitlements:
+      path: AppStore/Latchkey.entitlements
+      properties:REPLACE:
+        com.apple.security.app-sandbox: true
+        com.apple.security.files.user-selected.read-write: true
+        com.apple.security.files.bookmarks.app-scope: true
+        com.apple.security.network.client: true
+        com.apple.security.network.server: true
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)io.snackstud.latchkey
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)io.snackstud.latchkey
+          - $(AppIdentifierPrefix)io.latchkey.shared
+    info:
+      path: AppStore/Info.plist
+      properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSHumanReadableCopyright: Copyright © 2026 Snack Studio
+        LatchkeyDistributionChannel: app-store-sandbox-experiment
+    settings:
+      base:
+        ENABLE_APP_SANDBOX: YES
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) LATCHKEY_APP_STORE
+
+  # Only build metadata is overridden here. Safari source/resources remain owned by the extension work.
+  LatchkeySafari:
+    info:
+      path: AppStore/Safari.Info.plist
+      properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSHumanReadableCopyright: Copyright © 2026 Snack Studio

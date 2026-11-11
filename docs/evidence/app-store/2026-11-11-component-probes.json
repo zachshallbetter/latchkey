@@ -1,0 +1,40 @@
+{
+  "build": "0.1.0 (1), development-signed sandbox Debug experiment",
+  "checks": [
+    {
+      "name": "container env rewrite",
+      "passed": true
+    },
+    {
+      "name": "unselected home file denied",
+      "passed": true
+    },
+    {
+      "name": "app-group local IPC and kernel identity",
+      "passed": true
+    },
+    {
+      "name": "system child execution",
+      "passed": true
+    }
+  ],
+  "notCovered": [
+    "real selected-folder grants",
+    "terminal CLI/MCP",
+    "caller-context forgery",
+    "Node/npm and user commands",
+    "remote pushes",
+    "real keychain and migration",
+    "cross-Mac sync",
+    "Safari",
+    "TestFlight"
+  ],
+  "observations": {
+    "parentArgumentsVisible": true,
+    "parentWorkingDirectoryVisible": true
+  },
+  "passed": true,
+  "sourceBase": "fbc22866452cd4f9b786ecdfc1813fde4149118f",
+  "submissionReady": false,
+  "verifiedOn": "2026-11-11"
+}

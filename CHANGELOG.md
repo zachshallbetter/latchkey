@@ -4,6 +4,14 @@
 
 The first release.
 
+### App Store groundwork
+- An isolated experimental sandbox build and preflight checks, following the Apple SDK patterns used in Peel.
+- Persistent security-scoped file access with Settings removal, parent-folder consent for atomic env rewrites,
+  and Foundation document coordination.
+- A main-app privacy manifest and explicit full-functionality runtime/submission gates. No store submission
+  is enabled, and the shipping direct build and Safari extension remain separate from this experiment.
+
+
 ### Security and reliability fixes
 - **Allow Once** authorizes one read request. Implicit approval caching is removed; repeat access needs an
   explicit grant or the **No Approval** setting. Revoking a grant stops future reads through it immediately,

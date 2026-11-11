@@ -124,8 +124,10 @@ public enum EnvFile {
 
     public static func rewriteFile(at url: URL, original text: String, toReferences references: [String: String]) throws {
         let rewritten = try rewrite(text, toReferences: references)
-        guard try Data(contentsOf: url) == Data(text.utf8) else { throw ParseError.changed }
-        try write(rewritten, to: url, expected: Data(text.utf8))
+        try coordinatedWrite(to: url) { target in
+            guard try Data(contentsOf: target) == Data(text.utf8) else { throw ParseError.changed }
+            try write(rewritten, to: target, expected: Data(text.utf8))
+        }
     }
 
     @discardableResult
@@ -133,9 +135,22 @@ public enum EnvFile {
         let text = try String(contentsOf: url, encoding: .utf8)
         let new = References.renaming(text, renames)
         guard new != text else { return false }
-        guard try Data(contentsOf: url) == Data(text.utf8) else { throw ParseError.changed }
-        try write(new, to: url, expected: Data(text.utf8))
+        try coordinatedWrite(to: url) { target in
+            guard try Data(contentsOf: target) == Data(text.utf8) else { throw ParseError.changed }
+            try write(new, to: target, expected: Data(text.utf8))
+        }
         return true
+    }
+
+    /// Participate in document coordination for user-selected files, including files in cloud-backed folders.
+    private static func coordinatedWrite(to url: URL, operation: (URL) throws -> Void) throws {
+        var coordinationError: NSError?
+        var operationError: Error?
+        NSFileCoordinator().coordinate(writingItemAt: url, options: .forReplacing, error: &coordinationError) { target in
+            do { try operation(target) } catch { operationError = error }
+        }
+        if let error = coordinationError { throw error }
+        if let error = operationError { throw error }
     }
 
     private static func write(_ text: String, to url: URL, expected: Data) throws {

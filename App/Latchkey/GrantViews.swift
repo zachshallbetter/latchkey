@@ -166,7 +166,10 @@ struct NewGrantSheet: View {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
-        panel.message = "Choose the project folder the grant covers."
-        if panel.runModal() == .OK { folder = panel.url }
+        panel.message = "Choose the project folder the grant covers. In the sandbox build, this also allows Latchkey to read and update project files."
+        if panel.runModal() == .OK, let url = panel.url {
+            do { try model.rememberSelectedURL(url, isDirectory: true); folder = url }
+            catch { self.error = error.localizedDescription }
+        }
     }
 }

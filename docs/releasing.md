@@ -1,5 +1,9 @@
 # Releasing
 
+This page describes direct Developer ID distribution. Mac App Store preparation, the sandbox experiment and
+full-functionality submission gates are in [App Store preparation](app-store.md). Notarization is not an
+App Store upload, and the direct release script must not be used to manufacture a store package.
+
 A release is a Developer ID-signed, notarized and stapled `Latchkey.app`, with the command-line tool inside it, in a
 signed, notarized and stapled disk image.
 

@@ -108,6 +108,12 @@ opt-in. App compilation and these tests do not replace signed-app, real-Safari o
 The wire response keeps the optional legacy `remembered` field for older clients; new brokers never return it.
 The old read-approval preference and `LATCHKEY_APPROVAL_WINDOW` have no effect. Explicit grants provide repeat access.
 
+## Sandbox development
+
+See [App Store preparation](app-store.md) for the separate experimental configuration, Apple SDK choices,
+security-scoped access and submission gates. Full developer functionality remains the target; an unsigned
+compile does not establish runtime sandbox compatibility.
+
 ## Checking the UI without clicking
 
 Debug builds can draw their own UI to a PNG:

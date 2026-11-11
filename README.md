@@ -64,6 +64,7 @@ Codex CLI, Gemini CLI, Cursor and other tools that read Agent Skills can use the
 | [Apple Passwords and passkeys](docs/apple-passwords-and-passkeys.md) | How Latchkey relates to the Passwords app |
 | [Troubleshooting](docs/troubleshooting.md) | Common problems and fixes |
 | [Development](docs/development.md) | Building, testing and how it fits together |
+| [App Store preparation](docs/app-store.md) | Apple SDK boundaries, experimental sandbox build and full-functionality gates |
 | [Releasing](docs/releasing.md) | Developer ID signing, notarization and the disk image |
 | [Website](docs/site.md) | The product site and developer docs in `site/` |
 | [Changelog](CHANGELOG.md) | What changed in each release |

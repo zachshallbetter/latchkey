@@ -88,6 +88,25 @@ struct SettingsView: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
+            #if LATCHKEY_APP_STORE
+            Section("File Access") {
+                Text("File access permits reading or rewriting selected project files. It does not authorize releasing secrets.")
+                    .font(.caption).foregroundStyle(.secondary)
+                ForEach(model.authorizedResources) { resource in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(resource.path).font(.caption.monospaced()).lineLimit(2)
+                            if model.fileAccess?.isActive(resource.id) != true {
+                                Text("Unavailable; choose it again when connected.").font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                        Spacer()
+                        Button("Remove") { model.forgetFileAccess(resource.id) }
+                    }
+                }
+                Button("Allow Project Folder…") { model.chooseProjectFolder() }
+            }
+            #endif
             Section("Approval") {
                 LabeledContent("Method", value: model.broker.approver.method)
                 Text("Allow Once authorizes one read request. Repeated reads need an explicit grant or an item set to allow reads without approval. Revoking a grant stops future reads through it; it cannot recall values already released.")
