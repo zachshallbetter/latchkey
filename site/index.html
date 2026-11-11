@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Latchkey: development credentials where you need them</title>
-  <meta name="description" content="Latchkey keeps API keys and database URLs in iCloud Keychain. Import your env files once, keep latchkey:// references in their place, and let the commands and coding agents you authorize use the values across projects and Macs.">
+  <title>Latchkey: your projects move, your secrets don't</title>
+  <meta name="description" content="Latchkey keeps development credentials in your Mac's iCloud Keychain and reconnects them to the projects that need them. Restore an environment on another Mac, run commands with the right values, and let coding agents work through access you control.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Latchkey">
-  <meta property="og:title" content="Latchkey: development credentials where you need them">
-  <meta property="og:description" content="Import your credentials once. Use them across projects, environments, Macs and the tools you authorize, without copying values around.">
+  <meta property="og:title" content="Latchkey: your projects move, your secrets don't">
+  <meta property="og:description" content="References in your files. Values in Keychain. A native Mac tool for developers working across projects, machines and coding agents.">
   <meta name="twitter:card" content="summary">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
@@ -47,6 +47,9 @@
     .home .cap-row p { max-width: none; }
     .home figure.code pre code { white-space: pre-wrap; overflow-wrap: break-word; }
     .card code { font-size: .86em; }
+    .card .price-line { font: 700 30px/1.1 var(--display); color: var(--ink); letter-spacing: -0.02em; margin: 4px 0 6px; }
+    .card .price-line small { font: 500 14px var(--sans); color: var(--muted); letter-spacing: 0; }
+    .pro-actions { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; margin-top: 18px; }
     .hero h1 { max-width: 16ch; }
     .home .eyebrow + h2 { margin-top: 0; }
     .home .col > p, .home .col li { max-width: 66ch; }
@@ -225,14 +228,15 @@
   <main id="main" class="wrap home">
     <section class="hero" aria-labelledby="title">
       <div class="hero-copy">
-      <p class="eyebrow">Development credentials on your Mac</p>
-      <h1 id="title">Stop copying secrets between your projects, Macs and agents.</h1>
-      <p class="lede">Latchkey keeps API keys, database URLs and key files in iCloud Keychain. Import the env files you already have, keep stable <code>latchkey://</code> references in their place, and let the commands and agents you authorize use the values without anyone copying them around.</p>
+      <p class="eyebrow">A native Mac tool for developers</p>
+      <h1 id="title">Your projects move. Your secrets don't.</h1>
+      <p class="lede">Latchkey keeps development credentials in your Mac's iCloud Keychain and reconnects them to the projects that need them. Restore an environment on another Mac, run commands with the right values, and let coding agents work through access you control.</p>
       <div class="cta">
-        <a class="button primary" href="#install">Install the preview</a>
-        <a class="button secondary" href="#how">Watch it work</a>
-        <a href="developers/quickstart.html">Read the quickstart</a>
+        <a class="button primary" href="pricing.html#pro">Get early access</a>
+        <a class="button secondary" href="#how">See how it works</a>
+        <a href="#install">Install the preview</a>
       </div>
+      <p class="fine">For developers working across projects, machines and coding agents.</p>
       <ul class="facts-row" aria-label="At a glance">
         <li>macOS 15 or later</li><li>iCloud Keychain</li><li>CLI and MCP</li><li>No account or server</li>
       </ul>
@@ -257,42 +261,21 @@
           <span class="chip val">••••••••</span><span class="chip val">••••••••</span><span class="chip val">••••••••</span>
         </div>
       </div>
-      <p class="fine scene-cap">The file keeps references. <code>lk run</code> asks Latchkey for the values, you approve on your Mac (or a grant you made covers it), and the command starts with them in its environment. A value it prints shows up as <code>&lt;concealed by latchkey&gt;</code>. The scenes on this site replay what Latchkey prints and shows, with example data.</p>
+      <p class="fine scene-cap"><b>Run the tools you already use.</b> Latchkey resolves references when a command starts. Your app still receives the environment variables it expects; you don't rewrite it around a new secrets API. The scenes on this site replay what Latchkey prints and shows, with example data.</p>
       </div>
     </section>
 
     <section class="section" id="how" aria-labelledby="how-title">
       <div class="shead">
         <p class="eyebrow">How it works</p>
-        <h2 id="how-title">Your repository isn't your whole development environment.</h2>
-        <p class="intro">Source code is portable: clone it anywhere and it's all there. The credentials it needs aren't. They sit in gitignored files on one Mac, in dashboards, in chat history. Latchkey gives them one home, a stable name for each, and a way for your tools to use them.</p>
+        <h2 id="how-title">From scattered .env files to a working project.</h2>
+        <p class="intro">Import the environment you already have. Latchkey stores the credentials and replaces their values with references. On another Mac, restore the project\'s environment and get back to work. The environment travels with the project; the credential stays in your vault.</p>
       </div>
 
       <div class="feature">
         <div class="copy">
           <span class="step">1</span>
-          <h3>A fresh clone has no secrets. Latchkey knows whose it is.</h3>
-          <p>A new clone or git worktree has no <code>.env</code>; it's gitignored. <code>lk project</code> recognizes the checkout from its Git remote, and <code>lk export</code> writes the environment's env file from its record: references and plain settings, never a value.</p>
-          <a class="more" href="developers/cli.html#environments">Environments, projects and export</a>
-        </div>
-        <div class="scene-wrap" data-scene="clone" style="--w:600;--h:360" aria-hidden="true">
-          <div class="canvas">
-            <div class="mw tty" style="left:12px;top:12px;width:576px;height:336px">
-              <div class="mw-bar"><i></i><i></i><i></i><span>Terminal</span></div>
-<pre id="clone-tty"><span class="l"><span class="p">~/Projects/shop $</span> lk export shop/development --out .env.local</span><span class="l">wrote .env.local: 3 references, 1 plain setting</span><span class="l"><span class="d">next: lk run --env-file .env.local -- &lt;your command&gt;</span></span><span class="l"><span class="p">~/Projects/shop $</span> lk run --env-file .env.local -- npm run dev</span><span class="l"><span class="d">&gt; next dev</span></span><span class="l">  <span class="ok">✓ Ready</span> on http://localhost:3000</span></pre>
-            </div>
-            <div class="mw ed" id="clone-env" style="left:140px;top:40px;width:438px;height:132px">
-              <div class="mw-bar"><i></i><i></i><i></i><span>shop/.env.local</span></div>
-<pre><span class="ln"><span class="lit"># Latchkey environment shop/development</span></span><span class="ln"><span class="key">DATABASE_URL</span>=<span class="ref">latchkey://shop/development/DATABASE_URL</span></span><span class="ln"><span class="key">OPENAI_API_KEY</span>=<span class="ref">latchkey://OPENAI_API_KEY</span></span><span class="ln kept"><span class="key">PORT</span>=<span class="lit">3000</span></span><span class="ln"><span class="key">STRIPE_KEY</span>=<span class="ref">latchkey://shop/development/STRIPE_KEY</span></span></pre>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="feature flip">
-        <div class="copy">
-          <span class="step">2</span>
-          <h3>Keep the files. Move the secrets.</h3>
+          <h3>References in your files. Values in Keychain.</h3>
           <p>Point Latchkey at an env file. A dry run shows where each value would go and sends nothing. Then one approval saves them to iCloud Keychain under the repository's name and the environment the file name implies, and <code>--rewrite</code> leaves a reference where each value was. Plain settings such as <code>PORT</code> can stay as they are with <code>--skip</code>.</p>
           <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code>lk import .env.local --dry-run --skip PORT
 lk import .env.local --rewrite --skip PORT</code></pre></figure>
@@ -311,6 +294,27 @@ lk import .env.local --rewrite --skip PORT</code></pre></figure>
             <div class="sheet touch off" id="imp-touch" style="left:185px;top:120px">
               <svg class="fp" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg>
               <p><b>Latchkey is trying to import 3 items</b></p><p>Touch ID or enter your password.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature flip">
+        <div class="copy">
+          <span class="step">2</span>
+          <h3>Bring your environment with you.</h3>
+          <p>Project environment records sync with your credentials across your Macs. A fresh checkout or worktree shouldn't mean rebuilding your environment by hand: <code>lk project</code> recognizes the checkout from its Git remote, and <code>lk export</code> writes its env file from the record, with references and plain settings, never a value, and without relying on the original machine's file paths.</p>
+          <a class="more" href="developers/cli.html#environments">Environments, projects and export</a>
+        </div>
+        <div class="scene-wrap" data-scene="clone" style="--w:600;--h:360" aria-hidden="true">
+          <div class="canvas">
+            <div class="mw tty" style="left:12px;top:12px;width:576px;height:336px">
+              <div class="mw-bar"><i></i><i></i><i></i><span>Terminal</span></div>
+<pre id="clone-tty"><span class="l"><span class="p">~/Projects/shop $</span> lk export shop/development --out .env.local</span><span class="l">wrote .env.local: 3 references, 1 plain setting</span><span class="l"><span class="d">next: lk run --env-file .env.local -- &lt;your command&gt;</span></span><span class="l"><span class="p">~/Projects/shop $</span> lk run --env-file .env.local -- npm run dev</span><span class="l"><span class="d">&gt; next dev</span></span><span class="l">  <span class="ok">✓ Ready</span> on http://localhost:3000</span></pre>
+            </div>
+            <div class="mw ed" id="clone-env" style="left:140px;top:40px;width:438px;height:132px">
+              <div class="mw-bar"><i></i><i></i><i></i><span>shop/.env.local</span></div>
+<pre><span class="ln"><span class="lit"># Latchkey environment shop/development</span></span><span class="ln"><span class="key">DATABASE_URL</span>=<span class="ref">latchkey://shop/development/DATABASE_URL</span></span><span class="ln"><span class="key">OPENAI_API_KEY</span>=<span class="ref">latchkey://OPENAI_API_KEY</span></span><span class="ln kept"><span class="key">PORT</span>=<span class="lit">3000</span></span><span class="ln"><span class="key">STRIPE_KEY</span>=<span class="ref">latchkey://shop/development/STRIPE_KEY</span></span></pre>
             </div>
           </div>
         </div>
@@ -355,8 +359,8 @@ lk import .env.local --rewrite --skip PORT</code></pre></figure>
       <div class="feature flip">
         <div class="copy">
           <span class="step">4</span>
-          <h3>Authorize the work, not another round of copying.</h3>
-          <p>An agent runs its commands through <code>lk run</code>. When one needs a key that isn't already allowed, a panel on your Mac shows what's asking, from which folder, with which command, all read from macOS rather than the request. Allow it once, or allow the folder until the agent quits. A request the grant doesn't cover, like production, asks again.</p>
+          <h3>Let agents work. Keep control of access.</h3>
+          <p>Agents can check what a task needs, run commands through Latchkey, and ask for access when a grant doesn't cover it. Set grants for a folder, a session, a command or a time limit. Review activity, and revoke the grant when the work is done. A request the grant doesn't cover, like production, asks again.</p>
           <a class="more" href="developers/agents.html">Agents, skills and MCP</a>
         </div>
         <div class="scene-wrap" data-scene="agent" style="--w:600;--h:360" aria-hidden="true">
@@ -488,8 +492,8 @@ lk import .env.local --rewrite --skip PORT</code></pre></figure>
     <section class="section" id="proxy" aria-labelledby="proxy-title">
       <div class="shead">
       <p class="eyebrow">Mediated use</p>
-      <h2 id="proxy-title">Keys an agent can use without reading</h2>
-      <p class="intro">A command that has a key in its environment can print it, encode it or send it somewhere, and masking only catches exact copies. For OpenAI and Anthropic keys, <code>lk run --proxy</code> keeps the key out of the command entirely. Try what a command could do with it:</p>
+      <h2 id="proxy-title">Keep supported API keys out of agent processes</h2>
+      <p class="intro">For OpenAI and Anthropic, Latchkey's local proxy keeps the upstream key out of the command while forwarding its API requests. The process can still use the provider; it never receives the original key. Try what a command could do with it:</p>
       </div>
       <div class="scene proxy" id="proxy-demo">
         <div class="lanes">
@@ -542,6 +546,20 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
       <p style="margin-top:18px"><a class="more" href="security.html">The security model, trust boundaries and limits</a></p>
     </section>
 
+    <section class="section" id="pro" aria-labelledby="pro-title">
+      <div class="shead">
+        <p class="eyebrow">Latchkey Pro</p>
+        <h2 id="pro-title">Buy the tool. Keep the version you bought.</h2>
+        <p>Latchkey Pro is planned as a one-time purchase for developers working across projects, Macs and agents, with the first year of feature updates included. After that, your version keeps working; renewing updates is optional. Storage, references, import, running commands, approvals and export stay free.</p>
+      </div>
+      <div class="card-grid g3">
+        <div class="card"><b>Early access</b><span class="price-line">$59</span><span>A limited early-adopter license, with its features and update terms stated before anyone pays.</span></div>
+        <div class="card"><b>Latchkey Pro</b><span class="price-line">$79 <small>one time</small></span><span>Richer environment recovery and migration, advanced agent controls, project management, and activity and rotation tools, with provider integrations as they're completed.</span></div>
+        <div class="card"><b>Pro Updates</b><span class="price-line">$39 <small>a year</small></span><span>Optional, after the included year. Skipping it doesn't turn anything off.</span></div>
+      </div>
+      <div class="pro-actions"><a class="button primary" href="pricing.html#pro">Get early access</a><a class="button secondary" href="pricing.html#compare">Compare editions</a><span class="fine">Proposed prices, not a live offer yet.</span></div>
+    </section>
+
     <section class="section" id="paths" aria-labelledby="paths-title">
       <div class="shead">
       <p class="eyebrow">Get started</p>
@@ -561,10 +579,10 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
       <div class="cta-band">
         <div>
           <p class="eyebrow">Free during the development preview</p>
-          <h2 id="install-title">Your projects move. Your credentials shouldn't need copying along with them.</h2>
-          <p>Build Latchkey from source today. A signed download comes with the first release; Pro and Teams come later.</p>
+          <h2 id="install-title">Stop being the credential courier.</h2>
+          <p>Keep your projects, credentials and coding agents working together, with access you can inspect and control. Build Latchkey from source today; Pro comes with the first release.</p>
         </div>
-        <div class="cta-actions"><a class="button primary" href="developers/quickstart.html#install">Install from source</a><a class="button secondary" href="pricing.html">See pricing</a></div>
+        <div class="cta-actions"><a class="button primary" href="pricing.html#pro">Get early access</a><a class="button secondary" href="developers/quickstart.html#install">Install from source</a></div>
       </div>
       <ol class="card-grid g3" style="margin-top:16px">
         <li class="card"><span class="step">1</span><b>Build and install</b><span>From a source checkout, with Xcode and XcodeGen installed, run <code>scripts/install.sh</code>. Set your signing team in <code>App/project.yml</code> for iCloud Keychain storage.</span></li>
