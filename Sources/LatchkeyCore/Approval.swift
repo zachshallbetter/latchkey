@@ -49,6 +49,14 @@ public struct ApprovalRequest: Sendable {
         self.reason = reason
     }
 
+    /// The short line for the Touch ID sheet, which macOS shows as "Latchkey is trying to …": what's asked, and for
+    /// which agent, without the caller chain, folder and command the approval panel already shows above it.
+    public var touchIDReason: String {
+        let what = reason.range(of: ", asked by ").map { String(reason[..<$0.lowerBound]) } ?? reason
+        guard let agent = sessionName, !fromApp, !fromSafari else { return what }
+        return "\(what) for \(agent)"
+    }
+
     /// Reads from a folder can be turned into a grant from the approval itself.
     public var canGrant: Bool { action == .read && !folder.isEmpty && folder != "/" && remote == nil && !overSSH }
 }

@@ -183,7 +183,7 @@ public final class Broker: @unchecked Sendable {
 
         var denied: [String] = []
         if !toAsk.isEmpty {
-            switch ask(.read, toAsk, peer, req, "release \(Self.count(toAsk)) to \(Self.describe(peer, req))") {
+            switch ask(.read, toAsk, peer, req, "release \(Self.count(toAsk)), asked by \(Self.describe(peer, req))") {
             case .deny:
                 denied = toAsk
                 log("get", toAsk, "denied", peer, req)

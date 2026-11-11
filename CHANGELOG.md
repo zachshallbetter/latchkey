@@ -18,6 +18,11 @@
   Import names items after a linked project, so a clone under another folder name keeps its project.
 - MCP: `latchkey_project` and `latchkey_export_references`, which never return values.
 
+### Approvals and setup
+- The Touch ID sheet says only what's asked ("Latchkey is trying to add shop/development/DB for claude"); the
+  approval panel above it still shows the caller, folder and command.
+- After an import, the next-steps sheet offers a prompt to copy into an agent's instructions.
+
 ## 0.1.0 (unreleased)
 
 The first release.

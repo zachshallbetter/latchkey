@@ -35,7 +35,7 @@ final class PanelApprover: Approver, @unchecked Sendable {
         }
         guard choice.allowed else { return .deny }
         if touched { return choice }
-        return system.confirm(request.reason) ? choice : .deny
+        return system.confirm(request.touchIDReason) ? choice : .deny
     }
 }
 
@@ -135,7 +135,7 @@ struct ApprovalView: View {
         if Snapshot.requested { touch = ctx; return }   // draw the fingerprint area without asking for a finger
         #endif
         touch = ctx
-        ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: request.reason) { success, error in
+        ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: request.touchIDReason) { success, error in
             DispatchQueue.main.async {
                 if success { finish(choice.decision, authenticated: true); return }
                 // Locked out, or no finger: fall back to the buttons and the system sheet (which offers the password).

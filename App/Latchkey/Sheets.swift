@@ -223,6 +223,22 @@ struct NextSteps: Identifiable {
     var commands: [String]
     /// Mention how coding agents use the keys.
     var agents: Bool
+
+    /// The env file the commands run with, for the agent prompt.
+    var envFile: String? {
+        commands.lazy.compactMap { c -> String? in
+            guard let r = c.range(of: "--env-file ") else { return nil }
+            return c[r.upperBound...].split(separator: " ").first.map(String.init)
+        }.first
+    }
+
+    /// What to tell a coding agent: run through lk, keep values out of files and output, stop when refused.
+    static func agentPrompt(envFile: String?) -> String {
+        let file = envFile ?? ".env.local"
+        return """
+        Secrets are in Latchkey. \(file) holds latchkey:// references, not values. Run anything that needs them with `lk run --env-file \(file) -- <command>`. In a fresh checkout or worktree, write the file first with `lk project` and `lk export <project>/<environment> --out \(file)`. Never run `lk get`, print the environment, or put real values in env files. If lk exits 77 (refused) or 66 (missing), stop and ask me; don't retry.
+        """
+    }
 }
 
 struct NextStepsSheet: View {
@@ -250,8 +266,24 @@ struct NextStepsSheet: View {
                 }
             }
             if steps.agents {
-                Text("Coding agents run commands the same way. They'll ask you here before reading a key, or you can allow a folder for a while when the panel appears. To teach an agent, install the Latchkey skill or tell it to use lk run.")
-                    .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                let prompt = NextSteps.agentPrompt(envFile: steps.envFile)
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("For your coding agent").font(.callout.weight(.semibold))
+                        Spacer()
+                        Button(copied == prompt ? "Copied" : "Copy") {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(prompt, forType: .string)
+                            copied = prompt
+                        }
+                    }
+                    Text(prompt).font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Paste it into CLAUDE.md or AGENTS.md, or install the Latchkey skill. Agents ask you here before reading a key.")
+                        .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(8)
+                .background(RoundedRectangle(cornerRadius: 6).fill(.quaternary.opacity(0.6)))
             }
             HStack {
                 Spacer()
