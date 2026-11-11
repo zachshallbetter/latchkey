@@ -36,7 +36,8 @@
   var PUBLIC = [/\bpk_(?:live|test)_[A-Za-z0-9]{24,}\b/, /\bphc_[A-Za-z0-9]{30,}\b/];
 
   var PEM_PRIVATE = /-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----[\s\S]+?-----END (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----/;
-  var PEM_CERT = /-----BEGIN CERTIFICATE-----/;
+  var PEM_CERT = /-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----/;
+  var PEM_ANY = /-----BEGIN [A-Z ]+-----/;
   // A URL with a password in it: user:password@host.
   var CONNECTION = /\b(postgres(?:ql)?|mysql|mariadb|mongodb(?:\+srv)?|redis|rediss|amqps?):\/\/[^\s:@/]*:([^\s@/]{6,})@[^\s/]+[^\s"'<>]*/;
   var JWT = /\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{16,}\b/;
@@ -71,7 +72,11 @@
     if (v.length < 16 || v.length > 16384) return null;
     if (MASKED.test(v) || EXAMPLE.test(v)) return null;
     if (/^(.)\1+$/.test(v)) return null;
-    if (PEM_CERT.test(v) && !PEM_PRIVATE.test(v)) return null;   // a certificate is public; its private key isn't
+    // A certificate is public (its private key isn't): offered as a plain item, never marked on the page.
+    if (PEM_CERT.test(v) && !PEM_PRIVATE.test(v)) {
+      return { value: v.match(PEM_CERT)[0], type: "Certificate (public)", service: "", name: snake(context.label) || "CERTIFICATE",
+               kind: "value", score: 0.55, confidence: "medium", shownOnce: false, isPublic: true };
+    }
     for (var p = 0; p < PUBLIC.length; p++) { var pm = v.match(PUBLIC[p]); if (pm && pm[0].length >= v.length - 2) return null; }
 
     var label = context.label || "", nearby = context.nearby || "", host = (context.host || "").toLowerCase();
@@ -145,7 +150,7 @@
     var found = [], seen = {};
     var pieces = [text];
     // Split long text into lines so one value doesn't hide another; private keys stay whole.
-    if (text.length > 120 && !PEM_PRIVATE.test(text)) pieces = text.split(/\s*\n\s*|\s{2,}|[;,"'`]/);
+    if (text.length > 120 && !PEM_ANY.test(text)) pieces = text.split(/\s*\n\s*|\s{2,}|[;,"'`]/);
     for (var i = 0; i < pieces.length; i++) {
       var piece = pieces[i];
       if (!piece || piece.length < 16) continue;
@@ -158,6 +163,27 @@
     return found;
   }
 
+  var FIELD_KINDS = [
+    { re: /\b(private key|ssh key|signing key|pem|p8|key file)\b/, type: "Private key", kind: "key" },
+    { re: /\b(certificate|cert|crt|ca bundle)\b/, type: "Certificate", kind: "value" },
+    { re: /\b(connection string|connection url|database url|db url|dsn|mongodb uri|redis url)\b/, type: "Connection string", kind: "password" },
+    { re: /\b(client secret|webhook secret|signing secret|secret key|api secret|shared secret|secret)\b/, type: "Secret", kind: "token" },
+    { re: /\b(api key|apikey|access key|api token|access token|auth token|authentication token|bearer|personal access token|token)\b/, type: "API key or token", kind: "token" }
+  ];
+  var NOT_SECRET_FIELD = /\b(user ?name|e ?mail|search|captcha|verification|one ?time|otp|2fa|mfa|code|csrf|authenticity|coupon|promo|card|cvc|cvv|confirm|recovery)\b/;
+
+  /// What kind of secret a form field expects, from its label, placeholder, name, id and autocomplete hint, or null.
+  /// Never looks at the value. `field`: { label, placeholder, name, id, autocomplete }.
+  function fieldKind(field) {
+    field = field || {};
+    if (/^(current-password|new-password|one-time-code|username|email|cc-)/.test(field.autocomplete || "")) return null;
+    var text = [field.label, field.placeholder, field.name, field.id].filter(Boolean).join(" ")
+      .replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[_\-.]+/g, " ").toLowerCase();
+    if (!text || NOT_SECRET_FIELD.test(text)) return null;
+    for (var i = 0; i < FIELD_KINDS.length; i++) if (FIELD_KINDS[i].re.test(text)) return { type: FIELD_KINDS[i].type, kind: FIELD_KINDS[i].kind };
+    return null;   // a password field that names no key is a sign-in password
+  }
+
   function preview(v) {
     if (/^-----BEGIN/.test(v)) return v.split("\n")[0];
     var cut = v.search(/[_-][A-Za-z0-9]/);
@@ -165,7 +191,7 @@
     return head + "…" + v.slice(-4);
   }
 
-  var api = { classify: classify, findAll: findAll, preview: preview, entropy: entropy, rules: RULES };
+  var api = { classify: classify, findAll: findAll, fieldKind: fieldKind, preview: preview, entropy: entropy, rules: RULES };
   root.LatchkeyDetector = api;
   if (typeof module !== "undefined") module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

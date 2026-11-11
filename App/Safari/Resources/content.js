@@ -1,13 +1,14 @@
 // Finds keys and tokens on the page with Latchkey's detector (detector.js) and offers to save them. Confident finds
-// get a small "Save to Latchkey" button next to the key itself; less certain ones are listed in the toolbar panel.
-// Values stay in this page until you press Save, and then go only to the Latchkey app, which asks you first. The
-// toolbar panel sees previews, never values.
+// get a small "Save to Latchkey" button on the box that holds the key; less certain ones are listed in the toolbar
+// panel. It also notes fields that expect a key, token or certificate, by their labels, never their values. Values
+// stay in this page until you press Save, and then go only to the Latchkey app, which asks you first. The toolbar
+// panel sees previews, never values.
 (function () {
   "use strict";
   var D = window.LatchkeyDetector;
   if (!D || window.top !== window) return;
 
-  var found = [];            // { id, result, element }
+  var found = [];            // { id, result, element, elements }
   var byValue = new Map();
   var nextID = 1;
   var pills = new Map();     // detection id → host element of its button
@@ -41,33 +42,69 @@
     return { label: labelFor(el), nearby: nearbyFor(el), host: location.hostname, field: field };
   }
 
-  function visible(el) {
-    if (!el || !document.contains(el)) return false;
-    var r = el.getBoundingClientRect();
-    if (r.width < 4 || r.height < 4) return false;
+  // ---- Where a key is on screen: one box, the frame around its text or the field holding it. The button and the
+  // panel are both placed from that box, so they never chase a container or a hidden copy of the key.
+  function shownAt(el, r) {
+    if (!el || !document.contains(el) || r.width < 4 || r.height < 4) return false;
     var doc = document.documentElement;
     if (r.right + window.scrollX <= 0 || r.bottom + window.scrollY <= 0 || r.left + window.scrollX >= doc.scrollWidth) return false;
     if (el.checkVisibility && !el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) return false;
-    var cs = getComputedStyle(el);
-    if (cs.visibility === "hidden" || cs.opacity === "0") return false;
     // On screen, it must be what you'd hit there: not clipped away or covered.
-    var x = r.left + Math.min(r.width / 2, 12), y = r.top + r.height / 2;
+    var x = r.left + Math.min(r.width / 2, 12), y = r.top + Math.min(r.height / 2, 10);
     if (x < 0 || y < 0 || x > window.innerWidth || y > window.innerHeight) return true;
     var hit = document.elementFromPoint(x, y);
     return !!hit && (hit === el || el.contains(hit));
   }
-  // Where a key's button goes: the first copy you can see. A page may hold others (a hidden copy for its copy button).
-  function anchorOf(d) {
+  function textRange(el, value) {
+    var head = value.slice(0, 24), w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), n;
+    while ((n = w.nextNode())) {
+      var i = n.nodeValue.indexOf(head);
+      if (i < 0) continue;
+      var range = document.createRange();
+      range.setStart(n, i);
+      // Most keys are one text node; a key split across several (a PEM block with <br>s) ends at this node's end.
+      range.setEnd(n, n.nodeValue.indexOf(value, i) === i ? i + value.length : n.nodeValue.length);
+      return range;
+    }
+    return null;
+  }
+  // The nearest element that visibly frames the text (a bordered box, a code block), if it's close around it.
+  function frameFor(p, tr) {
+    for (var el = p, i = 0; el && el !== document.body && i < 5; el = el.parentElement, i++) {
+      var r = el.getBoundingClientRect();
+      if (r.width * r.height > Math.max(tr.width * tr.height * 6, tr.width * tr.height + 60000)) return null;
+      var cs = getComputedStyle(el);
+      var bordered = parseFloat(cs.borderTopWidth) > 0 && cs.borderTopStyle !== "none";
+      var filled = cs.backgroundColor && !/rgba\(0, 0, 0, 0\)|transparent/.test(cs.backgroundColor);
+      if (bordered || filled) return el;
+    }
+    return null;
+  }
+  function boxFor(el, value) {
+    if (el.matches(FIELDS)) {
+      var fr = el.getBoundingClientRect();
+      return shownAt(el, fr) ? { rect: fr, el: el } : null;
+    }
+    var range = textRange(el, value);
+    if (!range) return null;
+    var tr = range.getBoundingClientRect(), p = range.startContainer.parentElement;
+    if (!shownAt(p, tr)) return null;
+    var frame = frameFor(p, tr);
+    var r = frame ? frame.getBoundingClientRect() : { left: tr.left - 4, top: tr.top - 4, right: tr.right + 4, bottom: tr.bottom + 4, width: tr.width + 8, height: tr.height + 8 };
+    return { rect: r, el: el };
+  }
+  // The copy of a key you can see; a page may hold others (a hidden copy for its copy button, a dialog's whole text).
+  function boxOf(d) {
     d.elements = (d.elements || [d.element]).filter(function (e) { return document.contains(e); });
-    var best = null, area = Infinity;
+    var best = null;
     d.elements.forEach(function (e) {
-      if (!visible(e)) return;
-      var r = e.getBoundingClientRect(), a = r.width * r.height;
-      if (a < area) { best = e; area = a; }
+      var b = boxFor(e, d.result.value);
+      if (b && (!best || b.rect.width * b.rect.height < best.rect.width * best.rect.height)) best = b;
     });
-    if (best) d.element = best;
+    if (best) d.element = best.el;
     return best;
   }
+
   function live(d) {
     var el = d.element;
     if (!document.contains(el) || el.matches("input[type=password], input[type=hidden]")) return false;
@@ -87,6 +124,7 @@
       if (!navigated && live(d)) return true;
       retire(d); return false;
     });
+    secretFields = secretFields.filter(function (f) { return !navigated && document.contains(f.el); });
     if (navigated && panelHost) { panelHost.remove(); panelHost = null; }
   }
 
@@ -104,16 +142,34 @@
       byValue.set(r.value, d);
       if (found.length >= MAX_FOUND) retire(found.shift());
       found.push(d);
-      if (r.confidence === "high") showPill(d);
+      if (r.confidence === "high" && !r.isPublic) showPill(d);
     });
+  }
+
+  // ---- Fields that expect a secret, as password managers spot password fields: by label, placeholder, name and
+  // autocomplete hint. Their values are never read here (password-type fields included).
+  var secretFields = [];     // { el, kind: { type, kind }, label }
+  var MAX_FIELDS = 50;
+  function noteField(el) {
+    if (!D.fieldKind || secretFields.some(function (f) { return f.el === el; })) return;
+    var label = labelFor(el);
+    var kind = D.fieldKind({ label: label, placeholder: el.getAttribute("placeholder"), name: el.getAttribute("name"), id: el.id, autocomplete: el.getAttribute("autocomplete") });
+    if (!kind || secretFields.length >= MAX_FIELDS) return;
+    // What you'd call the field: its own label, else its accessible name or placeholder, else its name.
+    var own = el.id && document.querySelector('label[for="' + CSS.escape(el.id) + '"]');
+    var shown = (own && own.textContent) || (el.closest("label") && el.closest("label").textContent) ||
+      el.getAttribute("aria-label") || el.getAttribute("placeholder") || el.getAttribute("name") || "";
+    secretFields.push({ el: el, kind: kind, label: shown.replace(/\s+/g, " ").trim().slice(0, 60) });
   }
 
   function scan(root) {
     if (!root || root.nodeType !== 1 || (panelHost && panelHost.contains(root))) return;
     // Fields, code and cells, where keys are shown on purpose.
     var SHOWN = "code, pre, kbd, samp, td, [data-testid*=key i], [data-testid*=token i], [class*=secret i], [class*=token i], [class*=apikey i]";
+    var INPUTS = "input[type=text], input[type=password], input[type=url], input:not([type]), textarea";
     function within(sel) { var all = Array.from(root.querySelectorAll(sel)); if (root.matches(sel)) all.unshift(root); return all; }
     within(FIELDS).forEach(function (el) { consider(el.value, el, true); });
+    within(INPUTS).forEach(noteField);
     within(SHOWN).forEach(function (el) {
       if (el.closest(SKIP) || el.children.length > 20) return;
       consider((el.innerText || el.textContent || "").slice(0, 8000), el, el.matches("code, pre, kbd, samp"));
@@ -134,8 +190,7 @@
 
   function report() {
     prune();
-    var shown = found;
-    try { browser.runtime.sendMessage({ op: "count", count: shown.length }).catch(function () {}); } catch (e) {}
+    try { browser.runtime.sendMessage({ op: "count", count: found.length }).catch(function () {}); } catch (e) {}
   }
 
   // Changes to the page: look again at what changed, a moment later. Fields filled by script don't always change the
@@ -158,17 +213,19 @@
   document.addEventListener("focusin", function (e) { if (e.target.matches && e.target.matches(FIELDS)) { consider(e.target.value, e.target, true); report(); } }, true);
   document.addEventListener("input", function (e) { if (e.target.matches && e.target.matches(FIELDS)) later(e.target); }, true);
 
-  // ---- The button beside a key
+  // ---- The button on a key's box
   var STYLE =
     ":host{all:initial}" +
     "*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,sans-serif}" +
-    ".pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 7px;border-radius:999px;border:0;cursor:pointer;" +
-    "background:#0a63d1;color:#fff;font:600 12px/1.2 -apple-system,sans-serif;box-shadow:0 4px 14px rgba(10,99,209,.35)}" +
+    "@keyframes lkpop{from{opacity:0;transform:scale(.85)}}" +
+    ".pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 7px;height:24px;border-radius:999px;border:0;cursor:pointer;" +
+    "background:#0a63d1;color:#fff;font:600 12px/1 -apple-system,sans-serif;box-shadow:0 2px 8px rgba(10,99,209,.35);animation:lkpop .14s ease-out}" +
+    ".pill.icon{width:24px;padding:0;justify-content:center}.pill.icon span{display:none}" +
     ".pill:hover{filter:brightness(1.08)}.pill:focus-visible{outline:2px solid #fff;outline-offset:-4px}" +
-    ".pill svg{width:16px;height:13px;fill:#fff}" +
-    "@keyframes lkin{from{opacity:0;transform:translateY(-6px) scale(.97)}}" +
-    "@media (prefers-reduced-motion:reduce){.b{animation:none!important}}" +
-    ".b{animation:lkin .16s ease-out;transform-origin:top right;font:13px/1.45 -apple-system,sans-serif;width:340px;padding:14px;border-radius:12px;background:#fff;color:#12161c;" +
+    ".pill svg{width:15px;height:12px;fill:#fff;flex:none}" +
+    "@keyframes lkin{from{opacity:0;transform:translateY(var(--lk-dy,-6px)) scale(.97)}}" +
+    "@media (prefers-reduced-motion:reduce){.b,.pill{animation:none!important}}" +
+    ".b{animation:lkin .16s ease-out;font:13px/1.45 -apple-system,sans-serif;width:340px;padding:14px;border-radius:12px;background:#fff;color:#12161c;" +
     "border:1px solid #dde2e9;box-shadow:0 12px 32px rgba(16,24,40,.22)}" +
     "@media (prefers-color-scheme:dark){.b{background:#1c2128;color:#e8ecf1;border-color:#2f3640}.m{color:#a3adb9!important}input,select{background:#13181e!important;color:inherit!important;border-color:#2f3640!important}}" +
     "b.t{display:block;font-size:14px;margin-bottom:2px}.m{color:#5a6472;margin:0 0 10px}code{font:12px ui-monospace,Menlo,monospace}" +
@@ -181,60 +238,88 @@
 
   function host(z) {
     var h = document.createElement("div");
-    h.style.cssText = "position:fixed;z-index:" + z + ";top:0;left:0;";
+    // Hidden until it has a place, so it never appears somewhere and then jumps.
+    h.style.cssText = "position:fixed;z-index:" + z + ";top:0;left:0;visibility:hidden;";
     document.documentElement.appendChild(h);
     return h;
   }
-  function place(h, el, below, alignRight) {
-    var r = el.getBoundingClientRect();
-    if (!below && (!visible(el) || r.bottom < 0 || r.top > window.innerHeight)) { h.style.display = "none"; return; }
-    if (below && !visible(el)) {   // a panel whose key isn't on screen: bottom-right corner
-      h.style.display = ""; h.style.left = Math.max(8, window.innerWidth - (h.offsetWidth || 340) - 16) + "px";
-      h.style.top = Math.max(8, window.innerHeight - (h.offsetHeight || 260) - 16) + "px"; return;
-    }
+  function same(a, b) { return a && b && Math.abs(a.left - b.left) < 1 && Math.abs(a.top - b.top) < 1 && Math.abs(a.width - b.width) < 1 && Math.abs(a.height - b.height) < 1; }
+
+  // The button sits on the box: inside a one-line field at its right end (icon only, as password managers do), or on
+  // the top edge of a taller box at its right, like a tab. It appears once the box has stopped moving (dialogs
+  // animate in), and follows it from then on.
+  function placePill(h, d) {
+    var b = boxOf(d), r = b && b.rect;
+    if (!r || r.bottom < 0 || r.top > window.innerHeight) { h.style.display = "none"; h._last = null; return; }
+    var button = h._button, oneLine = r.height < 48;
+    button.classList.toggle("icon", oneLine);
     h.style.display = "";
-    var w = h.offsetWidth || 160, height = h.offsetHeight || 28;
-    var left = Math.min(window.innerWidth - w - 8, Math.max(8, below && !alignRight ? r.left : r.right - w));
-    var top = below ? r.bottom + 6 : r.top - height - 6;
-    if (top < 8) top = r.bottom + 6;
-    if (top + height > window.innerHeight - 8) top = Math.max(8, r.top - height - 6);
-    h.style.left = left + "px"; h.style.top = top + "px";
+    if (h.style.visibility === "hidden" && !same(h._last, r)) { h._last = { left: r.left, top: r.top, width: r.width, height: r.height }; return; }
+    h._last = { left: r.left, top: r.top, width: r.width, height: r.height };
+    var w = h.offsetWidth, ht = h.offsetHeight;
+    var left = oneLine ? r.right - w - 6 : r.right - w - 12;
+    var top = oneLine ? r.top + (r.height - ht) / 2 : r.top - ht / 2;
+    h.style.left = Math.round(Math.min(window.innerWidth - w - 4, Math.max(4, left))) + "px";
+    h.style.top = Math.round(Math.max(4, top)) + "px";
+    h.style.visibility = "visible";
+  }
+
+  // The panel opens from the button, beside the box rather than over the key: below it, else above, else to a side.
+  function placePanel(h) {
+    var d = h._d, b = d && d.id ? boxOf(d) : null, r = b && b.rect, pad = 8;
+    var w = h.offsetWidth || 340, ht = h.offsetHeight || 280, vw = window.innerWidth, vh = window.innerHeight;
+    if (!r && h._anchor && document.contains(h._anchor)) r = h._anchor.getBoundingClientRect();
+    if (!r || (!r.width && !r.height)) {   // nothing on screen to sit beside: the bottom-right corner
+      h.style.left = Math.max(pad, vw - w - 16) + "px"; h.style.top = Math.max(pad, vh - ht - 16) + "px";
+      h.style.visibility = "visible"; return;
+    }
+    var tab = pills.has(d && d.id) && r.height >= 48 ? 12 : 0;   // the button's half above the top edge
+    var left = Math.min(vw - w - pad, Math.max(pad, r.right - w)), top, origin, dy;
+    if (r.bottom + pad + ht <= vh - pad) { top = r.bottom + pad; origin = "top right"; dy = "-6px"; }
+    else if (r.top - tab - pad - ht >= pad) { top = r.top - tab - pad - ht; origin = "bottom right"; dy = "6px"; }
+    else {
+      top = Math.min(vh - ht - pad, Math.max(pad, r.top)); dy = "0px";
+      if (r.right + pad + w <= vw - pad) { left = r.right + pad; origin = "top left"; }
+      else { left = Math.max(pad, r.left - pad - w); origin = "top right"; }
+    }
+    h.style.left = Math.round(left) + "px"; h.style.top = Math.round(top) + "px";
+    h._panel.style.transformOrigin = origin; h._panel.style.setProperty("--lk-dy", dy);
+    h.style.visibility = "visible";
   }
 
   function showPill(d) {
     if (pills.has(d.id)) return;
     var h = host(2147483646);
     var root = h.attachShadow({ mode: "closed" });
-    root.innerHTML = "<style>" + STYLE + "</style><button class='pill' type='button'>" + MARK + "Save to Latchkey</button>";
-    root.querySelector("button").setAttribute("aria-label", "Save this " + (d.result.service || "secret") + " to Latchkey");
-    root.querySelector("button").addEventListener("click", function () { openPanel(d); });
+    root.innerHTML = "<style>" + STYLE + "</style><button class='pill' type='button'>" + MARK + "<span>Save to Latchkey</span></button>";
+    h._button = root.querySelector("button");
+    h._button.setAttribute("aria-label", "Save this " + (d.result.service || "secret") + " to Latchkey");
+    h._button.title = "Save to Latchkey";
+    h._button.addEventListener("click", function () { openPanel(d); });
     pills.set(d.id, h);
-    var a = anchorOf(d);
-    if (a) place(h, a, false); else h.style.display = "none";
+    placePill(h, d);
   }
   function reposition() {
     prune();
     pills.forEach(function (h, id) {
       var d = found.find(function (x) { return x.id === id; });
       if (!d) { h.remove(); pills.delete(id); return; }
-      var a = anchorOf(d);
-      if (a) place(h, a, false); else h.style.display = "none";
+      placePill(h, d);
     });
     offer();
-    if (panelHost && panelHost._anchor) place(panelHost, panelHost._anchor, true, panelHost._fromPill);
+    if (panelHost) placePanel(panelHost);
   }
-  // A key a page says it shows only once (a "your new key" dialog) gets the save panel without a click. Saving still
-  // takes your press and Touch ID. Once per key, and never over a panel you have open.
+  // A key a page says it shows only once (a "your new key" dialog) gets the save panel without a click, once its
+  // button has settled on it. Saving still takes your press and Touch ID. Once per key, never over an open panel.
   var offered = new Set();
   function offer() {
     if (panelHost) return;
     for (var i = 0; i < found.length; i++) {
-      var d = found[i];
+      var d = found[i], pill = pills.get(d.id);
       if (d.result.confidence !== "high" || !d.result.shownOnce || offered.has(d.result.value)) continue;
-      var a = anchorOf(d);
-      if (!a) continue;
+      if (!pill || pill.style.visibility !== "visible") continue;
       offered.add(d.result.value);
-      openPanel(d, a, true);
+      openPanel(d, null, true);
       return;
     }
   }
@@ -242,7 +327,7 @@
   function soon() { if (!queued) { queued = true; requestAnimationFrame(function () { queued = false; reposition(); }); } }
   window.addEventListener("scroll", soon, true);
   window.addEventListener("resize", soon);
-  setInterval(reposition, 1000);   // dialogs move and close without scrolling
+  setInterval(function () { if (pills.size || panelHost) reposition(); }, 200);   // dialogs move and close without scrolling
 
   // ---- Saving
   function openPanel(d, anchor, offeredByPage) {
@@ -251,10 +336,7 @@
     if (panelHost) panelHost.remove();
     var r = d.result;
     var h = host(2147483647);
-    if (r.confidence === "high" && d.id) showPill(d);
-    var pill = pills.get(d.id);
-    h._fromPill = !!pill && pill.style.display !== "none";
-    h._anchor = h._fromPill ? pill : anchor || anchorOf(d) || d.element;
+    h._d = d; h._anchor = anchor || d.element;
     var root = h.attachShadow({ mode: "closed" });
     var label = r.type + (r.environment ? " · " + (r.environment === "production" ? "live" : "test") : "");
     root.innerHTML = "<style>" + STYLE + "</style>" +
@@ -269,8 +351,9 @@
       '<div id="lk-next" hidden><p class="m">Use it in an env file in place of the value:</p>' +
       '<p class="ref"><code id="lk-ref"></code><button type="button" class="x" id="lk-copy">Copy</button></p>' +
       '<p class="m">Then run your project with <code>lk run --env-file .env -- &lt;your command&gt;</code>. If this replaces an older key, revoke the old one on this page.</p></div></div>';
+    h._panel = root.querySelector(".b");
     root.getElementById("what").textContent = label;
-    root.getElementById("conf").textContent = { high: "strong match", medium: "possible secret", selected: "you chose it" }[r.confidence] || "likely";
+    root.getElementById("conf").textContent = r.isPublic ? "not secret" : { high: "strong match", medium: "possible secret", selected: "you chose it" }[r.confidence] || "likely";
     root.getElementById("prev").textContent = D.preview(r.value);
     var placeSel = root.getElementById("lk-place"), name = root.getElementById("lk-name"), hint = root.getElementById("lk-hint");
     var status = root.getElementById("lk-status"), save = root.getElementById("lk-save");
@@ -298,6 +381,7 @@
         if (match.length === 1) placeSel.value = match[0];
       }
       explain();
+      placePanel(h);
     }).catch(function () { status.textContent = UNREACHABLE; explain(); });
     root.getElementById("lk-no").addEventListener("click", close);
     function close() { h.remove(); if (panelHost === h) panelHost = null; }
@@ -323,15 +407,16 @@
           status.textContent = (res && res.error) || "Not saved.";
           save.disabled = false;
         }
+        placePanel(h);
       }).catch(function () { status.textContent = UNREACHABLE; save.disabled = false; });
     });
     panelHost = h;
-    place(h, h._anchor, true, h._fromPill);
-    setTimeout(function () { (offeredByPage ? save : name).focus(); place(h, h._anchor, true, h._fromPill); }, 0);
+    placePanel(h);
+    setTimeout(function () { (offeredByPage ? save : name).focus(); placePanel(h); }, 0);
   }
 
   window.addEventListener("pagehide", function () {
-    found.forEach(retire); found = []; byValue.clear();
+    found.forEach(retire); found = []; byValue.clear(); secretFields = [];
     if (panelHost) { panelHost.remove(); panelHost = null; }
   });
   scan(document.body || document.documentElement);
@@ -341,8 +426,12 @@
     prune();
     if (msg.op === "detections") {
       return Promise.resolve(found.map(function (d) {
-        return { id: d.id, type: d.result.type, service: d.result.service, preview: D.preview(d.result.value), confidence: d.result.confidence };
+        return { id: d.id, type: d.result.type, service: d.result.service, preview: D.preview(d.result.value), confidence: d.result.confidence, isPublic: !!d.result.isPublic };
       }));
+    }
+    if (msg.op === "fields") {
+      // What each field expects and its label: page text, never a value.
+      return Promise.resolve(secretFields.map(function (f) { return { type: f.kind.type, label: f.label }; }));
     }
     if (msg.op === "open") {
       var d = found.find(function (x) { return x.id === msg.id; });

@@ -103,17 +103,24 @@ Click the key: search your items, copy a value, open an item in the window, open
 Latchkey comes with a Safari extension that spots a new key on the page where you made it and saves it when you say
 so. It recognizes the formats of about twenty providers (Stripe, OpenAI, Anthropic, GitHub, GitLab, Slack, Google,
 npm, Hugging Face and others), private keys, database URLs with a password, and long random values labelled as a
-secret or token. It skips what isn't secret or isn't a real key: masked values, examples, publishable keys,
-certificates, commit hashes.
+secret or token. It skips what isn't secret or isn't a real key: masked values, examples, publishable keys, commit
+hashes. Certificates are public, so they're never marked on the page; the toolbar panel lists them, and saving one
+makes a plain (unmasked) item.
 
 - When a page shows a new key and says it won't show it again, the save panel opens from its button on its own, once;
   press **Save to Latchkey** (or Return) to save it, or **Not now**.
-- For stronger matches, a **Save to Latchkey** button appears beside the key. Press it, choose where it goes (shared, or a
+- For stronger matches, a **Save to Latchkey** button sits on the box that holds the key: inside a one-line field at
+  its right end, or on the top edge of a larger box. The panel opens from it, beside the box rather than over the
+  key. Press it, choose where it goes (shared, or a
   project's environment; a live or test key is matched to production or development when it can be) and its name,
   then **Save to Latchkey**.
 - Less certain finds aren't marked on the page: the toolbar button shows how many it spotted, and its panel lists them
   (a short preview, never the value) so you can open the save panel for one.
 - For anything it missed, select the text, Control-click, and choose **Save Selection to Latchkey**.
+- It also notes fields that expect a key, token, secret, private key, certificate or connection string, the way a
+  password manager spots password fields: by label, placeholder, name and autocomplete hint, never by what's in them.
+  Sign-in passwords, one-time codes and email fields aren't counted. The toolbar panel lists them; filling them from
+  Latchkey isn't built yet.
 
 The app asks you to approve, showing the page's site, and the item's note says where it came from. Saving over an
 existing item keeps the old value in its history. After a save, the panel shows the reference to use, ready to copy.

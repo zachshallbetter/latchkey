@@ -51,7 +51,8 @@ check("private keys, not certificates", () => {
   const pem = j("-----BEGIN ", "PRIVATE KEY-----\n", rand(64, ALNUM + "+/"), "\n", rand(64, ALNUM + "+/"), "\n-----END ", "PRIVATE KEY-----");
   const r = D.classify(pem, {});
   assert(r && r.kind === "key" && r.name === "PRIVATE_KEY" && r.confidence === "high");
-  assert.strictEqual(D.classify(j("-----BEGIN ", "CERTIFICATE-----\n", rand(64), "\n-----END CERTIFICATE-----"), {}), null);
+  const cert = D.classify(j("-----BEGIN ", "CERTIFICATE-----\n", rand(64), "\n-----END CERTIFICATE-----"), {});
+  assert(cert && cert.isPublic && cert.kind === "value" && cert.confidence === "medium", "a certificate is a public item, never marked");
 });
 
 check("connection strings with a password", () => {
@@ -116,6 +117,22 @@ check("previews never show the whole value", () => {
   const key = j("rk", "_live_", rand(80));
   const p = D.preview(key);
   assert(p.startsWith("rk_") && p.endsWith(key.slice(-4)) && p.length < 16);
+});
+
+check("fields that expect a secret, by label and name, not value", () => {
+  const k = (f) => (D.fieldKind(f) || {}).type || null;
+  assert.strictEqual(k({ label: "API key" }), "API key or token");
+  assert.strictEqual(k({ name: "stripeSecretKey" }), "Secret");
+  assert.strictEqual(k({ label: "Client secret", autocomplete: "off" }), "Secret");
+  assert.strictEqual(k({ placeholder: "-----BEGIN PRIVATE KEY-----", label: "Private key" }), "Private key");
+  assert.strictEqual(k({ label: "Database URL" }), "Connection string");
+  assert.strictEqual(k({ label: "CA certificate" }), "Certificate");
+  assert.strictEqual(k({ label: "Personal access token" }), "API key or token");
+  assert.strictEqual(k({ label: "Password", autocomplete: "current-password" }), null, "sign-in password");
+  assert.strictEqual(k({ label: "Password" }), null, "a password field that names no key");
+  assert.strictEqual(k({ label: "Verification code", name: "otp_token" }), null, "one-time codes aren't keys");
+  assert.strictEqual(k({ label: "Email" }), null);
+  assert.strictEqual(k({ name: "q", placeholder: "Search tokens" }), null);
 });
 
 // Run the randomized cases many times, so a lucky draw can't hide a flaky rule.

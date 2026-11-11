@@ -48,7 +48,7 @@ command gets which value. This page says what it protects against, how, and wher
   both share. The app admits only Latchkey's signed extension there (checked by code signature), and only to list
   item names and save a value, which asks like any change. It can't read a stored value. The page's site it reports is
   shown in the approval as Safari reported it. Its key detection runs inside the page: a value goes to the app only
-  when you press Save, and its toolbar panel gets a short preview, never the value. Password fields are not read.
+  when you press Save, and its toolbar panel gets a short preview, never the value. Password fields are not read. Fields that expect a key are recognized by their labels and attributes only.
   Detection covers the main page DOM, not embedded frames or shadow roots.
   Use Safari’s website permissions to choose which sites the extension may inspect.
 - **Temporary key files** live in a new folder only you can open, are only readable by you, and are deleted when the

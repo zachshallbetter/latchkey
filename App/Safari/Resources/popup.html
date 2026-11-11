@@ -14,6 +14,8 @@
     .no::before { content: "\25CF  "; color: #ff3b30; }
     .muted { color: rgba(127, 127, 127, 1); font-size: 12px; margin: 0; }
     ul { list-style: none; margin: 0 0 10px; padding: 0; }
+    ul.plain li { padding: 4px 0; display: flex; justify-content: space-between; gap: 8px; }
+    ul.plain .l { color: rgba(127, 127, 127, 1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     li button { width: 100%; display: flex; align-items: center; gap: 8px; text-align: left; padding: 7px 9px; margin: 0 0 4px;
       border: 1px solid rgba(127, 127, 127, .3); border-radius: 7px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
     li button:hover { background: rgba(127, 127, 127, .1); }
@@ -29,6 +31,7 @@
   <h2>On this page</h2>
   <ul id="found" aria-live="polite"></ul>
   <p id="none" class="muted" hidden>No keys spotted here. To save something it missed, select it, then Control-click › Save Selection to Latchkey.</p>
+  <div id="fields-box" hidden><h2>Fields that take a key</h2><ul id="fields" class="plain"></ul></div>
   <p class="muted">Keys are spotted in this page, not sent anywhere, until you choose Save; then the Latchkey app asks for Touch ID. This extension can't read the keys already in Latchkey. If it doesn't run on a site, allow it there: Safari › Settings › Extensions › Latchkey.</p>
   <script src="popup.js"></script>
 </body>
