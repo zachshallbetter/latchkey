@@ -95,6 +95,41 @@
     .demo-foot p { margin: 0; font-size: 15px; }
     .js .demo-foot { min-height: 0; }
     .term .err { color: #ff9b8f; }
+    /* The menu bar, with Latchkey's icon and its panel of recent activity. */
+    .menubar { position: relative; display: flex; justify-content: flex-end; align-items: center; height: 30px; margin-bottom: 10px;
+               padding: 0 10px; border-radius: 8px; background: #1b2028; border: 1px solid #262e38; }
+    .mb-icon { display: grid; place-items: center; width: 34px; height: 24px; border: 0; border-radius: 6px; background: none; cursor: pointer; }
+    .mb-icon img { width: 20px; height: 17px; filter: brightness(0) invert(1); opacity: .92; }
+    .mb-icon[aria-expanded="true"], .mb-icon:hover { background: rgba(255, 255, 255, .14); }
+    .mb-icon.flash { animation: flash 1.2s ease; }
+    @keyframes flash { 0%, 60% { background: rgba(78, 161, 255, .55); } 100% { background: none; } }
+    .mb-menu { position: absolute; z-index: 5; top: 34px; right: 4px; width: min(340px, 92vw); padding: 10px; border-radius: 12px;
+               background: rgba(36, 40, 47, .97); border: 1px solid #3a414b; box-shadow: 0 16px 40px rgba(0, 0, 0, .5); color: #e8ecf1; font-size: 13px; }
+    .mb-head { margin: 2px 4px 8px; font-weight: 700; font-size: 14px; }
+    .mb-menu ul { list-style: none; margin: 0; padding: 6px 0; border-top: 1px solid #3a414b; border-bottom: 1px solid #3a414b; }
+    .mb-menu li { padding: 6px 4px; }
+    .mb-menu li b { display: block; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mb-menu li span { color: #aab3bf; font-size: 12px; }
+    .mb-menu li.no b::before { content: "\25CF  "; color: #ff6b5e; }
+    .mb-menu li.yes b::before { content: "\25CF  "; color: #4cd07d; }
+    .mb-menu .mb-empty { color: #aab3bf; }
+    .mb-foot { display: flex; justify-content: space-between; margin: 8px 4px 0; color: #aab3bf; }
+    .mb-foot a { color: #e8ecf1; }
+    /* The system's Touch ID sheet, with Latchkey's own words. */
+    .touch { position: absolute; z-index: 4; left: 50%; top: 60px; transform: translateX(-50%); width: min(300px, 92%); padding: 18px;
+             border-radius: 16px; background: rgba(40, 44, 52, .98); border: 1px solid #3a414b; box-shadow: 0 20px 50px rgba(0, 0, 0, .55);
+             color: #f1f3f6; text-align: left; }
+    .touch-icon { position: relative; width: 56px; height: 56px; border-radius: 50%; background: #e9ebef; color: #9aa1ab; display: grid; place-items: center; margin-bottom: 10px; }
+    .touch-icon svg { width: 34px; height: 34px; }
+    .touch-icon img { position: absolute; right: -8px; bottom: -4px; width: 20px; height: 17px; padding: 4px; border-radius: 7px; background: #f6f7f9; box-sizing: content-box; }
+    .touch.reading .touch-icon { color: #ff3b30; animation: read 1.2s ease-in-out infinite; }
+    .touch.ok .touch-icon { color: #34c759; }
+    @keyframes read { 50% { color: #ff8a80; } }
+    .touch-text { margin: 0 0 6px; font-weight: 700; font-size: 13.5px; line-height: 1.35; }
+    .touch-sub { margin: 0 0 12px; font-size: 13px; color: #c9ced6; }
+    .touch-btn { display: block; width: 100%; margin-top: 8px; padding: 7px; border-radius: 9px; border: 0; background: #4a505a; color: #fff; font: 600 13px var(--sans); cursor: pointer; }
+    .touch-btn:hover { background: #575e69; }
+    @media (prefers-reduced-motion: reduce) { .mb-icon.flash, .touch.reading .touch-icon { animation: none; } }
     .term .t-act { color: #8ec5ff; } .term .t-flag { color: #d4b3ff; } .term .t-val { color: #a5e3b5; }
     .term .t-sep { color: #8b95a1; } .term .t-child { color: #d7dee7; }
     /* The completion list under the command as it's typed, the way an editor suggests. */
@@ -130,7 +165,108 @@
     .term.mini pre { min-height: 64px; padding: 10px 14px; font-size: 13px; }
     .term.mini { margin-top: 12px; }
 
+    /* The Latchkey window: wider than the reading column, three panes like the app. */
+    .appwrap { position: relative; left: 50%; transform: translateX(-50%); width: min(1100px, calc(100vw - 32px)); margin: 24px 0 10px; }
+    .appwin { position: relative; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); overflow: hidden;
+              font-size: 13.5px; color: var(--ink); }
+    .appwin .chrome { display: flex; align-items: center; gap: 7px; height: 36px; padding: 0 12px; border-bottom: 1px solid var(--line); background: var(--bg-2); }
+    .appwin .chrome i { width: 11px; height: 11px; border-radius: 50%; background: #ff5f57; display: block; }
+    .appwin .chrome i:nth-child(2) { background: #febc2e; } .appwin .chrome i:nth-child(3) { background: #28c840; }
+    .appwin .chrome span { margin-left: 8px; font-weight: 600; color: var(--muted); }
+    .appwin .body { display: grid; grid-template-columns: 210px 290px 1fr; height: 560px; }
+    .appwin .side, .appwin .list, .appwin .detail { overflow-y: auto; padding: 12px; min-width: 0; }
+    .appwin .side { background: var(--bg-2); border-right: 1px solid var(--line); }
+    .appwin .list { border-right: 1px solid var(--line); }
+    .appwin .list.wide { grid-column: span 2; border-right: 0; }
+    .appwin button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; text-align: left; }
+    .appwin .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .appwin .tile { position: relative; padding: 8px 9px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); font-weight: 650; font-size: 12.5px; line-height: 1.2; min-height: 54px; display: flex; align-items: flex-end; }
+    .appwin .tile .tn { position: absolute; top: 6px; right: 9px; font-size: 13px; }
+    .appwin .tile[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+    .appwin .sh { margin: 12px 4px 4px; font-size: 11.5px; font-weight: 650; color: var(--muted); }
+    .appwin .side ul { list-style: none; margin: 0; padding: 0; }
+    .appwin .side li button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 6px; border-radius: 7px; }
+    .appwin .side li button span:not(.ki) { flex: 1; }
+    .appwin .side li button em { font-style: normal; color: var(--muted); }
+    .appwin .side li button[aria-pressed="true"], .appwin .side li button:hover { background: var(--surface); }
+    .appwin .sync { margin: 16px 0 0; padding: 10px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+    .appwin .sync b { display: block; color: var(--ink); font-size: 13px; }
+    .appwin .lt { margin: 0 4px 10px; font-weight: 700; font-size: 15px; }
+    .appwin .lt small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
+    .appwin .grp { display: flex; align-items: center; gap: 7px; width: 100%; padding: 7px 4px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+    .appwin .grp b { font-weight: 650; }
+    .appwin .grp em { font-style: normal; color: var(--muted); margin-right: auto; }
+    .appwin .grp.sub { padding-left: 18px; }
+    .appwin .chev { width: 8px; height: 8px; border-right: 1.6px solid var(--muted); border-bottom: 1.6px solid var(--muted); transform: rotate(-45deg); margin-right: 2px; transition: transform .15s; }
+    .appwin .grp[aria-expanded="true"] .chev { transform: rotate(45deg); }
+    .appwin .place { color: var(--muted); font-size: 12px; }
+    .appwin .env { padding: 1px 7px; border-radius: 6px; font-size: 11.5px; font-weight: 600; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--t-act); }
+    .appwin .env-preview { background: color-mix(in srgb, var(--t-flag) 18%, transparent); color: var(--t-flag); }
+    .appwin .env-production { background: rgba(225, 70, 60, .14); color: #a8291f; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .appwin .env-production { color: #ff8a80; } }
+    :root[data-theme="dark"] .appwin .env-production { color: #ff8a80; }
+    .appwin .item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 8px 7px 30px; border-radius: 8px; }
+    .appwin .item span { min-width: 0; }
+    .appwin .item b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .appwin .item small { color: var(--muted); font-size: 12px; }
+    .appwin .item[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+    .appwin .item[aria-pressed="true"] small { color: inherit; opacity: .85; }
+    .appwin .item:not([aria-pressed="true"]):hover { background: var(--bg-2); }
+    .appwin .ki { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; flex: none; color: #fff; }
+    .appwin .ki svg { width: 14px; height: 14px; fill: currentColor; }
+    .appwin .ki-token { background: #1f7cf0; } .appwin .ki-password { background: #f2994a; } .appwin .ki-key { background: #c94fd8; } .appwin .ki-value { background: #8a929c; }
+    .appwin .ki-proj, .appwin .ki-svc, .appwin .ki-grant, .appwin .ki-del, .appwin .ki-shared { width: 18px; height: 18px; border-radius: 5px; background: var(--line); }
+    .appwin .ki-grant { background: #2bb3c0; } .appwin .ki-proj { background: #6b7cf5; }
+    .appwin .side .ki:not(.ki-proj):not(.ki-svc):not(.ki-grant):not(.ki-del) { width: 20px; height: 20px; border-radius: 6px; }
+    .appwin .side .ki svg { width: 11px; height: 11px; }
+    .appwin .ki.big { width: 52px; height: 52px; border-radius: 13px; }
+    .appwin .ki.big svg { width: 26px; height: 26px; }
+    .appwin .card { padding: 10px 12px; border-radius: 10px; background: var(--bg-2); margin-bottom: 10px; }
+    .appwin .card.head { display: flex; gap: 12px; align-items: center; }
+    .appwin .dn { display: block; font-size: 18px; font-weight: 700; }
+    .appwin .kv { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+    .appwin .kv:last-child { border-bottom: 0; }
+    .appwin .kv > span { flex: 1; font-weight: 550; }
+    .appwin .kv small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+    .appwin .kv em { font-style: normal; color: var(--muted); }
+    .appwin .kv code { font-size: 12px; overflow-wrap: anywhere; background: none; border: 0; }
+    .appwin .ib { padding: 3px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); font-size: 12px; font-weight: 600; }
+    .appwin .switch { width: 38px; height: 22px; border-radius: 11px; background: var(--line); position: relative; flex: none; }
+    .appwin .switch i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+    .appwin .switch[aria-checked="true"] { background: #34c759; }
+    .appwin .switch[aria-checked="true"] i { left: 18px; }
+    .appwin .dh { margin: 14px 2px 6px; font-weight: 700; }
+    .appwin .fn { margin: -4px 4px 10px; font-size: 12px; color: var(--muted); }
+    .appwin .muted { margin: 0; color: var(--muted); }
+    .appwin .empty { color: var(--muted); padding: 8px 4px; }
+    .appwin .entry { display: flex; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--line); }
+    .appwin .entry div { flex: 1; min-width: 0; }
+    .appwin .entry b { display: block; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .appwin .entry span { display: block; color: var(--muted); font-size: 12px; }
+    .appwin .entry .mono { font-family: var(--mono); }
+    .appwin .entry time { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .appwin .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex: none; background: #34c759; }
+    .appwin .dot.no { background: #ff3b30; }
+    .appwin .grantrow { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-bottom: 1px solid var(--line); }
+    .appwin .grantrow div { flex: 1; }
+    .appwin .grantrow b { display: block; font-family: var(--mono); font-size: 13px; }
+    .appwin .grantrow span { display: block; color: var(--muted); font-size: 12px; }
+    .appwin .pill { padding: 5px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; }
+    .appwin button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .appwin .touch { top: 90px; }
+
+    @media (max-width: 860px) {
+      .appwin .body { grid-template-columns: 1fr; height: auto; }
+      .appwin .side { border-right: 0; border-bottom: 1px solid var(--line); max-height: none; }
+      .appwin .side ul, .appwin .side .sh, .appwin .sync { display: none; }
+      .appwin .tiles { grid-template-columns: repeat(4, 1fr); margin: 0; }
+      .appwin .list { border-right: 0; border-bottom: 1px solid var(--line); max-height: 380px; }
+      .appwin .list.wide { grid-column: auto; }
+      .appwin .detail { max-height: 520px; }
+    }
+
     @media (prefers-reduced-motion: reduce) {
+      .appwin .chev, .appwin .switch i { transition: none; }
       .panel, .envfile .v { transition: none; }
       .caret { animation: none; }
       .proxy .packet.go { animation: none; left: calc(100% - 10px); opacity: 1; }
@@ -176,6 +312,16 @@
       <p class="fine">macOS 15 or later. The app and the <code>lk</code> command-line tool. No account or server.</p>
 
       <div class="stage" id="demo">
+        <div class="menubar">
+          <button class="mb-icon" id="mb-icon" type="button" aria-expanded="false" aria-controls="mb-menu" aria-label="Latchkey in the menu bar">
+            <img src="logo.svg" alt="">
+          </button>
+          <div class="mb-menu" id="mb-menu" hidden>
+            <p class="mb-head">iCloud Keychain</p>
+            <ul id="mb-activity"><li class="mb-empty">No activity yet.</li></ul>
+            <p class="mb-foot"><a href="#app">Open Latchkey</a><span>Settings… &nbsp; Quit</span></p>
+          </div>
+        </div>
         <div class="term">
           <div class="bar"><i></i><i></i><i></i><span class="tt">claude in ~/Projects/shop</span></div>
 <pre id="demo-out" aria-hidden="true"><span class="p">~/Projects/shop $</span> lk run --env shop/development -- npm test
@@ -201,6 +347,13 @@
             <label><input type="checkbox" id="demo-only" disabled> Only for <span id="demo-only-cmd">npm test</span></label>
           </div>
           <div class="row"><small>Touch ID confirms your choice.</small><button class="btn" type="button" data-choice="deny" disabled>Deny</button><button class="btn go" type="button" data-choice="once" disabled>Allow Once</button></div>
+        </div>
+        <div class="touch" id="touch" role="dialog" aria-label="Touch ID" hidden>
+          <div class="touch-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg><img src="logo.svg" alt=""></div>
+          <p class="touch-text" id="touch-text"></p>
+          <p class="touch-sub">Touch ID or enter your password to continue with Latchkey.</p>
+          <button type="button" class="touch-btn" data-t="pw">Use Password…</button>
+          <button type="button" class="touch-btn" data-t="deny">Deny</button>
         </div>
         <div class="demo-foot">
           <p id="demo-status" class="fine" aria-live="polite">You're the person at the Mac: when the agent's command asks, choose in the panel.</p>
@@ -236,6 +389,11 @@ lk run --env shop/development -- npm test</code></pre></figure>
     <figure class="code"><figcaption><span>Run inside the agent's session</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code>lk grant 'shop/development/*' --session --for 4h
 lk grant 'shop/development/*' --command "npm test" --for 2h</code></pre></figure>
     <p>Through the MCP server, an agent can ask for a grant only on its own folder and for its own session, for a day at most, and never for production items.</p>
+
+    <h2 id="app">The app</h2>
+    <p>Everything Latchkey keeps is in one window: items grouped by project and environment, which ones agents may read without asking, where each is used, every request in Activity, and the grants in effect. The window below works with example data. Whatever you chose in the panel at the top of the page is already in its Activity, and a grant you made is under Grants, where Revoke ends it. Showing a value or changing a setting asks for Touch ID, as it does in the app.</p>
+    <div class="appwrap"><div class="appwin" id="appwin" aria-label="The Latchkey window, with example data"></div></div>
+    <p class="fine">Example data; the values are made up. The menu bar icon opens a smaller panel with search and recent activity, like the one above the terminal.</p>
 
     <h2 id="proxy">Keys an agent can use without reading</h2>
     <p>A command that has a key in its environment can print it, encode it or send it somewhere, and masking only catches exact copies. For OpenAI and Anthropic keys, <code>lk run --proxy</code> keeps the key out of the command. The command gets a placeholder and a base URL on your Mac; Latchkey adds the real key to requests bound for <code>api.openai.com</code> or <code>api.anthropic.com</code> and refuses everything else.</p>
@@ -420,6 +578,7 @@ lk rotate --touched --since 4h --by claude --open --push</code></pre></figure>
       await type(BASE + cmd, id);
       if (id !== run) return;
       if (covered(cmd)) {
+        record("allowed (grant " + grant.id + ")", true);
         status.textContent = "The grant covers this run" + (grant.only ? " of " + grant.only : "") + ", so nothing asks. It ends when claude quits.";
         await wait(300); await lines(OUTPUT[cmd], id); write("\n"); await type("", id); caret(true);
         finish("A grant made from the panel lasts until claude quits" + (grant.only ? " and covers only " + grant.only : "") + ".");
@@ -432,18 +591,82 @@ lk rotate --touched --since 4h --by claude --open --push</code></pre></figure>
     }
     function finish(text) { status.textContent = text; restart.hidden = false; if (usedKeyboard) restart.focus(); }
 
+    // ---- Touch ID, then what the app records: the menu bar panel here, and the app window (app-demo.js).
+    var touch = $("touch"), touchText = $("touch-text"), mbIcon = $("mb-icon"), mbMenu = $("mb-menu"), mbList = $("mb-activity");
+    var IDS = ["shop/development/DATABASE_URL", "shop/development/STRIPE_KEY"];
+    function touchID(cmd) {
+      touchText.textContent = "Latchkey is trying to release DATABASE_URL and STRIPE_KEY from shop/development to zsh › claude › Terminal in ~/Projects/shop (running lk run --env shop/development -- " + cmd + ").";
+      return new Promise(function (resolve) {
+        var done = false, timer;
+        function end(ok) {
+          if (done) return; done = true; clearTimeout(timer);
+          touch.classList.remove("reading");
+          if (!ok) { touch.hidden = true; resolve(false); return; }
+          touch.classList.add("ok");
+          setTimeout(function () { touch.hidden = true; touch.classList.remove("ok"); resolve(true); }, reduce ? 300 : 500);
+        }
+        touch.hidden = false; touch.classList.add("reading");
+        touch.querySelector('[data-t="pw"]').onclick = function () { end(true); };
+        touch.querySelector('[data-t="deny"]').onclick = function () { end(false); };
+        if (usedKeyboard) touch.querySelector('[data-t="deny"]').focus();
+        // The visitor's finger on the sensor, a moment later.
+        timer = setTimeout(function () { end(true); }, reduce ? 900 : 1800);
+      });
+    }
+    function record(decision, ok) {
+      var entry = { op: "get", names: IDS, decision: decision, chain: "zsh › claude › Terminal", cwd: "~/Projects/shop", time: new Date() };
+      document.dispatchEvent(new CustomEvent("lk:activity", { detail: entry }));
+      var empty = mbList.querySelector(".mb-empty"); if (empty) empty.remove();
+      var li = document.createElement("li");
+      li.className = ok ? "yes" : "no";
+      li.innerHTML = "<b></b><span></span>";
+      li.querySelector("b").textContent = "get DATABASE_URL, STRIPE_KEY";
+      li.querySelector("span").textContent = decision + " · zsh › claude › Terminal";
+      mbList.insertBefore(li, mbList.firstChild);
+      while (mbList.children.length > 3) mbList.lastChild.remove();
+      mbIcon.classList.remove("flash"); void mbIcon.offsetWidth; mbIcon.classList.add("flash");
+    }
+    function closeMenu(focusIcon) { mbMenu.hidden = true; mbIcon.setAttribute("aria-expanded", "false"); if (focusIcon) mbIcon.focus(); }
+    mbIcon.addEventListener("click", function () {
+      var open = mbMenu.hidden;
+      mbMenu.hidden = !open; mbIcon.setAttribute("aria-expanded", String(open));
+    });
+    document.addEventListener("click", function (ev) {
+      if (!mbMenu.hidden && !mbMenu.contains(ev.target) && !mbIcon.contains(ev.target)) closeMenu(false);
+    });
+    mbMenu.addEventListener("keydown", function (ev) { if (ev.code === "Escape") closeMenu(true); });
+    mbIcon.addEventListener("keydown", function (ev) { if (ev.code === "Escape") closeMenu(true); });
+    mbMenu.querySelector("a").addEventListener("click", function () { closeMenu(false); });
+    function newID() { return Math.random().toString(16).slice(2, 8); }
+    document.addEventListener("lk:revoke", function (ev) {
+      if (grant && grant.id === ev.detail.id) {
+        grant = null;
+        status.textContent = "Grant revoked in the app. The agent's next run asks again.";
+      }
+    });
+
     async function choose(choice) {
       var id = run, cmd = current;
       var onlyThis = only.checked;
       hidePanel(); caret(false);
+      if (choice !== "deny") {
+        status.textContent = "macOS asks for Touch ID to confirm.";
+        if (!(await touchID(cmd))) choice = "deny";
+        if (id !== run) return;
+      }
       if (choice === "deny") {
+        record("denied", false);
         await lines(REFUSED, id); write("\n"); await type("", id); caret(true);
         finish("Denied. lk exits with 77, and the agent's instructions tell it to stop and ask you.");
       } else if (choice === "once") {
+        record("approved", true);
         await lines(OUTPUT[cmd], id); write("\n"); await type("", id); caret(true);
         finish("Released for this run. The same request from the same place won't ask again for 2 minutes.");
       } else {
-        grant = { only: onlyThis ? cmd : null };
+        grant = { only: onlyThis ? cmd : null, id: newID() };
+        var limits = (grant.only ? "only " + grant.only + ", " : "") + "until claude quits";
+        record("approved (grant " + grant.id + " for 1 day, " + limits + ")", true);
+        document.dispatchEvent(new CustomEvent("lk:grant", { detail: { id: grant.id, names: IDS, folder: "~/Projects/shop", limits: limits } }));
         await lines(OUTPUT[cmd], id);
         write("\n");
         status.textContent = "Grant made. The agent runs something next…";
@@ -522,5 +745,6 @@ lk rotate --touched --since 4h --by claude --open --push</code></pre></figure>
     });
   })();
   </script>
+  <script src="app-demo.js"></script>
 </body>
 </html>

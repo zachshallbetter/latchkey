@@ -7,6 +7,7 @@ served. It isn't hosted or connected to any service yet.
 |---|---|
 | `index.html` | The home page: one column that follows the `shop` example from env file to rotation. Its CSS is inline; the terminal and approval panel are HTML drawn after the app's real panel, not images |
 | `site.css` | Shared styles: colour tokens (light and dark), header, footer, code blocks, and the developer docs layout |
+| `app-demo.js` | A working copy of the Latchkey window on the home page, with example data: sidebar filters and counts, the project and environment tree, item detail, Activity and Grants. It listens for the approval scene's `lk:activity` and `lk:grant` events, and sends `lk:revoke` when a grant is revoked there. Showing a value or changing a setting goes through a Touch ID sheet, as in the app |
 | `site.js` | Copy buttons, and `lk` commands coloured by part (action, option, value, the program it runs) with an explanation of each on hover or focus. The explanations live in its `ACTIONS` and `FLAGS`; keep them in step with the CLI. On the home page each code block is one keyboard stop and the arrow keys move between parts; on the developer pages explanations are hover-only, since the tables there cover every option |
 | `logo.svg` | The mark, used in the header, the drawn approval panel and the favicon. Replace this one file to change the logo |
 | `apple-touch-icon.png` | 180×180, rendered from the app icon (`sips -s format png -z 180 180 …/AppIcon.icns`) |
@@ -14,6 +15,8 @@ served. It isn't hosted or connected to any service yet.
 | `llms.txt` | Plain-text facts, agent instructions and links for language-model tools |
 | `robots.txt` | Crawl policy |
 
+The approval scene follows the real sequence: the panel, then the system's Touch ID sheet with Latchkey's own
+wording, then the result, recorded in the menu bar panel above the terminal and in the app window further down.
 In the opening terminal, a completion list appears under the command as each part is typed, the way an editor
 suggests, drawn from the same explanations. The home page has three scenes, each redrawing only what Latchkey really prints and shows. In the approval
 panel, the visitor plays the person at the Mac: Deny prints the real refusal, Allow Once runs the tests with the
