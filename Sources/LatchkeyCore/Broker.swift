@@ -126,6 +126,8 @@ public final class Broker: @unchecked Sendable {
             case "projects": return Response(ok: true, projects: try records.projects())
             case "project-link": return try linkProject(req, peer: peer)
             case "project-unlink": return try unlinkProject(req, peer: peer)
+            case "duplicates": return try duplicates(req, peer: peer)
+            case "combine": return try combine(req, peer: peer)
             default: return Response(ok: false, error: "unknown op \(req.op)")
             }
         } catch {
@@ -708,6 +710,75 @@ public final class Broker: @unchecked Sendable {
         return Response(ok: true, projects: [project])
     }
 
+    // MARK: duplicates
+
+    /// Which items hold the same value. The values are compared here and never returned, but reading them all is still
+    /// reading them, so this asks every time (no grant or agent-safe setting stands in), and agents can't ask at all:
+    /// which keys are shared is itself worth knowing.
+    func duplicates(_ req: Request, peer: PeerInfo) throws -> Response {
+        guard req.origin != "mcp" else { return Response(ok: false, error: "an agent can't compare values; ask the owner to run lk duplicates") }
+        guard !peer.isSafariExtension else { return Response(ok: false, error: "finding duplicates isn't available to Safari") }
+        let items = try store.list().filter { $0.kind.isSecret }
+        guard !items.isEmpty else { return Response(ok: true, groups: []) }
+        let names = items.map(\.name)
+        guard ask(.read, names, peer, req, "compare the values of \(Self.count(names)) to find duplicates (no value leaves Latchkey), asked by \(Self.describe(peer, req))").allowed else {
+            log("duplicates", [], "denied", peer, req)
+            return Response(ok: false, error: "finding duplicates was not approved")
+        }
+        let groups = Duplicates.groups(values: try store.values(names), items: items)
+        log("duplicates", groups.flatMap { $0 }, "approved (\(groups.count) group\(groups.count == 1 ? "" : "s"))", peer, req)
+        return Response(ok: true, groups: groups)
+    }
+
+    /// Makes items holding one value into one shared item, `into`: it's created from them (or must already hold the same
+    /// value), the others are deleted (kept in Recently Deleted), and environment records follow. Files are the caller's
+    /// to update, from `moved` and each item's `usedIn`, as after a move.
+    func combine(_ req: Request, peer: PeerInfo) throws -> Response {
+        guard req.origin != "mcp" else { return Response(ok: false, error: "an agent can't combine items; ask the owner to run lk combine") }
+        let ids = Array(Set(req.names ?? [])).sorted()
+        guard ids.count >= 2 || (ids.count == 1 && req.into != ids.first) else { return Response(ok: false, error: "give the items to combine") }
+        guard let into = req.into, let target = ItemID(into), target.isShared else {
+            return Response(ok: false, error: "combine needs a shared item name to combine into, such as OPENAI_API_KEY")
+        }
+        let infos = Dictionary(uniqueKeysWithValues: try store.list().map { ($0.name, $0) })
+        let missing = ids.filter { infos[$0] == nil }
+        guard missing.isEmpty else { return Response(ok: false, missing: missing) }
+        let values = try store.values(ids + (infos[into] != nil ? [into] : []))
+        guard Set(ids.compactMap { values[$0] }).count == 1, let value = values[ids[0]] else {
+            return Response(ok: false, error: "these items don't all hold the same value; nothing was combined")
+        }
+        if infos[into] != nil, values[into] != value {
+            return Response(ok: false, error: "\(into) already exists with a different value; choose another name")
+        }
+        let sources = ids.filter { $0 != into }
+        let what = "combine \(Self.count(ids)) into the shared item \(into)\(infos[into] != nil ? "" : " (new)")"
+        guard ask(.move, ids, peer, req, "\(what); the others are deleted and references follow, asked by \(Self.who(peer))").allowed else {
+            log("combine", ids, "denied", peer, req)
+            return Response(ok: false, error: "combining was not approved")
+        }
+        if infos[into] == nil {
+            let parts = ids.compactMap { infos[$0] }
+            // The strictest settings among them: agents may read it only if they could read every one.
+            let kind = parts.first?.kind ?? .token
+            let services = Set(parts.compactMap(\.service))
+            try store.save(name: into, value: value, kind: kind, agentSafe: parts.allSatisfy(\.agentSafe),
+                           note: "combined from \(ids.joined(separator: ", "))", usedIn: parts.flatMap { $0.usedIn ?? [] },
+                           service: services.count == 1 ? services.first! : "")
+        } else {
+            try store.save(name: into, value: nil, kind: nil, agentSafe: nil, note: nil, usedIn: sources.compactMap { infos[$0]?.usedIn }.flatMap { $0 })
+        }
+        var moved: [String: String] = [:]
+        for id in sources {
+            try keepCurrent(id, reason: .deleted, by: Self.who(peer))
+            _ = try store.remove(id)
+            moved[id] = into
+        }
+        for r in EnvironmentRecords.renaming(try records.environments(), moved) { try records.save(r) }
+        pruneVersions()
+        log("combine", ids, "approved (into \(into))", peer, req)
+        return Response(ok: true, moved: moved)
+    }
+
     // MARK: versions
 
     /// Saves the item's current value as a version before it's replaced or deleted. Skipped when the new value
@@ -1158,7 +1229,8 @@ public final class Broker: @unchecked Sendable {
         public static let commandLineTool = Gate(identifier: CodeIdentity.toolIdentifier, ops: [
             "status", "list", "check", "verify-log", "log", "get", "set", "rm", "import", "grants", "grant", "revoke",
             "move", "update", "history", "deleted", "version", "restore", "forget", "links", "link", "unlink", "remote-status", "push",
-            "environments", "environment-add", "environment-set", "environment-remove", "export", "projects", "project-link", "project-unlink"
+            "environments", "environment-add", "environment-set", "environment-remove", "export", "projects", "project-link", "project-unlink",
+            "duplicates", "combine"
         ])
         public static let safariExtension = Gate(identifier: CodeIdentity.safariExtensionIdentifier, ops: ["status", "list", "set", "fill"])
     }

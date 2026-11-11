@@ -73,6 +73,12 @@ Files refer to them as latchkey://ID.
       Move items into a project's environment (or back to shared) with one approval, then point
       references at the new IDs in the files each item was imported from, in --file files, and
       in the --from-file file. --from-file moves the shared items that FILE refers to.
+  latchkey duplicates [--json]   Items holding the same value, and what to do about each group: give production its
+      own key, or combine them into one shared item. Values are compared inside Latchkey and never shown; it asks
+      every time, and agents can't ask.
+  latchkey combine ID[,ID...] --into NAME [--file FILE]...
+      Make items holding one value into one shared item NAME (new, or already holding that value) with one approval.
+      The others go to Recently Deleted; environments and the files each was imported from (and --file files) follow.
   latchkey history ID             Earlier values of an item: when and by whom they were replaced. Never values.
   latchkey restore ID [--version N]
       Put back version N (1 = most recent) of ID, or bring back a deleted item. The current value
@@ -929,8 +935,14 @@ func moveCommand(_ input: [String]) -> Never {
     let moved = r.moved ?? [:]
     for (old, new) in moved.sorted(by: { $0.key < $1.key }) { print("moved    \(old) → \(new)") }
     if moved.isEmpty { print("Nothing to move: already there."); exit(0) }
+    renameReferences(in: files + usedIn.map { URL(fileURLWithPath: $0) }, moved)
+    exit(0)
+}
+
+/// Points references at new IDs in each file, once per file, saying what happened to each.
+func renameReferences(in files: [URL], _ moved: [String: String]) {
     var seen = Set<String>()
-    for url in files + usedIn.map({ URL(fileURLWithPath: $0) }) where seen.insert(url.path).inserted {
+    for url in files where seen.insert(url.path).inserted {
         guard FileManager.default.fileExists(atPath: url.path) else { print("missing  \(Broker.tilde(url.path)) (not updated)"); continue }
         do {
             if try EnvFile.renameReferences(in: url, moved) { print("updated  \(Broker.tilde(url.path))") }
@@ -938,6 +950,71 @@ func moveCommand(_ input: [String]) -> Never {
             print("failed   \(Broker.tilde(url.path)): \(error.localizedDescription)")
         }
     }
+}
+
+// MARK: - duplicates
+
+/// Groups of items holding the same value, with what to do about each. The values are compared inside Latchkey.
+func duplicatesCommand(_ input: [String]) -> Never {
+    let json = input.contains("--json")
+    if let other = input.first(where: { $0 != "--json" }) { fail("unknown option \(other)", code: 64) }
+    let r = send(Request(op: "duplicates"))
+    guard r.ok, let groups = r.groups else { fail(r.error ?? "finding duplicates failed", code: 1) }
+    if json {
+        let rows: [[String: Any]] = groups.map { g in
+            let a = Duplicates.advice(for: g)
+            var row: [String: Any] = ["items": g, "advice": a.code, "summary": a.summary]
+            if let into = a.into { row["into"] = into }
+            return row
+        }
+        let data = try! JSONSerialization.data(withJSONObject: rows, options: [.prettyPrinted, .sortedKeys])
+        print(String(decoding: data, as: UTF8.self))
+        exit(0)
+    }
+    guard !groups.isEmpty else { print("No two items hold the same value."); exit(0) }
+    for (i, g) in groups.enumerated() {
+        let a = Duplicates.advice(for: g)
+        if i > 0 { print("") }
+        print("\(g.count) items hold the same value:")
+        for id in g { print("  \(id)") }
+        print(a.summary)
+        if let into = a.into { print("  latchkey combine \(g.filter { $0 != into }.joined(separator: ",")) --into \(into)") }
+    }
+    exit(0)
+}
+
+/// Makes items holding one value into one shared item, then points references at it in the files each was imported
+/// from and in --file files.
+func combineCommand(_ input: [String]) -> Never {
+    var ids: [String] = []
+    var into: String?
+    var files: [URL] = []
+    var rest = input
+    while !rest.isEmpty {
+        let a = rest.removeFirst()
+        switch a {
+        case "--into":
+            guard !rest.isEmpty else { fail("--into takes a shared item name", code: 64) }
+            into = rest.removeFirst()
+        case "--file":
+            guard !rest.isEmpty else { fail("--file takes a path", code: 64) }
+            files.append(URL(fileURLWithPath: rest.removeFirst()).standardizedFileURL)
+        default:
+            if a.hasPrefix("-") { fail("unknown option \(a)", code: 64) }
+            ids += a.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        }
+    }
+    guard let into, !ids.isEmpty else { fail("usage: latchkey combine ID[,ID...] --into NAME [--file FILE]...", code: 64) }
+    guard ids.allSatisfy(Wire.isValidName) else { fail("no valid item IDs given", code: 64) }
+    let existing = send(Request(op: "list")).secrets ?? []
+    let usedIn = existing.filter { ids.contains($0.name) }.flatMap { $0.usedIn ?? [] }
+    let r = send(Request(op: "combine", names: ids, into: into))
+    if let m = r.missing, !m.isEmpty { fail("no item named: \(m.joined(separator: ", "))", code: 66) }
+    guard r.ok else { fail(r.error ?? "combining failed", code: 1) }
+    let moved = r.moved ?? [:]
+    for old in moved.keys.sorted() { print("combined \(old) → \(into)") }
+    renameReferences(in: files + usedIn.map { URL(fileURLWithPath: $0) }, moved)
+    print("The originals are in Recently Deleted for 30 days (latchkey deleted).")
     exit(0)
 }
 
@@ -1127,6 +1204,12 @@ case "push":
 
 case "mv":
     moveCommand(args)
+
+case "duplicates":
+    duplicatesCommand(args)
+
+case "combine":
+    combineCommand(args)
 
 case "env":
     envCommand(args)

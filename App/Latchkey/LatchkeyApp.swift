@@ -337,6 +337,9 @@ final class AppModel {
     var records: [EnvironmentRecord] = []
     /// What's selected in Review, Activity, Recently Deleted and Grants, for their detail panes.
     var selectedFinding: String?
+    /// Groups of items holding the same value, from the last Find Duplicates. Only IDs: kept in memory, never saved,
+    /// and nil until asked for.
+    var duplicateGroups: [[String]]?
     var selectedLog: String?
     var selectedVersion: String?
     var selectedGrant: String?
@@ -602,6 +605,38 @@ final class AppModel {
         notice = text + "."
         selection = Set(selection.map { moved[$0] ?? $0 })
         if !project.isEmpty { filter = .project(project) }
+        return nil
+    }
+
+    /// Compares every secret's value inside the broker (one approval) and keeps the groups that match.
+    func findDuplicates() async {
+        let r = await send(Request(op: "duplicates"))
+        guard r.ok, let groups = r.groups else { notice = r.error ?? "Finding duplicates failed."; return }
+        duplicateGroups = groups
+        notice = groups.isEmpty ? "No two items hold the same value." : "Found \(groups.count) group\(groups.count == 1 ? "" : "s") of items holding the same value."
+        selectedFinding = groups.first.map { "dup-\($0[0])" } ?? selectedFinding
+    }
+
+    /// Makes `ids` one shared item, `into`, then points references at it in each file they're recorded as used in.
+    func combine(_ ids: [String], into: String) async -> String? {
+        let usedIn = items.filter { ids.contains($0.name) }.flatMap { $0.usedIn ?? [] }.map { URL(fileURLWithPath: $0) }
+        for url in usedIn {
+            guard requestRewriteAccess(for: url) else { return "File access was cancelled. Nothing was combined." }
+        }
+        let r = await send(Request(op: "combine", names: ids, into: into))
+        guard r.ok else { return r.error ?? (r.missing.map { "No item named \($0.joined(separator: ", "))." } ?? "Combining failed.") }
+        let moved = r.moved ?? [:]
+        var updated = 0, failed: [String] = []
+        var seen = Set<String>()
+        for url in usedIn where seen.insert(url.path).inserted && FileManager.default.fileExists(atPath: url.path) {
+            do { if try EnvFile.renameReferences(in: url, moved) { updated += 1 } } catch { failed.append(url.lastPathComponent) }
+        }
+        var text = "Combined \(ids.count) items into \(into)"
+        if updated > 0 { text += "; updated references in \(updated) file\(updated == 1 ? "" : "s")" }
+        if !failed.isEmpty { text += "; couldn't update \(failed.joined(separator: ", "))" }
+        notice = text + ". The originals are in Recently Deleted."
+        duplicateGroups = duplicateGroups?.filter { Set($0).isDisjoint(with: ids) }
+        selectedFinding = nil
         return nil
     }
 

@@ -101,6 +101,21 @@ them. References are then updated in the files the items were imported from, in 
 `--from-file` file. `--from-file FILE` moves every shared item FILE refers to. If any target ID already exists,
 nothing moves.
 
+### `latchkey duplicates [--json]`
+
+Lists groups of items holding the same value, and what to do about each: give production its own key when it shares
+a value with another environment, point the rest at a shared item that already holds it, or combine them into one
+shared item (with the `latchkey combine` command to run). Values are compared inside Latchkey and never shown; plain
+values and values shorter than 8 characters are left out. It asks for approval every time (grants and agent-safe
+settings don't stand in), and agents can't ask. `--json` gives `items`, `advice`, `summary` and `into` for each group.
+
+### `latchkey combine IDS --into NAME [--file FILE]...`
+
+Makes items holding one value into one shared item NAME, with one approval. NAME is created from them (agent-safe only
+if every one was; the service if they agree; where they were used, combined), or must already hold the same value.
+The others go to Recently Deleted, environment records point at NAME, and references are updated in the files the
+items were imported from and in each `--file`. If the values differ, nothing changes. Agents can't combine.
+
 ## Environments
 
 Each environment has a record: its variables, each pointing at an item (shared items too) or holding a plain setting

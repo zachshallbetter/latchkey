@@ -80,6 +80,8 @@ command gets which value. This page says what it protects against, how, and wher
   key, and the hash and count of the latest entry, are keychain items only Latchkey can read, so `latchkey log
   --verify` finds an entry that was changed, removed or added, or a log cut short. It can't stop a program running as
   you from deleting the file, only show that it happened.
+- **Finding duplicates.** `lk duplicates` and **Find Duplicates…** compare values inside the app and return only which
+  items match. Which items share a key is still worth knowing, so it asks every time and agents can't ask.
 
 ## Where protection ends
 
