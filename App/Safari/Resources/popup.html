@@ -4,28 +4,32 @@
   <meta charset="utf-8">
   <style>
     :root { color-scheme: light dark; }
-    body { margin: 0; width: 300px; padding: 14px; font: 13px/1.45 -apple-system, BlinkMacSystemFont, sans-serif; }
+    body { margin: 0; width: 320px; padding: 14px; font: 13px/1.45 -apple-system, BlinkMacSystemFont, sans-serif; }
     h1 { font-size: 14px; margin: 0 0 6px; display: flex; align-items: center; gap: 8px; }
     h1 img { width: 20px; height: 20px; }
+    h2 { font-size: 12px; margin: 12px 0 6px; text-transform: uppercase; letter-spacing: .04em; color: rgba(127, 127, 127, 1); }
     p { margin: 0 0 10px; }
-    ul { margin: 0 0 10px; padding-left: 18px; }
     .status { padding: 7px 9px; border-radius: 7px; background: rgba(127, 127, 127, .14); }
     .ok::before { content: "\25CF  "; color: #34c759; }
     .no::before { content: "\25CF  "; color: #ff3b30; }
     .muted { color: rgba(127, 127, 127, 1); font-size: 12px; margin: 0; }
+    ul { list-style: none; margin: 0 0 10px; padding: 0; }
+    li button { width: 100%; display: flex; align-items: center; gap: 8px; text-align: left; padding: 7px 9px; margin: 0 0 4px;
+      border: 1px solid rgba(127, 127, 127, .3); border-radius: 7px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+    li button:hover { background: rgba(127, 127, 127, .1); }
+    li button:focus-visible { outline: 2px solid #0a63d1; outline-offset: 1px; }
+    li .w { flex: 1; min-width: 0; }
+    li code { display: block; font: 12px ui-monospace, Menlo, monospace; color: rgba(127, 127, 127, 1); }
+    .tag { font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 5px; background: rgba(127, 127, 127, .18); }
   </style>
 </head>
 <body>
   <h1><img src="icon-48.png" alt="">Latchkey for Safari</h1>
   <p class="status" id="status">Checking for Latchkey…</p>
-  <p>When one of these shows you a new API key, Latchkey offers to save it:</p>
-  <ul>
-    <li>Stripe: Developers › API keys</li>
-    <li>OpenAI: API keys</li>
-    <li>Anthropic: Console › API keys</li>
-    <li>GitHub: Settings › Developer settings › tokens</li>
-  </ul>
-  <p class="muted">If Safari shows a warning on this button, allow Latchkey on that site: Safari › Settings › Websites › Latchkey. It can't read the keys already in Latchkey.</p>
+  <h2>On this page</h2>
+  <ul id="found" aria-live="polite"></ul>
+  <p id="none" class="muted" hidden>No keys spotted here. To save something it missed, select it, then Control-click › Save Selection to Latchkey.</p>
+  <p class="muted">Keys are spotted in this page, not sent anywhere, until you choose Save; then the Latchkey app asks for Touch ID. This extension can't read the keys already in Latchkey. If it doesn't run on a site, allow it there: Safari › Settings › Extensions › Latchkey.</p>
   <script src="popup.js"></script>
 </body>
 </html>

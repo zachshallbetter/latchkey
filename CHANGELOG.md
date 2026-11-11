@@ -73,8 +73,10 @@ The first release.
 - One copy runs at a time.
 
 ### Safari
-- Latchkey for Safari: on Stripe, OpenAI, Anthropic and GitHub key pages, offers to save a newly shown key, with your
-  approval. It can't read values.
+- Latchkey for Safari spots keys on any page you allow it on: about twenty provider formats, private keys, database
+  URLs with a password, and labelled random secrets, skipping masked values, examples, publishable keys and
+  certificates. Confident finds get a Save to Latchkey button beside the key; others are listed in the toolbar panel,
+  with a count on its button. Save Selection to Latchkey saves anything it missed. It can't read values.
 - After a save, the extension shows the reference to use; its toolbar button says whether it can reach Latchkey.
 
 ### Approvals

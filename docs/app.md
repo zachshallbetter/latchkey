@@ -100,14 +100,26 @@ Click the key: search your items, copy a value, open an item in the window, open
 
 ## Latchkey for Safari
 
-Latchkey comes with a Safari extension that saves a new API key from the page where you made it. On the key pages of
-Stripe, OpenAI, Anthropic and GitHub, when a key is shown in full (as services do once, right after you create it),
-a small panel offers to save it: choose where it goes (shared, or a project's environment) and its name, then press
-**Save to Latchkey**. The app asks you to approve, showing the page's site, and the item's note says where it came
-from. Saving over an existing item keeps the old value in its history.
+Latchkey comes with a Safari extension that spots a new key on the page where you made it and saves it when you say
+so. It recognizes the formats of about twenty providers (Stripe, OpenAI, Anthropic, GitHub, GitLab, Slack, Google,
+npm, Hugging Face and others), private keys, database URLs with a password, and long random values labelled as a
+secret or token. It skips what isn't secret or isn't a real key: masked values, examples, publishable keys,
+certificates, commit hashes.
 
-Turn it on in Safari › Settings › Extensions, and allow it on those sites when Safari asks. Its toolbar button says
-whether it can reach Latchkey and which pages it works on. After a save, it shows the reference to use, ready to copy. If Latchkey isn't listed
+- When it's sure, a **Save to Latchkey** button appears beside the key. Press it, choose where it goes (shared, or a
+  project's environment; a live or test key is matched to production or development when it can be) and its name,
+  then **Save to Latchkey**.
+- Less certain finds aren't marked on the page: the toolbar button shows how many it spotted, and its panel lists them
+  (a short preview, never the value) so you can open the save panel for one.
+- For anything it missed, select the text, Control-click, and choose **Save Selection to Latchkey**.
+
+The app asks you to approve, showing the page's site, and the item's note says where it came from. Saving over an
+existing item keeps the old value in its history. After a save, the panel shows the reference to use, ready to copy.
+
+Spotting happens in the page: nothing leaves it until you press Save, and then the value goes only to the app.
+
+Turn it on in Safari › Settings › Extensions; Safari asks you to allow it on each site, or on all of them. Its toolbar
+button says whether it can reach Latchkey and lists what it found on the page. If Latchkey isn't listed
 there with a development build, turn on Safari › Settings › Advanced › **Show features for web developers**, then
 Develop › **Allow Unsigned Extensions**; a notarized release doesn't need this.
 

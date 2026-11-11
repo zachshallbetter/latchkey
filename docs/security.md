@@ -45,7 +45,8 @@ command gets which value. This page says what it protects against, how, and wher
 - **The Safari extension** is sandboxed and reaches the app through its own socket in the App Group container
   both share. The app admits only Latchkey's signed extension there (checked by code signature), and only to list
   item names and save a value, which asks like any change. It can't read a value. The page's site it reports is
-  shown in the approval as Safari reported it.
+  shown in the approval as Safari reported it. Its key detection runs inside the page: a value goes to the app only
+  when you press Save, and its toolbar panel gets a short preview, never the value. Password fields are not read.
 - **Temporary key files** live in a new folder only you can open, are only readable by you, and are deleted when the
   command exits.
 - **Remote pushes** pass values to each service's tool on standard input, never as arguments, so they don't appear

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Latchkey",
-  "description": "Save a new API key to Latchkey from the page where you made it.",
-  "version": "0.1.0",
+  "description": "Spots a new API key or private key on the page and saves it to Latchkey when you say so.",
+  "version": "0.2.0",
   "icons": {
     "48": "icon-48.png",
     "96": "icon-96.png",
@@ -12,17 +12,17 @@
     "service_worker": "background.js"
   },
   "permissions": [
-    "nativeMessaging"
+    "nativeMessaging",
+    "contextMenus",
+    "activeTab"
   ],
   "content_scripts": [
     {
       "matches": [
-        "https://dashboard.stripe.com/*",
-        "https://platform.openai.com/*",
-        "https://console.anthropic.com/*",
-        "https://github.com/settings/*"
+        "<all_urls>"
       ],
       "js": [
+        "detector.js",
         "content.js"
       ],
       "run_at": "document_idle"

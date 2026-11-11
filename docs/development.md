@@ -23,6 +23,7 @@ site/                      the product website and developer docs, static HTML (
 ```bash
 swift build
 swift test                                  # unit tests
+node App/Safari/detector.test.js            # the Safari extension's key detector
 LATCHKEY_KEYCHAIN_TESTS=1 swift test        # also round-trips through your real login keychain
 cd App && xcodegen && open Latchkey.xcodeproj
 scripts/install.sh                          # build Release, install the app and CLI, restart the app
