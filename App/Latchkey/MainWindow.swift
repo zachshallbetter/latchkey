@@ -51,7 +51,7 @@ struct MainWindow: View {
         } content: {
             Group {
                 if model.filter == .overview {
-                    ReviewView(model: model)
+                    ReviewList(model: model)
                 } else if model.filter == .activity {
                     ActivityList(model: model)
                 } else if model.filter == .grants {
@@ -64,7 +64,19 @@ struct MainWindow: View {
             }
             .navigationSplitViewColumnWidth(min: 300, ideal: 360)
         } detail: {
-            if model.filter.listsItems, let item = model.selectedItem {
+            if model.filter == .overview {
+                if let f = model.findings.first(where: { $0.id == model.selectedFinding }) { FindingDetail(model: model, finding: f).id(f.id) }
+                else { EmptyDetail(model: model) }
+            } else if model.filter == .activity {
+                if let e = model.log.first(where: { $0.key == model.selectedLog }) { ActivityDetail(entry: e).id(e.key) }
+                else { EmptyDetail(model: model) }
+            } else if model.filter == .deleted {
+                if let v = model.deleted.first(where: { $0.id == model.selectedVersion }) { DeletedDetail(model: model, version: v).id(v.id) }
+                else { EmptyDetail(model: model) }
+            } else if model.filter == .grants {
+                if let g = model.grants.first(where: { $0.id == model.selectedGrant }) { GrantDetail(model: model, grant: g).id(g.id) }
+                else { EmptyDetail(model: model) }
+            } else if model.filter.listsItems, let item = model.selectedItem {
                 ItemDetail(model: model, item: item).id(item.name)
             } else if model.filter.listsItems, model.selection.count > 1 {
                 BulkPanel(model: model, ids: model.selection.sorted())
@@ -140,7 +152,8 @@ struct Sidebar: View {
                     Divider().padding(.vertical, 12).padding(.horizontal, 8)
 
                     nav(.all, "square.grid.2x2", count: model.items.count)
-                    nav(.overview, "shield", count: model.reviewCount > 0 ? model.reviewCount : nil)
+                    NavRow(title: SidebarFilter.overview.title, symbol: "shield", count: model.findings.isEmpty ? nil : model.findings.count,
+                           badge: true, selected: model.filter == .overview) { model.filter = .overview }
                     nav(.activity, "waveform.path.ecg")
 
                     if !model.items.isEmpty {
@@ -345,11 +358,18 @@ struct ListHeader: View {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(model.filter.title).font(.title2.weight(.semibold)).lineLimit(1)
+                    if case .project(let p) = model.filter {
+                        HStack(spacing: 6) {
+                            ForEach(model.environments(in: p), id: \.self) { EnvBadge(environment: $0, compact: true).fixedSize() }
+                            Text("· \(count) item\(count == 1 ? "" : "s")").font(.callout).foregroundStyle(.secondary)
+                        }
+                    } else {
                     ViewThatFits(in: .horizontal) {
                         Text(subtitle).fixedSize()
                         Text("\(count) item\(count == 1 ? "" : "s")")
                     }
                     .font(.callout).foregroundStyle(.secondary).lineLimit(1)
+                    }
                 }
                 Spacer()
                 Menu {
@@ -464,129 +484,6 @@ struct FilterBar: View {
     }
 }
 
-/// Review: what may need a look, the way 1Password's Watchtower lists what to fix. Each card leads to the items.
-struct ReviewView: View {
-    let model: AppModel
-
-    var body: some View {
-        let stale = model.items.filter { model.remoteStates[$0.name] == .outOfDate }
-        let unpushed = model.items.filter { model.remoteStates[$0.name] == .notPushed }
-        let open = model.items.filter(\.agentSafe)
-        let unnamed = model.items.filter { $0.service == nil }
-        let soon = model.grants.filter { $0.expires.timeIntervalSinceNow < 3600 }
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                PageHeader(title: "Review", subtitle: model.reviewCount == 0 ? "Nothing needs a look" : "\(model.reviewCount) thing\(model.reviewCount == 1 ? "" : "s") to look at")
-                if model.reviewCount == 0 {
-                    Card {
-                        HStack(spacing: 12) {
-                            IconTile(symbol: "checkmark", tint: .green, size: 32)
-                            Text("Every pushed value is current, and nothing is waiting on you.").foregroundStyle(.secondary)
-                        }
-                        .padding(.vertical, 12)
-                    }
-                }
-                if !stale.isEmpty {
-                    ReviewCard(symbol: "arrow.triangle.2.circlepath", tint: .orange, title: "Changed since last push",
-                               detail: "These values changed in Latchkey after they were pushed. Push again so the services have them.",
-                               items: stale, model: model)
-                }
-                if !unpushed.isEmpty {
-                    ReviewCard(symbol: "icloud.slash", tint: .blue, title: "Not pushed yet",
-                               detail: "Their environment is linked to a service that doesn't have them yet.", items: unpushed, model: model)
-                }
-                if !soon.isEmpty {
-                    ReviewLink(symbol: "hourglass", tint: .teal, title: "Grants ending within the hour",
-                               detail: "Commands relying on them will start asking again.", count: soon.count) { model.filter = .grants }
-                }
-                Text("For reference").font(.headline).padding(.top, 6)
-                ReviewLink(symbol: "person.badge.shield.checkmark.fill", tint: .green, title: "Readable without approval",
-                           detail: "Any program in your Mac account can read these. Fine for values that aren't really secret.",
-                           count: open.count) { model.filter = .agentSafe }
-                ReviewLink(symbol: "server.rack", tint: .gray, title: "No service named",
-                           detail: "Naming the service adds a link to make a new key there, and lists the item under Services.",
-                           count: unnamed.count) { model.filter = .service("") }
-                ReviewLink(symbol: "hourglass", tint: .teal, title: "Grants in effect",
-                           detail: "Folders whose commands read items without asking, until each grant ends.",
-                           count: model.grants.count) { model.filter = .grants }
-            }
-            .padding(16)
-        }
-        .navigationTitle("Review")
-        .toolbar(removing: .title)
-    }
-}
-
-/// A Review finding with the items it's about, each opening its detail.
-struct ReviewCard: View {
-    let symbol: String
-    let tint: Color
-    let title: String
-    let detail: String
-    let items: [SecretInfo]
-    let model: AppModel
-
-    var body: some View {
-        Card {
-            HStack(alignment: .top, spacing: 12) {
-                IconTile(symbol: symbol, tint: tint, size: 32)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.body.weight(.semibold))
-                    Text(detail).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer()
-                Text("\(items.count)").font(.title3.weight(.semibold).monospacedDigit())
-            }
-            .padding(.vertical, 12)
-            ForEach(items.prefix(6)) { item in
-                Divider()
-                Button {
-                    model.filter = .all
-                    model.selection = [item.name]
-                } label: {
-                    ItemRow(item: item).contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-            if items.count > 6 {
-                Divider()
-                Text("and \(items.count - 6) more").font(.callout).foregroundStyle(.secondary).padding(.vertical, 8)
-            }
-        }
-    }
-}
-
-/// A Review line that leads to a filtered list.
-struct ReviewLink: View {
-    let symbol: String
-    let tint: Color
-    let title: String
-    let detail: String
-    let count: Int
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(alignment: .top, spacing: 12) {
-                IconTile(symbol: symbol, tint: tint, size: 32)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.body.weight(.semibold))
-                    Text(detail).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer()
-                Text("\(count)").font(.title3.weight(.semibold).monospacedDigit()).foregroundStyle(.secondary)
-                Image(systemName: "chevron.right").font(.callout.weight(.semibold)).foregroundStyle(.tertiary).padding(.top, 4)
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.quaternary.opacity(0.35)))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(.separator.opacity(0.5)))
-            .contentShape(RoundedRectangle(cornerRadius: 12))
-        }
-        .buttonStyle(.plain)
-    }
-}
-
 /// A page's title and summary, for views without the item list's header.
 struct PageHeader: View {
     let title: String
@@ -609,15 +506,18 @@ struct ItemRow: View {
     var remote: RemoteState? = nil
     @State private var hovering = false
 
-    /// Project · environment · service, leaving out what the view already says; the type when nothing else is left.
+    /// Project · environment · service, leaving out what the view already says. In a project's view: type · service,
+    /// with the environment as a badge on the right.
     private var subtitle: String {
         var parts: [String] = []
-        if item.ref.isShared { parts.append("Shared") } else {
-            if showsProject { parts.append(item.ref.project) }
+        if !showsProject && !item.ref.isShared { parts.append(ItemType(item).label) }
+        else if item.ref.isShared { parts.append("Shared") }
+        else {
+            parts.append(item.ref.project)
             if showsEnvironment { parts.append(item.ref.environment) }
         }
         if let s = item.service { parts.append(s) }
-        return parts.isEmpty ? ItemType(item).label : parts.joined(separator: " · ")
+        return parts.joined(separator: " · ")
     }
 
     var body: some View {
@@ -629,6 +529,9 @@ struct ItemRow: View {
                 Text(subtitle).font(.callout).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer(minLength: 6)
+            if !showsProject && showsEnvironment && !item.ref.isShared {
+                EnvBadge(environment: item.ref.environment, compact: true).fixedSize()
+            }
             if hovering, let model {
                 Button { model.copyReference(item.name) } label: { Image(systemName: "link") }
                     .buttonStyle(.borderless).help("Copy latchkey://\(item.name)")
@@ -649,7 +552,6 @@ struct ItemRow: View {
         .contentShape(Rectangle())
         .onHover { hovering = $0 }
         .help(item.name)
-        .listRowSeparator(.hidden)
     }
 }
 
@@ -740,119 +642,6 @@ struct BulkPanel: View {
     }
 }
 
-struct ActivityList: View {
-    let model: AppModel
-
-    var body: some View {
-        let entries = model.visibleLog
-        VStack(alignment: .leading, spacing: 0) {
-            PageHeader(title: "Activity", subtitle: "\(entries.count) entries · values are never logged")
-                .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 8)
-            List(Array(entries.enumerated()), id: \.offset) { _, e in
-                ActivityRow(entry: e, showNames: true).listRowSeparator(.hidden)
-            }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-        }
-        .overlay {
-            if entries.isEmpty {
-                ContentUnavailableView("No Activity", systemImage: "clock",
-                                       description: Text("Every read and change shows up here, never the values."))
-            }
-        }
-        .navigationTitle("Activity")
-        .toolbar(removing: .title)
-    }
-}
-
-/// One access-log entry on one line: what happened to what, then who asked and when; the rest is in its tooltip.
-struct ActivityRow: View {
-    let entry: Broker.LogEntry
-    var showNames = true
-
-    var icon: (String, Color) {
-        let d = entry.decision
-        if d.hasPrefix("denied") || d.hasPrefix("refused") { return ("xmark.circle.fill", .red) }
-        if d.hasPrefix("approved") { return ("touchid", .blue) }
-        return ("checkmark.circle.fill", .green)
-    }
-
-    /// What happened, in a word or two, past tense.
-    var verb: String {
-        switch entry.op {
-        case "get": return "Read"
-        case "set": return "Saved"
-        case "rm": return "Deleted"
-        case "import": return "Imported"
-        case "update": return "Settings changed"
-        case "move": return "Moved"
-        case "grant": return "Granted"
-        case "revoke": return "Grant revoked"
-        case "restore": return "Restored"
-        case "forget": return "History forgotten"
-        case "version": return "Earlier value shown"
-        case "fill": return "Filled in Safari"
-        case "export": return "Exported"
-        case "push": return "Pushed"
-        case "link": return "Linked"
-        case "unlink": return "Unlinked"
-        case "environment-add", "environment-set", "environment-remove": return "Record changed"
-        case "project-link", "project-unlink": return "Remotes changed"
-        default: return entry.op.prefix(1).uppercased() + entry.op.dropFirst()
-        }
-    }
-
-    /// The one item or environment, shortened to its name, or how many.
-    private var subject: String {
-        guard let first = entry.names.first else { return "" }
-        if entry.names.count > 1 { return "\(entry.names.count) items" }
-        return ItemID(first)?.name ?? first
-    }
-
-    private var place: (project: String, environment: String)? {
-        guard entry.names.count == 1, let first = entry.names.first else { return nil }
-        let parts = first.split(separator: "/").map(String.init)
-        return parts.count >= 2 ? (parts[0], parts[1]) : nil
-    }
-
-    private var who: String {
-        if let p = entry.program { return p }
-        let shells: Set<String> = ["zsh", "bash", "sh", "fish", "login", "sudo", "env", "tmux", "screen", "sshd-session", "latchkey", "lk"]
-        let name = entry.chain.first { !shells.contains($0.lowercased()) } ?? entry.chain.first ?? ""
-        return name.prefix(1).uppercased() + name.dropFirst()
-    }
-
-    /// Approved, denied, allowed or refused; nothing for entries whose verb already says it (a revoke).
-    private var outcome: String {
-        let word = entry.decision.split(separator: " ").first.map(String.init) ?? entry.decision
-        guard ["approved", "denied", "allowed", "refused"].contains(word) else { return "" }
-        return word.prefix(1).uppercased() + word.dropFirst()
-    }
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon.0).foregroundStyle(icon.1).frame(width: 18)
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    Text(showNames && !subject.isEmpty ? subject : verb).font(.callout.weight(.medium)).lineLimit(1).truncationMode(.middle)
-                    if showNames, let place {
-                        Chip(text: place.project).font(.caption)
-                        EnvBadge(environment: place.environment, compact: true).fixedSize()
-                    }
-                }
-                Text([showNames && !subject.isEmpty ? verb : nil, outcome, who].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
-                    .font(.caption).foregroundStyle(.secondary).lineLimit(1)
-            }
-            Spacer(minLength: 6)
-            Text(entry.time.formatted(.relative(presentation: .named))).font(.caption).foregroundStyle(.secondary).fixedSize()
-        }
-        .padding(.vertical, 4)
-        .help([entry.names.joined(separator: ", "), entry.decision, entry.chain.joined(separator: " › "),
-               entry.cwd.isEmpty ? "" : Broker.tilde(entry.cwd), entry.command.map { "$ \($0)" } ?? ""]
-              .filter { !$0.isEmpty }.joined(separator: "\n"))
-    }
-}
-
 struct EmptyDetail: View {
     let model: AppModel
 
@@ -894,64 +683,6 @@ struct NoticeBar: View {
                 try? await Task.sleep(for: .seconds(8))
                 if model.notice == n { model.notice = nil }
             }
-        }
-    }
-}
-
-/// Items deleted in the last 30 days, with a way back.
-struct DeletedList: View {
-    let model: AppModel
-    @State private var forgetting: Version?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            PageHeader(title: "Recently Deleted",
-                       subtitle: "\(model.deleted.count) item\(model.deleted.count == 1 ? "" : "s") · kept for \(Int(Versions.deletedFor / 86400)) days")
-                .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 8)
-            List(model.deleted) { v in
-                let info = SecretInfo(name: v.item, kind: v.kind, agentSafe: false, note: "", updatedAt: v.savedAt)
-                let type = ItemType(info)
-                let left = max(0, Int((Versions.deletedFor - Date().timeIntervalSince(v.savedAt)) / 86400))
-                HStack(spacing: 12) {
-                    Image(systemName: type.symbol).font(.system(size: 17, weight: .medium)).foregroundStyle(type.tint.opacity(0.7)).frame(width: 24)
-                    VStack(alignment: .leading, spacing: 3) {
-                        HStack(spacing: 6) {
-                            Text(info.ref.name).font(.body.weight(.medium)).lineLimit(1).truncationMode(.middle)
-                            if !info.ref.isShared {
-                                Chip(text: info.ref.project).font(.caption)
-                                EnvBadge(environment: info.ref.environment, compact: true).fixedSize()
-                            }
-                        }
-                        Text("Deleted \(v.savedAt.formatted(.relative(presentation: .named))) · \(left) day\(left == 1 ? "" : "s") left")
-                            .font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                    }
-                    Spacer(minLength: 6)
-                    Button("Restore") { Task { await model.restore(v) } }.buttonStyle(.bordered)
-                }
-                .padding(.vertical, 4)
-                .listRowSeparator(.hidden)
-                .help("\(v.item)\nDeleted by \(v.by)")
-                .contextMenu {
-                    Button("Restore") { Task { await model.restore(v) } }
-                    Button("Forget for Good…", role: .destructive) { forgetting = v }
-                }
-            }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-        }
-        .overlay {
-            if model.deleted.isEmpty {
-                ContentUnavailableView("Nothing Deleted", systemImage: "trash",
-                                       description: Text("Items you delete stay here for \(Int(Versions.deletedFor / 86400)) days."))
-            }
-        }
-        .navigationTitle("Recently Deleted")
-        .toolbar(removing: .title)
-        .confirmationDialog("Forget \(forgetting?.item ?? "")?", isPresented: Binding(get: { forgetting != nil }, set: { if !$0 { forgetting = nil } }),
-                            presenting: forgetting) { v in
-            Button("Forget for Good", role: .destructive) { Task { await model.forgetHistory([v.item]) } }
-        } message: { _ in
-            Text("Its value and every earlier value are deleted and can't be brought back.")
         }
     }
 }

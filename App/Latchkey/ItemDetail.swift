@@ -145,10 +145,14 @@ struct ItemDetail: View {
                             .help("Make a new key at \(service). To rotate: make one there, revoke the old one, then Change Value here.")
                     }
                 }
+                if !item.ref.isShared {
+                    CardRow(label: "Project") { Label(item.ref.project, systemImage: "folder").foregroundStyle(.secondary) }
+                    CardRow(label: "Environment") { EnvBadge(environment: item.ref.environment, compact: true).fixedSize() }
+                }
                 CardRow(label: "Note") {
                     Text(item.note.isEmpty ? "None" : item.note).foregroundStyle(.secondary).lineLimit(2).multilineTextAlignment(.trailing)
                 }
-                CardRow(label: "Used in", last: true) {
+                CardRow(label: "Location", last: true) {
                     let paths = item.usedIn ?? []
                     if paths.isEmpty {
                         Text("No files yet").foregroundStyle(.secondary)

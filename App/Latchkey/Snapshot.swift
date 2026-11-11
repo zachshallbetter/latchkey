@@ -84,12 +84,24 @@ enum Snapshot {
             drawOffscreen(EditItemSheet(model: model, item: item), to: path)
             return
         }
+        if arg("--part") == "findingdetail", let f = model.findings.first {
+            drawOffscreen(FindingDetail(model: model, finding: f).frame(width: 560, height: 700), to: path)
+            return
+        }
+        if arg("--part") == "activitydetail", let e = model.log.first {
+            drawOffscreen(ActivityDetail(entry: e).frame(width: 560, height: 640), to: path)
+            return
+        }
+        if arg("--part") == "deleteddetail", let v = model.deleted.first {
+            drawOffscreen(DeletedDetail(model: model, version: v).frame(width: 560, height: 640), to: path)
+            return
+        }
         if arg("--part") == "activity" {
-            drawOffscreen(ActivityList(model: model).frame(width: 420, height: 520), to: path)
+            drawOffscreen(ActivityList(model: model).frame(width: 460, height: 560), to: path)
             return
         }
         if arg("--part") == "review" {
-            drawOffscreen(ReviewView(model: model).frame(width: 420, height: 760), to: path)
+            drawOffscreen(ReviewList(model: model).frame(width: 420, height: 760), to: path)
             return
         }
         if arg("--part") == "pushapproval" {

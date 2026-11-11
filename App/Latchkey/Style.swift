@@ -164,6 +164,8 @@ struct NavRow: View {
     let title: String
     let symbol: String
     var count: Int? = nil
+    /// Show the count as a pill, for something that wants attention.
+    var badge = false
     let selected: Bool
     let action: () -> Void
 
@@ -174,7 +176,14 @@ struct NavRow: View {
                     .foregroundStyle(selected ? Color.white : Color.secondary)
                 Text(title).lineLimit(1).foregroundStyle(selected ? Color.white : Color.primary)
                 Spacer(minLength: 4)
-                if let count { Text("\(count)").monospacedDigit().foregroundStyle(selected ? Color.white.opacity(0.85) : Color.secondary) }
+                if let count, badge {
+                    Text("\(count)").font(.caption.weight(.semibold)).monospacedDigit()
+                        .foregroundStyle(selected ? Color.accentColor : Color.primary)
+                        .padding(.horizontal, 7).padding(.vertical, 1)
+                        .background(Capsule().fill(selected ? AnyShapeStyle(Color.white) : AnyShapeStyle(.quaternary)))
+                } else if let count {
+                    Text("\(count)").monospacedDigit().foregroundStyle(selected ? Color.white.opacity(0.85) : Color.secondary)
+                }
             }
             .padding(.horizontal, 10).padding(.vertical, 7)
             .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(selected ? AnyShapeStyle(Color.accentColor.gradient) : AnyShapeStyle(.clear)))

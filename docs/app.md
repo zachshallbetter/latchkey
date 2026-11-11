@@ -9,7 +9,7 @@ to be running for `latchkey run` to work (the tool starts it if it isn't). Only 
 
 Arranged the way 1Password arranges vaults and tags:
 
-- **All Items**, **Review** and **Activity**.
+- **All Items**, **Review** (with how many findings) and **Activity**.
 - **Projects** (and **Shared**), like vaults: choose one to see only its items. Right-click for actions on all of
   them.
 - **Services**, like tags: the services items name.
@@ -32,6 +32,21 @@ remote location, a crossed-out cloud when it hasn't been pushed there yet.
 Right-click a project in the sidebar to act on all its items: select all, require approval or let agents read, grant
 access, move, delete. An environment's **Remote Locations…** opens from the Remote card of any of its items.
 
+### Review, Activity, Recently Deleted and Grants
+
+Each is a list with the selected entry's detail on the right.
+
+- **Review** lists findings, filtered by **Access**, **Changes**, **Environment** or **Grants**: items any program can
+  read without approval, values changed since a push or not pushed yet, environment variables `lk env migrate` found
+  that nobody has confirmed, and grants ending within a day. A finding's detail lists what it's about and the
+  recommended action (**Require Approval…**, **Push…**, **Confirm All…**).
+- **Activity** has search and filters by event and project, grouped by day. An entry's detail shows the action, the
+  items, the decision, who asked through which programs, the folder and the command. Values are never logged.
+- **Recently Deleted** has search; an item's detail shows when and by whom it was deleted, its ID, service and last
+  value (shown only with approval), with **Restore Item** and **Permanently Delete…**.
+- **Grants** is a table of item, folder, limits, status and end; a grant's detail has **Revoke Grant** and **Show
+  Folder**.
+
 ### Selecting several items
 
 ⌘-click or ⇧-click to select several. The detail pane becomes a summary with actions for all of them: require
@@ -48,8 +63,8 @@ Right-clicking the selection offers the same.
   Details…** (kind, access, service, note and Safari fill sites, saved together with one Touch ID), **Move…**,
   **Remote Locations…**, **Copy Reference** and **Delete…** (the item moves to Recently Deleted for 30 days).
 - **Type** (hover for how it's stored and whether it's masked), **Access** (switch it to let any program read it
-  without approval), **Service** (with a link to make a new key there), **Note**, and **Used in**: the files it was
-  imported from; click to list them.
+  without approval), **Service** (with a link to make a new key there), **Project**, **Environment**, **Note**, and
+  **Location**: the files it was imported from; click to list them.
 - Grants that cover it, with **Revoke**.
 - **Remote**, when its environment is linked: where the item stands; click to manage the locations.
 - **Recent Activity**, then **History**: click for earlier values, with show and restore; **Forget History…** deletes

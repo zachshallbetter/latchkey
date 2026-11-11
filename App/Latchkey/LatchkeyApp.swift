@@ -282,6 +282,7 @@ final class AppModel {
         grants = broker.grants.all()
         deleted = (try? broker.versions.deleted(existing: Set(items.map(\.name)))) ?? []
         links = (try? broker.remotes.all()) ?? []
+        records = (try? broker.records.environments()) ?? []
         remoteStates = computeRemoteStates()
         let names = Set(items.map(\.name))
         if !selection.isSubset(of: names) { selection = selection.intersection(names) }
@@ -317,12 +318,6 @@ final class AppModel {
         return order.filter(present.contains)
     }
 
-    /// How many findings Review shows: values changed since a push, values not pushed yet, and grants about to end.
-    var reviewCount: Int {
-        items.filter { remoteStates[$0.name] == .outOfDate || remoteStates[$0.name] == .notPushed }.count
-            + grants.filter { $0.expires.timeIntervalSinceNow < 3600 }.count
-    }
-
     /// Every environment any item is in, in their usual order.
     var allEnvironments: [String] {
         Array(Set(items.filter { !$0.ref.isShared }.map(\.ref.environment))).sorted(by: Environments.order)
@@ -337,6 +332,25 @@ final class AppModel {
     var filtersActive: Bool { environmentFilter != nil || categoryFilter != nil || accessFilter != nil }
 
     func clearFilters() { environmentFilter = nil; categoryFilter = nil; accessFilter = nil }
+
+    /// Environment records, for Review's unconfirmed variables.
+    var records: [EnvironmentRecord] = []
+    /// What's selected in Review, Activity, Recently Deleted and Grants, for their detail panes.
+    var selectedFinding: String?
+    var selectedLog: String?
+    var selectedVersion: String?
+    var selectedGrant: String?
+
+    /// Confirms variables found through old file locations: one approval per environment.
+    func confirmVariables(_ variables: [(scope: String, name: String)]) async {
+        for (scope, names) in Dictionary(grouping: variables, by: \.scope).sorted(by: { $0.key < $1.key }) {
+            if let err = await run(Request(op: "environment-set", names: [scope], confirm: names.map(\.name))) {
+                notice = err
+                return
+            }
+        }
+        refresh()
+    }
 
     /// Sidebar sections (Projects, Services) the person has folded away.
     var collapsedSections: Set<String> = []

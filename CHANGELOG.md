@@ -6,8 +6,10 @@
 - A new layout, arranged like 1Password: All Items, **Review** (what may need a look: values changed since a push,
   values not pushed, grants about to end), Activity, then projects and services, then Grants and Recently Deleted.
   The list is flat and alphabetical, each row with its project and environment, with search (⌘F) and a filter for
-  category, environment and access. The detail pane is a set of cards with an **Edit** menu. Activity and Recently
-  Deleted rows fit on one line.
+  category, environment and access. The detail pane is a set of cards with an **Edit** menu.
+- Review, Activity, Recently Deleted and Grants each show the selected entry's detail: Review findings with their
+  items and a recommended action, Activity entries with who, where and the command, deleted items with restore and
+  permanent delete, and grants in a table with revoke.
 - **Edit Details…** changes kind, access, service, note and fill sites together, with one Touch ID.
 - The sheets share one header and footer.
 
