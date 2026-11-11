@@ -57,7 +57,12 @@ public struct PeerInfo: Codable, Sendable, Hashable {
     }
 
     /// The command line to show: the program's name, then its arguments, quoted where needed.
-    public var commandLine: String {
+    public var commandLine: String { Self.join(arguments) }
+
+    /// The command line with likely secrets replaced, for the log, the approval panel and the system sheet.
+    public var redactedCommandLine: String { Self.join(arguments.isEmpty ? [] : [arguments[0]] + Redact.arguments(Array(arguments.dropFirst()))) }
+
+    static func join(_ arguments: [String]) -> String {
         guard let first = arguments.first else { return "" }
         let quoted = arguments.dropFirst().map { a in
             a.isEmpty || a.contains(where: { " \"'$`\\".contains($0) }) ? "'" + a.replacingOccurrences(of: "'", with: "'\\''") + "'" : a

@@ -21,6 +21,8 @@ public final class Broker: @unchecked Sendable {
     /// How long a read approval covers the same names from the same place. 0 asks every time.
     public var readApprovalWindow: TimeInterval
     public let logURL: URL?
+    /// Signs each log entry into a chain, when the log is kept.
+    public let logKeys: LogKeyStore?
     /// Called after every logged decision (reads, changes, denials), off the main thread.
     public var onChange: (@Sendable () -> Void)?
     private let memory = ApprovalMemory()
@@ -30,7 +32,8 @@ public final class Broker: @unchecked Sendable {
     /// Without a log (tests), grants are kept in memory too unless a store is passed.
     public init(store: SecretStore, approver: Approver, readApprovalWindow: TimeInterval = 120,
                 logURL: URL? = Paths.accessLog, grants: GrantStore? = nil, versions: VersionStore? = nil,
-                remotes: RemoteStore? = nil, runner: RemoteRunner = ProcessRunner(), allowsPush: Bool = true) {
+                remotes: RemoteStore? = nil, runner: RemoteRunner = ProcessRunner(), allowsPush: Bool = true,
+                logKeys: LogKeyStore? = nil) {
         self.store = store
         self.runner = runner
         self.allowsPush = allowsPush
@@ -58,6 +61,13 @@ public final class Broker: @unchecked Sendable {
         self.approver = approver
         self.readApprovalWindow = readApprovalWindow
         self.logURL = logURL
+        if let logKeys {
+            self.logKeys = logKeys
+        } else if logURL != nil, let keychain = store as? KeychainStore {
+            self.logKeys = KeychainLogKeyStore(mode: keychain.mode)
+        } else {
+            self.logKeys = nil
+        }
     }
 
     // MARK: requests
@@ -70,6 +80,7 @@ public final class Broker: @unchecked Sendable {
             case "status": return status(peer)
             case "list": return Response(ok: true, secrets: try store.list())
             case "check": return try check(req, peer: peer)
+            case "verify-log": return verifyLog()
             case "get": return try get(req, peer: peer)
             case "set": return try set(req, peer: peer)
             case "rm": return try remove(req, peer: peer)
@@ -638,7 +649,7 @@ public final class Broker: @unchecked Sendable {
         let place = folder ?? peer.cwd
         var request = ApprovalRequest(action: action, names: names, chain: peer.chain,
                                       folder: place.isEmpty ? "" : Grant.normalize(place),
-                                      command: peer.commandLine.isEmpty ? nil : peer.commandLine, duration: duration, reason: reason)
+                                      command: peer.redactedCommandLine.isEmpty ? nil : peer.redactedCommandLine, duration: duration, reason: reason)
         request.fromApp = peer.pid == getpid()
         request.sessionName = peer.sessionProcess?.name
         request.runCommand = peer.runCommand
@@ -710,7 +721,7 @@ public final class Broker: @unchecked Sendable {
         let who = peer.chain.prefix(3).joined(separator: " › ")
         let cwd = shortFolder(peer.cwd)
         var s = (who.isEmpty ? "a process" : who) + (cwd.isEmpty ? "" : " in \(cwd)")
-        let c = peer.commandLine
+        let c = peer.redactedCommandLine
         if !c.isEmpty { s += " (running \(c.count > 48 ? String(c.prefix(45)) + "…" : c))" }
         return s
     }
@@ -727,15 +738,27 @@ public final class Broker: @unchecked Sendable {
         public var command: String?
         /// The asking program, when it isn't Latchkey's own command-line tool or the app.
         public var program: String?
+        /// The MAC of the entry before this one, and this entry's own (see LogChain).
+        public var prev: String?
+        public var mac: String?
     }
 
     private func log(_ op: String, _ names: [String], _ decision: String, _ peer: PeerInfo, _ req: Request) {
         guard let url = logURL else { return }
-        let entry = LogEntry(time: Date(), op: op, names: names, decision: decision,
-                             chain: peer.chain, cwd: peer.cwd, command: peer.commandLine.isEmpty ? nil : peer.commandLine,
+        var entry = LogEntry(time: Date(), op: op, names: names, decision: decision,
+                             chain: peer.chain, cwd: peer.cwd, command: peer.redactedCommandLine.isEmpty ? nil : peer.redactedCommandLine,
                              program: peer.isLatchkeyTool || peer.pid == getpid() || peer.path.isEmpty ? nil : peer.path)
+        var head: LogHead?
+        if let keys = logKeys, let key = keys.key() {
+            let last = keys.head()
+            entry.prev = last?.mac
+            let mac = LogChain.mac(entry, key: key)
+            entry.mac = mac
+            head = LogHead(mac: mac, count: (last?.count ?? 0) + 1)
+        }
         guard var line = try? Wire.encoder().encode(entry) else { return }
         line.append(0x0A)
+        defer { if let head { logKeys?.setHead(head) } }
         if let h = try? FileHandle(forWritingTo: url) {
             h.seekToEndOfFile()
             h.write(line)
@@ -744,6 +767,17 @@ public final class Broker: @unchecked Sendable {
             FileManager.default.createFile(atPath: url.path, contents: line, attributes: [.posixPermissions: 0o600])
         }
         onChange?()
+    }
+
+    /// Whether the access log is as Latchkey wrote it.
+    func verifyLog() -> Response {
+        guard let url = logURL, let keys = logKeys else { return Response(ok: false, error: "this broker keeps no signed log") }
+        switch LogChain.verify(url, keys: keys) {
+        case .intact(let signed, let unsigned):
+            return Response(ok: true, info: ["result": "intact", "signed": String(signed), "unsigned": String(unsigned)])
+        case .broken(let line, let reason):
+            return Response(ok: true, info: ["result": "broken", "line": String(line), "reason": reason])
+        }
     }
 
     public static func readLog(limit: Int = 50, from url: URL = Paths.accessLog) -> [LogEntry] {

@@ -40,7 +40,14 @@ command gets which value. This page says what it protects against, how, and wher
   command exits.
 - **Remote pushes** pass values to each service's tool on standard input, never as arguments, so they don't appear
   in process listings. No service tokens are stored.
-- **Logs and errors** never contain values. Tool errors are shortened and have any value replaced.
+- **Logs and errors** never contain values. Tool errors are shortened and have any value replaced. Command lines in
+  the log, the approval panel and the system sheet have likely secrets replaced with `<redacted>` (values after
+  `--token` and similar, `NAME=VALUE` where the name says it's secret, Authorization headers, known token prefixes,
+  long random-looking strings).
+- **The log is tamper-evident.** Each entry carries a keyed hash (HMAC-SHA256) of itself and the one before it. The
+  key, and the hash and count of the latest entry, are keychain items only Latchkey can read, so `latchkey log
+  --verify` finds an entry that was changed, removed or added, or a log cut short. It can't stop a program running as
+  you from deleting the file, only show that it happened.
 
 ## Where protection ends
 

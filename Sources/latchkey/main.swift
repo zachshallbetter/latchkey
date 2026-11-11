@@ -76,6 +76,9 @@ Files refer to them as latchkey://ID.
       --command limits it to `latchkey run` of that command ("npm test" covers "npm test -- --ci").
       --once ends it after one use.
       PROJECT/* or PROJECT/ENV/* covers a whole project or environment, including items added later.
+  latchkey log [--limit 20] | latchkey log --verify
+      Recent entries of the access log (never values), or a check that no entry was changed, removed or
+      added since Latchkey wrote it.
   latchkey touched [--since 24h] [--by NAME] [--grant ID] [--json]
       Items Latchkey released in that time (to anything, to programs under NAME such as claude, or under a grant),
       with how often and to whom, from the access log.
@@ -967,6 +970,22 @@ case "run":
 
 case "check":
     checkCommand(args)
+
+case "log":
+    if args.contains("--verify") {
+        let info = send(Request(op: "verify-log")).info ?? [:]
+        if info["result"] == "intact" {
+            print("intact: \(info["signed"] ?? "0") signed entries\(info["unsigned"].flatMap { $0 == "0" ? nil : ", \($0) older unsigned ones" } ?? "")")
+            exit(0)
+        }
+        fail("the access log was changed: line \(info["line"] ?? "?"), \(info["reason"] ?? "unknown")", code: 1)
+    }
+    var limit = 20
+    if let i = args.firstIndex(of: "--limit"), i + 1 < args.count, let n = Int(args[i + 1]) { limit = n }
+    for e in Broker.readLog(limit: limit) {
+        let who = e.program ?? e.chain.prefix(3).joined(separator: " › ")
+        print("\(e.time.formatted(date: .abbreviated, time: .standard))  \(e.op)  \(e.decision)  \(e.names.joined(separator: ", "))  \(who)  \(Broker.tilde(e.cwd))\(e.command.map { "  $ \($0)" } ?? "")")
+    }
 
 case "touched":
     touchedCommand(args)

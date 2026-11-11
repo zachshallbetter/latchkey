@@ -84,3 +84,4 @@ values are gone from Latchkey; check your version control or the service that is
 
 The activity log is `~/Library/Application Support/Latchkey/access.jsonl`: one JSON line per read, change, grant,
 move, import or push, with the program chain and folder, never values. Settings › **Show in Finder** opens it.
+`latchkey log` shows recent entries; `latchkey log --verify` checks that none was changed, removed or added.

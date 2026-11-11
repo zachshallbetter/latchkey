@@ -147,6 +147,13 @@ dashboards. It takes you to the page, saves what you paste, and puts it everywhe
 
 See [Remote locations](remote.md) for the keys each service takes.
 
+## The log
+
+| Command | |
+|---|---|
+| `latchkey log [--limit 20]` | Recent access log entries: time, what, decision, items, who, folder and command. Never values. |
+| `latchkey log --verify` | Checks the log's chain: exits 0 if every entry is as Latchkey wrote it, 1 with the first line that isn't. |
+
 ## Status
 
 ### `latchkey status`

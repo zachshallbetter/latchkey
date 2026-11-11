@@ -41,7 +41,7 @@ latchkey (CLI) ──JSON over a Unix socket──► Broker (in the app) ──
                                               │                    VersionStore     (latchkey, latchkey.history,
                                               ├─ Approver           RemoteStore      latchkey.remote services)
                                               ├─ GrantStore ──► keychain (latchkey.grants, this Mac)
-                                              ├─ access log ──► access.jsonl
+                                              ├─ access log ──► access.jsonl (HMAC chain; key and head in the keychain)
                                               └─ RemoteRunner ──► vercel / gh / railway / flyctl
 ```
 
