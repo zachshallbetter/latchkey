@@ -71,14 +71,18 @@ struct LatchkeyApp: App {
 // MARK: - Model
 
 enum SidebarFilter: Hashable {
-    case all, agentSafe, needsApproval, activity, grants, shared, deleted
+    case overview, all, agentSafe, needsApproval, activity, grants, shared, deleted
     case kind(ItemKind)
     case project(String)
     case service(String)
 
+    /// Views that list items, where a selection shows its detail.
+    var listsItems: Bool { ![.overview, .activity, .grants, .deleted].contains(self) }
+
     var title: String {
         switch self {
-        case .all: return "All"
+        case .overview: return "Overview"
+        case .all: return "Credentials"
         case .agentSafe: return "No Approval"
         case .needsApproval: return "Ask First"
         case .activity: return "Activity"
@@ -288,7 +292,7 @@ final class AppModel {
 
     func matches(_ f: SidebarFilter, _ i: SecretInfo) -> Bool {
         switch f {
-        case .all, .activity, .grants, .deleted: return true
+        case .overview, .all, .activity, .grants, .deleted: return true
         case .agentSafe: return i.agentSafe
         case .needsApproval: return !i.agentSafe
         case .shared: return i.ref.isShared
@@ -538,6 +542,12 @@ final class AppModel {
     /// The only sites Latchkey for Safari may fill this item on; an empty list goes back to the default.
     func setFillSites(_ name: String, _ sites: [String]) async -> String? {
         await run(Request(op: "update", names: [name], fillSites: sites))
+    }
+
+    /// Several settings of one item in one request, so one approval: only the ones given change.
+    func updateDetails(_ name: String, kind: ItemKind?, agentSafe: Bool?, service: String?, note: String?, fillSites: [String]?) async -> String? {
+        guard kind != nil || agentSafe != nil || service != nil || note != nil || fillSites != nil else { return nil }
+        return await run(Request(op: "update", names: [name], kind: kind, agentSafe: agentSafe, note: note, service: service, fillSites: fillSites))
     }
 
     func setService(_ name: String, _ service: String) async -> String? {

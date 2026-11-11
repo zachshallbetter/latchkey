@@ -7,18 +7,22 @@ to be running for `latchkey run` to work (the tool starts it if it isn't). Only 
 
 ### Sidebar
 
-- **All**, **No Approval**, **Ask First** and **Activity**, each with a count.
-- **Kinds**: tokens, passwords, key files and plain values.
+- **Overview**: counts to jump from (all credentials, no approval, ask first, grants), the four kinds, and recent
+  activity.
+- **Credentials** (every item), **Activity**, **Grants**, and **Recently Deleted** when something has been deleted.
 - **Projects**: one row per project, with a filter field once you have more than eight. **Shared** holds items that
   belong to no project.
-- **Services**: items by the service that issued them.
-- **Access**: **Grants** and **Recently Deleted**.
-- At the bottom, where values are kept: **iCloud Keychain** or **This Mac only**.
+- **Services**: opens to list items by the service that issued them.
+- At the bottom, where values are kept: **iCloud Keychain** or **This Mac only**. Hover for what that means.
 
 ### The list
 
+The list's header names what's shown and how many, with a search field (⌘F) and a **…** menu: New Item, Import,
+sort order, and **Show** (no approval, ask first, or one kind). Each item shows its type (token, API key, database,
+URL, password, key file, plain value) and service.
+
 Items are shown as a tree: project, then environment, then items. In a project's own view the tree starts at its
-environments. Groups start closed; a closed project shows how many items it has and which environments, and a closed
+environments; a project with one environment lists its items directly. Groups start closed; a closed project shows how many items it has and which environments, and a closed
 environment shows where its values live (**Local**, **Not linked**, or the services it's linked to). While you
 search, groups start open.
 
@@ -40,17 +44,20 @@ Right-clicking the selection offers the same.
   to your other devices through Universal Clipboard), marks it so clipboard managers skip it, and clears it after 60
   seconds. Both ask unless the item is agent-safe.
 - **Reference**: the `latchkey://` text to paste into a file.
-- **Change Value…**, **Kind**, **Allow reads without approval**, **Project** (with **Move…**), **Service**,
-  **Note**.
-- **Remote**: where the item stands at each linked location.
-- **Readable Without Asking**: grants that cover it, with **Revoke**.
-- **Used In**: the files it was imported from.
-- **History**: earlier values with show and restore; **Forget History…** deletes them for good.
-- **Recent Activity**, and **Delete…** (the item moves to Recently Deleted for 30 days).
+- The header shows the item's project and environment. **Edit** offers **Change Value…**, **Edit Details…** (kind,
+  access, service, note and Safari fill sites, saved together with one Touch ID), **Move…**, **Copy Reference** and
+  **Delete…** (the item moves to Recently Deleted for 30 days).
+- **Kind**, **Access** (switch it to let any program read it without approval), **Service** (with a link to make a
+  new key there), **Note** and **Fill in Safari on**.
+- Grants that cover it, with **Revoke**.
+- **Used In**: the files it was imported from; click to list them.
+- **Remote**: where the item stands at linked locations; click to manage them.
+- **History**: click for earlier values, with show and restore; **Forget History…** deletes them for good.
+- **Recent Activity**.
 
 ### Adding and importing
 
-- **+ › New Item…** (⌘N).
+- **… › New Item…** (⌘N).
 - **File › Import .env File…** (⇧⌘I), or drop a file on the window. The sheet proposes the project and environment,
   lists each key with its kind and agent-safe setting, marks keys that already exist, and lists lines it leaves alone
   (empty, already references, or expiring Vercel and Turbo tokens). Import asks once. **Replace values in the file
@@ -58,7 +65,7 @@ Right-clicking the selection offers the same.
 
 ### Moving
 
-**Move to a Project…** (item menu, detail pane, or **+**): pick items, a project and environment (or Shared), and the
+**Move to a Project…** (item menu, **Edit › Move…**, or the list's **…** menu): pick items, a project and environment (or Shared), and the
 files whose references should follow. Items keep their values, settings and history.
 
 ### Grants

@@ -19,28 +19,43 @@ struct AddItemSheet: View {
         return nil
     }
 
+    private var place: String {
+        guard let id = ItemID(name), Wire.isValidName(name) else { return "Name it NAME for a shared item, or project/environment/NAME" }
+        return id.isShared ? "A shared item" : "In \(id.project) / \(id.environment)"
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("New Item").font(.title3.weight(.semibold)).padding([.top, .horizontal], 20)
-            Form {
-                TextField("Name", text: $name, prompt: Text("GEMINI_API_KEY"))
-                if let p = nameProblem { Text(p).font(.caption).foregroundStyle(.red) }
-                Picker("Kind", selection: $kind) {
-                    ForEach(ItemKind.allCases, id: \.self) { Label($0.label, systemImage: $0.symbol).tag($0) }
+        VStack(alignment: .leading, spacing: 18) {
+            SheetHeader(symbol: kind.symbol, tint: kind.tint, title: "New Item", subtitle: place)
+            Card {
+                FieldRow(label: "Name") {
+                    TextField("Name", text: $name, prompt: Text("GEMINI_API_KEY")).font(.body.monospaced())
                 }
-                if kind == .key || kind == .value {
-                    TextField("Value", text: $value, axis: .vertical).lineLimit(3...10).font(.body.monospaced())
-                } else {
-                    SecureField("Value", text: $value)
+                FieldRow(label: "Kind") {
+                    Picker("", selection: $kind) {
+                        ForEach(ItemKind.allCases, id: \.self) { Label($0.label, systemImage: $0.symbol).tag($0) }
+                    }
+                    .labelsHidden().fixedSize()
+                    Spacer()
                 }
-                TextField("Note", text: $note, prompt: Text("Optional"))
-                Toggle("Allow reads without approval", isOn: $agentSafe)
-                if let error { Text(error).font(.caption).foregroundStyle(.red) }
+                FieldRow(label: "Value") {
+                    if kind == .key || kind == .value {
+                        TextField("Value", text: $value, prompt: Text("Paste the value"), axis: .vertical).lineLimit(3...10).font(.body.monospaced())
+                    } else {
+                        SecureField("Value", text: $value, prompt: Text("Paste the value"))
+                    }
+                }
+                FieldRow(label: "Note") {
+                    TextField("Note", text: $note, prompt: Text("Optional"))
+                }
+                FieldRow(label: "Access", last: true) {
+                    Text(agentSafe ? "No approval" : "Requires approval").foregroundStyle(.secondary)
+                    Spacer()
+                    Toggle("", isOn: $agentSafe).toggleStyle(.switch).labelsHidden().controlSize(.small)
+                }
             }
-            .formStyle(.grouped)
-            HStack {
-                Text("Saving asks for Touch ID.").font(.caption).foregroundStyle(.secondary)
-                Spacer()
+            if let p = nameProblem ?? error { Text(p).font(.callout).foregroundStyle(.red) }
+            SheetFooter(note: "Saving asks for Touch ID.", noteSymbol: "touchid") {
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
                 Button("Save") {
                     saving = true
@@ -66,9 +81,9 @@ struct AddItemSheet: View {
                 .keyboardShortcut(.defaultAction)
                 .disabled(name.isEmpty || nameProblem != nil || value.isEmpty || saving)
             }
-            .padding(20)
         }
-        .frame(width: 460)
+        .padding(24)
+        .frame(width: 520)
     }
 }
 
@@ -80,17 +95,23 @@ struct ChangeValueSheet: View {
     @State private var error: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("New value for \(item.name)").font(.title3.weight(.semibold))
-            if item.kind == .key || item.kind == .value {
-                TextField("Value", text: $value, axis: .vertical).lineLimit(3...10).font(.body.monospaced())
-            } else {
-                SecureField("Value", text: $value)
+        VStack(alignment: .leading, spacing: 18) {
+            SheetHeader(symbol: ItemType(item).symbol, tint: ItemType(item).tint, title: "New Value", subtitle: "for \(item.name)")
+            Group {
+                if item.kind == .key || item.kind == .value {
+                    TextField("Value", text: $value, prompt: Text("Value"), axis: .vertical).lineLimit(3...10).font(.body.monospaced())
+                } else {
+                    SecureField("Value", text: $value, prompt: Text("Value"))
+                }
             }
-            Text("Commands pick up the new value the next time they start.").font(.caption).foregroundStyle(.secondary)
-            if let error { Text(error).font(.caption).foregroundStyle(.red) }
-            HStack {
-                Spacer()
+            .textFieldStyle(.plain).font(.title3)
+            .padding(.horizontal, 14).padding(.vertical, 12)
+            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.quaternary.opacity(0.35)))
+            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Color.accentColor, lineWidth: 2))
+            Text("Commands pick up the new value the next time they start. The current one is kept in History.")
+                .font(.callout).foregroundStyle(.secondary)
+            if let error { Text(error).font(.callout).foregroundStyle(.red) }
+            SheetFooter {
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
                 Button("Save") {
                     Task {
@@ -105,9 +126,82 @@ struct ChangeValueSheet: View {
                 .keyboardShortcut(.defaultAction).disabled(value.isEmpty)
             }
         }
-        .textFieldStyle(.roundedBorder)
-        .padding(20)
-        .frame(width: 420)
+        .padding(24)
+        .frame(width: 520)
+    }
+}
+
+/// An item's settings, changed together with one approval.
+struct EditItemSheet: View {
+    let model: AppModel
+    let item: SecretInfo
+    @Environment(\.dismiss) private var dismiss
+    @State private var kind = ItemKind.token
+    @State private var agentSafe = false
+    @State private var service = ""
+    @State private var note = ""
+    @State private var fillSites = ""
+    @State private var error: String?
+    @State private var saving = false
+
+    private var sites: [String] {
+        fillSites.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+    }
+
+    private var changed: Bool {
+        kind != item.kind || agentSafe != item.agentSafe || service != (item.service ?? "") || note != item.note
+            || sites != (item.fillSites ?? [])
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            SheetHeader(symbol: ItemType(item).symbol, tint: ItemType(item).tint, title: "Edit Details", subtitle: item.name)
+            Card {
+                FieldRow(label: "Kind") {
+                    Picker("", selection: $kind) {
+                        ForEach(ItemKind.allCases, id: \.self) { Label($0.label, systemImage: $0.symbol).tag($0) }
+                    }
+                    .labelsHidden().fixedSize()
+                    Spacer()
+                }
+                FieldRow(label: "Access") {
+                    Text(agentSafe ? "No approval" : "Requires approval").foregroundStyle(.secondary)
+                    Spacer()
+                    Toggle("", isOn: $agentSafe).toggleStyle(.switch).labelsHidden().controlSize(.small)
+                }
+                FieldRow(label: "Service") { TextField("Service", text: $service, prompt: Text("Stripe, Neon, GitHub…")) }
+                FieldRow(label: "Note") { TextField("Note", text: $note, prompt: Text("What it's for, where it came from")) }
+                FieldRow(label: "Fill in Safari on", last: true) {
+                    TextField("Sites", text: $fillSites, prompt: Text("Its service's site and deployment platforms"))
+                }
+            }
+            Text("Sites are separated by commas, such as vercel.com, and each covers its subdomains. Leave them empty for the item's service and the deployment platforms.")
+                .font(.caption).foregroundStyle(.secondary)
+            if let error { Text(error).font(.callout).foregroundStyle(.red) }
+            SheetFooter(note: "Saving asks for Touch ID once.", noteSymbol: "touchid") {
+                Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
+                Button("Save") {
+                    saving = true
+                    Task {
+                        error = await model.updateDetails(item.name,
+                                                          kind: kind == item.kind ? nil : kind,
+                                                          agentSafe: agentSafe == item.agentSafe ? nil : agentSafe,
+                                                          service: service == (item.service ?? "") ? nil : service,
+                                                          note: note == item.note ? nil : note,
+                                                          fillSites: sites == (item.fillSites ?? []) ? nil : sites)
+                        saving = false
+                        if error == nil { dismiss() }
+                    }
+                }
+                .keyboardShortcut(.defaultAction).disabled(saving || !changed)
+            }
+        }
+        .padding(24)
+        .frame(width: 540)
+        .onAppear {
+            kind = item.kind; agentSafe = item.agentSafe; service = item.service ?? ""; note = item.note
+            fillSites = (item.fillSites ?? []).joined(separator: ", ")
+        }
     }
 }
 
@@ -131,11 +225,8 @@ struct ImportSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Import \(draft.url.lastPathComponent)").font(.title3.weight(.semibold))
-                Text(Broker.tilde(draft.url.path)).font(.caption.monospaced()).foregroundStyle(.secondary)
-                    .lineLimit(1).truncationMode(.head)
-            }
+            SheetHeader(symbol: "square.and.arrow.down", tint: .blue, title: "Import \(draft.url.lastPathComponent)",
+                        subtitle: Broker.tilde(draft.url.path))
             HStack(spacing: 10) {
                 Picker("", selection: $draft.shared) {
                     Text("Project").tag(false)
@@ -248,7 +339,7 @@ struct NextStepsSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Label(steps.title, systemImage: "checkmark.circle.fill").font(.title3.weight(.semibold)).foregroundStyle(.primary)
+            SheetHeader(symbol: "checkmark", tint: .green, title: steps.title)
             Text(steps.body).fixedSize(horizontal: false, vertical: true)
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(steps.commands, id: \.self) { command in
@@ -285,12 +376,11 @@ struct NextStepsSheet: View {
                 .padding(8)
                 .background(RoundedRectangle(cornerRadius: 6).fill(.quaternary.opacity(0.6)))
             }
-            HStack {
-                Spacer()
+            SheetFooter {
                 Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
             }
         }
-        .padding(20)
-        .frame(width: 480)
+        .padding(24)
+        .frame(width: 520)
     }
 }

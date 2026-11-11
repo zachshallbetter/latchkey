@@ -5,130 +5,186 @@ import SwiftUI
 struct ItemDetail: View {
     let model: AppModel
     let item: SecretInfo
-    @State private var noteDraft = ""
-    @State private var serviceDraft = ""
-    @State private var fillSitesDraft = ""
     @State private var versions: [Version] = []
     @State private var confirmingForget = false
     @State private var changingValue = false
+    @State private var editing = false
     @State private var confirmingDelete = false
+    @State private var showsFiles = false
+    @State private var showsHistory = false
     @State private var working = false
 
     var body: some View {
-        Form {
-            Section {
-                HStack(spacing: 14) {
-                    KindIcon(kind: item.kind, size: 52)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(item.ref.name).font(.title2.weight(.semibold)).textSelection(.enabled)
-                        if !item.ref.isShared {
-                            HStack(spacing: 6) {
-                                Text(item.ref.project).font(.callout.weight(.medium))
-                                EnvBadge(environment: item.ref.environment)
-                            }
-                        }
-                        Text("Changed \(item.updatedAt.formatted(date: .abbreviated, time: .shortened))")
-                            .font(.callout).foregroundStyle(.secondary)
-                    }
-                }
-                .padding(.vertical, 4)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                header
+                valueCard
+                detailsCard
+                grantsCard
+                usedIn
+                remote
+                history
+                activity
             }
+            .padding(16)
+        }
+        .disabled(working)
+        .task(id: item.updatedAt) { versions = model.history(for: item.name) }
+        .sheet(isPresented: $changingValue) { ChangeValueSheet(model: model, item: item) }
+        .sheet(isPresented: $editing) { EditItemSheet(model: model, item: item) }
+        .confirmationDialog("Forget the history of \(item.ref.name)?", isPresented: $confirmingForget) {
+            Button("Forget \(versions.count) Earlier Value\(versions.count == 1 ? "" : "s")", role: .destructive) {
+                act {
+                    await model.forgetHistory([item.name])
+                    versions = model.history(for: item.name)
+                }
+            }
+        } message: {
+            Text("The current value stays. The earlier ones are deleted\(model.synced ? " on all your Macs" : "") and can't be brought back.")
+        }
+        .confirmationDialog("Delete \(item.name)?", isPresented: $confirmingDelete) {
+            Button("Delete", role: .destructive) { act { _ = await model.remove(item.name) } }
+        } message: {
+            if let files = item.usedIn, !files.isEmpty {
+                Text("It moves to Recently Deleted\(model.synced ? " on all your Macs" : "") and can be restored for \(Int(Versions.deletedFor / 86400)) days. Until then these files stop working: \(files.map(Broker.tilde).joined(separator: ", ")).")
+            } else {
+                Text("It moves to Recently Deleted\(model.synced ? " on all your Macs" : "") and can be restored for \(Int(Versions.deletedFor / 86400)) days. Until then, files that refer to latchkey://\(item.name) stop working.")
+            }
+        }
+    }
 
-            Section {
-                LabeledContent("Value") {
-                    HStack(spacing: 8) {
-                        if let v = model.revealed[item.name] {
-                            Text(v).font(.body.monospaced()).textSelection(.enabled).lineLimit(item.kind == .key ? 12 : 3)
-                        } else {
-                            Text(String(repeating: "•", count: 14)).foregroundStyle(.secondary)
-                        }
-                        Spacer(minLength: 8)
-                        Button {
-                            if model.revealed[item.name] != nil { model.revealed[item.name] = nil }
-                            else { act { await model.reveal(item.name) } }
-                        } label: {
-                            Image(systemName: model.revealed[item.name] == nil ? "eye" : "eye.slash")
-                        }
-                        .help(model.revealed[item.name] == nil ? "Show (asks unless a grant or No Approval setting permits it)" : "Hide")
-                        Button { act { await model.copyValue(item.name) } } label: { Image(systemName: "doc.on.doc") }
-                            .help("Copy value; the clipboard clears after 60 seconds")
-                    }
-                    .buttonStyle(.borderless)
-                }
-                LabeledContent("Reference") {
-                    HStack {
-                        Text(References.scheme + item.name).font(.body.monospaced()).textSelection(.enabled)
-                        Spacer()
-                        Button { model.copyReference(item.name) } label: { Image(systemName: "doc.on.doc") }
-                            .buttonStyle(.borderless).help("Copy reference for a .env file")
+    // MARK: header and value
+
+    private var header: some View {
+        let type = ItemType(item)
+        return HStack(alignment: .top, spacing: 14) {
+            IconTile(symbol: type.symbol, tint: type.tint, size: 52)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(item.ref.name).font(.title2.weight(.semibold)).textSelection(.enabled).lineLimit(2)
+                HStack(spacing: 6) {
+                    if item.ref.isShared {
+                        Chip(text: "Shared")
+                    } else {
+                        Chip(text: item.ref.project)
+                        EnvBadge(environment: item.ref.environment)
                     }
                 }
+            }
+            Spacer(minLength: 8)
+            Menu {
                 Button("Change Value…") { changingValue = true }
+                Button("Edit Details…") { editing = true }
+                Button("Move…") { model.moveRequest = MoveRequest(ids: [item.name]) }
+                Divider()
+                Button("Copy Reference") { model.copyReference(item.name) }
+                Divider()
+                Button("Delete \(item.ref.name)…", role: .destructive) { confirmingDelete = true }
+            } label: {
+                Label("Edit", systemImage: "pencil")
             }
+            .menuStyle(.button).buttonStyle(.bordered).menuIndicator(.hidden).fixedSize()
+        }
+        .padding(16)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.quaternary.opacity(0.35)))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(.separator.opacity(0.5)))
+    }
 
-            Section {
-                Picker("Kind", selection: Binding(get: { item.kind }, set: { k in
-                    act { if let error = await model.save(name: item.name, value: nil, kind: k, agentSafe: nil, note: nil) { model.notice = error } }
-                })) {
-                    ForEach(ItemKind.allCases, id: \.self) { Label($0.label, systemImage: $0.symbol).tag($0) }
+    private var valueCard: some View {
+        Card {
+            CardRow(label: "Value") {
+                if let v = model.revealed[item.name] {
+                    Text(v).font(.body.monospaced()).textSelection(.enabled).lineLimit(item.kind == .key ? 12 : 3)
+                        .multilineTextAlignment(.trailing)
+                } else {
+                    Text(String(repeating: "•", count: 14)).foregroundStyle(.secondary)
                 }
-                Toggle(isOn: Binding(get: { item.agentSafe }, set: { on in
-                    act { if let error = await model.save(name: item.name, value: nil, kind: nil, agentSafe: on, note: nil) { model.notice = error } }
-                })) {
-                    Text("Allow reads without approval")
-                    Text(item.agentSafe
-                         ? "Any program in your Mac account may request this value."
-                         : "Reads ask for approval unless a grant covers them.")
+                Button {
+                    if model.revealed[item.name] != nil { model.revealed[item.name] = nil }
+                    else { act { await model.reveal(item.name) } }
+                } label: { Image(systemName: model.revealed[item.name] == nil ? "eye" : "eye.slash") }
+                .help(model.revealed[item.name] == nil ? "Show (asks unless a grant or No Approval setting permits it)" : "Hide")
+                Button { act { await model.copyValue(item.name) } } label: { Image(systemName: "doc.on.doc") }
+                    .help("Copy the value to this Mac's clipboard; it clears after 60 seconds")
+            }
+            CardRow(label: "Reference", last: true) {
+                Text(References.scheme + item.name).font(.callout.monospaced()).textSelection(.enabled)
+                    .lineLimit(1).truncationMode(.middle)
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(.quaternary.opacity(0.6)))
+                Button { model.copyReference(item.name) } label: { Image(systemName: "doc.on.doc") }
+                    .help("Copy the reference for an env file")
+            }
+        }
+        .buttonStyle(.borderless)
+    }
+
+    // MARK: details
+
+    private var detailsCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Card {
+                CardRow(label: "Kind") {
+                    Text(item.kind.label).foregroundStyle(.secondary)
                 }
-                LabeledContent("Project") {
-                    HStack {
-                        Text(item.ref.isShared ? "Shared" : "\(item.ref.project) / \(item.ref.environment)")
-                        Spacer()
-                        Button("Move…") { model.moveRequest = MoveRequest(ids: [item.name]) }
+                CardRow(label: "Access") {
+                    Text(item.agentSafe ? "No approval" : "Requires approval").foregroundStyle(.secondary)
+                    Toggle("", isOn: Binding(get: { item.agentSafe }, set: { on in
+                        act { if let e = await model.updateDetails(item.name, kind: nil, agentSafe: on, service: nil, note: nil, fillSites: nil) { model.notice = e } }
+                    }))
+                    .toggleStyle(.switch).labelsHidden().controlSize(.small)
+                    .help(item.agentSafe ? "Any program in your Mac account may request this value." : "Reads ask for approval unless a grant covers them.")
+                }
+                CardRow(label: "Service") {
+                    Text(item.service ?? "None").foregroundStyle(.secondary)
+                    if let service = item.service, let page = Services.keyPages[service].flatMap(URL.init(string:)) {
+                        Link(destination: page) { Image(systemName: "arrow.up.forward.square") }
+                            .help("Make a new key at \(service). To rotate: make one there, revoke the old one, then Change Value here.")
                     }
                 }
-                TextField("Service", text: $serviceDraft, prompt: Text("Stripe, Neon, GitHub…"))
-                    .onSubmit { saveService() }
-                if let service = item.service, let page = Services.keyPages[service].flatMap(URL.init(string:)) {
-                    Link("Make a new key at \(service)", destination: page)
-                        .help("To rotate: make a new key there, revoke the old one, then Change Value here")
+                CardRow(label: "Note") {
+                    Text(item.note.isEmpty ? "None" : item.note).foregroundStyle(.secondary).lineLimit(2).multilineTextAlignment(.trailing)
                 }
-                TextField("Note", text: $noteDraft, prompt: Text("What it's for, where it came from"))
-                    .onSubmit { saveNote() }
-                TextField("Fill in Safari on", text: $fillSitesDraft,
-                          prompt: Text("Its service's site and deployment platforms"))
-                    .onSubmit { saveFillSites() }
-                    .help("Sites Latchkey for Safari may fill this item on, separated by commas, such as vercel.com. Each covers its subdomains. Leave empty for its service's own site and the deployment platforms (Vercel, GitHub, Railway, Fly and others).")
-            } footer: {
-                Text(item.kind.isSecret ? "Masked in command output." : "Plain values are not masked in output.")
-                    .font(.caption).foregroundStyle(.secondary)
+                CardRow(label: "Fill in Safari on", last: true) {
+                    Text(item.fillSites.map { $0.joined(separator: ", ") } ?? "Its service's site and deployment platforms")
+                        .foregroundStyle(.secondary).lineLimit(2).multilineTextAlignment(.trailing)
+                }
             }
+            Text(item.kind.isSecret ? "Masked in command output." : "Plain values are not masked in output.")
+                .font(.caption).foregroundStyle(.secondary).padding(.leading, 4)
+        }
+    }
 
-            let itemGrants = model.grants(for: item.name)
-            if !itemGrants.isEmpty {
-                Section("Readable Without Asking") {
-                    ForEach(itemGrants) { g in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(Broker.tilde(g.folder)).font(.callout.monospaced())
-                                if g.repo != nil { Text("Includes repository worktrees").font(.caption).foregroundStyle(.secondary) }
-                                if !g.limits.isEmpty { Text(g.limits).font(.caption).foregroundStyle(.secondary) }
-                                Text("Until \(g.expires.formatted(date: .omitted, time: .shortened)) · from \(g.createdBy)")
-                                    .font(.caption).foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Button("Revoke") { act { await model.revoke(g.id) } }
+    @ViewBuilder
+    private var grantsCard: some View {
+        let itemGrants = model.grants(for: item.name)
+        if !itemGrants.isEmpty {
+            Card {
+                ForEach(Array(itemGrants.enumerated()), id: \.element.id) { i, g in
+                    CardRow(label: Broker.tilde(g.folder), last: i == itemGrants.count - 1) {
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("Until \(g.expires.formatted(date: .omitted, time: .shortened))").foregroundStyle(.secondary)
+                            if !g.limits.isEmpty { Text(g.limits).font(.caption).foregroundStyle(.secondary) }
                         }
+                        Button("Revoke") { act { await model.revoke(g.id) } }
                     }
                 }
             }
+        }
+    }
 
-            if let paths = item.usedIn, !paths.isEmpty {
-                Section("Used In") {
-                    ForEach(paths, id: \.self) { path in
-                        HStack {
-                            Text(Broker.tilde(path)).font(.callout.monospaced()).lineLimit(1).truncationMode(.head)
-                            Spacer()
+    // MARK: where it's used, pushed and changed
+
+    @ViewBuilder
+    private var usedIn: some View {
+        if let paths = item.usedIn, !paths.isEmpty {
+            LinkCard(symbol: "folder", title: "Used In",
+                     detail: paths.count == 1 ? Broker.tilde(paths[0]) : "\(Broker.tilde(paths[0])) and \(paths.count - 1) more") {
+                withAnimation(.snappy) { showsFiles.toggle() }
+            }
+            if showsFiles {
+                Card {
+                    ForEach(Array(paths.enumerated()), id: \.element) { i, path in
+                        CardRow(label: Broker.tilde(path), last: i == paths.count - 1) {
                             if FileManager.default.fileExists(atPath: path) {
                                 Button { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)]) } label: {
                                     Image(systemName: "folder")
@@ -141,151 +197,87 @@ struct ItemDetail: View {
                     }
                 }
             }
+        }
+    }
 
-            if !item.ref.isShared {
-                let remote = model.remoteStates(of: item)
-                Section {
-                    if remote.isEmpty {
-                        Text("\(item.ref.project)/\(item.ref.environment) isn't linked to Vercel, GitHub Actions, Railway or Fly.")
-                            .foregroundStyle(.secondary)
-                    }
-                    ForEach(remote, id: \.link.id) { r in
+    @ViewBuilder
+    private var remote: some View {
+        if !item.ref.isShared {
+            let states = model.remoteStates(of: item)
+            let stale = states.contains { $0.state == .outOfDate }
+            let detail = states.isEmpty ? "Not linked"
+                : stale ? "Changed since last push"
+                : states.contains { $0.state == .notPushed } ? "Not pushed everywhere"
+                : "Up to date in \(states.count) location\(states.count == 1 ? "" : "s")"
+            LinkCard(symbol: "cloud", title: "Remote", detail: detail,
+                     dot: states.isEmpty ? .yellow : stale ? .orange : .green) {
+                model.remoteRequest = RemoteRequest(scope: "\(item.ref.project)/\(item.ref.environment)")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var history: some View {
+        LinkCard(symbol: "clock.arrow.circlepath", title: "History",
+                 detail: versions.isEmpty ? "No earlier values yet. The last \(Versions.keep) values are kept."
+                    : "\(versions.count) earlier value\(versions.count == 1 ? "" : "s"), last replaced \(versions[0].savedAt.formatted(.relative(presentation: .named)))") {
+            withAnimation(.snappy) { showsHistory.toggle() }
+        }
+        if showsHistory && !versions.isEmpty {
+            Card {
+                ForEach(Array(versions.enumerated()), id: \.element.id) { i, v in
+                    VStack(alignment: .leading, spacing: 4) {
                         HStack {
-                            Text(r.link.target.label).lineLimit(1)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(v.savedAt.formatted(date: .abbreviated, time: .shortened)).font(.callout)
+                                Text("\(v.reason == .changed ? "Replaced" : v.reason == .restored ? "Replaced by a restore" : "Deleted") by \(v.by)")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
                             Spacer()
-                            switch r.state {
-                            case .current:
-                                Text("Pushed \(r.link.pushed[item.name]!.formatted(.relative(presentation: .named)))").foregroundStyle(.secondary)
-                            case .outOfDate:
-                                Label("Changed since last push", systemImage: "arrow.triangle.2.circlepath").foregroundStyle(.orange)
-                            case .notPushed:
-                                Text("Not pushed").foregroundStyle(.secondary)
-                            }
+                            Button {
+                                if model.revealedVersions[v.id] != nil { model.revealedVersions[v.id] = nil }
+                                else { act { await model.revealVersion(v) } }
+                            } label: { Image(systemName: model.revealedVersions[v.id] == nil ? "eye" : "eye.slash") }
+                            .buttonStyle(.borderless).help("Show this earlier value (asks for approval)")
+                            Button("Restore") { act { await model.restore(v) } }
                         }
-                        .font(.callout)
-                    }
-                } header: {
-                    HStack {
-                        Text("Remote")
-                        Spacer()
-                        Button("Manage…") { model.remoteRequest = RemoteRequest(scope: "\(item.ref.project)/\(item.ref.environment)") }
-                            .buttonStyle(.link).font(.caption)
-                    }
-                }
-            }
-
-            Section {
-                if versions.isEmpty {
-                    Text("No earlier values yet. When this value changes, the old one is kept here.")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(versions) { v in
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(v.savedAt.formatted(date: .abbreviated, time: .shortened)).font(.callout)
-                                    Text("\(v.reason == .changed ? "Replaced" : v.reason == .restored ? "Replaced by a restore" : "Deleted") by \(v.by)")
-                                        .font(.caption).foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                Button {
-                                    if model.revealedVersions[v.id] != nil { model.revealedVersions[v.id] = nil }
-                                    else { act { await model.revealVersion(v) } }
-                                } label: { Image(systemName: model.revealedVersions[v.id] == nil ? "eye" : "eye.slash") }
-                                .buttonStyle(.borderless).help("Show this earlier value (asks for approval)")
-                                Button("Restore") { act { await model.restore(v) } }
-                            }
-                            if let value = model.revealedVersions[v.id] {
-                                Text(value).font(.caption.monospaced()).textSelection(.enabled).lineLimit(4)
-                            }
+                        if let value = model.revealedVersions[v.id] {
+                            Text(value).font(.caption.monospaced()).textSelection(.enabled).lineLimit(4)
                         }
                     }
-                }
-            } header: {
-                Text("History")
-            } footer: {
-                HStack {
-                    Text("The last \(Versions.keep) values are kept. Restoring keeps the current value too.")
-                    Spacer()
-                    if !versions.isEmpty { Button("Forget History…") { confirmingForget = true }.buttonStyle(.link) }
-                }
-                .font(.caption).foregroundStyle(.secondary)
-            }
-
-            Section("Recent Activity") {
-                let entries = model.activity(for: item.name)
-                if entries.isEmpty {
-                    Text("Not used yet.").foregroundStyle(.secondary)
-                } else {
-                    ForEach(Array(entries.enumerated()), id: \.offset) { _, e in ActivityRow(entry: e, showNames: false) }
+                    .padding(.vertical, 10)
+                    if i < versions.count - 1 { Divider() }
                 }
             }
-
-            Section {
-                Button("Delete \(item.name)…", role: .destructive) { confirmingDelete = true }
+            HStack {
+                Text("Restoring keeps the current value too.").font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Button("Forget History…") { confirmingForget = true }.buttonStyle(.link).font(.caption)
             }
-        }
-        .formStyle(.grouped)
-        .disabled(working)
-        .onAppear { noteDraft = item.note; serviceDraft = item.service ?? ""; fillSitesDraft = (item.fillSites ?? []).joined(separator: ", ") }
-        .onChange(of: item.service) { _, s in serviceDraft = s ?? "" }
-        .onChange(of: item.fillSites) { _, s in fillSitesDraft = (s ?? []).joined(separator: ", ") }
-        .task(id: item.updatedAt) { versions = model.history(for: item.name) }
-        .confirmationDialog("Forget the history of \(item.ref.name)?", isPresented: $confirmingForget) {
-            Button("Forget \(versions.count) Earlier Value\(versions.count == 1 ? "" : "s")", role: .destructive) {
-                act {
-                    await model.forgetHistory([item.name])
-                    versions = model.history(for: item.name)
-                }
-            }
-        } message: {
-            Text("The current value stays. The earlier ones are deleted\(model.synced ? " on all your Macs" : "") and can't be brought back.")
-        }
-        .onChange(of: item.note) { _, n in noteDraft = n }
-        .onDisappear { if noteDraft != item.note { saveNote() } }
-        .sheet(isPresented: $changingValue) { ChangeValueSheet(model: model, item: item) }
-        .confirmationDialog("Delete \(item.name)?", isPresented: $confirmingDelete) {
-            Button("Delete", role: .destructive) { act { _ = await model.remove(item.name) } }
-        } message: {
-            if let files = item.usedIn, !files.isEmpty {
-                Text("It moves to Recently Deleted\(model.synced ? " on all your Macs" : "") and can be restored for \(Int(Versions.deletedFor / 86400)) days. Until then these files stop working: \(files.map(Broker.tilde).joined(separator: ", ")).")
-            } else {
-                Text("It moves to Recently Deleted\(model.synced ? " on all your Macs" : "") and can be restored for \(Int(Versions.deletedFor / 86400)) days. Until then, files that refer to latchkey://\(item.name) stop working.")
-            }
+            .padding(.horizontal, 4)
         }
     }
 
-    private func saveFillSites() {
-        let sites = fillSitesDraft.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-        guard sites != (item.fillSites ?? []) else { return }
-        act {
-            if let err = await model.setFillSites(item.name, sites) {
-                model.notice = err
-                fillSitesDraft = (item.fillSites ?? []).joined(separator: ", ")
+    private var activity: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 12) {
+                Image(systemName: "waveform.path.ecg").font(.title3).foregroundStyle(.secondary).frame(width: 26)
+                Text("Recent Activity").font(.body.weight(.semibold))
+            }
+            .padding(.vertical, 12)
+            let entries = model.activity(for: item.name)
+            if entries.isEmpty {
+                Text("Not used yet.").foregroundStyle(.secondary).padding(.bottom, 12)
+            }
+            ForEach(Array(entries.enumerated()), id: \.offset) { i, e in
+                Divider()
+                ActivityRow(entry: e, showNames: false).padding(.vertical, 8)
             }
         }
-    }
-
-    private func saveService() {
-        guard serviceDraft != (item.service ?? "") else { return }
-        let s = serviceDraft
-        act {
-            if let err = await model.setService(item.name, s) {
-                model.notice = err
-                serviceDraft = item.service ?? ""
-            }
-        }
-    }
-
-    private func saveNote() {
-        guard noteDraft != item.note else { return }
-        let n = noteDraft
-        act {
-            if let err = await model.save(name: item.name, value: nil, kind: nil, agentSafe: nil, note: n) {
-                model.notice = err
-                noteDraft = item.note
-            }
-        }
+        .padding(.horizontal, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.quaternary.opacity(0.35)))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(.separator.opacity(0.5)))
     }
 
     private func act(_ work: @escaping @MainActor () async -> Void) {

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### The window
+- A new layout: the sidebar has Overview, Credentials, Activity, Grants, projects and services; the list has its own
+  header, search (⌘F) and menu; each item shows its type; the detail pane is a set of cards with an **Edit** menu.
+- **Edit Details…** changes kind, access, service, note and fill sites together, with one Touch ID.
+- The sheets share one header and footer.
+
 ### Fixes
 - Copied values stay on this Mac: Universal Clipboard no longer hands them to your other devices.
 - `lk push` and `lk remote status` cover the whole environment record: shared items and plain settings go too, and

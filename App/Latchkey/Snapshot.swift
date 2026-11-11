@@ -73,6 +73,22 @@ enum Snapshot {
             drawOffscreen(RemoteSheet(model: model, scope: arg("--scope") ?? "shop/production"), to: path)
             return
         }
+        if arg("--part") == "additem" {
+            drawOffscreen(AddItemSheet(model: model), to: path)
+            return
+        }
+        if arg("--part") == "changevalue", let item = model.selectedItem {
+            drawOffscreen(ChangeValueSheet(model: model, item: item), to: path)
+            return
+        }
+        if arg("--part") == "edititem", let item = model.selectedItem {
+            drawOffscreen(EditItemSheet(model: model, item: item), to: path)
+            return
+        }
+        if arg("--part") == "overview" {
+            drawOffscreen(OverviewView(model: model).frame(width: 420, height: 760), to: path)
+            return
+        }
         if arg("--part") == "pushapproval" {
             var r = ApprovalRequest(action: .push, names: ["shop/production/DATABASE_URL", "shop/production/STRIPE_SECRET_KEY"],
                                     chain: ["the Latchkey app"], folder: "", reason: "push 2 items")

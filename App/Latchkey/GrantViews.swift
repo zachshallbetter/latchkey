@@ -89,8 +89,8 @@ struct NewGrantSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("New Grant").font(.title3.weight(.semibold))
+            VStack(alignment: .leading, spacing: 10) {
+                SheetHeader(symbol: "checkmark.shield", tint: .teal, title: "New Grant")
                 Text("Programs in this folder, its subfolders and its repository’s Git worktrees can read these items until the grant ends. Revoking stops future reads, not values already released.")
                     .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }

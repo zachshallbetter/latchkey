@@ -18,25 +18,35 @@ struct RemoteSheet: View {
     var itemCount: Int { model.items.filter { $0.name.hasPrefix(scope + "/") }.count }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Remote Locations").font(.title3.weight(.semibold))
-                HStack(spacing: 6) {
-                    Text(scope.split(separator: "/").first.map(String.init) ?? scope).font(.callout.weight(.medium))
-                    EnvBadge(environment: String(scope.split(separator: "/").last ?? ""))
-                    Text("· \(itemCount) item\(itemCount == 1 ? "" : "s")").foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(spacing: 14) {
+                IconTile(symbol: "cloud", tint: .blue, size: 48)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Remote Locations").font(.title2.weight(.semibold))
+                    HStack(spacing: 6) {
+                        Text(scope.split(separator: "/").first.map(String.init) ?? scope).font(.callout.weight(.medium))
+                        EnvBadge(environment: String(scope.split(separator: "/").last ?? ""))
+                        Text("· \(itemCount) item\(itemCount == 1 ? "" : "s")").foregroundStyle(.secondary)
+                    }
                 }
             }
 
             if links.isEmpty && !adding {
-                ContentUnavailableView {
-                    Label("Not Linked", systemImage: "icloud")
-                } description: {
+                VStack(spacing: 12) {
+                    RoundedRectangle(cornerRadius: 22, style: .continuous).fill(.quaternary.opacity(0.4))
+                        .frame(width: 88, height: 88)
+                        .overlay(Image(systemName: "cloud").font(.system(size: 36, weight: .regular)).foregroundStyle(.blue))
+                    Text("Not Linked").font(.title3.weight(.semibold))
                     Text("Link this environment to Vercel, GitHub Actions, Railway or Fly to push its values there and see what's out of step.")
-                } actions: {
-                    Button("Add a Location…") { adding = true }
+                        .multilineTextAlignment(.center).foregroundStyle(.secondary).frame(maxWidth: 380)
+                    Button { adding = true } label: { Label("Add a Location…", systemImage: "plus") }
+                        .buttonStyle(.borderedProminent).controlSize(.large)
+                    HStack(spacing: 6) {
+                        ForEach(["Vercel", "GitHub Actions", "Railway", "Fly"], id: \.self) { Chip(text: $0) }
+                    }
+                    .font(.caption)
                 }
-                .frame(maxHeight: 220)
+                .frame(maxWidth: .infinity).padding(.vertical, 12)
             } else {
                 List {
                     ForEach(links) { link in
@@ -52,17 +62,14 @@ struct RemoteSheet: View {
                 AddLinkForm(model: model, scope: scope) { adding = false }
             }
 
-            HStack {
-                if !links.isEmpty {
+            if !links.isEmpty {
+                HStack {
                     Button(checking ? "Checking…" : "Check Status") { check() }.disabled(checking || working)
                     Button("Add a Location…") { adding = true }.disabled(adding)
                 }
-                Spacer()
-                Text("Values go through each service's own tool, signed in as you. Nothing is deployed.")
-                    .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.trailing)
             }
-            HStack {
-                Spacer()
+            Spacer(minLength: 0)
+            SheetFooter(note: "Values go through each service's own tool, signed in as you. Nothing is deployed.") {
                 Button("Done") { dismiss() }.keyboardShortcut(.cancelAction)
                 if !links.isEmpty {
                     Button(working ? "Pushing…" : "Push to All") { pushTo(nil) }
@@ -70,7 +77,7 @@ struct RemoteSheet: View {
                 }
             }
         }
-        .padding(20)
+        .padding(24)
         .frame(width: 620, height: adding ? 680 : 520)
         .confirmationDialog("Unlink \(unlinking?.target.label ?? "")?", isPresented: Binding(get: { unlinking != nil }, set: { if !$0 { unlinking = nil } }),
                             presenting: unlinking) { link in
