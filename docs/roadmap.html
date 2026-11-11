@@ -223,7 +223,7 @@ const tiers = [
       plan: "<b>Plan:</b> <code>latchkey proxy</code> adds the <code>Authorization</code> header for specific hosts, so an agent calls the API without ever holding the token." },
   ]},
   { id: "daily", eyebrow: "Tier 3", title: "Day-to-day use", note: "Smaller features that remove friction.", items: [
-    { t: "Key files", s: "M", who: ["you", "agents"],
+    { t: "Key files", s: "M", who: ["you", "agents"], built: true,
       gap: "<b>Gap:</b> tools that want a file path (.p8, .pem, service-account JSON) can't use an environment value.",
       plan: "<b>Plan:</b> <code>GOOGLE_APPLICATION_CREDENTIALS=latchkey-file://gcp-sa</code> writes a 0600 temporary file and deletes it when the command exits." },
     { t: "Project commands", s: "M", who: ["you", "agents"],

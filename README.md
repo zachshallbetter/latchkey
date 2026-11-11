@@ -18,11 +18,12 @@ command starts. Agents get only the items marked agent-safe; everything else nee
 | `latchkey` command-line tool: `run`, `list`, `get`, `set`, `rm`, `update`, `import`, `mv`, `history`, `restore`, `deleted`, `forget`, `remote`, `push`, `grant`, `grants`, `revoke`, `status`; starts the app if needed | Built |
 | `latchkey-broker`: the broker without a window, for development | Built |
 | App: window with sidebar, item list and detail; reveal and copy behind Touch ID; .env import sheet; activity log; menu bar panel; settings; open at login. Hosts the broker | Built; needs a team set to sync |
-| Key-file delivery, expiry reminders | Not built |
+| Key-file delivery (`--file`, `latchkey-file://`) | Built |
+| Expiry reminders | Not built |
 | Browser extension or AutoFill provider | Not built |
 | SSH agent (Secure Enclave keys) | Not built |
 
-Tests: 55 (`swift test`; add `LATCHKEY_KEYCHAIN_TESTS=1` to include a real keychain round trip).
+Tests: 59 (`swift test`; add `LATCHKEY_KEYCHAIN_TESTS=1` to include a real keychain round trip).
 
 See [docs/apple-passwords-and-passkeys.md](docs/apple-passwords-and-passkeys.md) for how this uses iCloud Keychain
 and LocalAuthentication, why items don't appear in the Passwords app, and where passkeys fit.
@@ -56,7 +57,36 @@ agent working:
     latchkey revoke 3f9a1c        # or: latchkey revoke all
 
 Grants are kept on this Mac only (`~/Library/Application Support/Latchkey/grants.json`), last at most 7 days,
-and show up in Activity when they're made, used and revoked.
+and show up in Activity when they're made, used and revoked. A grant for a repository's folder also covers its
+git worktrees, wherever they live (`~/Projects/_worktrees/site/fix-login` is covered by a grant for
+`~/Projects/site`).
+
+## Running commands
+
+    latchkey run --env-file .env.local -- npm run dev          # references in a file
+    latchkey run --env acp/development -- npm test              # an environment, no file needed
+    latchkey run --env acp/development --file ASC_KEY_PATH=acp/production/ASC_P8 -- fastlane beta
+
+- `--env PROJECT/ENV` sets each of the environment's items as its name, plus the shared items that environment's
+  files use (as recorded on import). Repeat it to combine environments. Fresh worktrees have no `.env` (it's
+  gitignored); this needs none.
+- `--file NAME=ID`, or `NAME=latchkey-file://ID` in an env file, gives the command the path of a temporary file
+  holding the value, readable only by you and deleted when the command exits. For tools that want a file: App Store
+  Connect `.p8` keys, a gcloud service-account JSON, a TLS key.
+
+Exit codes, for scripts and agents:
+
+| Code | Meaning |
+|---|---|
+| 0 | Done |
+| 64 | Wrong usage |
+| 66 | No item with that ID. Ask the owner to add it; don't retry. |
+| 69 | The Latchkey app can't be reached |
+| 73 | A file couldn't be rewritten |
+| 77 | Refused: not agent-safe, not approved, no grant. Ask the owner to approve or grant; don't retry. |
+| 127 | The command couldn't start |
+
+Refusals and missing items print the item IDs and the grant command that would allow them.
 
 ## Projects, environments and services
 
@@ -190,7 +220,8 @@ Many repositories at once: one review, one approval, then each file rewritten.
     latchkey import --batch envs.txt --share-identical --agent-safe-pattern 'NEXT_PUBLIC_*,VITE_*' --dry-run
     latchkey import --batch envs.txt --share-identical --agent-safe-pattern 'NEXT_PUBLIC_*,VITE_*' --rewrite
 
-Each file lands in its own project (its repository's folder) and environment (from its name). With
+Each file lands in its own project (its repository's main checkout folder, also from a worktree) and environment
+(from its name). With
 `--share-identical`, a name that holds the same value in every file that has it, such as `GEMINI_API_KEY`, becomes
 one shared item that every file refers to, so rotating it is one change; names whose values differ stay per
 project. If two files give one ID different values (`.env` and `.env.local` in the same repository, say), that's a

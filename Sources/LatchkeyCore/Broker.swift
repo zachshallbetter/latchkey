@@ -285,7 +285,8 @@ public final class Broker: @unchecked Sendable {
         guard duration > 0 else { return Response(ok: false, error: "the duration must be positive") }
         var r = req
         r.cwd = folder
-        let reason = "let programs in \(Self.tilde(folder)) read \(Self.count(names)) without asking for \(GrantStore.describe(duration)), asked by \(Self.who(peer))"
+        let worktrees = Repo.commonDir(for: folder) != nil ? " (and its worktrees)" : ""
+        let reason = "let programs in \(Self.tilde(folder))\(worktrees) read \(Self.count(names)) without asking for \(GrantStore.describe(duration)), asked by \(Self.who(peer))"
         guard ask(.grant, names, peer, r, reason, duration: duration).allowed else {
             log("grant", names, "denied", peer, r)
             return Response(ok: false, error: "the grant was not approved")

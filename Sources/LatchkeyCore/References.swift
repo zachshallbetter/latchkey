@@ -51,6 +51,19 @@ public enum References {
         return out + ns.substring(from: last)
     }
 
+    /// `latchkey-file://ID` as a whole value: the command gets the path of a temporary file holding the value,
+    /// for tools that want a file (a .p8 key, a service-account JSON).
+    public static let fileScheme = "latchkey-file://"
+
+    /// Variables whose whole value is a file reference → the item id.
+    public static func fileReferences(in env: [String: String]) -> [String: String] {
+        env.compactMapValues { v in
+            guard v.hasPrefix(fileScheme) else { return nil }
+            let id = String(v.dropFirst(fileScheme.count))
+            return Wire.isValidName(id) ? id : nil
+        }
+    }
+
     public static func resolve(env: [String: String], with values: [String: String]) -> [String: String] {
         env.mapValues { $0.contains(scheme) ? resolve($0, with: values) : $0 }
     }

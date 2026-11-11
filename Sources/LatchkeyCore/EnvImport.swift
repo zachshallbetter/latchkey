@@ -155,16 +155,12 @@ public enum EnvImport {
         }
     }
 
-    /// The project a file belongs to: the name of the enclosing git repository's folder, or failing that the
-    /// file's own folder, lowercased with anything outside letters, digits, `_`, `-` and `.` turned into `-`.
+    /// The project a file belongs to: the folder name of the repository's main checkout (so a worktree at
+    /// `~/Projects/_worktrees/site/fix-login` is still `site`), or failing that the file's own folder, lowercased
+    /// with anything outside letters, digits, `_`, `-` and `.` turned into `-`.
     public static func project(forFile url: URL) -> String {
-        var dir = url.deletingLastPathComponent().standardizedFileURL
-        let start = dir
-        while dir.path != "/" {
-            if FileManager.default.fileExists(atPath: dir.appendingPathComponent(".git").path) { return slug(dir.lastPathComponent) }
-            dir = dir.deletingLastPathComponent()
-        }
-        return slug(start.lastPathComponent)
+        if let main = Repo.mainCheckout(for: url.path) { return slug(URL(fileURLWithPath: main).lastPathComponent) }
+        return slug(url.deletingLastPathComponent().standardizedFileURL.lastPathComponent)
     }
 
     static func slug(_ s: String) -> String {

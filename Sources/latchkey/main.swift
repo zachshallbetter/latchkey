@@ -9,8 +9,11 @@ latchkey: read secrets from the Latchkey app without keeping them in files.
 Items are shared (ID = NAME) or belong to a project's environment (ID = project/environment/NAME).
 Files refer to them as latchkey://ID.
 
-  latchkey run [--env-file FILE]... [--no-masking] -- COMMAND [ARGS...]
+  latchkey run [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [--no-masking] -- COMMAND [ARGS...]
       Start COMMAND with every latchkey://ID in its environment replaced by the real value.
+      --env loads an environment's items without any file (each as its NAME), plus the shared items that
+      environment's files use. --file NAME=ID (or NAME=latchkey-file://ID in an env file) gives COMMAND the
+      path of a temporary file holding the value, readable only by you and deleted when COMMAND exits.
       Secret values printed by COMMAND are concealed unless --no-masking is given.
   latchkey list [--project P] [--json]   IDs, kinds and whether agents may read them. Never values.
   latchkey get ID                 Print one value.
@@ -71,6 +74,10 @@ Files refer to them as latchkey://ID.
 
 Items not marked agent-safe need your approval (Touch ID, Apple Watch or your Mac password).
 Changes always do. Values are kept in iCloud Keychain, so they follow you to your other Macs.
+
+Exit codes: 0 done; 64 wrong usage; 66 no item with that ID (ask the owner to add it); 69 the Latchkey app
+can't be reached; 73 a file couldn't be rewritten; 77 refused: not agent-safe, not approved, no grant (ask
+the owner to approve or grant, don't retry); 127 the command couldn't start.
 """
 
 func fail(_ message: String, code: Int32 = 1) -> Never {
@@ -137,6 +144,17 @@ func send(_ request: Request) -> Response {
 
 func currentDirectory() -> String { FileManager.default.currentDirectoryPath }
 
+/// Exit 66 with the missing IDs and what to do, worded for agents as much as people.
+func failMissing(_ ids: [String]) -> Never {
+    fail("no item named: \(ids.joined(separator: ", "))\n  Ask the owner to add it in Latchkey (latchkey set ID) or check the name. Don't retry.", code: 66)
+}
+
+/// Exit 77 with the refused IDs and what to do.
+func failRefused(_ ids: [String]) -> Never {
+    let folder = Broker.tilde(currentDirectory())
+    fail("refused: \(ids.joined(separator: ", ")) (not agent-safe, not approved, no grant)\n  Ask the owner to approve it in Latchkey, or to grant it: latchkey grant \(ids.joined(separator: ",")) --folder \(folder) --for 2h. Don't retry.", code: 77)
+}
+
 func readValue(prompt: String) -> String {
     if isatty(STDIN_FILENO) == 1 {
         guard let p = getpass(prompt) else { fail("no value given") }
@@ -154,6 +172,8 @@ nonisolated(unsafe) var childPID: pid_t = 0
 
 func runCommand(_ input: [String]) -> Never {
     var envFiles: [String] = []
+    var scopes: [String] = []
+    var fileArgs: [(name: String, id: String)] = []
     var masking = true
     var rest = input
     var cmd: [String] = []
@@ -164,6 +184,15 @@ func runCommand(_ input: [String]) -> Never {
         case "--env-file":
             guard !rest.isEmpty else { fail("--env-file takes a path", code: 64) }
             envFiles.append(rest.removeFirst())
+        case "--env":
+            guard !rest.isEmpty, RemoteLink.isValidScope(rest[0]) else { fail("--env takes PROJECT/ENV, such as acp/development", code: 64) }
+            scopes.append(rest.removeFirst())
+        case "--file":
+            guard !rest.isEmpty, let eq = rest[0].firstIndex(of: "="), Wire.isValidName(String(rest[0][rest[0].index(after: eq)...])) else {
+                fail("--file takes NAME=ID, such as GOOGLE_APPLICATION_CREDENTIALS=gcp/production/SERVICE_ACCOUNT", code: 64)
+            }
+            let a = rest.removeFirst(), i = a.firstIndex(of: "=")!
+            fileArgs.append((String(a[..<i]), String(a[a.index(after: i)...])))
         case "--no-masking": masking = false
         default:
             if a.hasPrefix("--env-file=") { envFiles.append(String(a.dropFirst(11))) }
@@ -171,7 +200,7 @@ func runCommand(_ input: [String]) -> Never {
             else { cmd = [a] + rest; rest = [] }
         }
     }
-    guard !cmd.isEmpty else { fail("usage: latchkey run [--env-file FILE] -- COMMAND [ARGS...]", code: 64) }
+    guard !cmd.isEmpty else { fail("usage: latchkey run [--env-file FILE] [--env PROJECT/ENV] [--file NAME=ID] -- COMMAND [ARGS...]", code: 64) }
 
     var env = ProcessInfo.processInfo.environment
     for path in envFiles {
@@ -179,21 +208,55 @@ func runCommand(_ input: [String]) -> Never {
         catch { fail("cannot read \(path): \(error.localizedDescription)", code: 66) }
     }
 
-    let names = References.names(in: env)
+    if !scopes.isEmpty {
+        let all = send(Request(op: "list")).secrets ?? []
+        for scope in scopes {
+            let inScope = all.filter { $0.name.hasPrefix(scope + "/") }
+            if inScope.isEmpty { failMissing(["\(scope)/*"]) }
+            for item in inScope { env[item.ref.name] = References.scheme + item.name }
+            // Shared items this environment's files use (recorded on import), unless something already set them.
+            let folders = Set(inScope.flatMap { $0.usedIn ?? [] }.map { Repo.mainCheckout(for: $0) ?? URL(fileURLWithPath: $0).deletingLastPathComponent().path })
+            for item in all where item.ref.isShared && env[item.name] == nil {
+                let used = (item.usedIn ?? []).contains { path in folders.contains { path.hasPrefix($0 + "/") } }
+                if used { env[item.name] = References.scheme + item.name }
+            }
+        }
+    }
+    for f in fileArgs { env[f.name] = References.fileScheme + f.id }
+
+    let fileRefs = References.fileReferences(in: env)
+    let names = Array(Set(References.names(in: env) + fileRefs.values)).sorted()
     var secretValues: [String] = []
+    var tempDir: URL?
     if !names.isEmpty {
         let r = send(Request(op: "get", names: names, cwd: currentDirectory(), command: cmd.joined(separator: " ")))
-        if let m = r.missing, !m.isEmpty { fail("no item named: \(m.joined(separator: ", "))", code: 66) }
-        if let d = r.denied, !d.isEmpty {
-            fail("refused: \(d.joined(separator: ", ")) (not marked agent-safe, and not approved in the app)", code: 77)
-        }
+        if let m = r.missing, !m.isEmpty { failMissing(m) }
+        if let d = r.denied, !d.isEmpty { failRefused(d) }
         let values = r.values ?? [:]
         env = References.resolve(env: env, with: values)
+        if !fileRefs.isEmpty {
+            // A private folder of owner-only files, removed when the command ends.
+            let dir = FileManager.default.temporaryDirectory.appendingPathComponent("latchkey-run-\(UUID().uuidString)")
+            do {
+                try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+                for (key, id) in fileRefs {
+                    let file = dir.appendingPathComponent(ItemID(id)?.name ?? id)
+                    guard FileManager.default.createFile(atPath: file.path, contents: Data((values[id] ?? "").utf8),
+                                                         attributes: [.posixPermissions: 0o600]) else { throw CocoaError(.fileWriteUnknown) }
+                    env[key] = file.path
+                }
+            } catch {
+                try? FileManager.default.removeItem(at: dir)
+                fail("couldn't write a temporary file for \(fileRefs.keys.sorted().joined(separator: ", ")): \(error.localizedDescription)")
+            }
+            tempDir = dir
+        }
         let masked = Set(r.masked ?? names)
-        secretValues = values.filter { masked.contains($0.key) }.map(\.value)
+        secretValues = masking ? values.filter { masked.contains($0.key) }.map(\.value) : []
     }
 
-    if !masking || secretValues.isEmpty {
+    // Exec in place when there's nothing to mask and nothing to clean up afterwards.
+    if secretValues.isEmpty && tempDir == nil {
         for (k, v) in env { setenv(k, v, 1) }
         var argv: [UnsafeMutablePointer<CChar>?] = cmd.map { strdup($0) }
         argv.append(nil)
@@ -239,6 +302,7 @@ func runCommand(_ input: [String]) -> Never {
     pump(errPipe, to: FileHandle.standardError)
     process.waitUntilExit()
     group.wait()
+    if let tempDir { try? FileManager.default.removeItem(at: tempDir) }
     if process.terminationReason == .uncaughtSignal { exit(128 + process.terminationStatus) }
     exit(process.terminationStatus)
 }
@@ -735,8 +799,8 @@ case "list":
 case "get":
     guard let name = args.first, Wire.isValidName(name) else { fail("usage: latchkey get ID", code: 64) }
     let r = send(Request(op: "get", names: [name], cwd: currentDirectory()))
-    if let m = r.missing, !m.isEmpty { fail("no item named \(name)", code: 66) }
-    if let d = r.denied, !d.isEmpty { fail("refused: \(name) is not marked agent-safe and was not approved", code: 77) }
+    if let m = r.missing, !m.isEmpty { failMissing(m) }
+    if let d = r.denied, !d.isEmpty { failRefused(d) }
     guard let v = r.values?[name] else { fail("no value returned") }
     print(v)
 

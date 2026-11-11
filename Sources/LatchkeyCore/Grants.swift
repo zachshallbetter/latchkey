@@ -12,15 +12,19 @@ public struct Grant: Codable, Identifiable, Hashable, Sendable {
     public var created: Date
     /// Who asked for it, as the approval described them ("zsh › claude", "the Latchkey app").
     public var createdBy: String
+    /// The git repository (its common `.git` directory) the folder belongs to, if any. Commands run from any of
+    /// that repository's worktrees are covered too, wherever the worktree lives.
+    public var repo: String?
 
     public init(id: String = Grant.newID(), names: [String], folder: String, expires: Date,
-                created: Date = Date(), createdBy: String) {
+                created: Date = Date(), createdBy: String, repo: String? = nil) {
         self.id = id
         self.names = names.sorted()
         self.folder = Grant.normalize(folder)
         self.expires = expires
         self.created = created
         self.createdBy = createdBy
+        self.repo = repo
     }
 
     public static func newID() -> String {
@@ -49,7 +53,9 @@ public struct Grant: Codable, Identifiable, Hashable, Sendable {
     public func covers(_ name: String, cwd: String, now: Date = Date()) -> Bool {
         guard expires > now, names.contains(where: { Grant.entry($0, matches: name) }), !cwd.isEmpty else { return false }
         let c = Grant.normalize(cwd)
-        return c == folder || c.hasPrefix(folder == "/" ? "/" : folder + "/")
+        if c == folder || c.hasPrefix(folder == "/" ? "/" : folder + "/") { return true }
+        if let repo, Repo.commonDir(for: c) == repo { return true }
+        return false
     }
 }
 
@@ -83,7 +89,7 @@ public final class GrantStore: @unchecked Sendable {
     @discardableResult
     public func add(names: [String], folder: String, duration: TimeInterval, createdBy: String, now: Date = Date()) -> Grant {
         let g = Grant(names: names, folder: folder, expires: now.addingTimeInterval(min(duration, Self.longest)),
-                      created: now, createdBy: createdBy)
+                      created: now, createdBy: createdBy, repo: Repo.commonDir(for: folder))
         lock.withLock {
             cache.append(g)
             persist()
