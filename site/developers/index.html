@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Latchkey for developers · Latchkey</title>
+  <meta name="description" content="How Latchkey fits together for developers: the latchkey command-line tool, the app that holds the keychain, latchkey:// references, and how agents and MCP servers use them.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:title" content="Latchkey for developers · Latchkey">
+  <meta property="og:description" content="How Latchkey fits together for developers: the latchkey command-line tool, the app that holds the keychain, latchkey:// references, and how agents and MCP servers use them.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="../logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="twitter:card" content="summary">
+  <link rel="stylesheet" href="../site.css">
+  <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="../llms.txt">
+  <script defer src="../site.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site">
+    <nav class="top wrap" aria-label="Main">
+      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+      <ul>
+        <li><a href="index.html" aria-current="page">Docs</a></li>
+        <li><a class="button primary" href="../index.html#install">Preview status</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main id="main" class="wrap docs">
+    <nav class="side" aria-label="Developer documentation"><p class="side-title">Developers</p><ul><li><a href="index.html" aria-current="page">Overview</a></li><li><a href="quickstart.html">Quickstart</a></li><li><a href="cli.html">CLI reference</a></li><li><a href="agents.html">Agents and MCP</a></li><li><a href="api.html">References and API</a></li></ul></nav>
+    <article class="doc">
+      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><span aria-current="page">Developers</span></li></ol></nav>
+      <h1>Latchkey for developers</h1>
+      <p class="lede">Everything you can script: the <code>latchkey</code> command-line tool, the references your files hold, the protocol the tool speaks to the app, and how to put agents and MCP servers behind it.</p>
+      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#pieces">The pieces</a></li><li><a href="#start">Where to start</a></li><li><a href="#ids">Item IDs</a></li><li><a href="#rules">What&rsquo;s released without asking</a></li></ul></nav>
+
+<h2 id="pieces">The pieces</h2>
+<ul>
+<li>The app holds the keychain. It runs the broker, shows approval panels, and keeps the log, grants and history. Only the signed app can read Latchkey&rsquo;s keychain access group.</li>
+<li><code>latchkey</code>, the command-line tool, asks the app for everything over a Unix socket. It starts the app in the background if it isn&rsquo;t running.</li>
+<li>References such as <code>latchkey://shop/production/DATABASE_URL</code> go in env files and environment variables in place of values.</li>
+</ul>
+<figure class="code"><figcaption><span>How it fits together</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">latchkey (CLI) ──JSON over a Unix socket──► Broker (in the app) ──► iCloud Keychain
+                                              ├─ approval panel, then Touch ID
+                                              ├─ grants      keychain, this Mac only
+                                              ├─ access log  access.jsonl (never values)
+                                              └─ remote pushes via vercel, gh, railway, flyctl</code></pre></figure>
+
+<h2 id="start">Where to start</h2>
+<dl class="pages">
+<dt><a href="quickstart.html">Quickstart</a></dt><dd>Install the tool, import an env file, run a command, grant a folder.</dd>
+<dt><a href="cli.html">CLI reference</a></dt><dd>Every command and option, environment variables and exit codes.</dd>
+<dt><a href="agents.html">Agents and MCP</a></dt><dd>Instructions for coding agents, narrower grants, keys an agent can use without reading, rotation after a session, SSH, and Latchkey&rsquo;s MCP server.</dd>
+<dt><a href="api.html">References and API</a></dt><dd>The reference formats, the broker protocol, the access log, and the files Latchkey keeps.</dd>
+</dl>
+
+<h2 id="ids">Item IDs</h2>
+<p>An item is either shared, <code>NAME</code>, or belongs to one environment of a project, <code>project/environment/NAME</code>. Each part is letters, digits, <code>_</code>, <code>-</code> and <code>.</code>, at most 64 bytes. The ID is the only place project and environment are stored.</p>
+<p>Environments can be any name; <code>development</code>, <code>preview</code>, <code>staging</code>, <code>production</code> and <code>test</code> sort first. Use names like <code>vercel.preview</code> to tell apart the same environment in different places.</p>
+<table><thead><tr><th>Kind</th><th>For</th><th>Masked in output</th></tr></thead><tbody><tr><td><code>token</code></td><td>API tokens and keys, one line</td><td>Yes</td></tr><tr><td><code>password</code></td><td>Passwords and connection strings, one line</td><td>Yes</td></tr><tr><td><code>key</code></td><td>Key material: SSH, GPG, <code>.p8</code>, <code>.pem</code>. Multi-line</td><td>Yes, line by line</td></tr><tr><td><code>value</code></td><td>Not secret: host names, account IDs</td><td>No</td></tr></tbody></table>
+
+<h2 id="rules">What&rsquo;s released without asking</h2>
+<p>A read is released without a prompt only when the item is <strong>agent-safe</strong> (No Approval in the app), or a <strong>grant</strong> covers the folder, session and command as applicable. Allow Once authorizes one request; approvals are not cached. Revoking a grant stops future reads through it, but cannot recall released values. Everything else shows the approval panel, then Touch ID, Apple Watch or your password. Earlier values always ask. Changes (set, update, delete, move, import, restore, push) always ask, once per request.</p>
+
+      <nav class="pager" aria-label="Pages"><a class="next" href="quickstart.html"><span>Next</span>Quickstart</a></nav>
+    </article>
+  </main>
+  <footer class="site">
+    <div class="wrap">
+      <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
+      <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="cli.html">CLI reference</a></li>
+        <li><a href="agents.html">Agents and MCP</a></li>
+        <li><a href="api.html">References and API</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

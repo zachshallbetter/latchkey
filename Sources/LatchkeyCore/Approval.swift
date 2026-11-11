@@ -1,0 +1,144 @@
+import Foundation
+import LocalAuthentication
+
+/// What the broker is asking the person at the Mac to allow.
+public struct ApprovalRequest: Sendable {
+    public enum Action: String, Sendable {
+        case read, add, change, delete, importItems, grant, move, readVersion, restore, link, push
+    }
+    public var action: Action
+    public var names: [String]
+    /// The asking program and its parents, nearest first ("zsh", "claude").
+    public var chain: [String]
+    /// Absolute folder the request came from; empty for the app itself.
+    public var folder: String
+    public var command: String?
+    /// For a grant made ahead of time: how long it lasts.
+    public var duration: TimeInterval?
+    /// Completes the system sentence "<App> is trying to …".
+    public var reason: String
+    /// push, link: where values are going, as labels.
+    public var targets: [String] = []
+    /// push: at least one target is production, which needs its own confirmation.
+    public var production = false
+    /// Asked through `latchkey mcp`, by an agent rather than a command.
+    public var byAgent = false
+    /// The asking program's path when it isn't Latchkey's own signed command-line tool.
+    public var program: String?
+    /// Asked from the Latchkey window itself (the same process), not over the socket.
+    public var fromApp = false
+    /// The agent a grant made here could last as long as ("claude"), if the caller runs under one.
+    public var sessionName: String?
+    /// What a signed `latchkey run` is starting, which a grant made here can be limited to.
+    public var runCommand: [String]?
+    /// From another computer through an SSH forward, and what the tool there says about itself (unverified).
+    public var overSSH = false
+    public var remote: RemoteClaim?
+    /// From Latchkey's Safari extension, and the site the value was found on (as Safari reported it).
+    public var fromSafari = false
+    public var page: String?
+
+    public init(action: Action, names: [String], chain: [String], folder: String, command: String? = nil,
+                duration: TimeInterval? = nil, reason: String) {
+        self.action = action
+        self.names = names
+        self.chain = chain
+        self.folder = folder
+        self.command = command
+        self.duration = duration
+        self.reason = reason
+    }
+
+    /// Reads from a folder can be turned into a grant from the approval itself.
+    public var canGrant: Bool { action == .read && !folder.isEmpty && folder != "/" && remote == nil && !overSSH }
+}
+
+public enum ApprovalDecision: Sendable, Equatable {
+    case deny
+    case once
+    /// Allow now, and keep allowing these names from this folder, within these limits.
+    case grant(GrantChoice)
+
+    public var allowed: Bool { self != .deny }
+}
+
+/// A grant made from an approval: for how long, and whether only while the agent runs or only for this command.
+public struct GrantChoice: Sendable, Equatable {
+    public var duration: TimeInterval
+    public var untilAgentQuits: Bool
+    public var thisCommandOnly: Bool
+
+    public init(duration: TimeInterval, untilAgentQuits: Bool = false, thisCommandOnly: Bool = false) {
+        self.duration = duration
+        self.untilAgentQuits = untilAgentQuits
+        self.thisCommandOnly = thisCommandOnly
+    }
+}
+
+/// Asks the person at the Mac to allow something.
+public protocol Approver: Sendable {
+    /// How approval happens, for `latchkey status`.
+    var method: String { get }
+    func approve(_ request: ApprovalRequest) -> ApprovalDecision
+}
+
+/// The system authentication sheet: Touch ID, a paired Apple Watch, or the account password, in that
+/// order of preference, whichever this Mac has. This is the same check that unlocks a passkey or a saved
+/// password in the Passwords app. A desktop Mac without a Touch ID keyboard still gets the Watch or the
+/// password.
+public final class SystemApprover: Approver, @unchecked Sendable {
+    /// An unanswered sheet is withdrawn and counts as a denial, so one forgotten prompt
+    /// cannot hold up every other request.
+    public var timeout: TimeInterval
+
+    public init(timeout: TimeInterval = 90) {
+        self.timeout = timeout
+    }
+
+    public var method: String {
+        let ctx = LAContext()
+        var err: NSError?
+        guard ctx.canEvaluatePolicy(.deviceOwnerAuthentication, error: &err) else {
+            return "unavailable (\(err?.localizedDescription ?? "no authentication method"))"
+        }
+        var parts: [String] = []
+        if ctx.biometryType == .touchID { parts.append("Touch ID") }
+        if ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithWatch, error: nil) { parts.append("Apple Watch") }
+        parts.append("password")
+        return parts.joined(separator: ", ")
+    }
+
+    public func approve(_ request: ApprovalRequest) -> ApprovalDecision {
+        // The system sheet has no way to ask "are you sure this is production?", so it doesn't approve that.
+        if request.production { return .deny }
+        return confirm(request.reason) ? .once : .deny
+    }
+
+    /// Touch ID / Watch / password with this reason. True if the person passed it.
+    public func confirm(_ reason: String) -> Bool {
+        let ctx = LAContext()
+        ctx.localizedCancelTitle = "Deny"
+        var err: NSError?
+        guard ctx.canEvaluatePolicy(.deviceOwnerAuthentication, error: &err) else { return false }
+        let done = DispatchSemaphore(value: 0)
+        nonisolated(unsafe) var ok = false
+        ctx.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { success, _ in
+            ok = success
+            done.signal()
+        }
+        if done.wait(timeout: .now() + timeout) == .timedOut {
+            ctx.invalidate()
+            done.wait()
+        }
+        return ok
+    }
+}
+
+/// Gives the same answer to everything without asking. Tests only.
+public struct FixedApprover: Approver {
+    public let answer: ApprovalDecision
+    public init(_ allow: Bool) { answer = allow ? .once : .deny }
+    public init(_ decision: ApprovalDecision) { answer = decision }
+    public var method: String { "fixed (test)" }
+    public func approve(_ request: ApprovalRequest) -> ApprovalDecision { answer }
+}

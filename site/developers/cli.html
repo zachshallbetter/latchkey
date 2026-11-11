@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CLI reference · Latchkey</title>
+  <meta name="description" content="Reference for the latchkey command-line tool: run, check, mcp, get, list, set, update, rm, mv, import, history, restore, grant, remote, push and status, with environment variables and exit codes.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:title" content="CLI reference · Latchkey">
+  <meta property="og:description" content="Reference for the latchkey command-line tool: run, check, mcp, get, list, set, update, rm, mv, import, history, restore, grant, remote, push and status, with environment variables and exit codes.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="../logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="twitter:card" content="summary">
+  <link rel="stylesheet" href="../site.css">
+  <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="../llms.txt">
+  <script defer src="../site.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site">
+    <nav class="top wrap" aria-label="Main">
+      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+      <ul>
+        <li><a href="index.html" aria-current="page">Docs</a></li>
+        <li><a class="button primary" href="../index.html#install">Preview status</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main id="main" class="wrap docs">
+    <nav class="side" aria-label="Developer documentation"><p class="side-title">Developers</p><ul><li><a href="index.html">Overview</a></li><li><a href="quickstart.html">Quickstart</a></li><li><a href="cli.html" aria-current="page">CLI reference</a></li><li><a href="agents.html">Agents and MCP</a></li><li><a href="api.html">References and API</a></li></ul></nav>
+    <article class="doc">
+      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><a href="index.html">Developers</a></li><li><span aria-current="page">CLI reference</span></li></ol></nav>
+      <h1>CLI reference</h1>
+      <p class="lede">Every <code>latchkey</code> command and option. <code>latchkey help</code> prints a summary. Nothing here prints a value except <code>latchkey get</code>.</p>
+      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#conventions">Conventions</a></li><li><a href="#running">Running commands</a></li><li><a href="#items">Items</a></li><li><a href="#import">Importing</a></li><li><a href="#history">History</a></li><li><a href="#grants">Grants</a></li><li><a href="#rotating">Rotating</a></li><li><a href="#remote">Remote locations</a></li><li><a href="#log">The log</a></li><li><a href="#status">Status</a></li><li><a href="#environment">Environment variables</a></li><li><a href="#exit-codes">Exit codes</a></li></ul></nav>
+
+<h2 id="conventions">Conventions</h2>
+<ul>
+<li><code>lk</code> is the same tool: <code>lk run -- npm test</code>.</li>
+<li>IDs are <code>NAME</code> or <code>project/environment/NAME</code>. Where a command takes several, separate them with commas.</li>
+<li>PATTERN means <code>project/*</code> or <code>project/environment/*</code>.</li>
+<li>Each command that changes items asks for approval once, for everything it touches.</li>
+<li>If the app isn&rsquo;t running, <code>latchkey</code> starts it hidden and waits. <code>LATCHKEY_NO_LAUNCH=1</code> fails with 69 instead.</li>
+</ul>
+
+<h2 id="running">Running commands</h2>
+<h3 id="run"><code>latchkey run</code></h3>
+<figure class="code"><figcaption><span>Synopsis</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">latchkey run [options] -- COMMAND [ARGS...]</code></pre></figure>
+<p>Starts COMMAND with every <code>latchkey://ID</code> in its environment replaced by the item&rsquo;s value.</p>
+<table><thead><tr><th>Option</th><th>Meaning</th></tr></thead><tbody><tr><td><code>--env-file FILE</code></td><td>Load <code>KEY=VALUE</code> lines from FILE first. Repeatable.</td></tr><tr><td><code>--env PROJECT/ENV</code></td><td>Set each item in the environment as its name, plus the shared items that environment&rsquo;s files use (as recorded on import). Repeatable.</td></tr><tr><td><code>--file NAME=ID</code></td><td>Set NAME to the path of a temporary file holding the value, readable only by you and deleted when COMMAND exits. <code>NAME=latchkey-file://ID</code> in an env file does the same.</td></tr><tr><td><code>--no-masking</code></td><td>Don&rsquo;t hide values in COMMAND&rsquo;s output, and start it directly.</td></tr><tr><td><code>--proxy</code></td><td>Keep <code>OPENAI_API_KEY</code> and <code>ANTHROPIC_API_KEY</code> out of COMMAND entirely (see below).</td></tr><tr><td><code>--aws-session</code>, <code>--aws-role ARN</code>, <code>--aws-for TIME</code></td><td>Give COMMAND short-lived AWS credentials instead of the long-lived key (see below).</td></tr></tbody></table>
+<p>Values of secret kinds that are 6 characters or longer are replaced with <code>&lt;concealed by latchkey&gt;</code> in COMMAND&rsquo;s output, including values split across two chunks; multi-line values are hidden line by line. If COMMAND is killed by a signal, the status is 128 plus the signal.</p>
+<figure class="code"><figcaption><span>Examples</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey run --env-file .env.local -- npm run dev
+latchkey run --env shop/development --env shop/vercel.preview -- npm test
+latchkey run --file ASC_KEY_PATH=shop/production/ASC_P8 -- fastlane beta</code></pre></figure>
+
+<p>Proxy mode requires whole references for supported keys and refuses custom base URLs or an additional variable/file delivery of a protected key. Other credentials are still delivered normally. Temporary files are distinct per full item ID.</p>
+<h3 id="check"><code>latchkey check</code></h3>
+<figure class="code"><figcaption><span>Synopsis</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">latchkey check [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [IDS] [--json]</code></pre></figure>
+<p>What <code>latchkey run</code> with the same options would get without asking (agent-safe or covered by a grant), what would ask you, and what&rsquo;s missing. Asks nothing and releases nothing. Exits 66 if an item is missing, otherwise 0.</p>
+<figure class="code"><figcaption><span>Example</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">$ latchkey check --env-file .env.local
+agent-safe        shop/development/PGHOST
+granted           shop/development/DATABASE_URL  (grant k3v9q2, 1 hour, 12 minutes left)
+asks              shop/development/STRIPE_KEY</code></pre></figure>
+
+<h3 id="mcp-command"><code>latchkey mcp</code></h3>
+<p>Serves Latchkey&rsquo;s tools to an agent over MCP, on standard input and output. See <a href="agents.html#mcp">Latchkey&rsquo;s MCP server</a>.</p>
+
+<h3 id="proxy">Keys that never reach the command: <code>--proxy</code></h3>
+<p>With <code>--proxy</code>, a variable that is exactly a reference to an OpenAI or Anthropic key gets a placeholder instead, and <code>OPENAI_BASE_URL</code> or <code>ANTHROPIC_BASE_URL</code> points at a port on this Mac that <code>latchkey run</code> listens on. Requests there that carry the placeholder go to <code>api.openai.com</code> or <code>api.anthropic.com</code> with the real key in its place; anything else is refused. The command can use the key but can&rsquo;t read, print or send it anywhere else.</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey run --proxy --env shop/development -- npm test</code></pre></figure>
+<p>It works with programs that use the OpenAI or Anthropic SDKs (or read those base URL variables). If a base URL variable is already set, the run is refused; unset the base URL first.</p>
+
+<h3 id="aws">Short-lived AWS credentials</h3>
+<p>With <code>--aws-session</code>, <code>latchkey run</code> signs a request to AWS STS with your long-lived access key (<code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code>, both references) and gives COMMAND the temporary credentials STS returns, including <code>AWS_SESSION_TOKEN</code>. <code>--aws-role ARN</code> assumes that role instead. They last 15 minutes unless <code>--aws-for</code> says otherwise (at most 12 hours). The long-lived key never reaches COMMAND, and no AWS CLI is needed. MFA isn&rsquo;t supported yet.</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey run --aws-role arn:aws:iam::123456789012:role/dev --aws-for 1h --env shop/development -- terraform plan</code></pre></figure>
+
+<h3 id="get"><code>latchkey get</code></h3>
+<figure class="code"><figcaption><span>Synopsis</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">latchkey get ID</code></pre></figure>
+<p>Prints one value. Asks unless the item is agent-safe or covered by a grant. Keep agents away from it.</p>
+
+<h2 id="items">Items</h2>
+<table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td><code>latchkey list [--project P] [--json]</code></td><td>IDs grouped by project and environment, with kind, service, agent-safe and note. <code>--json</code> prints the same as JSON (see <a href="api.html#item">the item shape</a>). Never values.</td></tr><tr><td><code>latchkey set ID [--kind KIND] [--agent-safe] [--note TEXT] [--service NAME]</code></td><td>Add or change an item. The value comes from standard input, or a hidden prompt in a terminal. Replacing a value keeps the old one as a version. Asks.</td></tr><tr><td><code>latchkey update IDS|PATTERN... [--agent-safe yes|no] [--kind KIND] [--service NAME] [--note TEXT]</code></td><td>Change settings on many items with one approval. Values are untouched. <code>--service ""</code> clears the service.</td></tr><tr><td><code>latchkey rm IDS|PATTERN...</code></td><td>Delete items with one approval; they go to Recently Deleted for 30 days. If any named item doesn&rsquo;t exist, nothing is deleted.</td></tr><tr><td><code>latchkey mv IDS | --from-file FILE --to PROJECT/ENV | --shared [--file FILE]...</code></td><td>Move items, with values, settings and history, then update references in the files they came from, each <code>--file</code>, and the <code>--from-file</code> file. If any target exists, nothing moves.</td></tr></tbody></table>
+<figure class="code"><figcaption><span>Examples</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">printf %s &quot;$TOKEN&quot; | latchkey set shop/production/STRIPE_KEY --kind token --service Stripe
+latchkey update &#x27;shop/development/*&#x27; --agent-safe no
+latchkey list --project shop --json</code></pre></figure>
+
+<p>Imports support quoted multiline values and refuse malformed syntax before saving anything. Rewriting replaces the complete assignment and stops if the file changed while approval was pending.</p>
+<h2 id="import">Importing</h2>
+<figure class="code"><figcaption><span>Synopsis</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">latchkey import FILE... [options]</code></pre></figure>
+<table><thead><tr><th>Option</th><th>Meaning</th></tr></thead><tbody><tr><td><code>--batch LIST</code></td><td>Also import the files listed in LIST, one path per line (<code>#</code> comments allowed).</td></tr><tr><td><code>--scan DIR</code></td><td>Also import every <code>.env</code> and <code>.env.*</code> under DIR, skipping examples, templates, backups, and dependency, build and <code>.git</code> folders.</td></tr><tr><td><code>--project P</code>, <code>--env E</code></td><td>Place items here instead of what the repository and file name imply.</td></tr><tr><td><code>--shared</code></td><td>Import as shared items named after their keys.</td></tr><tr><td><code>--share-identical</code></td><td>With several files, make a name with the same value in every file one shared item.</td></tr><tr><td><code>--rewrite</code></td><td>Replace each imported value in its file with its reference.</td></tr><tr><td><code>--replace</code></td><td>Overwrite items that already exist (old values are kept as versions).</td></tr><tr><td><code>--dry-run</code></td><td>Show what would happen; send nothing.</td></tr><tr><td><code>--only KEY,...</code></td><td>Import only these keys (one file only).</td></tr><tr><td><code>--kind KIND</code>, <code>--kind KEY=KIND</code></td><td>Kind for all keys, or one.</td></tr><tr><td><code>--agent-safe KEY,...</code> or <code>all</code></td><td>Mark keys agent-safe.</td></tr><tr><td><code>--agent-safe-pattern PATTERN,...</code></td><td>Import matching names as agent-safe plain values.</td></tr><tr><td><code>--skip PATTERN,...</code></td><td>Leave matching names alone.</td></tr><tr><td><code>--no-default-skip</code></td><td>Import <code>VERCEL_OIDC_TOKEN</code>, <code>VERCEL_*</code> and <code>TURBO_*</code> too.</td></tr></tbody></table>
+
+<h2 id="history">History</h2>
+<table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td><code>latchkey history ID</code></td><td>Earlier values: when, why (replaced, deleted, replaced by a restore) and by whom. Never values.</td></tr><tr><td><code>latchkey restore ID [--version N]</code></td><td>Put back version N (1 is the most recent), or bring back a deleted item with its settings. The current value is kept as a version first. Asks.</td></tr><tr><td><code>latchkey deleted</code></td><td>Items deleted in the last 30 days, with days left.</td></tr><tr><td><code>latchkey forget IDS</code></td><td>Delete earlier values for good. Asks.</td></tr></tbody></table>
+
+<h2 id="grants">Grants</h2>
+<table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td><code>latchkey grant IDS [--folder DIR] [--for TIME] [--session] [--command CMD]... [--once]</code></td><td>Let commands run from DIR (default: here), the folders inside it and that repository&rsquo;s worktrees read these items without asking. TIME is like <code>30m</code>, <code>2h</code>, <code>1d</code>; default 1 hour, at most 7 days. IDS can include patterns. Asks once.</td></tr><tr><td><code>latchkey grants</code></td><td>Grants in effect, with time left and any limits.</td></tr><tr><td><code>latchkey revoke ID</code> or <code>all</code></td><td>End a grant, or all of them. Doesn&rsquo;t ask.</td></tr></tbody></table>
+
+<p>Narrow a grant with <code>--session</code> (it ends when the agent you run it under quits, and covers only programs started under it), <code>--command "npm test"</code> (only <code>latchkey run</code> of that command, read from the signed tool&rsquo;s own command line), or <code>--once</code> (one request). The approval panel offers the same: <strong>until claude quits</strong> and <strong>Only for &hellip;</strong>.</p>
+
+<h2 id="rotating">Rotating</h2>
+<table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td><code>latchkey touched [--since 24h] [--by NAME] [--grant ID] [--json]</code></td><td>Items Latchkey released in that time: to anything, to programs under NAME (such as <code>claude</code>), or under one grant. From the access log; never values.</td></tr><tr><td><code>latchkey rotate IDS|PATTERN... | --touched [...] [--open] [--push]</code></td><td>Replace items one by one: ends grants that cover them, shows where to make each new key (<code>--open</code> opens it), asks for the new value (the old one stays in history), then pushes to linked environments with <code>--push</code>.</td></tr></tbody></table>
+<figure class="code"><figcaption><span>After an agent session</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey touched --since 4h --by claude
+latchkey rotate --touched --since 4h --by claude --open --push</code></pre></figure>
+<p>Latchkey can&rsquo;t make the new key for you: Stripe, GitHub, OpenAI and most services issue keys only in their dashboards. It takes you to the page, saves what you paste, and puts it everywhere it&rsquo;s linked.</p>
+
+<h2 id="remote">Remote locations</h2>
+<table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td><code>latchkey remote list [PROJECT/ENV]</code></td><td>Links, with when each was last pushed.</td></tr><tr><td><code>latchkey remote link PROJECT/ENV SERVICE KEY=VALUE...</code></td><td>Link an environment. SERVICE is <code>vercel</code>, <code>github</code>, <code>railway</code> or <code>fly</code>. Asks.</td></tr><tr><td><code>latchkey remote unlink LINK</code></td><td>Remove a link. Doesn&rsquo;t ask.</td></tr><tr><td><code>latchkey remote status PROJECT/ENV</code></td><td>Names missing on each side, and values changed since the last push.</td></tr><tr><td><code>latchkey push PROJECT/ENV [--to LINK] [--only IDS] [--dry-run]</code></td><td>Push values with each service&rsquo;s own tool, values on standard input. Asks every time; production needs its own confirmation in the app. Nothing is deployed.</td></tr></tbody></table>
+<table><thead><tr><th>Service</th><th>Keys</th><th>Tool</th></tr></thead><tbody><tr><td><code>vercel</code></td><td><code>environment=</code> (development, preview or production), and <code>project=</code> or <code>dir=</code>; optional <code>branch=</code> for one preview branch</td><td><code>vercel</code></td></tr><tr><td><code>github</code></td><td><code>repo=owner/repo</code>; optional <code>environment=</code> (leave out for repository secrets)</td><td><code>gh</code></td></tr><tr><td><code>railway</code></td><td><code>environment=</code>, <code>service=</code>, and <code>project=</code> or <code>dir=</code></td><td><code>railway</code></td></tr><tr><td><code>fly</code></td><td><code>app=</code></td><td><code>flyctl</code></td></tr></tbody></table>
+
+<h2 id="log">The log</h2>
+<table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td><code>latchkey log [--limit 20]</code></td><td>Recent access log entries: time, what, decision, items, who, folder and command. Never values; likely secrets in command lines are redacted.</td></tr><tr><td><code>latchkey log --verify</code></td><td>Checks the log&rsquo;s chain: exits 0 if every entry is as Latchkey wrote it, 1 with the first line that isn&rsquo;t.</td></tr></tbody></table>
+
+<h2 id="status">Status</h2>
+<figure class="code"><figcaption><span>Synopsis</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">latchkey status</code></pre></figure>
+<p>Where values are kept, how you approve, how many items and grants, and the socket path.</p>
+
+<h2 id="environment">Environment variables</h2>
+<table><thead><tr><th>Variable</th><th>Meaning</th></tr></thead><tbody><tr><td><code>LATCHKEY_NO_LAUNCH=1</code></td><td>Don&rsquo;t start the app if it isn&rsquo;t running; fail with exit 69 instead.</td></tr><tr><td><code>LATCHKEY_SOCKET=PATH</code></td><td>Connect to a socket forwarded over SSH from the Mac running Latchkey (see <a href="agents.html#ssh">from another Mac</a>).</td></tr></tbody></table>
+
+<h2 id="exit-codes">Exit codes</h2>
+<table><thead><tr><th>Code</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>Done</td></tr><tr><td>64</td><td>Wrong usage</td></tr><tr><td>66</td><td>No item with that ID</td></tr><tr><td>69</td><td>The Latchkey app can&rsquo;t be reached</td></tr><tr><td>73</td><td>A file couldn&rsquo;t be rewritten</td></tr><tr><td>77</td><td>Refused: not agent-safe, not approved, no grant</td></tr><tr><td>127</td><td>The command couldn&rsquo;t start</td></tr></tbody></table>
+<p>On 66 and 77, Latchkey prints the item IDs and what to do, including the <code>latchkey grant</code> command that would allow the refused items.</p>
+
+      <nav class="pager" aria-label="Pages"><a class="prev" href="quickstart.html"><span>Previous</span>Quickstart</a><a class="next" href="agents.html"><span>Next</span>Agents and MCP</a></nav>
+    </article>
+  </main>
+  <footer class="site">
+    <div class="wrap">
+      <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
+      <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="cli.html">CLI reference</a></li>
+        <li><a href="agents.html">Agents and MCP</a></li>
+        <li><a href="api.html">References and API</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

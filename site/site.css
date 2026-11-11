@@ -1,0 +1,168 @@
+/* Latchkey site: tokens, page chrome (header, footer), text, code blocks, and the developer docs layout.
+   System fonts only, so the site makes no third-party requests. The accent follows the logo; change it here. */
+:root {
+  --bg: #f7f8fa;
+  --bg-2: #eef1f5;
+  --surface: #ffffff;
+  --ink: #12161c;
+  --muted: #5a6472;
+  --line: #dde2e9;
+  --accent: #0a63d1;
+  --accent-ink: #ffffff;
+  --accent-soft: #e4effc;
+  --ok: #1f7a4a;
+  --warn: #a35a00;
+  --code-bg: #f1f4f8;
+  --code-fig: #e7ecf2;
+  --code-ink: #1d2733;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 12px 32px rgba(16, 24, 40, .08);
+  /* Parts of an lk command: what it does, its options, their values, and the program it runs. */
+  --t-act: #0a5bc2;
+  --t-flag: #7a3cb3;
+  --t-val: #1d6b43;
+  --t-dim: #5a6472;
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  --display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1014; --bg-2: #161b21; --surface: #13181e; --ink: #e8ecf1; --muted: #98a2b0; --line: #252c35;
+    --accent: #4ea1ff; --accent-ink: #06121f; --accent-soft: #10243b; --ok: #5fd39a; --warn: #f0a54a;
+    --code-bg: #10151b; --code-fig: #19202a; --code-ink: #dbe3ec;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 16px 40px rgba(0, 0, 0, .45);
+    --t-act: #6cb2ff; --t-flag: #c9a2ff; --t-val: #7fd6a4; --t-dim: #98a2b0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1014; --bg-2: #161b21; --surface: #13181e; --ink: #e8ecf1; --muted: #98a2b0; --line: #252c35;
+  --accent: #4ea1ff; --accent-ink: #06121f; --accent-soft: #10243b; --ok: #5fd39a; --warn: #f0a54a;
+  --code-bg: #10151b; --code-fig: #19202a; --code-ink: #dbe3ec;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 16px 40px rgba(0, 0, 0, .45);
+  --t-act: #6cb2ff; --t-flag: #c9a2ff; --t-val: #7fd6a4; --t-dim: #98a2b0;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 var(--sans); }
+.wrap { width: 100%; max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+h1, h2, h3 { font-family: var(--display); line-height: 1.12; letter-spacing: -0.02em; text-wrap: balance; margin: 0 0 12px; }
+h1 { font-size: clamp(36px, 6vw, 60px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3.6vw, 36px); font-weight: 700; }
+h3 { font-size: 19px; font-weight: 650; letter-spacing: -0.01em; }
+p { margin: 0 0 14px; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+code { font: 500 0.88em var(--mono); background: var(--code-bg); border: 1px solid var(--line); padding: 1px 5px; border-radius: 5px; overflow-wrap: anywhere; }
+.skip { position: absolute; left: -9999px; top: 8px; padding: 8px 12px; background: var(--surface); border-radius: 8px; z-index: 10; }
+.skip:focus { left: 16px; }
+.muted { color: var(--muted); }
+
+/* Header */
+header.site { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px); border-bottom: 1px solid var(--line); }
+nav.top { display: flex; align-items: center; gap: 16px; min-height: 60px; }
+.brand { display: inline-flex; align-items: center; gap: 9px; color: var(--ink); text-decoration: none; font: 700 19px/1 var(--display); letter-spacing: -0.01em; margin-right: auto; }
+/* The mark on its own, in the header. The tile below is for drawings of the app icon (the approval panel). */
+.brand .logo { width: 34px; height: 28px; display: block; }
+/* The app icon as macOS draws it: the mark on a light or dark tile. */
+.mark { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; flex: none; background: linear-gradient(180deg, #fdfdfe, #e3e8ef); box-shadow: inset 0 0 0 1px rgba(16, 24, 40, .08); }
+.mark img { width: 19px; height: 19px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .mark { background: linear-gradient(180deg, #2c3038, #101215); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); } }
+:root[data-theme="dark"] .mark { background: linear-gradient(180deg, #2c3038, #101215); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); }
+nav.top ul { display: flex; align-items: center; gap: 4px; list-style: none; margin: 0; padding: 0; }
+nav.top ul a { display: inline-flex; align-items: center; min-height: 40px; padding: 0 12px; border-radius: 8px; color: var(--muted); font-weight: 550; font-size: 15px; text-decoration: none; }
+nav.top ul a:hover, nav.top ul a[aria-current="page"] { color: var(--ink); background: var(--bg-2); }
+.button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 20px; border-radius: 10px; font: 650 16px/1 var(--sans); text-decoration: none; border: 1px solid transparent; white-space: nowrap; }
+.button.primary { background: var(--accent); color: var(--accent-ink); }
+.button.primary:hover { filter: brightness(1.08); }
+.button.secondary { background: var(--surface); color: var(--ink); border-color: var(--line); }
+.button.secondary:hover { border-color: var(--accent); }
+nav.top .button { min-height: 36px; padding: 0 14px; font-size: 14px; }
+
+/* Footer */
+footer.site { border-top: 1px solid var(--line); margin-top: 72px; padding: 28px 0 40px; color: var(--muted); font-size: 15px; }
+footer.site .wrap { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; justify-content: space-between; }
+footer.site ul { display: flex; flex-wrap: wrap; gap: 6px 20px; list-style: none; margin: 0; padding: 0; }
+footer.site a { color: var(--muted); }
+footer.site a:hover { color: var(--ink); }
+
+/* Code blocks */
+figure.code { margin: 16px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--code-bg); overflow: hidden; }
+figure.code figcaption { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 38px; padding: 0 8px 0 14px; background: var(--code-fig); border-bottom: 1px solid var(--line); font: 600 12.5px/1 var(--mono); color: var(--muted); }
+figure.code pre { margin: 0; padding: 14px 16px; overflow-x: auto; tab-size: 2; }
+figure.code pre code { display: block; padding: 0; border: 0; background: none; border-radius: 0; font: 500 14px/1.6 var(--mono); color: var(--code-ink); overflow-wrap: normal; white-space: pre; }
+button.copy { appearance: none; min-height: 28px; min-width: 60px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink); font: 600 12.5px/1 var(--sans); cursor: pointer; }
+button.copy:hover { border-color: var(--accent); color: var(--accent); }
+button.copy[data-done] { color: var(--ok); border-color: var(--ok); }
+
+/* lk commands, coloured by part; hover or focus a part for what it means (site.js). */
+.tok[data-tip] { cursor: help; border-radius: 3px; }
+.tok[data-tip]:hover, .tok[data-tip]:focus-visible { background: color-mix(in srgb, currentColor 14%, transparent); }
+.tok:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.t-prog { font-weight: 700; }
+.t-act { color: var(--t-act); font-weight: 650; }
+.t-flag { color: var(--t-flag); }
+.t-val { color: var(--t-val); }
+.t-sep, .t-child, .t-comment { color: var(--t-dim); }
+.t-child { color: inherit; }
+.tok-tip { position: absolute; z-index: 20; max-width: 300px; padding: 7px 10px; border-radius: 8px; background: var(--ink);
+           color: var(--bg); font: 500 13px/1.4 var(--sans); box-shadow: var(--shadow); pointer-events: none; }
+
+/* Developer docs */
+main.docs { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 0 48px; align-items: start; }
+.side { position: sticky; top: 76px; padding: 28px 0; }
+.side-title { margin: 0 0 8px 12px; font: 700 13px/1 var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.side ul { list-style: none; margin: 0; padding: 0; }
+.side a { display: flex; align-items: center; min-height: 40px; padding: 0 12px; border-radius: 8px; color: var(--muted); font-weight: 550; font-size: 15px; text-decoration: none; }
+.side a:hover, .side a[aria-current="page"] { color: var(--ink); background: var(--bg-2); }
+.side a[aria-current="page"] { box-shadow: inset 3px 0 0 var(--accent); }
+article.doc { max-width: 780px; padding: 28px 0 24px; min-width: 0; }
+article.doc h1 { font-size: clamp(34px, 5vw, 46px); }
+article.doc h2 { font-size: 26px; margin-top: 52px; padding-top: 20px; border-top: 1px solid var(--line); scroll-margin-top: 76px; }
+article.doc h3 { margin-top: 32px; scroll-margin-top: 76px; }
+article.doc .lede { font-size: 19px; color: var(--muted); }
+article.doc table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 15.5px; display: block; overflow-x: auto; }
+article.doc th, article.doc td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+article.doc th { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); white-space: nowrap; }
+article.doc td:first-child code { white-space: nowrap; }
+article.doc ul, article.doc ol { padding-left: 22px; }
+article.doc li { margin: 6px 0; }
+.crumbs ol { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0 0 18px; padding: 0; font-size: 14px; color: var(--muted); }
+.crumbs li + li::before { content: "›"; margin-right: 6px; }
+.crumbs a { color: var(--muted); }
+.toc { margin: 24px 0 8px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.toc h2 { margin: 0 0 6px !important; padding: 0 !important; border: 0 !important; font: 700 12.5px/1.2 var(--sans) !important; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.toc ul { columns: 2 220px; margin: 0; padding-left: 18px; font-size: 15px; }
+.toc li { margin: 3px 0; }
+.note { margin: 18px 0; padding: 12px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg-2); font-size: 16px; }
+.note p:last-child { margin: 0; }
+dl.pages { margin: 18px 0; }
+dl.pages dt { font-weight: 650; margin-top: 14px; }
+dl.pages dd { margin: 2px 0 0; color: var(--muted); }
+.pager { display: flex; justify-content: space-between; gap: 12px; margin-top: 56px; }
+.pager a { display: block; flex: 1; max-width: 48%; padding: 12px 16px; border: 1px solid var(--line); border-radius: 12px; text-decoration: none; font-weight: 650; color: var(--ink); background: var(--surface); }
+.pager a:hover { border-color: var(--accent); }
+.pager a span { display: block; font-size: 12.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.pager .next { text-align: right; margin-left: auto; }
+@media (max-width: 900px) {
+  main.docs { display: block; }
+  .side { position: static; padding: 16px 0 0; }
+  .side-title { display: none; }
+  .side ul { display: flex; flex-wrap: wrap; gap: 4px; }
+  .side a { min-height: 36px; }
+  .side a[aria-current="page"] { box-shadow: none; }
+}
+@media (max-width: 560px) {
+  body { font-size: 16px; }
+  figure.code pre code { font-size: 13px; }
+  .pager { flex-direction: column; }
+  .pager a { max-width: none; }
+}
+@media print {
+  header.site, .side, .pager, button.copy, footer.site { display: none; }
+  main.docs { display: block; }
+  figure.code pre code { white-space: pre-wrap; }
+}

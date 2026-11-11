@@ -1,0 +1,295 @@
+import AppKit
+import LatchkeyCore
+import SwiftUI
+
+struct ItemDetail: View {
+    let model: AppModel
+    let item: SecretInfo
+    @State private var noteDraft = ""
+    @State private var serviceDraft = ""
+    @State private var fillSitesDraft = ""
+    @State private var versions: [Version] = []
+    @State private var confirmingForget = false
+    @State private var changingValue = false
+    @State private var confirmingDelete = false
+    @State private var working = false
+
+    var body: some View {
+        Form {
+            Section {
+                HStack(spacing: 14) {
+                    KindIcon(kind: item.kind, size: 52)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(item.ref.name).font(.title2.weight(.semibold)).textSelection(.enabled)
+                        if !item.ref.isShared {
+                            HStack(spacing: 6) {
+                                Text(item.ref.project).font(.callout.weight(.medium))
+                                EnvBadge(environment: item.ref.environment)
+                            }
+                        }
+                        Text("Changed \(item.updatedAt.formatted(date: .abbreviated, time: .shortened))")
+                            .font(.callout).foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+
+            Section {
+                LabeledContent("Value") {
+                    HStack(spacing: 8) {
+                        if let v = model.revealed[item.name] {
+                            Text(v).font(.body.monospaced()).textSelection(.enabled).lineLimit(item.kind == .key ? 12 : 3)
+                        } else {
+                            Text(String(repeating: "•", count: 14)).foregroundStyle(.secondary)
+                        }
+                        Spacer(minLength: 8)
+                        Button {
+                            if model.revealed[item.name] != nil { model.revealed[item.name] = nil }
+                            else { act { await model.reveal(item.name) } }
+                        } label: {
+                            Image(systemName: model.revealed[item.name] == nil ? "eye" : "eye.slash")
+                        }
+                        .help(model.revealed[item.name] == nil ? "Show (asks unless a grant or No Approval setting permits it)" : "Hide")
+                        Button { act { await model.copyValue(item.name) } } label: { Image(systemName: "doc.on.doc") }
+                            .help("Copy value; the clipboard clears after 60 seconds")
+                    }
+                    .buttonStyle(.borderless)
+                }
+                LabeledContent("Reference") {
+                    HStack {
+                        Text(References.scheme + item.name).font(.body.monospaced()).textSelection(.enabled)
+                        Spacer()
+                        Button { model.copyReference(item.name) } label: { Image(systemName: "doc.on.doc") }
+                            .buttonStyle(.borderless).help("Copy reference for a .env file")
+                    }
+                }
+                Button("Change Value…") { changingValue = true }
+            }
+
+            Section {
+                Picker("Kind", selection: Binding(get: { item.kind }, set: { k in
+                    act { if let error = await model.save(name: item.name, value: nil, kind: k, agentSafe: nil, note: nil) { model.notice = error } }
+                })) {
+                    ForEach(ItemKind.allCases, id: \.self) { Label($0.label, systemImage: $0.symbol).tag($0) }
+                }
+                Toggle(isOn: Binding(get: { item.agentSafe }, set: { on in
+                    act { if let error = await model.save(name: item.name, value: nil, kind: nil, agentSafe: on, note: nil) { model.notice = error } }
+                })) {
+                    Text("Allow reads without approval")
+                    Text(item.agentSafe
+                         ? "Any program in your Mac account may request this value."
+                         : "Reads ask for approval unless a grant covers them.")
+                }
+                LabeledContent("Project") {
+                    HStack {
+                        Text(item.ref.isShared ? "Shared" : "\(item.ref.project) / \(item.ref.environment)")
+                        Spacer()
+                        Button("Move…") { model.moveRequest = MoveRequest(ids: [item.name]) }
+                    }
+                }
+                TextField("Service", text: $serviceDraft, prompt: Text("Stripe, Neon, GitHub…"))
+                    .onSubmit { saveService() }
+                if let service = item.service, let page = Services.keyPages[service].flatMap(URL.init(string:)) {
+                    Link("Make a new key at \(service)", destination: page)
+                        .help("To rotate: make a new key there, revoke the old one, then Change Value here")
+                }
+                TextField("Note", text: $noteDraft, prompt: Text("What it's for, where it came from"))
+                    .onSubmit { saveNote() }
+                TextField("Fill in Safari on", text: $fillSitesDraft,
+                          prompt: Text("Its service's site and deployment platforms"))
+                    .onSubmit { saveFillSites() }
+                    .help("Sites Latchkey for Safari may fill this item on, separated by commas, such as vercel.com. Each covers its subdomains. Leave empty for its service's own site and the deployment platforms (Vercel, GitHub, Railway, Fly and others).")
+            } footer: {
+                Text(item.kind.isSecret ? "Masked in command output." : "Plain values are not masked in output.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            let itemGrants = model.grants(for: item.name)
+            if !itemGrants.isEmpty {
+                Section("Readable Without Asking") {
+                    ForEach(itemGrants) { g in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(Broker.tilde(g.folder)).font(.callout.monospaced())
+                                if g.repo != nil { Text("Includes repository worktrees").font(.caption).foregroundStyle(.secondary) }
+                                if !g.limits.isEmpty { Text(g.limits).font(.caption).foregroundStyle(.secondary) }
+                                Text("Until \(g.expires.formatted(date: .omitted, time: .shortened)) · from \(g.createdBy)")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Button("Revoke") { act { await model.revoke(g.id) } }
+                        }
+                    }
+                }
+            }
+
+            if let paths = item.usedIn, !paths.isEmpty {
+                Section("Used In") {
+                    ForEach(paths, id: \.self) { path in
+                        HStack {
+                            Text(Broker.tilde(path)).font(.callout.monospaced()).lineLimit(1).truncationMode(.head)
+                            Spacer()
+                            if FileManager.default.fileExists(atPath: path) {
+                                Button { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)]) } label: {
+                                    Image(systemName: "folder")
+                                }
+                                .buttonStyle(.borderless).help("Show in Finder")
+                            } else {
+                                Text("missing").font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+            }
+
+            if !item.ref.isShared {
+                let remote = model.remoteStates(of: item)
+                Section {
+                    if remote.isEmpty {
+                        Text("\(item.ref.project)/\(item.ref.environment) isn't linked to Vercel, GitHub Actions, Railway or Fly.")
+                            .foregroundStyle(.secondary)
+                    }
+                    ForEach(remote, id: \.link.id) { r in
+                        HStack {
+                            Text(r.link.target.label).lineLimit(1)
+                            Spacer()
+                            switch r.state {
+                            case .current:
+                                Text("Pushed \(r.link.pushed[item.name]!.formatted(.relative(presentation: .named)))").foregroundStyle(.secondary)
+                            case .outOfDate:
+                                Label("Changed since last push", systemImage: "arrow.triangle.2.circlepath").foregroundStyle(.orange)
+                            case .notPushed:
+                                Text("Not pushed").foregroundStyle(.secondary)
+                            }
+                        }
+                        .font(.callout)
+                    }
+                } header: {
+                    HStack {
+                        Text("Remote")
+                        Spacer()
+                        Button("Manage…") { model.remoteRequest = RemoteRequest(scope: "\(item.ref.project)/\(item.ref.environment)") }
+                            .buttonStyle(.link).font(.caption)
+                    }
+                }
+            }
+
+            Section {
+                if versions.isEmpty {
+                    Text("No earlier values yet. When this value changes, the old one is kept here.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(versions) { v in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(v.savedAt.formatted(date: .abbreviated, time: .shortened)).font(.callout)
+                                    Text("\(v.reason == .changed ? "Replaced" : v.reason == .restored ? "Replaced by a restore" : "Deleted") by \(v.by)")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Button {
+                                    if model.revealedVersions[v.id] != nil { model.revealedVersions[v.id] = nil }
+                                    else { act { await model.revealVersion(v) } }
+                                } label: { Image(systemName: model.revealedVersions[v.id] == nil ? "eye" : "eye.slash") }
+                                .buttonStyle(.borderless).help("Show this earlier value (asks for approval)")
+                                Button("Restore") { act { await model.restore(v) } }
+                            }
+                            if let value = model.revealedVersions[v.id] {
+                                Text(value).font(.caption.monospaced()).textSelection(.enabled).lineLimit(4)
+                            }
+                        }
+                    }
+                }
+            } header: {
+                Text("History")
+            } footer: {
+                HStack {
+                    Text("The last \(Versions.keep) values are kept. Restoring keeps the current value too.")
+                    Spacer()
+                    if !versions.isEmpty { Button("Forget History…") { confirmingForget = true }.buttonStyle(.link) }
+                }
+                .font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section("Recent Activity") {
+                let entries = model.activity(for: item.name)
+                if entries.isEmpty {
+                    Text("Not used yet.").foregroundStyle(.secondary)
+                } else {
+                    ForEach(Array(entries.enumerated()), id: \.offset) { _, e in ActivityRow(entry: e, showNames: false) }
+                }
+            }
+
+            Section {
+                Button("Delete \(item.name)…", role: .destructive) { confirmingDelete = true }
+            }
+        }
+        .formStyle(.grouped)
+        .disabled(working)
+        .onAppear { noteDraft = item.note; serviceDraft = item.service ?? ""; fillSitesDraft = (item.fillSites ?? []).joined(separator: ", ") }
+        .onChange(of: item.service) { _, s in serviceDraft = s ?? "" }
+        .onChange(of: item.fillSites) { _, s in fillSitesDraft = (s ?? []).joined(separator: ", ") }
+        .task(id: item.updatedAt) { versions = model.history(for: item.name) }
+        .confirmationDialog("Forget the history of \(item.ref.name)?", isPresented: $confirmingForget) {
+            Button("Forget \(versions.count) Earlier Value\(versions.count == 1 ? "" : "s")", role: .destructive) {
+                act {
+                    await model.forgetHistory([item.name])
+                    versions = model.history(for: item.name)
+                }
+            }
+        } message: {
+            Text("The current value stays. The earlier ones are deleted\(model.synced ? " on all your Macs" : "") and can't be brought back.")
+        }
+        .onChange(of: item.note) { _, n in noteDraft = n }
+        .onDisappear { if noteDraft != item.note { saveNote() } }
+        .sheet(isPresented: $changingValue) { ChangeValueSheet(model: model, item: item) }
+        .confirmationDialog("Delete \(item.name)?", isPresented: $confirmingDelete) {
+            Button("Delete", role: .destructive) { act { _ = await model.remove(item.name) } }
+        } message: {
+            if let files = item.usedIn, !files.isEmpty {
+                Text("It moves to Recently Deleted\(model.synced ? " on all your Macs" : "") and can be restored for \(Int(Versions.deletedFor / 86400)) days. Until then these files stop working: \(files.map(Broker.tilde).joined(separator: ", ")).")
+            } else {
+                Text("It moves to Recently Deleted\(model.synced ? " on all your Macs" : "") and can be restored for \(Int(Versions.deletedFor / 86400)) days. Until then, files that refer to latchkey://\(item.name) stop working.")
+            }
+        }
+    }
+
+    private func saveFillSites() {
+        let sites = fillSitesDraft.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        guard sites != (item.fillSites ?? []) else { return }
+        act {
+            if let err = await model.setFillSites(item.name, sites) {
+                model.notice = err
+                fillSitesDraft = (item.fillSites ?? []).joined(separator: ", ")
+            }
+        }
+    }
+
+    private func saveService() {
+        guard serviceDraft != (item.service ?? "") else { return }
+        let s = serviceDraft
+        act {
+            if let err = await model.setService(item.name, s) {
+                model.notice = err
+                serviceDraft = item.service ?? ""
+            }
+        }
+    }
+
+    private func saveNote() {
+        guard noteDraft != item.note else { return }
+        let n = noteDraft
+        act {
+            if let err = await model.save(name: item.name, value: nil, kind: nil, agentSafe: nil, note: n) {
+                model.notice = err
+                noteDraft = item.note
+            }
+        }
+    }
+
+    private func act(_ work: @escaping @MainActor () async -> Void) {
+        working = true
+        Task { await work(); working = false }
+    }
+}

@@ -1,0 +1,27 @@
+# Latchkey
+
+> A secrets manager for macOS and the coding agents that run on it. Project files keep latchkey:// references;
+> the values live in iCloud Keychain; Latchkey fills them in when a command starts, after the owner approves with
+> Touch ID, Apple Watch or their password, or under a grant they made.
+
+- Platform: macOS 15 or later (app); the command-line tool `latchkey` (`lk` for short) ships inside the app.
+- Storage: iCloud Keychain, in Latchkey's own access group, synced to the owner's Macs. No Latchkey server or account.
+- Made by Snack Studio.
+
+## For agents
+
+- Run commands that need secrets as `latchkey run --env-file .env.local -- <command>` or
+  `latchkey run --env <project>/<environment> -- <command>`.
+- Never run `latchkey get`, never print the environment, never write values into .env files.
+- Exit 77 means refused and 66 means missing: stop and ask the person; don't retry.
+- `latchkey check` (or the MCP tool latchkey_check) shows what a run would get without asking.
+- MCP: `latchkey mcp` serves latchkey_status, latchkey_list, latchkey_check, latchkey_run and
+  latchkey_request_grant. It has no direct secret-read tool; child output masks exact values, but transformed secrets can leak.
+
+## Docs
+
+- [Developers overview](developers/index.html)
+- [Quickstart](developers/quickstart.html)
+- [CLI reference](developers/cli.html)
+- [Agents and MCP](developers/agents.html)
+- [References and API](developers/api.html)

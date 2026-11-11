@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "scope": "full-functionality",
+  "submissionEnabled": false,
+  "metadata": {
+    "name": "Latchkey",
+    "primaryCategory": "public.app-category.developer-tools",
+    "supportURL": null,
+    "privacyPolicyURL": null,
+    "marketingURL": null,
+    "reviewContactConfirmed": false,
+    "exportComplianceReviewed": false
+  },
+  "runtimeGates": {
+    "vaultAndHistory": {
+      "status": "pending",
+      "evidence": []
+    },
+    "signedFileAccessAndRevocation": {
+      "status": "pending",
+      "evidence": []
+    },
+    "authenticatedCLITransportAndCallerIdentity": {
+      "status": "pending",
+      "evidence": []
+    },
+    "commandExecutionProxyAndAWS": {
+      "status": "pending",
+      "evidence": []
+    },
+    "nativeRemotePushes": {
+      "status": "pending",
+      "evidence": []
+    },
+    "directToStoreMigrationAndSync": {
+      "status": "pending",
+      "evidence": []
+    },
+    "safariIntegration": {
+      "status": "pending",
+      "evidence": []
+    },
+    "cleanMacTestFlightReviewFlow": {
+      "status": "pending",
+      "evidence": []
+    }
+  },
+  "componentProbe": {
+    "status": "passed",
+    "evidence": [
+      "docs/evidence/app-store/2026-11-11-component-probes.json"
+    ],
+    "covers": "Container writes, sandbox denial, self IPC/code identity, system child only; not full feature acceptance."
+  }
+}

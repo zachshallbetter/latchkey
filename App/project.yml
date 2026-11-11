@@ -1,0 +1,89 @@
+# Generate the Xcode project with:  cd App && xcodegen
+# DEVELOPMENT_TEAM signs the app; iCloud Keychain needs a signed app. Every Mac must use the same team.
+name: Latchkey
+options:
+  bundleIdPrefix: io.snackstud
+  deploymentTarget:
+    macOS: "15.0"
+packages:
+  LatchkeyCore:
+    path: ..
+settings:
+  base:
+    DEVELOPMENT_TEAM: "PKH7G93GGD"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+targets:
+  Latchkey:
+    type: application
+    platform: macOS
+    sources: [Latchkey]
+    dependencies:
+      - package: LatchkeyCore
+        product: LatchkeyCore
+      - target: LatchkeySafari
+    entitlements:
+      path: Latchkey/Latchkey.entitlements
+      properties:
+        # Shared with the Safari extension, which holds its socket there (it can't reach the app's own socket).
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)io.snackstud.latchkey
+        # iCloud Keychain (synchronizable, data-protection keychain) is only open to signed apps
+        # with an access group. Not sandboxed: the broker reads other processes' paths to name callers.
+        # The first group is Latchkey's; the second is the one 0.1.0 development builds used, kept so the app can
+        # move items out of it (see StoreMigration.adopt).
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)io.snackstud.latchkey
+          - $(AppIdentifierPrefix)io.latchkey.shared
+    info:
+      path: Latchkey/Info.plist
+      properties:
+        CFBundleDisplayName: Latchkey
+        LSApplicationCategoryType: public.app-category.developer-tools
+        # One Latchkey at a time: two would compete for the broker socket and the approval panel.
+        LSMultipleInstancesProhibited: true
+        NSHumanReadableCopyright: ""
+        LatchkeyAccessGroup: $(AppIdentifierPrefix)io.snackstud.latchkey
+        LatchkeyPreviousAccessGroup: $(AppIdentifierPrefix)io.latchkey.shared
+        LatchkeyAppGroup: $(TeamIdentifierPrefix)io.snackstud.latchkey
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.snackstud.latchkey
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+  # Latchkey for Safari: offers to save a new API key from the page where you made it. Sandboxed, as Safari
+  # extensions must be; it reaches the app through a socket in the shared App Group container.
+  LatchkeySafari:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Safari/SafariWebExtensionHandler.swift
+      - path: Safari/Resources
+        buildPhase: resources
+    dependencies:
+      - package: LatchkeyCore
+        product: LatchkeyCore
+    entitlements:
+      path: Safari/Safari.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)io.snackstud.latchkey
+    info:
+      path: Safari/Info.plist
+      properties:
+        CFBundleDisplayName: Latchkey
+        NSHumanReadableCopyright: ""
+        LatchkeyAppGroup: $(TeamIdentifierPrefix)io.snackstud.latchkey
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.Safari.web-extension
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SafariWebExtensionHandler
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.snackstud.latchkey.safari
+        PRODUCT_NAME: LatchkeySafari
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Automatic
