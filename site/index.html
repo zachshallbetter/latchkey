@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Latchkey: secrets for your Mac and your coding agents</title>
+  <meta name="description" content="Keep latchkey:// references in your project files and the values in iCloud Keychain. Latchkey fills them in when a command starts, after you approve with Touch ID.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:title" content="Latchkey: secrets for your Mac and your coding agents">
+  <meta property="og:description" content="References in your files, values in iCloud Keychain, and Touch ID before anything is shared.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="site.css">
+  <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="llms.txt">
+  <style>
+    /* Home page only. Layout: hero (copy | terminal with the approval panel), before/after, three steps, agents,
+       features grid, security, download. */
+    section { padding: 72px 0 0; }
+    .eyebrow { font: 650 13px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+    .lede { font-size: 20px; color: var(--muted); max-width: 40ch; }
+    .section-lede { font-size: 18px; color: var(--muted); max-width: 62ch; }
+
+    .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 48px; align-items: center; padding-top: 56px; }
+    .hero h1 { max-width: 13ch; }
+    .cta { display: flex; flex-wrap: wrap; gap: 12px; margin: 28px 0 12px; }
+    .fine { font-size: 14px; color: var(--muted); }
+
+    /* A terminal window with the approval panel over it, drawn in HTML so it stays sharp and themed. */
+    .stage { position: relative; padding-bottom: 230px; }
+    .term { border-radius: 12px; background: #0f1318; color: #d7dee7; box-shadow: var(--shadow); border: 1px solid #222a33; overflow: hidden; }
+    .term .bar { display: flex; gap: 7px; padding: 11px 12px; background: #171c22; border-bottom: 1px solid #222a33; }
+    .term .bar i { width: 11px; height: 11px; border-radius: 50%; background: #3a424c; display: block; }
+    .term pre { margin: 0; padding: 16px 18px 22px; font: 500 13.5px/1.7 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+    .term .p { color: #6fb3ff; }
+    .term .d { color: #7d8794; }
+    .term .c { color: #ffcf6b; }
+    .panel { position: absolute; right: -8px; bottom: 0; width: min(390px, 90%); padding: 18px 18px 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); font-size: 14px; }
+    .panel .head { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+    .panel .head .mark { width: 40px; height: 40px; border-radius: 10px; }
+    .panel .head .mark img { width: 24px; height: 24px; }
+    .panel .head b { display: block; font: 700 16px/1.2 var(--display); }
+    .panel .head span { color: var(--muted); font-size: 13px; }
+    .panel dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0 0 12px; }
+    .panel dt { color: var(--muted); text-align: right; }
+    .panel dd { margin: 0; font: 500 12.5px/1.6 var(--mono); overflow-wrap: anywhere; }
+    .panel .grant { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 10px; border-radius: 9px; background: var(--bg-2); margin-bottom: 12px; color: var(--muted); font-size: 13px; }
+    .panel .chip { padding: 3px 9px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); }
+    .panel .row { display: flex; align-items: center; gap: 8px; }
+    .panel .row small { margin-right: auto; color: var(--muted); font-size: 12px; }
+    .panel .btn { white-space: nowrap; padding: 6px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 13px; }
+    .panel .btn.go { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 28px; }
+    .compare figure.code { margin: 0; }
+    .compare .bad figcaption { color: var(--warn); }
+    .compare .good figcaption { color: var(--ok); }
+
+    .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 28px; counter-reset: step; }
+    .step { padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); display: flex; flex-direction: column; }
+    .step::before { counter-increment: step; content: counter(step); display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 700; margin-bottom: 12px; }
+    .step p { color: var(--muted); font-size: 16px; }
+    .step figure.code { margin: auto 0 0; }
+    .step figure.code pre code, .compare figure.code pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+    .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: start; margin-top: 28px; }
+    .ticks { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+    .ticks li { padding-left: 30px; position: relative; }
+    .ticks li::before { content: ""; position: absolute; left: 0; top: 6px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent-soft); box-shadow: inset 0 0 0 5px var(--accent-soft), inset 0 0 0 18px var(--accent); transform: scale(.75); }
+    .ticks b { display: block; }
+    .ticks span { color: var(--muted); font-size: 16px; }
+
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 28px; }
+    .feature { padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+    .feature p { color: var(--muted); font-size: 16px; margin: 0; }
+
+    .limits { margin-top: 28px; padding: 24px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+    .limits ul { margin: 0; padding-left: 20px; color: var(--muted); }
+    .limits li { margin: 8px 0; }
+
+    .download { text-align: center; padding: 56px 24px; margin-top: 72px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); }
+    .download .mark { width: 72px; height: 72px; border-radius: 18px; margin: 0 auto 18px; }
+    .download .mark img { width: 42px; height: 42px; }
+    .download .cta { justify-content: center; }
+
+    @media (max-width: 900px) {
+      .hero, .split { grid-template-columns: 1fr; }
+      .steps, .grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      section { padding-top: 56px; }
+      .compare, .steps, .grid { grid-template-columns: 1fr; }
+      .stage { padding-bottom: 0; }
+      .panel { position: relative; right: auto; width: 100%; margin-top: -24px; }
+      .lede { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site">
+    <nav class="top wrap" aria-label="Main">
+      <a class="brand" href="index.html"><span class="mark"><img src="logo.svg" alt=""></span>Latchkey</a>
+      <ul>
+        <li class="hide-sm"><a href="#how">How it works</a></li>
+        <li class="hide-sm"><a href="#agents">Agents</a></li>
+        <li class="hide-sm"><a href="#security">Security</a></li>
+        <li><a href="developers/index.html">Developers</a></li>
+        <li><a class="button primary" href="#download">Download</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main" class="wrap">
+    <div class="hero">
+      <div>
+        <p class="eyebrow">For macOS</p>
+        <h1>Secrets for your Mac and your coding agents</h1>
+        <p class="lede">Your project files keep references. iCloud Keychain keeps the values. Latchkey fills them in when a command starts, and asks you first.</p>
+        <div class="cta">
+          <a class="button primary" href="#download">Download for Mac</a>
+          <a class="button secondary" href="#how">How it works</a>
+        </div>
+        <p class="fine">macOS 15 or later. App and command-line tool. No account, no server.</p>
+      </div>
+      <div class="stage" aria-label="A terminal running latchkey run, with Latchkey's approval panel asking to release two items">
+        <div class="term" aria-hidden="true">
+          <div class="bar"><i></i><i></i><i></i></div>
+<pre><span class="p">~/Projects/shop $</span> latchkey run --env-file .env.local -- npm run dev
+<span class="d">&gt; shop@1.0.0 dev</span>
+<span class="d">&gt; next dev</span>
+  ▲ Next.js
+  - Local:    http://localhost:3000
+  ✓ Database  <span class="c">&lt;concealed by latchkey&gt;</span>
+  ✓ Ready</pre>
+        </div>
+        <div class="panel" aria-hidden="true">
+          <div class="head"><span class="mark"><img src="logo.svg" alt=""></span><div><b>Release 2 items?</b><span>Latchkey</span></div></div>
+          <dl>
+            <dt>Items</dt><dd>DATABASE_URL, STRIPE_KEY</dd>
+            <dt>Asked by</dt><dd>zsh › claude › Terminal</dd>
+            <dt>Folder</dt><dd>~/Projects/shop</dd>
+            <dt>Command</dt><dd>npm run dev</dd>
+          </dl>
+          <div class="grant">Allow from this folder for <span class="chip">1 hour</span> <span class="chip">Allow</span></div>
+          <div class="row"><small>Touch ID confirms your choice.</small><span class="btn">Deny</span><span class="btn go">Allow Once</span></div>
+        </div>
+      </div>
+    </div>
+
+    <section aria-labelledby="files">
+      <p class="eyebrow">The problem</p>
+      <h2 id="files">Your <code>.env</code> files hold the keys to everything</h2>
+      <p class="section-lede">They sit in every project and every worktree, get copied between Macs, and are read by every tool and agent that opens the folder. With Latchkey they hold references instead, which are safe to keep around.</p>
+      <div class="compare">
+        <figure class="code bad"><figcaption>.env.local before</figcaption><pre><code>DATABASE_URL=postgres://app:9fK2…@db.neon.tech/shop
+STRIPE_KEY=sk_live_51Hx…
+NEXT_PUBLIC_SITE_URL=https://shop.example</code></pre></figure>
+        <figure class="code good"><figcaption>.env.local after</figcaption><pre><code>DATABASE_URL=latchkey://shop/development/DATABASE_URL
+STRIPE_KEY=latchkey://shop/development/STRIPE_KEY
+NEXT_PUBLIC_SITE_URL=https://shop.example</code></pre></figure>
+      </div>
+    </section>
+
+    <section id="how" aria-labelledby="how-title">
+      <p class="eyebrow">How it works</p>
+      <h2 id="how-title">Import once, then run as usual</h2>
+      <div class="steps">
+        <div class="step">
+          <h3>Import</h3>
+          <p>Latchkey reads your env file, files each value under its project and environment, and swaps the values in the file for references.</p>
+          <figure class="code"><figcaption>Terminal</figcaption><pre><code>latchkey import .env.local --rewrite</code></pre></figure>
+        </div>
+        <div class="step">
+          <h3>Run</h3>
+          <p>Put <code>latchkey run</code> in front of a command. The values reach the command, not the file, and are hidden if it prints them.</p>
+          <figure class="code"><figcaption>Terminal</figcaption><pre><code>latchkey run --env-file .env.local -- npm test</code></pre></figure>
+        </div>
+        <div class="step">
+          <h3>Approve</h3>
+          <p>The first read asks with Touch ID, your Apple Watch or your password, and shows who's asking, from where, to run what.</p>
+          <figure class="code"><figcaption>Or allow a folder for a while</figcaption><pre><code>latchkey grant 'shop/development/*' --for 2h</code></pre></figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="agents" aria-labelledby="agents-title">
+      <p class="eyebrow">Built for agents</p>
+      <h2 id="agents-title">Let an agent run your project without holding your secrets</h2>
+      <div class="split">
+        <div>
+          <p class="section-lede">Coding agents need your API keys to run tests and dev servers. With Latchkey they run commands through <code>latchkey run</code> and never see a value in a file. You decide what they may use without asking.</p>
+          <figure class="code"><figcaption>CLAUDE.md or AGENTS.md</figcaption><pre><code>Secrets are in Latchkey. Run anything that needs them as
+`latchkey run --env shop/development -- &lt;command&gt;`.
+Never run `latchkey get`. If latchkey exits with 77
+(refused) or 66 (missing), stop and ask.</code></pre></figure>
+          <p class="fine"><a href="developers/agents.html">Agents and MCP servers →</a></p>
+        </div>
+        <ul class="ticks">
+          <li><b>Every request shows its process chain</b><span>An approval names the program asking (<code>zsh › claude › Terminal</code>), its folder and its command.</span></li>
+          <li><b>Grants for a folder and a time</b><span>A folder, its subfolders and the repository's worktrees, for up to 7 days. Revoke them whenever you like.</span></li>
+          <li><b>Agent-safe items</b><span>Values that aren't really secret, like a host name, read without asking.</span></li>
+          <li><b>Exit codes agents can act on</b><span>A refusal says which items and the exact <code>latchkey grant</code> that would allow them.</span></li>
+          <li><b>Works in fresh worktrees</b><span><code>latchkey run --env shop/development</code> needs no env file at all.</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section aria-labelledby="features-title">
+      <p class="eyebrow">Everything else</p>
+      <h2 id="features-title">A home for every key you use</h2>
+      <div class="grid">
+        <div class="feature"><h3>Projects and environments</h3><p><code>shop/development</code>, <code>shop/vercel.preview</code>, or shared. Group, filter and act on a whole project at once.</p></div>
+        <div class="feature"><h3>On every Mac</h3><p>Values live in iCloud Keychain, end-to-end encrypted, on every Mac signed in to your Apple Account.</p></div>
+        <div class="feature"><h3>History</h3><p>The last 10 values of every item, and deleted items for 30 days. Restore with one approval.</p></div>
+        <div class="feature"><h3>Push to where it runs</h3><p>Link an environment to Vercel, GitHub Actions, Railway or Fly and push with their own tools. Production asks twice.</p></div>
+        <div class="feature"><h3>Import a hundred files</h3><p><code>latchkey import --batch</code> places every value from every project with one approval, and dry-runs first.</p></div>
+        <div class="feature"><h3>A log without values</h3><p>Every read, change and refusal, with the program, folder and command. Never a value.</p></div>
+      </div>
+    </section>
+
+    <section id="security" aria-labelledby="security-title">
+      <p class="eyebrow">Security</p>
+      <h2 id="security-title">Apple's keychain, your approval, nothing in between</h2>
+      <div class="split">
+        <div>
+          <p class="section-lede">Values stay in iCloud Keychain, in Latchkey's own access group, readable only by the signed app. The command-line tool asks the app over a socket only you can open, and the app asks you.</p>
+          <p class="section-lede">There's no Latchkey server and no account. Values leave the keychain only for a command you approved, a grant you made, or a push you confirmed.</p>
+        </div>
+        <div class="limits">
+          <h3>Where it stops</h3>
+          <ul>
+            <li>Once a command has a value, it can do anything with it. Masking hides exact copies in its output; it can't stop a command that tries to leak.</li>
+            <li>Anything running as you can ask. Keep grants narrow and short, and deny what you don't recognize.</li>
+            <li>Someone with your Apple Account and a trusted device can reach iCloud Keychain.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div id="download" class="download">
+      <span class="mark"><img src="logo.svg" alt=""></span>
+      <h2>Get Latchkey</h2>
+      <p class="section-lede" style="margin: 0 auto">Signed and notarized. Drag it to Applications, then choose <b>Latchkey › Install Command Line Tool…</b></p>
+      <div class="cta">
+        <a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest">Download for Mac</a>
+        <a class="button secondary" href="developers/quickstart.html">Developer quickstart</a>
+      </div>
+      <p class="fine">macOS 15 or later · Apple silicon and Intel · iCloud Keychain for sync</p>
+    </div>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
+      <ul>
+        <li><a href="developers/index.html">Developers</a></li>
+        <li><a href="developers/cli.html">CLI reference</a></li>
+        <li><a href="developers/agents.html">Agents and MCP</a></li>
+        <li><a href="developers/api.html">References and API</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

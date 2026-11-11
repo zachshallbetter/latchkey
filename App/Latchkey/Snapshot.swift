@@ -30,6 +30,8 @@ enum Snapshot {
         started = true
         if CommandLine.arguments.contains("--sample") {
             model.items = sampleItems
+            model.log = []
+            model.grants = []
             model.deleted = sampleVersions.filter { $0.reason == .deleted }
             model.links = [
                 RemoteLink(id: "a1b2c3", scope: "shop/production", target: RemoteTarget(service: .vercel, project: "shop", environment: "production"),

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>References and API · Latchkey</title>
+  <meta name="description" content="The latchkey:// and latchkey-file:// reference formats, the JSON-lines protocol the latchkey tool speaks to the app over a Unix socket, the access log format, and the files Latchkey keeps.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:title" content="References and API · Latchkey">
+  <meta property="og:description" content="The latchkey:// and latchkey-file:// reference formats, the JSON-lines protocol the latchkey tool speaks to the app over a Unix socket, the access log format, and the files Latchkey keeps.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="../logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../site.css">
+  <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="../llms.txt">
+  <script defer src="../site.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site">
+    <nav class="top wrap" aria-label="Main">
+      <a class="brand" href="../index.html"><span class="mark"><img src="../logo.svg" alt=""></span>Latchkey</a>
+      <ul>
+        <li class="hide-sm"><a href="../index.html#how">How it works</a></li>
+        <li class="hide-sm"><a href="../index.html#security">Security</a></li>
+        <li><a href="index.html" aria-current="page">Developers</a></li>
+        <li><a class="button primary" href="../index.html#download">Download</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main id="main" class="wrap docs">
+    <nav class="side" aria-label="Developer documentation"><p class="side-title">Developers</p><ul><li><a href="index.html">Overview</a></li><li><a href="quickstart.html">Quickstart</a></li><li><a href="cli.html">CLI reference</a></li><li><a href="agents.html">Agents and MCP</a></li><li><a href="api.html" aria-current="page">References and API</a></li></ul></nav>
+    <article class="doc">
+      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><a href="index.html">Developers</a></li><li><span aria-current="page">References and API</span></li></ol></nav>
+      <h1>References and API</h1>
+      <p class="lede">The formats Latchkey reads and writes: references in your files, the protocol between the command-line tool and the app, and the files it keeps on disk.</p>
+      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#references">References</a></li><li><a href="#protocol">The broker protocol</a></li><li><a href="#log">The access log</a></li><li><a href="#files">Files and storage</a></li></ul></nav>
+
+<div class="note"><p><strong>Use the command-line tool.</strong> <code>latchkey</code> is the supported interface, from any language. The socket protocol below is how it talks to the app; it changes only by adding optional fields, but scripts that speak it directly also take on its approval rules.</p></div>
+
+<h2 id="references">References</h2>
+<table><thead><tr><th>Form</th><th>Where</th><th>Becomes</th></tr></thead><tbody><tr><td><code>latchkey://ID</code></td><td>Values in env files and in the environment of <code>latchkey run</code></td><td>The item&rsquo;s value</td></tr><tr><td><code>latchkey-file://ID</code></td><td>Values in env files and in the environment of <code>latchkey run</code></td><td>The path of a temporary file holding the value, mode 0600, deleted when the command exits</td></tr></tbody></table>
+<p>A <code>latchkey://</code> reference can sit inside a longer value, as in <code>postgres://app:latchkey://shop/production/DB_PASSWORD@db/shop</code>; each one is replaced. A <code>latchkey-file://</code> reference must be the whole value. ID is <code>NAME</code> or <code>project/environment/NAME</code>, each part letters, digits, <code>_</code>, <code>-</code> and <code>.</code>, at most 64 bytes.</p>
+<figure class="code"><figcaption><span>.env.local</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">DATABASE_URL=latchkey://shop/development/DATABASE_URL
+SENTRY_DSN=latchkey://SENTRY_DSN
+ASC_KEY_PATH=latchkey-file://shop/production/ASC_P8</code></pre></figure>
+
+<h2 id="protocol">The broker protocol</h2>
+<p>The app listens on a Unix socket at <code>~/Library/Application Support/Latchkey/broker.sock</code>, mode 0600 in a 0700 folder. A client connects, writes one JSON object followed by a newline, and reads one JSON object followed by a newline. Keys are sorted; dates are ISO 8601. The broker reads the caller&rsquo;s process ID from the socket and walks its parent processes to name it in the approval panel and the log, so a request can&rsquo;t claim to be someone else.</p>
+<p>Requests are handled one at a time. A request that needs approval waits until you answer, so allow for that in timeouts.</p>
+<figure class="code"><figcaption><span>Request</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="json">{&quot;cwd&quot;:&quot;/Users/you/Projects/shop&quot;,&quot;op&quot;:&quot;status&quot;}</code></pre></figure>
+<figure class="code"><figcaption><span>Response</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="json">{&quot;info&quot;:{&quot;approval&quot;:&quot;Touch ID, password&quot;,&quot;grants&quot;:&quot;0&quot;,&quot;items&quot;:&quot;17&quot;,&quot;socket&quot;:&quot;/Users/you/Library/Application Support/Latchkey/broker.sock&quot;,&quot;storage&quot;:&quot;iCloud Keychain (synced to your Macs)&quot;},&quot;ok&quot;:true}</code></pre></figure>
+
+<h3 id="ops">Operations</h3>
+<table><thead><tr><th><code>op</code></th><th>Fields</th><th>Returns</th></tr></thead><tbody><tr><td><code>status</code></td><td></td><td><code>info</code></td></tr><tr><td><code>list</code></td><td></td><td><code>secrets</code>: item metadata, never values</td></tr><tr><td><code>get</code></td><td><code>names</code>, <code>cwd</code>, <code>command</code></td><td><code>values</code>, <code>masked</code> (names to hide in output), <code>denied</code>, <code>missing</code></td></tr><tr><td><code>set</code></td><td><code>names</code> (one), <code>value</code>, <code>kind</code>, <code>agentSafe</code>, <code>note</code>, <code>service</code></td><td><code>ok</code></td></tr><tr><td><code>update</code></td><td><code>names</code>, <code>kind</code>, <code>agentSafe</code>, <code>note</code>, <code>service</code></td><td><code>ok</code></td></tr><tr><td><code>rm</code></td><td><code>names</code></td><td><code>ok</code>, or <code>missing</code></td></tr><tr><td><code>move</code></td><td><code>names</code>, <code>project</code> (<code>""</code> for shared), <code>environment</code></td><td><code>moved</code>: old ID to new ID</td></tr><tr><td><code>import</code></td><td><code>items</code>, <code>replace</code>, <code>source</code></td><td><code>added</code>, <code>replaced</code>, <code>skipped</code></td></tr><tr><td><code>history</code></td><td><code>names</code> (one)</td><td><code>versions</code>, never values</td></tr><tr><td><code>deleted</code></td><td></td><td><code>versions</code> of deleted items</td></tr><tr><td><code>version</code></td><td><code>version</code>: a version ID from <code>history</code></td><td><code>values</code>, after approval (always asks)</td></tr><tr><td><code>restore</code></td><td><code>version</code></td><td><code>ok</code></td></tr><tr><td><code>forget</code></td><td><code>names</code></td><td><code>ok</code></td></tr><tr><td><code>grants</code></td><td></td><td><code>grants</code></td></tr><tr><td><code>grant</code></td><td><code>names</code>, <code>folder</code>, <code>duration</code> (seconds)</td><td><code>grants</code></td></tr><tr><td><code>revoke</code></td><td><code>names</code>: a grant ID, or <code>["all"]</code></td><td><code>info.revoked</code>, or <code>missing</code></td></tr><tr><td><code>links</code></td><td><code>names</code>: optional scope</td><td><code>links</code></td></tr><tr><td><code>link</code></td><td><code>names</code>: the scope, <code>target</code></td><td><code>links</code></td></tr><tr><td><code>unlink</code></td><td><code>names</code>: the link ID</td><td><code>ok</code></td></tr><tr><td><code>remote-status</code></td><td><code>names</code>: the scope</td><td><code>remoteStatus</code></td></tr><tr><td><code>push</code></td><td><code>names</code>: the scope, <code>link</code>, <code>only</code></td><td><code>pushResults</code></td></tr></tbody></table>
+<p>Every request may carry <code>cwd</code>, the folder the caller runs in; grants are matched against it. Unknown <code>op</code> values are refused.</p>
+
+<h3 id="response">Responses</h3>
+<p>Every response has <code>ok</code>. When it&rsquo;s false, <code>error</code> says why: bad input, a change you didn&rsquo;t approve, a keychain failure. Reads report per item instead: <code>get</code> answers <code>ok: true</code> with <code>denied</code> for items you refused and <code>missing</code> for IDs that don&rsquo;t exist, and if anything was denied, no values are released at all. The command-line tool maps these to exit codes 77 and 66.</p>
+<figure class="code"><figcaption><span>A refused get</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="json">{&quot;denied&quot;:[&quot;shop/production/STRIPE_KEY&quot;],&quot;masked&quot;:[],&quot;ok&quot;:true,&quot;values&quot;:{}}</code></pre></figure>
+
+<h3 id="item">The item shape</h3>
+<p>What <code>list</code> returns in <code>secrets</code>, and what <code>latchkey list --json</code> prints:</p>
+<figure class="code"><figcaption><span>latchkey list --json</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="json">[
+  {
+    &quot;agentSafe&quot; : false,
+    &quot;kind&quot; : &quot;password&quot;,
+    &quot;name&quot; : &quot;shop/development/DATABASE_URL&quot;,
+    &quot;note&quot; : &quot;&quot;,
+    &quot;service&quot; : &quot;Neon&quot;,
+    &quot;updatedAt&quot; : &quot;2026-11-10T21:52:37Z&quot;,
+    &quot;usedIn&quot; : [
+      &quot;/Users/you/Projects/shop/.env.local&quot;
+    ]
+  }
+]</code></pre></figure>
+<table><thead><tr><th>Field</th><th>Meaning</th></tr></thead><tbody><tr><td><code>name</code></td><td>The item ID</td></tr><tr><td><code>kind</code></td><td><code>token</code>, <code>password</code>, <code>key</code> or <code>value</code></td></tr><tr><td><code>agentSafe</code></td><td>Read without asking</td></tr><tr><td><code>note</code></td><td>Free text</td></tr><tr><td><code>service</code></td><td>Who issued it, optional</td></tr><tr><td><code>usedIn</code></td><td>Files that reference it, recorded on import and move, optional</td></tr><tr><td><code>updatedAt</code></td><td>When the value or settings last changed</td></tr></tbody></table>
+
+<h3 id="grant">The grant shape</h3>
+<figure class="code"><figcaption><span>Grant</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="json">{
+  &quot;created&quot;: &quot;2026-11-10T20:00:00Z&quot;,
+  &quot;createdBy&quot;: &quot;zsh › claude&quot;,
+  &quot;expires&quot;: &quot;2026-11-10T22:00:00Z&quot;,
+  &quot;folder&quot;: &quot;/Users/you/Projects/shop&quot;,
+  &quot;id&quot;: &quot;k3v9q2&quot;,
+  &quot;names&quot;: [&quot;shop/development/*&quot;],
+  &quot;repo&quot;: &quot;/Users/you/Projects/shop/.git&quot;
+}</code></pre></figure>
+<p><code>repo</code> is the repository&rsquo;s common <code>.git</code> folder, present when the folder is in one; commands run from any of its worktrees are covered.</p>
+
+<h2 id="log">The access log</h2>
+<p><code>~/Library/Application Support/Latchkey/access.jsonl</code>, mode 0600: one JSON object per line for every read, change and refusal. Never values.</p>
+<figure class="code"><figcaption><span>access.jsonl</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="json">{&quot;chain&quot;:[&quot;zsh&quot;,&quot;claude&quot;,&quot;Terminal&quot;],&quot;command&quot;:&quot;npm test&quot;,&quot;cwd&quot;:&quot;/Users/you/Projects/shop&quot;,&quot;decision&quot;:&quot;allowed (grant k3v9q2)&quot;,&quot;names&quot;:[&quot;shop/development/DATABASE_URL&quot;],&quot;op&quot;:&quot;get&quot;,&quot;time&quot;:&quot;2026-11-10T20:14:03Z&quot;}</code></pre></figure>
+<table><thead><tr><th>Field</th><th>Meaning</th></tr></thead><tbody><tr><td><code>time</code></td><td>When</td></tr><tr><td><code>op</code></td><td>The operation</td></tr><tr><td><code>names</code></td><td>Item IDs involved</td></tr><tr><td><code>decision</code></td><td>What happened: allowed and why, denied, refused</td></tr><tr><td><code>chain</code></td><td>The calling process and its parents, nearest first</td></tr><tr><td><code>cwd</code></td><td>The folder the caller ran in</td></tr><tr><td><code>command</code></td><td>What <code>latchkey run</code> was about to start, when given</td></tr></tbody></table>
+
+<h2 id="files">Files and storage</h2>
+<table><thead><tr><th>Where</th><th>What</th></tr></thead><tbody><tr><td>iCloud Keychain, access group <code>TEAM.io.snackstud.latchkey</code></td><td>Items (service <code>latchkey</code>), earlier values (<code>latchkey.history</code>) and remote links (<code>latchkey.remote</code>), as generic passwords. Synced to your Macs.</td></tr><tr><td><code>~/Library/Application Support/Latchkey/broker.sock</code></td><td>The broker socket</td></tr><tr><td><code>~/Library/Application Support/Latchkey/access.jsonl</code></td><td>The access log</td></tr><tr><td><code>~/Library/Application Support/Latchkey/grants.json</code></td><td>Grants in effect, on this Mac only</td></tr><tr><td><code>/Applications/Latchkey.app/Contents/Helpers/latchkey</code></td><td>The command-line tool, linked from <code>~/.local/bin/latchkey</code></td></tr></tbody></table>
+
+      <nav class="pager" aria-label="Pages"><a class="prev" href="agents.html"><span>Previous</span>Agents and MCP</a></nav>
+    </article>
+  </main>
+  <footer class="site">
+    <div class="wrap">
+      <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
+      <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="cli.html">CLI reference</a></li>
+        <li><a href="agents.html">Agents and MCP</a></li>
+        <li><a href="api.html">References and API</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

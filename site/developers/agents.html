@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Agents and MCP · Latchkey</title>
+  <meta name="description" content="Use Latchkey with coding agents and MCP servers: instructions to give an agent, grants for unattended work, exit codes to act on, and MCP servers launched through latchkey run.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:title" content="Agents and MCP · Latchkey">
+  <meta property="og:description" content="Use Latchkey with coding agents and MCP servers: instructions to give an agent, grants for unattended work, exit codes to act on, and MCP servers launched through latchkey run.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="../logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../site.css">
+  <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="../llms.txt">
+  <script defer src="../site.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site">
+    <nav class="top wrap" aria-label="Main">
+      <a class="brand" href="../index.html"><span class="mark"><img src="../logo.svg" alt=""></span>Latchkey</a>
+      <ul>
+        <li class="hide-sm"><a href="../index.html#how">How it works</a></li>
+        <li class="hide-sm"><a href="../index.html#security">Security</a></li>
+        <li><a href="index.html" aria-current="page">Developers</a></li>
+        <li><a class="button primary" href="../index.html#download">Download</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main id="main" class="wrap docs">
+    <nav class="side" aria-label="Developer documentation"><p class="side-title">Developers</p><ul><li><a href="index.html">Overview</a></li><li><a href="quickstart.html">Quickstart</a></li><li><a href="cli.html">CLI reference</a></li><li><a href="agents.html" aria-current="page">Agents and MCP</a></li><li><a href="api.html">References and API</a></li></ul></nav>
+    <article class="doc">
+      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><a href="index.html">Developers</a></li><li><span aria-current="page">Agents and MCP</span></li></ol></nav>
+      <h1>Agents and MCP</h1>
+      <p class="lede">Coding agents need your keys to run tests and dev servers. With Latchkey they get them through <code>latchkey run</code>: the values reach the command, not the agent&rsquo;s files, and you decide what an agent may use without asking.</p>
+      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#pattern">The pattern</a></li><li><a href="#instructions">Instructions for agents</a></li><li><a href="#exit-codes">Exit codes to act on</a></li><li><a href="#unattended">Leaving an agent working</a></li><li><a href="#mcp">MCP servers</a></li><li><a href="#key-files">Key files</a></li><li><a href="#limits">What Latchkey can&rsquo;t do for you</a></li></ul></nav>
+
+<h2 id="pattern">The pattern</h2>
+<ol>
+<li>Keep references in env files: <code>latchkey import .env.local --rewrite</code>.</li>
+<li>Run anything that needs secrets through <code>latchkey run</code>.</li>
+<li>Decide what an agent may read without you: <strong>agent-safe</strong> items for values that aren&rsquo;t secret, <strong>grants</strong> for a folder and a time. Everything else asks you, showing the agent&rsquo;s process chain, folder and command.</li>
+</ol>
+<p>Fresh git worktrees don&rsquo;t have your <code>.env</code> (it&rsquo;s gitignored). <code>latchkey run --env PROJECT/ENV</code> loads an environment&rsquo;s items directly, and a grant for a repository&rsquo;s folder covers its worktrees.</p>
+
+<h2 id="instructions">Instructions for agents</h2>
+<p>Put this in <code>CLAUDE.md</code>, <code>AGENTS.md</code> or your agent&rsquo;s equivalent:</p>
+<figure class="code"><figcaption><span>CLAUDE.md / AGENTS.md</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="markdown">Secrets are in Latchkey. Env files hold latchkey:// references, not values.
+Run anything that needs secrets as
+`latchkey run --env-file .env.local -- &lt;command&gt;` or
+`latchkey run --env &lt;project&gt;/&lt;environment&gt; -- &lt;command&gt;`.
+Never run `latchkey get`, never print the environment, and never read or
+write values in .env files. If latchkey exits with 77 (refused) or 66
+(missing), stop and ask; don&#x27;t retry.</code></pre></figure>
+
+<h2 id="exit-codes">Exit codes to act on</h2>
+<table><thead><tr><th>Code</th><th>Meaning</th><th>What an agent should do</th></tr></thead><tbody><tr><td>0</td><td>Done</td><td></td></tr><tr><td>64</td><td>Wrong usage</td><td>Fix the command</td></tr><tr><td>66</td><td>No item with that ID</td><td>Stop; ask the person to add it</td></tr><tr><td>69</td><td>The Latchkey app can&rsquo;t be reached</td><td>Stop; ask the person to open Latchkey</td></tr><tr><td>73</td><td>A file couldn&rsquo;t be rewritten</td><td>Stop and report</td></tr><tr><td>77</td><td>Refused: not agent-safe, not approved, no grant</td><td>Stop; ask the person to approve or grant. Don&rsquo;t retry</td></tr><tr><td>127</td><td>The command couldn&rsquo;t start</td><td>Fix the command</td></tr></tbody></table>
+<p>On 77 and 66 the message names the items and, for 77, the exact <code>latchkey grant</code> command that would allow them, for the person to run.</p>
+
+<h2 id="unattended">Leaving an agent working</h2>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey grant &#x27;shop/development/*&#x27; --folder ~/Projects/shop --for 2h</code></pre></figure>
+<p>The agent&rsquo;s reads go through without asking until the grant ends, and each one is in the app&rsquo;s Activity. End it early from <strong>Grants</strong> in the app or with <code>latchkey revoke ID</code>.</p>
+
+<h2 id="mcp">MCP servers</h2>
+<p>Latchkey doesn&rsquo;t run an MCP server of its own; agents use the command-line tool. An MCP server that your agent starts as a command can get its keys through Latchkey: wrap the command, and keep references in its environment.</p>
+<figure class="code"><figcaption><span>.mcp.json</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="json">{
+  &quot;mcpServers&quot;: {
+    &quot;some-server&quot;: {
+      &quot;command&quot;: &quot;latchkey&quot;,
+      &quot;args&quot;: [&quot;run&quot;, &quot;--no-masking&quot;, &quot;--&quot;, &quot;npx&quot;, &quot;-y&quot;, &quot;some-mcp-server&quot;],
+      &quot;env&quot;: { &quot;SOME_API_KEY&quot;: &quot;latchkey://SOME_API_KEY&quot; }
+    }
+  }
+}</code></pre></figure>
+<ul>
+<li>Use <code>--no-masking</code>: MCP speaks over standard output, which must pass through untouched.</li>
+<li>The server&rsquo;s process chain includes the agent, so make its items agent-safe or grant them, or each start asks.</li>
+<li>Servers reached over HTTP with a header can&rsquo;t be wrapped this way.</li>
+</ul>
+<div class="note"><p>Agents need the absolute path when <code>~/.local/bin</code> isn&rsquo;t on their <code>PATH</code>: use <code>"command": "/Users/you/.local/bin/latchkey"</code>.</p></div>
+
+<h2 id="key-files">Key files</h2>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey run --file ASC_KEY_PATH=shop/production/ASC_P8 -- fastlane beta</code></pre></figure>
+<p>The command gets the path of a temporary file only you can read, deleted when it exits. In an env file, <code>ASC_KEY_PATH=latchkey-file://shop/production/ASC_P8</code> does the same.</p>
+
+<h2 id="limits">What Latchkey can&rsquo;t do for you</h2>
+<p>A value you release to a command is in that command&rsquo;s memory and environment. A command run by an agent can write it to a file, send it over the network, or encode it so masking doesn&rsquo;t catch it. Masking only hides exact copies, 6 characters or longer, in what the command prints. Agent-safe and grants decide what reaches the command; they can&rsquo;t control what the command does with it.</p>
+
+      <nav class="pager" aria-label="Pages"><a class="prev" href="cli.html"><span>Previous</span>CLI reference</a><a class="next" href="api.html"><span>Next</span>References and API</a></nav>
+    </article>
+  </main>
+  <footer class="site">
+    <div class="wrap">
+      <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
+      <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="cli.html">CLI reference</a></li>
+        <li><a href="agents.html">Agents and MCP</a></li>
+        <li><a href="api.html">References and API</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

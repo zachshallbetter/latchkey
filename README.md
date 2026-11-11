@@ -53,6 +53,7 @@ Requires macOS 15 or later. See [Getting started](docs/getting-started.md) to in
 | [Troubleshooting](docs/troubleshooting.md) | Common problems and fixes |
 | [Development](docs/development.md) | Building, testing and how it fits together |
 | [Releasing](docs/releasing.md) | Developer ID signing, notarization and the disk image |
+| [Website](docs/site.md) | The product site and developer docs in `site/` |
 | [Changelog](CHANGELOG.md) | What changed in each release |
 
 ## Logo

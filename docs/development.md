@@ -14,6 +14,7 @@ App/Branding/key.svg       the logo source (Font Awesome Pro, commercial license
 scripts/install.sh         build and install the app and CLI (development)
 scripts/release.sh         Developer ID build, notarized, in a disk image (see docs/releasing.md)
 docs/                      user and developer documentation
+site/                      the product website and developer docs, static HTML (see docs/site.md)
 ```
 
 ## Building and testing
@@ -89,7 +90,7 @@ build/DerivedData/Build/Products/Debug/Latchkey.app/Contents/MacOS/Latchkey \
   [--part sidebar|menubar|approval|list|bulk|move|detail|deleted|remote|pushapproval] -ApplePersistenceIgnoreState YES
 ```
 
-`--sample` uses example data, so nothing real is shown. `--part` draws one view off screen (more reliable than the
+`--sample` uses example data and never loads your items, so nothing real is shown. `--part` draws one view off screen (more reliable than the
 whole window when started from a shell).
 
 ## The logo and icon

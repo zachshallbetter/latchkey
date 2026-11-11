@@ -204,6 +204,9 @@ final class AppModel {
     var synced: Bool { if case .iCloud = store.mode { true } else { false } }
 
     func refresh() {
+        #if DEBUG
+        if Snapshot.usesSample { return }   // keep the example data; never load real items into a sample drawing
+        #endif
         do {
             items = try store.list()
             problem = problem?.hasPrefix("keychain") == true ? nil : problem

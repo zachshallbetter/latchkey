@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Quickstart · Latchkey</title>
+  <meta name="description" content="Install the latchkey command-line tool, import an env file into iCloud Keychain, run a command with its values, and grant a folder for an agent.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:title" content="Quickstart · Latchkey">
+  <meta property="og:description" content="Install the latchkey command-line tool, import an env file into iCloud Keychain, run a command with its values, and grant a folder for an agent.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="../logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../site.css">
+  <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="../llms.txt">
+  <script defer src="../site.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site">
+    <nav class="top wrap" aria-label="Main">
+      <a class="brand" href="../index.html"><span class="mark"><img src="../logo.svg" alt=""></span>Latchkey</a>
+      <ul>
+        <li class="hide-sm"><a href="../index.html#how">How it works</a></li>
+        <li class="hide-sm"><a href="../index.html#security">Security</a></li>
+        <li><a href="index.html" aria-current="page">Developers</a></li>
+        <li><a class="button primary" href="../index.html#download">Download</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main id="main" class="wrap docs">
+    <nav class="side" aria-label="Developer documentation"><p class="side-title">Developers</p><ul><li><a href="index.html">Overview</a></li><li><a href="quickstart.html" aria-current="page">Quickstart</a></li><li><a href="cli.html">CLI reference</a></li><li><a href="agents.html">Agents and MCP</a></li><li><a href="api.html">References and API</a></li></ul></nav>
+    <article class="doc">
+      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><a href="index.html">Developers</a></li><li><span aria-current="page">Quickstart</span></li></ol></nav>
+      <h1>Quickstart</h1>
+      <p class="lede">From an env file full of secrets to a command that gets them at start-up, in four steps.</p>
+      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#install">1. Install</a></li><li><a href="#import">2. Import an env file</a></li><li><a href="#run">3. Run a command</a></li><li><a href="#grant">4. Let an agent work</a></li></ul></nav>
+
+<h2 id="install">1. Install</h2>
+<p>Open the disk image, drag <strong>Latchkey</strong> to Applications and open it. Then choose <strong>Latchkey › Install Command Line Tool…</strong>, which links <code>~/.local/bin/latchkey</code> to the copy inside the app so it updates with the app. Make sure <code>~/.local/bin</code> is on your <code>PATH</code>.</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey status</code></pre></figure>
+<p>You should see <code>storage: iCloud Keychain (synced to your Macs)</code>.</p>
+
+<h2 id="import">2. Import an env file</h2>
+<p>Look first. A dry run prints names and where each would go, never values:</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">cd ~/Projects/shop
+latchkey import .env.local --dry-run</code></pre></figure>
+<p>Then import, and replace each value in the file with its reference. The project is named after the repository; the environment comes from the file name (<code>.env.local</code> is <code>development</code>).</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey import .env.local --rewrite</code></pre></figure>
+<figure class="code"><figcaption><span>.env.local</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">DATABASE_URL=latchkey://shop/development/DATABASE_URL
+STRIPE_KEY=latchkey://shop/development/STRIPE_KEY</code></pre></figure>
+<p>Many projects at once: <code>latchkey import --batch files.txt</code>, one path per line, one approval. See the <a href="cli.html#import">import options</a>.</p>
+
+<h2 id="run">3. Run a command</h2>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey run --env-file .env.local -- npm run dev
+latchkey run --env shop/development -- npm test      # no env file needed</code></pre></figure>
+<p>The first read asks. Values that reach the command&rsquo;s output are replaced with <code>&lt;concealed by latchkey&gt;</code>. The command&rsquo;s exit status becomes <code>latchkey run</code>&rsquo;s.</p>
+
+<h2 id="grant">4. Let an agent work</h2>
+<p>Before you step away, allow the folder for a while. Commands run from it, its subfolders and the repository&rsquo;s worktrees read these items without asking until the grant ends.</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey grant &#x27;shop/development/*&#x27; --folder ~/Projects/shop --for 2h
+latchkey grants
+latchkey revoke all</code></pre></figure>
+<p>Then tell the agent how to run things; see <a href="agents.html#instructions">instructions for agents</a>.</p>
+
+      <nav class="pager" aria-label="Pages"><a class="prev" href="index.html"><span>Previous</span>Overview</a><a class="next" href="cli.html"><span>Next</span>CLI reference</a></nav>
+    </article>
+  </main>
+  <footer class="site">
+    <div class="wrap">
+      <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
+      <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="cli.html">CLI reference</a></li>
+        <li><a href="agents.html">Agents and MCP</a></li>
+        <li><a href="api.html">References and API</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>
