@@ -21,40 +21,32 @@
     /* Security: the hero beside a scene of a boundary at work, then each topic with its heading beside the text.
        Grids and tables use the full width; reading text keeps a comfortable measure. */
     .sec .page-hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 32px 56px; align-items: center; padding: 48px 0 0; }
-    .sec .page-hero h1 { font-size: clamp(34px, 4.2vw, 50px); }
     .sec .lede { font-size: 19px; color: var(--muted); }
     .sec .jump { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 22px 0 0; padding: 0; }
     .sec .jump a { display: inline-flex; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 14px; font-weight: 550; text-decoration: none; }
     .sec .jump a:hover { border-color: var(--accent); }
-    .sec section { margin-top: 88px; scroll-margin-top: 76px; }
-    .sec h2 { font-size: clamp(24px, 3vw, 30px); margin: 0 0 12px; }
+    .sec h2 { scroll-margin-top: 76px; }
     .sec h3 { margin-top: 24px; font-size: 18px; }
     .sec h3:first-child { margin-top: 0; }
     /* A topic: its heading and one line on the left, the detail on the right. */
+    .topic + .topic { --section: 56px; }
     .topic { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 16px 56px; padding-top: 28px; border-top: 1px solid var(--line); }
     .topic > header p { color: var(--muted); font-size: 16px; }
     .topic .body > p, .topic .body li { max-width: 68ch; }
     .topic .body ul { margin: 0; padding-left: 20px; }
     .topic .body li { margin: 0 0 10px; }
-    .shead { max-width: 760px; margin-bottom: 24px; }
-    .shead p { color: var(--muted); }
-    .bounds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 0; padding: 0; list-style: none; }
-    .bounds li { margin: 0; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
-    .bounds b { display: block; margin-bottom: 6px; font: 650 17px/1.3 var(--display); }
-    .bounds span { color: var(--muted); font-size: 15px; }
     .sec table { border-collapse: collapse; width: 100%; font-size: 15px; }
     .sec th, .sec td { text-align: left; vertical-align: top; padding: 12px 14px; border-bottom: 1px solid var(--line); }
     .sec th { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); white-space: nowrap; }
     .sec td:first-child { font-weight: 650; white-space: nowrap; }
-    .sec .tablebox { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 4px 6px; }
+    .sec .tablebox { border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); padding: 4px 6px; }
     .sec .tablebox tr:last-child td { border-bottom: 0; }
     .sec .feature { border-top: 1px solid var(--line); padding: 28px 0 0; }
     .sec .feature .copy h2 { margin-top: 0; }
     @media (max-width: 1000px) { .sec .page-hero { grid-template-columns: minmax(0, 1fr); } }
     @media (max-width: 860px) {
       .topic { grid-template-columns: minmax(0, 1fr); }
-      .bounds { grid-template-columns: 1fr; }
-      .sec td:first-child { white-space: normal; }
+        .sec td:first-child { white-space: normal; }
       /* Tables become one block per row on phones, so nothing scrolls sideways. */
       .sec table, .sec tbody, .sec tr, .sec td { display: block; }
       .sec thead { display: none; }
@@ -75,7 +67,7 @@
         <li><a href="pricing.html">Pricing</a></li>
         <li><a href="security.html" aria-current="page">Security</a></li>
         <li><a href="developers/index.html">Docs</a></li>
-        <li><a class="button primary" href="index.html#install">Development preview</a></li>
+        <li><a class="button primary" href="index.html#install">Install the preview</a></li>
       </ul>
     </nav>
   </header>
@@ -113,19 +105,19 @@
       </div>
     </section>
 
-    <section id="distinctions" aria-labelledby="distinctions-title">
+    <section class="section" id="distinctions" aria-labelledby="distinctions-title">
     <div class="shead"><p class="eyebrow">Before anything else</p><h2 id="distinctions-title">Six distinctions worth knowing</h2></div>
-    <ul class="bounds">
-      <li><b>The keychain protects stored values, not released ones.</b><span>Once a command has a value, it's in that command's memory and environment, and Latchkey can't control what it does with it.</span></li>
-      <li><b>A reference names a secret; it doesn't grant access to it.</b><span><code>latchkey://shop/development/STRIPE_KEY</code> in a committed file reveals a name. Reading the item still needs it to be agent-safe, a grant covering the caller, or your approval.</span></li>
-      <li><b>A proxy hides a key without narrowing what it can do.</b><span>With <code>--proxy</code> the command never holds the OpenAI or Anthropic key, but it can still make any call that key allows through the proxy.</span></li>
-      <li><b>iCloud Keychain sync is separate from agent authorization.</b><span>Items and environment records sync to your Macs. Grants don't: each is kept on the Mac where you made it.</span></li>
-      <li><b>The access log records releases, not provider-side use.</b><span>It shows what Latchkey gave to which program, from where. What that program then did at the service is the service's record.</span></li>
-      <li><b>A shared credential means fewer copies of the same authority.</b><span>One shared item used by five projects is one value to rotate, and still one key that all five can use.</span></li>
+    <ul class="card-grid g3">
+      <li class="card"><b>The keychain protects stored values, not released ones.</b><span>Once a command has a value, it's in that command's memory and environment, and Latchkey can't control what it does with it.</span></li>
+      <li class="card"><b>A reference names a secret; it doesn't grant access to it.</b><span><code>latchkey://shop/development/STRIPE_KEY</code> in a committed file reveals a name. Reading the item still needs it to be agent-safe, a grant covering the caller, or your approval.</span></li>
+      <li class="card"><b>A proxy hides a key without narrowing what it can do.</b><span>With <code>--proxy</code> the command never holds the OpenAI or Anthropic key, but it can still make any call that key allows through the proxy.</span></li>
+      <li class="card"><b>iCloud Keychain sync is separate from agent authorization.</b><span>Items and environment records sync to your Macs. Grants don't: each is kept on the Mac where you made it.</span></li>
+      <li class="card"><b>The access log records releases, not provider-side use.</b><span>It shows what Latchkey gave to which program, from where. What that program then did at the service is the service's record.</span></li>
+      <li class="card"><b>A shared credential means fewer copies of the same authority.</b><span>One shared item used by five projects is one value to rotate, and still one key that all five can use.</span></li>
     </ul>
     </section>
 
-    <section class="topic" id="storage" aria-labelledby="storage-title">
+    <section class="section topic" id="storage" aria-labelledby="storage-title">
       <header><h2 id="storage-title">Storage</h2><p>Values live in the keychain, behind the signed app.</p></header>
       <div class="body">
     <ul>
@@ -137,7 +129,7 @@
       </div>
     </section>
 
-    <section class="topic" id="sync" aria-labelledby="sync-title">
+    <section class="section topic" id="sync" aria-labelledby="sync-title">
       <header><h2 id="sync-title">Sync between Macs</h2><p>iCloud Keychain carries items; permissions stay put.</p></header>
       <div class="body">
     <p>Latchkey's items sync through iCloud Keychain, end to end encrypted, to each Mac signed in to your Apple Account that has Latchkey installed. There's no Latchkey server or account. That protection is Apple's: anyone who controls your Apple Account and a trusted device can reach synced items. Apple describes it in <a href="https://support.apple.com/guide/security/icloud-keychain-security-overview-sec1c89c6f3b/web">iCloud Keychain security overview</a> and <a href="https://support.apple.com/en-us/102651">iCloud data security overview</a>.</p>
@@ -145,7 +137,7 @@
       </div>
     </section>
 
-    <section class="topic" id="identity" aria-labelledby="identity-title">
+    <section class="section topic" id="identity" aria-labelledby="identity-title">
       <header><h2 id="identity-title">Who's asking</h2><p>Identity comes from the kernel, not the request.</p></header>
       <div class="body">
     <ul>
@@ -156,7 +148,7 @@
       </div>
     </section>
 
-    <section class="topic" id="release" aria-labelledby="release-title">
+    <section class="section topic" id="release" aria-labelledby="release-title">
       <header><h2 id="release-title">Releasing values</h2><p>Approvals, grants, and items agents may read.</p></header>
       <div class="body">
     <h3>Approvals</h3>
@@ -168,7 +160,7 @@
       </div>
     </section>
 
-    <section id="paths" aria-labelledby="paths-title">
+    <section class="section" id="paths" aria-labelledby="paths-title">
     <div class="shead"><h2 id="paths-title">How a command gets a value</h2><p>The guarantee depends on which path a value takes into the command.</p></div>
     <div class="tablebox"><table>
       <thead><tr><th>Path</th><th>What the command holds</th><th>What it protects</th></tr></thead>
@@ -182,14 +174,14 @@
     </table></div>
     </section>
 
-    <section class="topic" id="safari" aria-labelledby="safari-title">
+    <section class="section topic" id="safari" aria-labelledby="safari-title">
       <header><h2 id="safari-title">Latchkey for Safari</h2><p>Sandboxed, and limited to names, saves and one fill.</p></header>
       <div class="body">
     <p>The extension is sandboxed and reaches the app through its own socket, which admits only Latchkey's signed extension and only to list item names, save a value (which asks like any change) and fill one item into the page you're on. Key detection runs inside the page: a value goes to the app only when you press Save. Password fields aren't read. Fill asks every time, works only on the item's fill sites (by default its service's own site and deployment platforms), over https only, never in a frame, and is logged. Otherwise it can't read a stored value.</p>
       </div>
     </section>
 
-    <section class="feature" id="log" aria-labelledby="log-title">
+    <section class="section feature" id="log" aria-labelledby="log-title">
       <div class="copy"><h2 id="log-title">The access log</h2>
         <p>Every read, change, grant, move, import and push is logged with the program chain and folder. Stored values aren't logged; likely secrets in command arguments are replaced with <code>&lt;redacted&gt;</code>, which is heuristic, so keep values out of command arguments. Each entry carries a keyed hash (HMAC-SHA256) of itself and the one before it, with the key kept in the keychain, so <code>lk log --verify</code> finds an entry that was changed, removed or added, or a log cut short. It can't stop a program running as you from deleting the file, only show that it happened.</p>
       </div>
@@ -203,7 +195,7 @@
       </div>
     </section>
 
-    <section id="table" aria-labelledby="table-title">
+    <section class="section" id="table" aria-labelledby="table-title">
     <div class="shead"><h2 id="table-title">Guarantees and limits</h2><p>Each mechanism, what it protects against, and what it doesn't promise.</p></div>
     <div class="tablebox"><table>
       <thead><tr><th>Mechanism</th><th>Protects against</th><th>Doesn't guarantee</th></tr></thead>
@@ -222,7 +214,7 @@
     </table></div>
     </section>
 
-    <section class="topic" id="limits" aria-labelledby="limits-title">
+    <section class="section topic" id="limits" aria-labelledby="limits-title">
       <header><h2 id="limits-title">Where protection ends</h2><p>Read these before you rely on Latchkey.</p></header>
       <div class="body">
     <ul>
@@ -237,13 +229,21 @@
       </div>
     </section>
 
-    <section class="topic" id="report" aria-labelledby="report-title">
+    <section class="section topic" id="report" aria-labelledby="report-title">
       <header><h2 id="report-title">Reporting a problem</h2><p>Privately, never in public.</p></header>
       <div class="body">
     <p>Latchkey is in development preview and its repository isn't public yet, so there's no public route for reports today. When it opens, report a vulnerability privately through GitHub: the repository's <b>Security</b> tab › <b>Report a vulnerability</b>. Please don't open a public issue for it. Include the Latchkey and macOS versions, what an attacker can do and what they need first, and steps to reproduce with example values only. Never send a real secret.</p>
       </div>
     </section>
 
+    <section class="section cta-band" aria-labelledby="cta-title">
+      <div>
+        <p class="eyebrow">Free during the development preview</p>
+        <h2 id="cta-title">Your projects move. Your credentials shouldn't need copying along with them.</h2>
+        <p>Build Latchkey from source today. A signed download comes with the first release; Pro and Teams come later.</p>
+      </div>
+      <div class="cta-actions"><a class="button primary" href="index.html#install">Install the preview</a><a class="button secondary" href="pricing.html">See pricing</a></div>
+    </section>
   </main>
 
   <footer class="site">

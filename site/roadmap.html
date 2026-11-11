@@ -23,7 +23,7 @@
     .rm .lede { font-size: 19px; color: var(--muted); }
     .rm .principle { padding: 14px 16px; border-radius: 12px; background: var(--accent-soft); color: var(--ink); }
     .status { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
-    .status li { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+    .status .card { --card-pad: 14px 16px; gap: 2px; }
     .status .k { font: 650 11.5px/1.2 var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--ok); }
     .status .k.pending { color: var(--warn); }
     .controls { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; margin: 56px 0 0; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); position: sticky; top: 60px; z-index: 3; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(10px); }
@@ -36,7 +36,7 @@
     #tiers .tier:first-child { border-top: 0; margin-top: 8px; }
     .tier-head h2 { font-size: clamp(22px, 2.6vw, 28px); margin: 0 0 8px; }
     .tier-head p:not(.eyebrow) { color: var(--muted); }
-    .items { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+    .items { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); }
     .item { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 6px 16px; padding: 16px 18px; border-top: 1px solid var(--line); }
     .item:first-child { border-top: 0; }
     .item[hidden], .tier[hidden] { display: none; }
@@ -53,15 +53,9 @@
     .pill.built { background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); border-color: transparent; }
     .item.is-built .size { background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); }
     .empty { padding: 18px; color: var(--muted); }
-    .limits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-    .limits div { padding: 18px; border: 1px dashed var(--line); border-radius: 14px; }
-    .limits h3 { margin: 0 0 6px; font-size: 17px; }
-    .limits p { margin: 0; color: var(--muted); font-size: 15px; }
-    .rm .outside { margin-top: 88px; }
     @media (max-width: 900px) {
       .rm .page-hero, .tier { grid-template-columns: minmax(0, 1fr); }
-      .limits { grid-template-columns: 1fr; }
-      .controls { position: static; }
+        .controls { position: static; }
       .legend { margin-left: 0; }
     }
     @media (max-width: 620px) {
@@ -82,7 +76,7 @@
         <li><a href="pricing.html">Pricing</a></li>
         <li><a href="security.html">Security</a></li>
         <li><a href="developers/index.html">Docs</a></li>
-        <li><a class="button primary" href="index.html#install">Development preview</a></li>
+        <li><a class="button primary" href="index.html#install">Install the preview</a></li>
       </ul>
     </nav>
   </header>
@@ -96,13 +90,14 @@
         <p class="principle"><b>Guiding rule:</b> values move from the keychain straight to the process that needs them. People approve; agents get references.</p>
       </div>
       <ul class="status" aria-label="Where it stands">
-        <li><span class="k">Built</span><span>CLI: run, check, import, export, environments, grants, rotate, push, log, MCP</span></li>
-        <li><span class="k">Built</span><span>Mac app: window, import sheet, menu bar, settings, Latchkey for Safari</span></li>
-        <li><span class="k">Built</span><span>Approval panel, then Touch ID, Apple Watch or password; grants; a tamper-evident access log</span></li>
-        <li><span class="k pending">Pending</span><span>A public, notarized release; sync tried end to end on a second Mac</span></li>
+        <li class="card"><span class="k">Built</span><span>CLI: run, check, import, export, environments, grants, rotate, push, log, MCP</span></li>
+        <li class="card"><span class="k">Built</span><span>Mac app: window, import sheet, menu bar, settings, Latchkey for Safari</span></li>
+        <li class="card"><span class="k">Built</span><span>Approval panel, then Touch ID, Apple Watch or password; grants; a tamper-evident access log</span></li>
+        <li class="card"><span class="k pending">Pending</span><span>A public, notarized release; sync tried end to end on a second Mac</span></li>
       </ul>
     </section>
 
+    <div class="tiers-wrap">
     <div class="controls">
       <div class="seg" role="group" aria-label="Show items that help">
         <button type="button" data-f="all" aria-pressed="true">Everything</button>
@@ -445,15 +440,24 @@
         </ul>
       </section>
     </div>
+    </div>
 
-    <section class="outside" aria-labelledby="outside-title">
+    <section class="section outside" aria-labelledby="outside-title">
       <div class="shead"><p class="eyebrow">Outside the plan</p><h2 id="outside-title">Limits and non-goals</h2></div>
-      <div class="limits">
-        <div><h3>Items in the Passwords app</h3><p>Apple doesn't let other apps write to or read from the Passwords app. Latchkey uses the same iCloud Keychain underneath, in its own group. CSV import is the bridge.</p></div>
-        <div><h3>Passkeys as API tokens</h3><p>A passkey only signs logins for one website. Latchkey uses the same Touch ID check for approvals, and Secure Enclave keys for SSH.</p></div>
-        <div><h3>Teams and other platforms</h3><p>Latchkey is for one person's Macs. Shared vaults, Windows and Linux are out of scope.</p></div>
+      <div class="card-grid g3">
+        <div class="card"><h3>Items in the Passwords app</h3><p>Apple doesn't let other apps write to or read from the Passwords app. Latchkey uses the same iCloud Keychain underneath, in its own group. CSV import is the bridge.</p></div>
+        <div class="card"><h3>Passkeys as API tokens</h3><p>A passkey only signs logins for one website. Latchkey uses the same Touch ID check for approvals, and Secure Enclave keys for SSH.</p></div>
+        <div class="card"><h3>Teams and other platforms</h3><p>Latchkey is for one person's Macs. Shared vaults, Windows and Linux are out of scope.</p></div>
       </div>
       <p class="fine" style="margin-top:16px">Sizes are rough. "Built" marks what's done; "Next up" marks the recommended next batch.</p>
+    </section>
+    <section class="section cta-band" aria-labelledby="cta-title">
+      <div>
+        <p class="eyebrow">Free during the development preview</p>
+        <h2 id="cta-title">Your projects move. Your credentials shouldn't need copying along with them.</h2>
+        <p>Build Latchkey from source today. A signed download comes with the first release; Pro and Teams come later.</p>
+      </div>
+      <div class="cta-actions"><a class="button primary" href="index.html#install">Install the preview</a><a class="button secondary" href="pricing.html">See pricing</a></div>
     </section>
   </main>
 

@@ -20,14 +20,13 @@
     /* Pricing: the promise first, then the plans as a row of cards, what each includes, the update policy, and
        short answers. Nothing here is on sale yet; every plan says so where it matters. */
     .pr .page-hero { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 32px 56px; align-items: center; padding: 48px 0 0; }
-    .pr .page-hero h1 { font-size: clamp(34px, 4.4vw, 54px); }
     .pr .lede { font-size: 19px; color: var(--muted); }
     .promise { display: flex; gap: 14px; align-items: flex-start; padding: 22px; font-size: 16px; border-radius: 14px; background: color-mix(in srgb, var(--ok) 10%, var(--surface)); border: 1px solid color-mix(in srgb, var(--ok) 30%, var(--line)); }
     .promise b { display: block; font: 650 20px/1.3 var(--display); margin-bottom: 8px; }
     .promise > span { font-size: 22px; color: var(--ok); line-height: 1.2; }
     .promise span { color: var(--muted); }
     .plans { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 48px; }
-    .plan { display: flex; flex-direction: column; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); min-width: 0; }
+    .plan { display: flex; flex-direction: column; padding: var(--card-pad); border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); min-width: 0; }
     .plan.feature-plan { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
     .plan .tier { font: 650 12.5px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
     .plan h2 { margin: 10px 0 2px; font-size: 22px; }
@@ -40,10 +39,7 @@
     .plan .cta { margin-top: auto; display: grid; gap: 8px; }
     .plan .cta .fine { margin: 0; font-size: 13px; }
     .button[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
-    .pr section { margin-top: 96px; }
-    .pr .shead { max-width: 760px; margin-bottom: 24px; }
-    .pr .shead p { color: var(--muted); }
-    .grid-table { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 4px 6px; }
+    .grid-table { border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); padding: 4px 6px; }
     .grid-table table { width: 100%; border-collapse: collapse; font-size: 15px; }
     .grid-table th, .grid-table td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: center; }
     .grid-table th:first-child, .grid-table td:first-child { text-align: left; }
@@ -52,16 +48,8 @@
     .grid-table .yes { color: var(--ok); font-weight: 700; }
     .grid-table .no { color: var(--muted); }
     .grid-table td small { display: block; color: var(--muted); font-size: 12.5px; }
-    .policy { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-    .policy div { padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
-    .policy b { display: block; margin-bottom: 6px; font: 650 17px/1.3 var(--display); }
-    .policy span { color: var(--muted); font-size: 15px; }
-    .band { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 32px 56px; align-items: center; padding: 32px; border-radius: 20px; border: 1px solid var(--line); background: var(--surface); }
-    .band h2 { margin: 0 0 12px; }
-    .band-copy > p:not(.eyebrow) { color: var(--muted); }
     .band-price { color: var(--ink) !important; }
     .band-price b { font: 700 24px/1 var(--display); color: var(--ink); margin-right: 6px; }
-    .band-art { margin: 0; }
     .faq { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 40px; }
     .faq details { padding: 14px 0; border-bottom: 1px solid var(--line); }
     .faq summary { cursor: pointer; font-weight: 650; list-style: none; }
@@ -69,11 +57,10 @@
     .faq summary::after { content: "+"; float: right; color: var(--muted); font-weight: 400; }
     .faq details[open] summary::after { content: "–"; }
     .faq details p { margin: 8px 0 0; color: var(--muted); }
-    @media (max-width: 1000px) { .plans { grid-template-columns: repeat(2, 1fr); } .pr .page-hero, .band { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 1000px) { .plans { grid-template-columns: repeat(2, 1fr); } .pr .page-hero { grid-template-columns: minmax(0, 1fr); } }
     @media (max-width: 760px) {
       .plans, .policy, .faq { grid-template-columns: minmax(0, 1fr); }
-      .band { padding: 20px; }
-      .grid-table th, .grid-table td { padding: 10px 8px; }
+        .grid-table th, .grid-table td { padding: 10px 8px; }
     }
   </style>
 </head>
@@ -88,7 +75,7 @@
         <li><a href="pricing.html" aria-current="page">Pricing</a></li>
         <li><a href="security.html">Security</a></li>
         <li><a href="developers/index.html">Docs</a></li>
-        <li><a class="button primary" href="index.html#install">Development preview</a></li>
+        <li><a class="button primary" href="index.html#install">Install the preview</a></li>
       </ul>
     </nav>
   </header>
@@ -103,7 +90,7 @@
       <div class="promise"><span aria-hidden="true">✓</span><div><b>Your credentials never depend on paying.</b><span>Keychain storage, references, import, running commands, approvals, the security protections and exporting your own values are in every plan, and stay that way. Pro charges for convenience and sophistication around the core, never for access to what's yours.</span></div></div>
     </section>
 
-    <div class="plans" aria-label="Plans">
+    <div class="plans section" style="--section:56px" aria-label="Plans">
       <article class="plan">
         <span class="tier">Free</span>
         <h2>Latchkey Core</h2>
@@ -160,7 +147,7 @@
     </div>
     <p class="fine" style="margin-top:14px">Prices are planned, not current offers. Nothing is sold through this site yet, and no plan's features are promised by a date.</p>
 
-    <section id="compare" aria-labelledby="compare-title">
+    <section class="section" id="compare" aria-labelledby="compare-title">
       <div class="shead"><h2 id="compare-title">What each plan includes</h2><p>The free column is what Latchkey does today. Pro and Teams rows are planned and marked as such.</p></div>
       <div class="grid-table"><table>
         <thead><tr><th>Capability</th><th>Free</th><th>Pro</th><th>Teams</th></tr></thead>
@@ -180,16 +167,16 @@
       </table></div>
     </section>
 
-    <section id="updates" aria-labelledby="updates-title">
+    <section class="section" id="updates" aria-labelledby="updates-title">
       <div class="shead"><h2 id="updates-title">Bought once, not rented</h2><p>Latchkey runs on your Mac and keeps nothing on a server, so a license works like one.</p></div>
-      <div class="policy">
-        <div><b>Yours to keep</b><span>Pro is a one-time purchase per developer. The version you buy keeps working, with no renewal.</span></div>
-        <div><b>A year of updates included</b><span>New features for a year after you buy. After that, $39 a year keeps them coming, if you want them.</span></div>
-        <div><b>Free stays free</b><span>Storage, references, import, running commands, approvals and export never move behind Pro.</span></div>
+      <div class="card-grid g3">
+        <div class="card"><b>Yours to keep</b><span>Pro is a one-time purchase per developer. The version you buy keeps working, with no renewal.</span></div>
+        <div class="card"><b>A year of updates included</b><span>New features for a year after you buy. After that, $39 a year keeps them coming, if you want them.</span></div>
+        <div class="card"><b>Free stays free</b><span>Storage, references, import, running commands, approvals and export never move behind Pro.</span></div>
       </div>
     </section>
 
-    <section id="teams-path" class="band" aria-labelledby="teams-path-title">
+    <section id="teams-path" class="section band" aria-labelledby="teams-path-title">
       <div class="band-copy">
         <p class="eyebrow">For teams · Snack Studio</p>
         <h2 id="teams-path-title">Start with a migration</h2>
@@ -210,7 +197,7 @@
       </figure>
     </section>
 
-    <section id="faq" aria-labelledby="faq-title">
+    <section class="section" id="faq" aria-labelledby="faq-title">
       <div class="shead"><p class="eyebrow">Questions</p><h2 id="faq-title">Good questions, short answers</h2></div>
       <div class="faq">
         <div>
@@ -228,6 +215,14 @@
           <details><summary>How do refunds and other Macs work?</summary><p>Those terms will be published with Pro, before it goes on sale.</p></details>
         </div>
       </div>
+    </section>
+    <section class="section cta-band" aria-labelledby="cta-title">
+      <div>
+        <p class="eyebrow">Free during the development preview</p>
+        <h2 id="cta-title">Your projects move. Your credentials shouldn't need copying along with them.</h2>
+        <p>Build Latchkey from source today. A signed download comes with the first release; Pro and Teams come later.</p>
+      </div>
+      <div class="cta-actions"><a class="button primary" href="index.html#install">Install the preview</a><a class="button secondary" href="pricing.html">See pricing</a></div>
     </section>
   </main>
 

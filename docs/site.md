@@ -38,7 +38,12 @@ system's, so pages make no third-party requests.
 Every page keeps to these; they're what the layout passes checked, page by page, at 1440 and 375 pixels wide, in
 light and dark:
 
-- One header (Features, How it works, Pricing, Security, Docs, Development preview) and one footer on every page.
+- One header (Features, How it works, Pricing, Security, Docs, and **Install the preview**) and one footer on every
+  page; product pages end with the closing call-to-action band (`.cta-band`).
+- One type scale and rhythm from `site.css`: page titles 56px, section titles 36px, topic titles 28px, card titles
+  17.5px; sections are `.section` (104px apart, 72px on phones). Cards are `.card` in a `.card-grid` (`g2`, `g3`,
+  `g4`, chosen so rows balance); wide copy-beside-example panels are `.band`. Pages compose these and don't restyle
+  them; drawings inside the app window and scenes use their own class names (`pane-card`, `icard`).
 - No sideways scroll, and no visible scrollbars inside the page: code wraps between words, tables become one
   labelled block per row on phones, and the app window hides its pane scrollbars.
 - A section opens with its heading and a wide example (a scene, the app window, a demo or a grid of cards) before

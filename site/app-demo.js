@@ -160,24 +160,24 @@
     var p = parts(i.id), shown = state.revealed[i.id];
     var mine = activity.filter(function (a) { return a.names.indexOf(i.id) >= 0; }).slice(0, 3);
     return '<div class="detail">' +
-      '<div class="card head">' + kindIcon(i.kind).replace("ki ", "ki big ") + '<div><b class="dn">' + esc(p.name) + "</b>" +
+      '<div class="pane-card head">' + kindIcon(i.kind).replace("ki ", "ki big ") + '<div><b class="dn">' + esc(p.name) + "</b>" +
       "<span>" + (p.project ? esc(p.project) + ' <span class="env env-' + p.env.split(".").pop() + '">' + esc(p.env) + "</span>" : "Shared") + "</span></div></div>" +
-      '<div class="card"><div class="kv"><span>Value</span><code class="val">' + (shown ? esc(i.sample) : "••••••••••••••") + "</code>" +
+      '<div class="pane-card"><div class="kv"><span>Value</span><code class="val">' + (shown ? esc(i.sample) : "••••••••••••••") + "</code>" +
       '<button type="button" class="ib" data-reveal="' + esc(i.id) + '" aria-label="' + (shown ? "Hide the value" : "Show the value") + '">' + (shown ? "Hide" : "Show") + "</button></div>" +
       '<div class="kv"><span>Reference</span><code>latchkey://' + esc(i.id) + '</code><button type="button" class="ib" data-copy="latchkey://' + esc(i.id) + '">Copy</button></div></div>' +
-      '<div class="card"><div class="kv"><span>Kind</span><em>' + KINDS[i.kind][1] + "</em></div>" +
+      '<div class="pane-card"><div class="kv"><span>Kind</span><em>' + KINDS[i.kind][1] + "</em></div>" +
       '<div class="kv"><span>Allow reads without approval<small>' + (i.safe ? "Any program in your Mac account may request this value." : "Reads ask unless a grant covers them.") +
       '</small></span><button type="button" class="switch" role="switch" aria-checked="' + i.safe + '" data-safe="' + esc(i.id) + '" aria-label="Allow reads without approval"><i></i></button></div>' +
       '<div class="kv"><span>Project</span><em>' + (p.project ? esc(p.project) + " / " + esc(p.env) : "Shared") + "</em></div>" +
       '<div class="kv"><span>Service</span><em>' + esc(i.service) + "</em></div>" +
       (i.note ? '<div class="kv"><span>Note</span><em>' + esc(i.note) + "</em></div>" : "") + "</div>" +
       '<p class="fn">' + (i.kind === "value" ? "Plain values are not masked in output." : "Masked in command output.") + "</p>" +
-      (i.used.length ? '<p class="dh">Used In</p><div class="card"><code>' + i.used.map(esc).join("<br>") + "</code></div>" : "") +
-      '<p class="dh">Remote</p><div class="card"><p class="muted">' + (i.remote ? "Linked: " + esc(i.remote) : esc(p.project ? p.project + "/" + p.env : "Shared items") + " isn't linked to Vercel, GitHub Actions, Railway or Fly.") + "</p></div>" +
-      '<p class="dh">History</p><div class="card">' + (i.history ? i.history.map(function (h) { return '<p class="muted">' + esc(h.when) + ", " + esc(h.why) + "</p>"; }).join("")
+      (i.used.length ? '<p class="dh">Used In</p><div class="pane-card"><code>' + i.used.map(esc).join("<br>") + "</code></div>" : "") +
+      '<p class="dh">Remote</p><div class="pane-card"><p class="muted">' + (i.remote ? "Linked: " + esc(i.remote) : esc(p.project ? p.project + "/" + p.env : "Shared items") + " isn't linked to Vercel, GitHub Actions, Railway or Fly.") + "</p></div>" +
+      '<p class="dh">History</p><div class="pane-card">' + (i.history ? i.history.map(function (h) { return '<p class="muted">' + esc(h.when) + ", " + esc(h.why) + "</p>"; }).join("")
         : '<p class="muted">No earlier values yet. When this value changes, the old one is kept here.</p>') + "</div>" +
       '<p class="fn">The last 10 values are kept. Restoring keeps the current value too.</p>' +
-      (mine.length ? '<p class="dh">Recent Activity</p><div class="card">' + mine.map(entry).join("") + "</div>" : "") +
+      (mine.length ? '<p class="dh">Recent Activity</p><div class="pane-card">' + mine.map(entry).join("") + "</div>" : "") +
       "</div>";
   }
 

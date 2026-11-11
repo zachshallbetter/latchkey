@@ -55,8 +55,9 @@ html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 var(--sans); }
 .wrap { width: 100%; max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
 h1, h2, h3 { font-family: var(--display); line-height: 1.12; letter-spacing: -0.02em; text-wrap: balance; margin: 0 0 12px; }
-h1 { font-size: clamp(36px, 6vw, 60px); font-weight: 700; }
-h2 { font-size: clamp(26px, 3.6vw, 36px); font-weight: 700; }
+/* One type scale: page titles, section titles, topic titles (.topic, roadmap tiers), card titles. */
+h1 { font-size: clamp(36px, 4.6vw, 56px); font-weight: 700; }
+h2 { font-size: clamp(28px, 3.4vw, 36px); font-weight: 700; }
 h3 { font-size: 19px; font-weight: 650; letter-spacing: -0.01em; }
 p { margin: 0 0 14px; }
 a { color: var(--accent); text-underline-offset: 3px; }
@@ -351,10 +352,10 @@ figure.code + .more { margin-top: 12px; }
 .mw.app .pj { display: flex; align-items: center; gap: 5px; padding: 3px 4px; border-radius: 5px; background: var(--surface); font-size: 10.5px; font-weight: 600; }
 .mw.app .pj i { width: 10px; height: 10px; border-radius: 3px; background: #6b7cf5; }
 .mw.app .pj em { margin-left: auto; font-style: normal; color: var(--muted); font-weight: 500; }
-.mw.app .card { display: flex; align-items: center; gap: 8px; margin: 8px; padding: 8px; border-radius: 8px; background: var(--bg-2); }
-.mw.app .card .ki { width: 28px; height: 28px; border-radius: 8px; }
-.mw.app .card b { display: block; font-size: 13px; }
-.mw.app .card small { color: var(--muted); font-size: 10.5px; }
+.mw.app .icard { display: flex; align-items: center; gap: 8px; margin: 8px; padding: 8px; border-radius: 8px; background: var(--bg-2); }
+.mw.app .icard .ki { width: 28px; height: 28px; border-radius: 8px; }
+.mw.app .icard b { display: block; font-size: 13px; }
+.mw.app .icard small { color: var(--muted); font-size: 10.5px; }
 .mw.app .kv { display: flex; justify-content: space-between; gap: 8px; margin: 0 8px; padding: 5px 2px; border-bottom: 1px solid var(--line); font-size: 11px; }
 .mw.app .kv em { font-style: normal; color: var(--muted); transition: color .3s; }
 .mw.app .kv em.hl { color: var(--ok); font-weight: 600; }
@@ -468,8 +469,8 @@ figure.code + .more { margin-top: 12px; }
 .appwin .side .ki svg { width: 11px; height: 11px; }
 .appwin .ki.big { width: 52px; height: 52px; border-radius: 13px; }
 .appwin .ki.big svg { width: 26px; height: 26px; }
-.appwin .card { padding: 10px 12px; border-radius: 10px; background: var(--bg-2); margin-bottom: 10px; }
-.appwin .card.head { display: flex; gap: 12px; align-items: center; }
+.appwin .pane-card { padding: 10px 12px; border-radius: 10px; background: var(--bg-2); margin-bottom: 10px; }
+.appwin .pane-card.head { display: flex; gap: 12px; align-items: center; }
 .appwin .dn { display: block; font-size: 18px; font-weight: 700; }
 .appwin .kv { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
 .appwin .kv:last-child { border-bottom: 0; }
@@ -512,3 +513,49 @@ figure.code + .more { margin-top: 12px; }
   .appwin .detail { max-height: 520px; }
 }
 @media (prefers-reduced-motion: reduce) { .appwin .chev, .appwin .switch i { transition: none; } }
+
+
+/* ---- The design system for product pages: one section rhythm, one card, grids of cards, a band, and the closing
+   call to action. Pages compose these; they don't restyle them. */
+:root { --section: 104px; --card-radius: 16px; --card-pad: 22px; --band-radius: 22px; }
+@media (max-width: 760px) { :root { --section: 72px; --card-pad: 18px; } }
+.section { margin-top: var(--section); }
+.shead { max-width: 760px; margin-bottom: 28px; }
+.shead h2 { margin: 0 0 10px; }
+.shead p:not(.eyebrow) { color: var(--muted); font-size: 18px; margin: 0; }
+.topic h2, .tier-head h2 { font-size: clamp(22px, 2.4vw, 28px); }
+
+.card-grid { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; }
+.card-grid.g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.card-grid.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.card-grid.g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.card { display: flex; flex-direction: column; gap: 6px; min-width: 0; margin: 0; padding: var(--card-pad); border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); color: var(--ink); }
+.card > b, .card > h3 { margin: 0; font: 650 17.5px/1.3 var(--display); letter-spacing: -0.01em; }
+.card > span, .card > p { margin: 0; color: var(--muted); font-size: 15.5px; }
+.card .step, .card > span.step { margin-bottom: 6px; color: var(--accent-ink); font-size: 14px; }
+a.card { text-decoration: none; transition: border-color .15s; }
+a.card:hover { border-color: var(--accent); }
+a.card > b::after { content: " →"; color: var(--accent); }
+.card .links { margin-top: auto; padding-top: 10px; display: grid; gap: 2px; }
+@media (max-width: 1000px) { .card-grid.g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .card-grid.g2, .card-grid.g3, .card-grid.g4 { grid-template-columns: minmax(0, 1fr); } }
+
+/* A band: a wide panel holding copy beside an example. */
+.band { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 32px 56px; align-items: center; padding: 36px; border: 1px solid var(--line); border-radius: var(--band-radius); background: var(--surface); }
+.band h2 { margin: 0 0 12px; }
+.band-copy > p:not(.eyebrow) { color: var(--muted); }
+.band-art { margin: 0; min-width: 0; }
+@media (max-width: 1000px) { .band { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) { .band { padding: 22px; } }
+
+/* The closing call to action every product page ends with. */
+.cta-band { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 24px 56px; align-items: center; padding: 44px; border-radius: var(--band-radius);
+            background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--accent) 22%, var(--surface)), var(--surface) 70%); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line)); }
+.cta-band h2 { margin: 0 0 10px; font-size: clamp(26px, 3vw, 34px); }
+.cta-band p { margin: 0; color: var(--muted); font-size: 18px; }
+.cta-actions { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; justify-content: flex-end; }
+@media (max-width: 860px) { .cta-band { grid-template-columns: minmax(0, 1fr); padding: 28px; } .cta-actions { justify-content: flex-start; } }
+
+/* A calm note, for status that isn't a warning (the development preview, say). */
+.note-card { display: flex; gap: 12px; align-items: flex-start; padding: 16px 18px; border-radius: 14px; background: var(--bg-2); border: 1px solid var(--line); color: var(--muted); font-size: 15.5px; }
+.note-card .avail { flex: none; }

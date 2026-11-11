@@ -20,45 +20,25 @@
     /* For teams: the migration engagement beside a scene of the inventory it starts with, then its deliverables,
        how it runs, how credentials are handled and its limits; then Latchkey Teams, looking for design partners. */
     .tm .page-hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 32px 56px; align-items: center; padding: 48px 0 0; }
-    .tm .page-hero h1 { font-size: clamp(34px, 4.2vw, 50px); }
     .tm .lede { font-size: 19px; color: var(--muted); }
     .offer { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 18px 0; }
     .offer b { font: 700 32px/1 var(--display); letter-spacing: -0.02em; }
     .offer span { color: var(--muted); }
     .cta-row { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
     .button[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
-    .tm section { margin-top: 96px; }
-    .shead { max-width: 760px; margin-bottom: 24px; }
-    .shead p { color: var(--muted); }
-    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 0; padding: 0; list-style: none; }
-    .cards.two { grid-template-columns: repeat(2, 1fr); }
-    .cards.four { grid-template-columns: repeat(4, 1fr); }
-    .cards li { margin: 0; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
-    .cards b { display: block; margin-bottom: 6px; font: 650 17px/1.3 var(--display); }
-    .cards span { color: var(--muted); font-size: 15px; }
-    .cards .step { margin-bottom: 10px; color: var(--accent-ink); font-size: 14px; }
-    /* A card that is one link: the whole card is the target, the title isn't underlined. */
-    a.card-link { display: block; height: 100%; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); text-decoration: none; }
-    a.card-link:hover { border-color: var(--accent); }
-    a.card-link b::after { content: " →"; color: var(--accent); }
-    .cards li:has(> a.card-link) { padding: 0; border: 0; background: none; }
     .topic { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 16px 56px; padding-top: 28px; border-top: 1px solid var(--line); }
     .topic > header p { color: var(--muted); }
     .topic ul { margin: 0; padding-left: 20px; }
+    .partner-price { font: 700 26px/1.1 var(--display); }
+    .partner-price small { font: 500 14px var(--sans); color: var(--muted); }
+    .band ul { margin: 8px 0 0; padding-left: 20px; }
     .tm .feature { border-top: 1px solid var(--line); padding: 28px 0 0; }
     .tm .feature h2 { margin-top: 0; }
     .handling { margin: 12px 0 0; padding-left: 20px; color: var(--muted); }
     .handling li { margin: 0 0 10px; }
-    .band-art { margin: 0; }
     .topic li { margin: 0 0 10px; max-width: 68ch; }
-    .partner { padding: 28px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface); display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 24px 48px; }
-    .partner h2 { margin-top: 0; }
-    .partner .price { font: 700 26px/1.1 var(--display); }
-    .partner .price small { font: 500 14px var(--sans); color: var(--muted); }
-    .partner ul { margin: 8px 0 0; padding-left: 20px; }
-    @media (max-width: 1000px) { .tm .page-hero, .partner { grid-template-columns: minmax(0, 1fr); } }
-    @media (max-width: 1000px) { .cards.four { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 860px) { .cards, .cards.two, .cards.four, .topic { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 1000px) { .tm .page-hero { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 860px) { .topic { grid-template-columns: minmax(0, 1fr); } }
   </style>
 </head>
 <body>
@@ -72,7 +52,7 @@
         <li><a href="pricing.html">Pricing</a></li>
         <li><a href="security.html">Security</a></li>
         <li><a href="developers/index.html">Docs</a></li>
-        <li><a class="button primary" href="index.html#install">Development preview</a></li>
+        <li><a class="button primary" href="index.html#install">Install the preview</a></li>
       </ul>
     </nav>
   </header>
@@ -100,29 +80,29 @@
       </div>
     </section>
 
-    <section id="scope" aria-labelledby="scope-title">
+    <section class="section" id="scope" aria-labelledby="scope-title">
       <div class="shead"><p class="eyebrow">Deliverables</p><h2 id="scope-title">What the engagement leaves you with</h2><p>A result, not a license: your team's credentials organized, its Macs set up, and the procedures written down.</p></div>
-      <ul class="cards">
-        <li><b>Credential and environment inventory</b><span>Every env file under your projects, where each value would go, and what's shared, skipped or in conflict.</span></li>
-        <li><b>Dependency and migration report</b><span>Which projects and environments use which credentials, the duplicates and stale ones, and the order to move them in.</span></li>
-        <li><b>Latchkey set up on supported Macs</b><span>Projects linked to their repositories, env files of references, and environment records your developers can export on any Mac.</span></li>
-        <li><b>Access and recovery procedures</b><span>How each developer gets a credential, what agents may read without asking, how grants are made, and how to rotate and restore.</span></li>
-        <li><b>Onboarding and handoff</b><span>A walkthrough for your developers, and the documentation to bring the next one on without us.</span></li>
-        <li><b>Safer agent access</b><span>Grants scoped to folders, sessions and commands, and the agent instructions that keep values out of transcripts.</span></li>
+      <ul class="card-grid g3">
+        <li class="card"><b>Credential and environment inventory</b><span>Every env file under your projects, where each value would go, and what's shared, skipped or in conflict.</span></li>
+        <li class="card"><b>Dependency and migration report</b><span>Which projects and environments use which credentials, the duplicates and stale ones, and the order to move them in.</span></li>
+        <li class="card"><b>Latchkey set up on supported Macs</b><span>Projects linked to their repositories, env files of references, and environment records your developers can export on any Mac.</span></li>
+        <li class="card"><b>Access and recovery procedures</b><span>How each developer gets a credential, what agents may read without asking, how grants are made, and how to rotate and restore.</span></li>
+        <li class="card"><b>Onboarding and handoff</b><span>A walkthrough for your developers, and the documentation to bring the next one on without us.</span></li>
+        <li class="card"><b>Safer agent access</b><span>Grants scoped to folders, sessions and commands, and the agent instructions that keep values out of transcripts.</span></li>
       </ul>
     </section>
 
-    <section id="how" aria-labelledby="how-title">
+    <section class="section" id="how" aria-labelledby="how-title">
       <div class="shead"><h2 id="how-title">How it runs</h2></div>
-      <ol class="cards four">
-        <li><span class="step">1</span><b>Agree scope</b><span>Which projects, Macs and deployment platforms, and how credentials are handled, in writing.</span></li>
-        <li><span class="step">2</span><b>Inventory</b><span>Dry runs on your team's Macs: names, counts and conflicts, never values.</span></li>
-        <li><span class="step">3</span><b>Migrate</b><span>Imports with one approval per developer, references in place of values, projects and records set up.</span></li>
-        <li><span class="step">4</span><b>Hand off</b><span>Procedures, onboarding, and a check that every project runs through Latchkey.</span></li>
+      <ol class="card-grid g4">
+        <li class="card"><span class="step">1</span><b>Agree scope</b><span>Which projects, Macs and deployment platforms, and how credentials are handled, in writing.</span></li>
+        <li class="card"><span class="step">2</span><b>Inventory</b><span>Dry runs on your team's Macs: names, counts and conflicts, never values.</span></li>
+        <li class="card"><span class="step">3</span><b>Migrate</b><span>Imports with one approval per developer, references in place of values, projects and records set up.</span></li>
+        <li class="card"><span class="step">4</span><b>Hand off</b><span>Procedures, onboarding, and a check that every project runs through Latchkey.</span></li>
       </ol>
     </section>
 
-    <section class="feature flip" id="handling" aria-labelledby="handling-title">
+    <section class="section feature flip" id="handling" aria-labelledby="handling-title">
       <div class="copy">
         <h2 id="handling-title">How your credentials are handled</h2>
         <ul class="handling">
@@ -152,7 +132,7 @@
       </figure>
     </section>
 
-    <section class="topic" id="limits" aria-labelledby="limits-title" style="margin-top:40px">
+    <section class="section topic" id="limits" aria-labelledby="limits-title" style="--section:48px">
       <header><h2 id="limits-title">What it covers, and what it doesn't</h2><p>Fixed scope, limited to what Latchkey supports today.</p></header>
       <ul>
         <li>Covered: Macs on macOS 15 or later, env files and the local workflows Latchkey supports, and linking environments to Vercel, GitHub Actions, Railway or Fly.</li>
@@ -161,8 +141,8 @@
       </ul>
     </section>
 
-    <section id="teams" aria-labelledby="teams-title">
-      <div class="partner">
+    <section class="section" id="teams" aria-labelledby="teams-title">
+      <div class="band">
         <div>
           <p class="eyebrow">Latchkey Teams · in design</p>
           <h2 id="teams-title">Shared environments for the whole team</h2>
@@ -174,7 +154,7 @@
           </ul>
         </div>
         <div>
-          <p class="price">$15 <small>per user a month, billed yearly, planned</small></p>
+          <p class="partner-price">$15 <small>per user a month, billed yearly, planned</small></p>
           <p>We'll build it with two or three teams who would pay for it, before building a hosted service. If your team wants shared environments, organizational controls and audit evidence, we'd like to hear what it would need to do.</p>
           <div class="cta-row"><span class="button secondary" role="link" aria-disabled="true">Become a design partner</span></div>
           <p class="fine" style="margin-top:10px">Not available. Requests open when the contact address is published.</p>
@@ -182,13 +162,21 @@
       </div>
     </section>
 
-    <section id="evaluate" aria-labelledby="evaluate-title">
+    <section class="section" id="evaluate" aria-labelledby="evaluate-title">
       <div class="shead"><h2 id="evaluate-title">Evaluating Latchkey first?</h2><p>Everything an engineer needs to judge it is public on this site.</p></div>
-      <ul class="cards">
-        <li><a class="card-link" href="security.html"><b>The security model</b><span>What each mechanism protects, where it stops, and the trust boundaries.</span></a></li>
-        <li><a class="card-link" href="developers/cli.html"><b>The command reference</b><span>Every command, option and exit code, and what each one asks.</span></a></li>
-        <li><a class="card-link" href="pricing.html"><b>Plans and pricing</b><span>What stays free, what Pro will add, and how updates work.</span></a></li>
+      <ul class="card-grid g3">
+        <li style="display:contents"><a class="card" href="security.html"><b>The security model</b><span>What each mechanism protects, where it stops, and the trust boundaries.</span></a></li>
+        <li style="display:contents"><a class="card" href="developers/cli.html"><b>The command reference</b><span>Every command, option and exit code, and what each one asks.</span></a></li>
+        <li style="display:contents"><a class="card" href="pricing.html"><b>Plans and pricing</b><span>What stays free, what Pro will add, and how updates work.</span></a></li>
       </ul>
+    </section>
+    <section class="section cta-band" aria-labelledby="cta-title">
+      <div>
+        <p class="eyebrow">Snack Studio · from $2,500</p>
+        <h2 id="cta-title">Start with an inventory of every env file your team depends on.</h2>
+        <p>A fixed-scope migration that leaves your credentials organized, your Macs set up and the procedures written down.</p>
+      </div>
+      <div class="cta-actions"><span class="button primary" role="link" aria-disabled="true">Request an assessment</span><a class="button secondary" href="index.html#install">Install the preview</a></div>
     </section>
   </main>
 
