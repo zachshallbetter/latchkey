@@ -17,9 +17,6 @@ public final class Broker: @unchecked Sendable {
     let runner: RemoteRunner
     /// Pushes run only in the app, where the approval panel can confirm production. The window-less broker refuses them.
     public let allowsPush: Bool
-    /// The owner's trust in ACP, or nil where it can't be kept safely (outside the data-protection keychain).
-    public let acpTrust: AcpTrustStore?
-    let acpVerifier: AcpVerifier
     public let approver: Approver
     /// How long a read approval covers the same names from the same place. 0 asks every time.
     public var readApprovalWindow: TimeInterval
@@ -33,17 +30,8 @@ public final class Broker: @unchecked Sendable {
     /// Without a log (tests), grants are kept in memory too unless a store is passed.
     public init(store: SecretStore, approver: Approver, readApprovalWindow: TimeInterval = 120,
                 logURL: URL? = Paths.accessLog, grants: GrantStore? = nil, versions: VersionStore? = nil,
-                remotes: RemoteStore? = nil, runner: RemoteRunner = ProcessRunner(), allowsPush: Bool = true,
-                acpTrust: AcpTrustStore? = nil, acpVerifier: AcpVerifier = HTTPAcpVerifier()) {
+                remotes: RemoteStore? = nil, runner: RemoteRunner = ProcessRunner(), allowsPush: Bool = true) {
         self.store = store
-        self.acpVerifier = acpVerifier
-        if let acpTrust {
-            self.acpTrust = acpTrust
-        } else if logURL != nil, let keychain = store as? KeychainStore {
-            self.acpTrust = KeychainAcpTrustStore(mode: keychain.mode)
-        } else {
-            self.acpTrust = logURL == nil ? MemoryAcpTrustStore() : nil
-        }
         self.runner = runner
         self.allowsPush = allowsPush
         if let remotes {
@@ -96,10 +84,6 @@ public final class Broker: @unchecked Sendable {
             case "unlink": return try unlink(req, peer: peer)
             case "remote-status": return try remoteStatus(req)
             case "push": return try push(req, peer: peer)
-            case "acp-status": return Response(ok: true, acpTrust: acpTrust?.load())
-            case "acp-trust": return try trustAcp(req, peer: peer)
-            case "acp-untrust": return untrustAcp(req, peer: peer)
-            case "acp-redeem": return try redeem(req, peer: peer)
             default: return Response(ok: false, error: "unknown op \(req.op)")
             }
         } catch {
@@ -130,8 +114,7 @@ public final class Broker: @unchecked Sendable {
         for name in needApproval { if let g = grants.covering(name, cwd: cwd) { byGrant[g, default: []].append(name) } }
         let granted = byGrant.values.flatMap { $0 }
         for (g, names) in byGrant.sorted(by: { $0.key.id < $1.key.id }) {
-            let from = g.issuer == "acp" ? " from ACP for \(g.agent ?? "an agent"), ticket \(g.ticket ?? "?"), coordinator \(g.coordinator ?? "?")" : ""
-            log("get", names.sorted(), "allowed (grant \(g.id)\(from))", peer, req)
+            log("get", names.sorted(), "allowed (grant \(g.id))", peer, req)
         }
         let toAsk = needApproval.filter { !granted.contains($0) }
 
@@ -563,73 +546,6 @@ public final class Broker: @unchecked Sendable {
     /// Belt and braces: no value appears in an error message, even if a tool echoed it.
     static func redact(_ text: String, _ secrets: [String]) -> String {
         secrets.filter { $0.count >= 4 }.reduce(text) { $0.replacingOccurrences(of: $1, with: "<value>") }
-    }
-
-    // MARK: ACP
-
-    func trustAcp(_ req: Request, peer: PeerInfo) throws -> Response {
-        guard let store = acpTrust else {
-            return Response(ok: false, error: "ACP trust needs the signed app (iCloud Keychain), where only Latchkey can change it")
-        }
-        guard let trust = req.acpTrust else { return Response(ok: false, error: "no trust given") }
-        if let problem = trust.problem { return Response(ok: false, error: problem) }
-        guard try self.store.info(trust.gatewayTokenItem) != nil else {
-            return Response(ok: false, error: "no item named \(trust.gatewayTokenItem); add ACP's gateway token first")
-        }
-        let limits = "\(trust.environments.joined(separator: ", ")) items for up to \(GrantStore.describe(trust.maxDuration))"
-        guard ask(.change, ["ACP"], peer, req, "trust ACP at \(trust.url) (key \(trust.keyID)) to give agents read access to \(limits), asked by \(Self.who(peer))").allowed else {
-            log("acp-trust", [], "denied", peer, req)
-            return Response(ok: false, error: "trusting ACP was not approved")
-        }
-        try store.save(trust)
-        log("acp-trust", [], "approved (\(trust.url), key \(trust.keyID); \(limits))", peer, req)
-        return Response(ok: true, acpTrust: trust)
-    }
-
-    /// Stops accepting ACP capabilities and ends every ACP grant. Taking access away never asks.
-    func untrustAcp(_ req: Request, peer: PeerInfo) -> Response {
-        try? acpTrust?.save(nil)
-        let n = grants.revoke("acp")
-        log("acp-untrust", [], "ACP no longer trusted; \(n) ACP grant\(n == 1 ? "" : "s") ended", peer, req)
-        return Response(ok: true, info: ["revoked": String(n)])
-    }
-
-    /// Turns an ACP capability into a grant. No approval: the checks are the approval. Signature and audience,
-    /// expiry, single use, the owner's limits, the repository the command runs in, then ACP's own word.
-    func redeem(_ req: Request, peer: PeerInfo) throws -> Response {
-        let cwd = req.cwd ?? peer.cwd
-        func refuse(_ r: Acp.Refusal, _ items: [String] = []) -> Response {
-            log("acp-grant", items, "refused (\(r))", peer, req)
-            return Response(ok: false, error: r.description)
-        }
-        guard let store = acpTrust, let trust = store.load() else { return refuse(.notTrusted) }
-        guard let token = req.capability else { return refuse(.malformed) }
-        let claims: Acp.Claims
-        do { claims = try Acp.verify(token, trust: trust) } catch let r as Acp.Refusal { return refuse(r) }
-        do { try Acp.checkLimits(claims, trust: trust) } catch let r as Acp.Refusal { return refuse(r, claims.items) }
-        if store.used()[claims.jti] != nil { return refuse(.replayed, claims.items) }
-        guard let common = Repo.commonDir(for: cwd) else { return refuse(.repository("\(Self.tilde(cwd)) isn't in a git repository"), claims.items) }
-        guard let origin = Acp.originRepository(commonDir: common),
-              origin.owner.lowercased() == claims.repository.owner.lowercased(),
-              origin.name.lowercased() == claims.repository.name.lowercased() else {
-            return refuse(.repository("the capability is for \(claims.repository.owner)/\(claims.repository.name)"), claims.items)
-        }
-        guard let bearer = try store.gatewayToken(self.store, trust.gatewayTokenItem) else {
-            return refuse(.unreachable("no item named \(trust.gatewayTokenItem) for ACP's gateway token"), claims.items)
-        }
-        switch acpVerifier.check(token, trust: trust, bearer: bearer) {
-        case .failure(let e): return refuse((e as? Acp.Refusal) ?? .unreachable(e.localizedDescription), claims.items)
-        case .success(let reason?): return refuse(.notValid(reason), claims.items)
-        case .success(nil): break
-        }
-        try store.markUsed(claims.jti, until: Date(timeIntervalSince1970: claims.exp))
-        let duration = min(claims.duration, trust.maxDuration)
-        let folder = Repo.mainCheckout(for: cwd) ?? Grant.normalize(cwd)
-        let g = grants.add(names: claims.items, folder: folder, duration: duration,
-                           createdBy: "ACP for \(claims.sub) (\(claims.ticket))",
-                           acp: (claims.sub, claims.act, claims.ticket, claims.jti))
-        log("acp-grant", claims.items, "granted \(g.id) by ACP for \(claims.sub), ticket \(claims.ticket), coordinator \(claims.act), \(GrantStore.describe(duration))", peer, req)
-        return Response(ok: true, grants: [g])
     }
 
     /// Taking access away never needs approval.

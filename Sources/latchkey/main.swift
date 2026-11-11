@@ -68,14 +68,7 @@ Files refer to them as latchkey://ID.
       Let commands run from DIR (default: here) and the folders inside it read these items
       without asking, until the time is up (30m, 2h, 1d; at most 7d). Asks for approval once.
       PROJECT/* or PROJECT/ENV/* covers a whole project or environment, including items added later.
-  latchkey grant --capability TOKEN|-
-      Redeem a capability ACP issued for this agent: a grant for the items, repository and time it names,
-      within the limits the owner set. Run it from inside that repository.
   latchkey grants                 Grants that are in effect.
-  latchkey acp trust URL --key-id ID --public-key BASE64 --gateway-token-item ITEM [--env E,...] [--max 2h]
-      Accept capabilities signed by this ACP deployment's Latchkey key. ACP grants are read-only, limited to
-      the environments given (default development,preview; never production) and to --max (default 2h).
-  latchkey acp status | latchkey acp untrust    (untrust ends every ACP grant)
   latchkey revoke ID|all
   latchkey status
 
@@ -536,64 +529,7 @@ func printGrants(_ grants: [Grant]) {
     }
 }
 
-func acpCommand(_ args: [String]) -> Never {
-    guard let sub = args.first else { fail("usage: latchkey acp trust|status|untrust (see latchkey help)", code: 64) }
-    var rest = Array(args.dropFirst())
-    switch sub {
-    case "status":
-        let r = send(Request(op: "acp-status"))
-        guard let t = r.acpTrust else { print("ACP isn't trusted on this Mac."); exit(0) }
-        print("trusted: \(t.url), key \(t.keyID) (since \(t.trustedAt.formatted(date: .abbreviated, time: .shortened)))")
-        print("limits: read-only, \(t.environments.joined(separator: ", ")), up to \(GrantStore.describe(t.maxDuration))")
-        print("validity checks use the item \(t.gatewayTokenItem)")
-        let acpGrants = (send(Request(op: "grants")).grants ?? []).filter { $0.issuer == "acp" }
-        print("\(acpGrants.count) ACP grant\(acpGrants.count == 1 ? "" : "s") in effect")
-    case "untrust":
-        let r = send(Request(op: "acp-untrust"))
-        print("ACP is no longer trusted; ended \(r.info?["revoked"] ?? "0") ACP grant(s)")
-    case "trust":
-        guard let url = rest.first, !url.hasPrefix("-") else { fail("latchkey acp trust URL --key-id ID --public-key BASE64 --gateway-token-item ITEM", code: 64) }
-        rest.removeFirst()
-        var keyID = "", key = "", item = "", envs = ["development", "preview"], maxDuration: TimeInterval = 7200
-        while !rest.isEmpty {
-            let a = rest.removeFirst()
-            guard !rest.isEmpty else { fail("\(a) needs a value", code: 64) }
-            let v = rest.removeFirst()
-            switch a {
-            case "--key-id": keyID = v
-            case "--public-key": key = v
-            case "--gateway-token-item": item = v
-            case "--env": envs = v.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-            case "--max":
-                guard let d = GrantStore.parseDuration(v) else { fail("--max takes a time such as 2h", code: 64) }
-                maxDuration = d
-            default: fail("unknown option \(a)", code: 64)
-            }
-        }
-        let t = Acp.Trust(url: url, keyID: keyID, publicKey: key, gatewayTokenItem: item, environments: envs, maxDuration: maxDuration)
-        if let p = t.problem { fail(p, code: 64) }
-        _ = send(Request(op: "acp-trust", cwd: currentDirectory(), acpTrust: t))
-        print("ACP trusted: \(url), key \(keyID); read-only, \(envs.joined(separator: ", ")), up to \(GrantStore.describe(maxDuration))")
-    default:
-        fail("unknown: acp \(sub)", code: 64)
-    }
-    exit(0)
-}
-
 func grantCommand(_ input: [String]) -> Never {
-    if let i = input.firstIndex(of: "--capability") {
-        guard i + 1 < input.count else { fail("--capability takes a token, or - to read it from standard input", code: 64) }
-        var token = input[i + 1]
-        if token == "-" { token = String(decoding: FileHandle.standardInput.readDataToEndOfFile(), as: UTF8.self) }
-        let r: Response
-        do { r = try BrokerClient.send(Request(op: "acp-redeem", cwd: currentDirectory(), capability: token.trimmingCharacters(in: .whitespacesAndNewlines))) }
-        catch { fail("cannot reach the Latchkey app (\(error))", code: 69) }
-        guard r.ok, let g = r.grants?.first else {
-            fail("ACP grant refused: \(r.error ?? "unknown")\n  Ask your coordinator or the owner; don't retry the same capability.", code: 77)
-        }
-        print("granted \(g.id): \(g.names.joined(separator: ", ")) readable from \(Broker.tilde(g.folder)) and its worktrees until \(g.expires.formatted(date: .omitted, time: .shortened)) (ACP, ticket \(g.ticket ?? "?"))")
-        exit(0)
-    }
     var names: [String] = []
     var folder: String?
     var duration: TimeInterval = 3600
@@ -950,8 +886,6 @@ case "grant":
 case "remote":
     remoteCommand(args)
 
-case "acp":
-    acpCommand(args)
 
 case "push":
     pushCommand(args)

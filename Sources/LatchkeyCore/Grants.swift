@@ -15,13 +15,6 @@ public struct Grant: Codable, Identifiable, Hashable, Sendable {
     /// The git repository (its common `.git` directory) the folder belongs to, if any. Commands run from any of
     /// that repository's worktrees are covered too, wherever the worktree lives.
     public var repo: String?
-    /// "acp" for grants ACP arranged for an agent; nil for grants the owner made.
-    public var issuer: String?
-    /// For ACP grants: the agent it's for, the coordinator that delegated it, the ticket, and the capability id.
-    public var agent: String?
-    public var coordinator: String?
-    public var ticket: String?
-    public var capability: String?
 
     public init(id: String = Grant.newID(), names: [String], folder: String, expires: Date,
                 created: Date = Date(), createdBy: String, repo: String? = nil) {
@@ -94,17 +87,9 @@ public final class GrantStore: @unchecked Sendable {
     }
 
     @discardableResult
-    public func add(names: [String], folder: String, duration: TimeInterval, createdBy: String, now: Date = Date(),
-                    acp: (agent: String, coordinator: String, ticket: String, capability: String)? = nil) -> Grant {
-        var g = Grant(names: names, folder: folder, expires: now.addingTimeInterval(min(duration, Self.longest)),
+    public func add(names: [String], folder: String, duration: TimeInterval, createdBy: String, now: Date = Date()) -> Grant {
+        let g = Grant(names: names, folder: folder, expires: now.addingTimeInterval(min(duration, Self.longest)),
                       created: now, createdBy: createdBy, repo: Repo.commonDir(for: folder))
-        if let acp {
-            g.issuer = "acp"
-            g.agent = acp.agent
-            g.coordinator = acp.coordinator
-            g.ticket = acp.ticket
-            g.capability = acp.capability
-        }
         lock.withLock {
             cache.append(g)
             persist()
@@ -112,12 +97,12 @@ public final class GrantStore: @unchecked Sendable {
         return g
     }
 
-    /// Removes the grant with this id, every grant for "all", or every ACP grant for "acp". Returns how many.
+    /// Removes the grant with this id, or every grant for "all". Returns how many were removed.
     @discardableResult
     public func revoke(_ id: String) -> Int {
         lock.withLock {
             let before = cache.count
-            cache.removeAll { id == "all" || $0.id == id || (id == "acp" && $0.issuer == "acp") }
+            cache.removeAll { id == "all" || $0.id == id }
             persist()
             return before - cache.count
         }

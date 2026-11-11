@@ -56,7 +56,7 @@ public struct RemoteTarget: Codable, Hashable, Sendable {
         self.directory = directory
     }
 
-    /// "Vercel acp-gateway · production", "GitHub Actions owner/repo", "Fly acp-api".
+    /// "Vercel shop · production", "GitHub Actions owner/repo", "Fly shop-api".
     public var label: String {
         var parts: [String] = []
         switch service {

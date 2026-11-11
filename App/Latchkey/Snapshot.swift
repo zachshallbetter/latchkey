@@ -32,9 +32,9 @@ enum Snapshot {
             model.items = sampleItems
             model.deleted = sampleVersions.filter { $0.reason == .deleted }
             model.links = [
-                RemoteLink(id: "a1b2c3", scope: "acp/production", target: RemoteTarget(service: .vercel, project: "acp", environment: "production"),
-                           pushed: ["acp/production/DATABASE_URL": Date().addingTimeInterval(-86400)]),
-                RemoteLink(id: "d4e5f6", scope: "acp/production", target: RemoteTarget(service: .github, environment: "production", repo: "me/acp")),
+                RemoteLink(id: "a1b2c3", scope: "shop/production", target: RemoteTarget(service: .vercel, project: "shop", environment: "production"),
+                           pushed: ["shop/production/DATABASE_URL": Date().addingTimeInterval(-86400)]),
+                RemoteLink(id: "d4e5f6", scope: "shop/production", target: RemoteTarget(service: .github, environment: "production", repo: "me/shop")),
             ]
         }
         if let names = arg("--select") {
@@ -66,13 +66,13 @@ enum Snapshot {
             return
         }
         if arg("--part") == "remote" {
-            drawOffscreen(RemoteSheet(model: model, scope: arg("--scope") ?? "acp/production"), to: path)
+            drawOffscreen(RemoteSheet(model: model, scope: arg("--scope") ?? "shop/production"), to: path)
             return
         }
         if arg("--part") == "pushapproval" {
-            var r = ApprovalRequest(action: .push, names: ["acp/production/DATABASE_URL", "acp/production/STRIPE_SECRET_KEY"],
+            var r = ApprovalRequest(action: .push, names: ["shop/production/DATABASE_URL", "shop/production/STRIPE_SECRET_KEY"],
                                     chain: ["the Latchkey app"], folder: "", reason: "push 2 items")
-            r.targets = ["Vercel acp · production", "GitHub Actions me/acp · environment production"]
+            r.targets = ["Vercel shop · production", "GitHub Actions me/shop · environment production"]
             r.production = true
             drawOffscreen(ApprovalView(request: r) { _ in }, to: path)
             return
@@ -111,14 +111,14 @@ enum Snapshot {
             SecretInfo(name: id, kind: kind, agentSafe: safe, note: used == nil ? "" : "imported from .env.local",
                        updatedAt: now, usedIn: used, service: service)
         }
-        let acpDev = [NSHomeDirectory() + "/Projects/acp/.env.local"]
+        let shopDev = [NSHomeDirectory() + "/Projects/shop/.env.local"]
         return [
-            i("acp/development/DATABASE_URL", .password, "Neon", used: acpDev),
-            i("acp/development/PGHOST", .value, "Neon", safe: true, used: acpDev),
-            i("acp/development/ACP_GATEWAY_TOKEN", .token, nil, used: acpDev),
-            i("acp/production/DATABASE_URL", .password, "Neon"),
-            i("acp/production/STRIPE_SECRET_KEY", .token, "Stripe"),
-            i("acp/preview/DATABASE_URL", .password, "Neon"),
+            i("shop/development/DATABASE_URL", .password, "Neon", used: shopDev),
+            i("shop/development/PGHOST", .value, "Neon", safe: true, used: shopDev),
+            i("shop/development/API_TOKEN", .token, nil, used: shopDev),
+            i("shop/production/DATABASE_URL", .password, "Neon"),
+            i("shop/production/STRIPE_SECRET_KEY", .token, "Stripe"),
+            i("shop/preview/DATABASE_URL", .password, "Neon"),
             i("site/production/RESEND_API_KEY", .token, "Resend"),
             i("site/development/NEXT_PUBLIC_API_HOST", .value, nil, safe: true),
             i("GEMINI_API_KEY", .token, "Google"),
@@ -136,9 +136,9 @@ enum Snapshot {
                     kind: .password, agentSafe: false, note: "", service: "Neon", usedIn: nil)
         }
         return [
-            v("acp/production/DATABASE_URL", 3 * 3600, .changed, "the Latchkey app"),
-            v("acp/production/DATABASE_URL", 9 * 86400, .changed, "zsh › claude"),
-            v("acp/production/DATABASE_URL", 40 * 86400, .restored, "the Latchkey app"),
+            v("shop/production/DATABASE_URL", 3 * 3600, .changed, "the Latchkey app"),
+            v("shop/production/DATABASE_URL", 9 * 86400, .changed, "zsh › claude"),
+            v("shop/production/DATABASE_URL", 40 * 86400, .restored, "the Latchkey app"),
             v("old-site/production/SENTRY_DSN", 2 * 86400, .deleted, "the Latchkey app"),
         ]
     }
