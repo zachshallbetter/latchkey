@@ -1,8 +1,9 @@
 # Latchkey
 
-> A secrets manager for macOS and the coding agents that run on it. Project files keep latchkey:// references;
-> the values live in iCloud Keychain; Latchkey fills them in when a command starts, after the owner approves with
-> Touch ID, Apple Watch or their password, or under a grant they made.
+> Development credentials on your Mac. Latchkey keeps API keys, database URLs and key files in iCloud Keychain;
+> project files keep latchkey:// references; Latchkey fills the values in when a command starts, after the owner
+> approves with Touch ID, Apple Watch or their password, or under a grant they made. For developers and the coding
+> agents they run.
 
 - Platform: macOS 15 or later (app); the command-line tool `latchkey` (`lk` for short) ships inside the app.
 - Storage: iCloud Keychain, in Latchkey's own access group, synced to the owner's Macs. No Latchkey server or account.
@@ -24,6 +25,7 @@
 
 - [Features](features.html)
 - [Security](security.html)
+- [Roadmap](roadmap.html)
 - [Developers overview](developers/index.html)
 - [Quickstart](developers/quickstart.html)
 - [CLI reference](developers/cli.html)

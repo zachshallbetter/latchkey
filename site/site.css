@@ -409,6 +409,10 @@ figure.code + .more { margin-top: 12px; }
 
 /* The Latchkey window (app-demo.js): three panes like the app, at the full width of the page. */
 .appwrap { width: 100%; margin: 0; }
+/* What the window shows when scripts don't run; app-demo.js replaces it with the working window. */
+.appwin-static { padding: 18px 20px; font-size: 15px; }
+.appwin-static ul { margin: 8px 0 12px; padding-left: 20px; }
+.appwin-static li { margin: 4px 0; }
 .appwin { position: relative; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); overflow: hidden;
           font-size: 13.5px; color: var(--ink); }
 .appwin .chrome { display: flex; align-items: center; gap: 7px; height: 36px; padding: 0 12px; border-bottom: 1px solid var(--line); background: var(--bg-2); }

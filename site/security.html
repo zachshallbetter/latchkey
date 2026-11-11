@@ -108,7 +108,7 @@
             <svg class="cursor" viewBox="0 0 18 22" style="transform:translate(480px,300px)"><path d="M1.5 1.5v16.2l4.2-4 2.7 6.3 2.8-1.2-2.7-6.2h5.9z" fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/></svg>
           </div>
         </div>
-        <p class="fine wide-cap">A reference in a committed file names the item and nothing more. A script that asks Latchkey directly, instead of through the signed <code>lk</code> tool, is named by its path with a warning, and is refused unless you allow it.</p>
+        <p class="fine wide-cap">A reference in a committed file names the item and nothing more. A script that asks Latchkey directly, instead of through the signed <code>lk</code> tool, is named by its path with a warning, and is refused unless you allow it. The scene uses example data.</p>
       </div>
     </section>
 
@@ -139,7 +139,7 @@
     <section class="topic" id="sync" aria-labelledby="sync-title">
       <header><h2 id="sync-title">Sync between Macs</h2><p>iCloud Keychain carries items; permissions stay put.</p></header>
       <div class="body">
-    <p>Latchkey's items sync through iCloud Keychain, end to end encrypted, to each Mac signed in to your Apple Account that has Latchkey installed. There's no Latchkey server or account. That protection is Apple's: anyone who controls your Apple Account and a trusted device can reach synced items.</p>
+    <p>Latchkey's items sync through iCloud Keychain, end to end encrypted, to each Mac signed in to your Apple Account that has Latchkey installed. There's no Latchkey server or account. That protection is Apple's: anyone who controls your Apple Account and a trusted device can reach synced items. Apple describes it in <a href="https://support.apple.com/guide/security/icloud-keychain-security-overview-sec1c89c6f3b/web">iCloud Keychain security overview</a> and <a href="https://support.apple.com/en-us/102651">iCloud data security overview</a>.</p>
     <p>Grants, approvals and the access log stay on each Mac. A second Mac gets your items and environment records, not the permissions you gave agents on the first. <span class="avail pending">Second-Mac test pending</span></p>
       </div>
     </section>
@@ -159,7 +159,7 @@
       <header><h2 id="release-title">Releasing values</h2><p>Approvals, grants, and items agents may read.</p></header>
       <div class="body">
     <h3>Approvals</h3>
-    <p>Approvals use macOS LocalAuthentication: Touch ID, a paired Apple Watch, or your account password. Releasing values shows the panel first, with the caller's folder, command and process chain; Touch ID confirms. Changes ask with the system sheet alone, naming the item, the agent and the folder. A request over SSH, or from a program that isn't Latchkey's tool, always shows the panel and its warning first. Nothing unanswered is allowed: either prompt denies after 90 seconds. Allow Once authorizes one request; approvals are never cached.</p>
+    <p>Approvals use macOS <a href="https://developer.apple.com/documentation/localauthentication">LocalAuthentication</a>: Touch ID, a paired Apple Watch, or your account password. Releasing values shows the panel first, with the caller's folder, command and process chain; Touch ID confirms. Changes ask with the system sheet alone, naming the item, the agent and the folder. A request over SSH, or from a program that isn't Latchkey's tool, always shows the panel and its warning first. Nothing unanswered is allowed: either prompt denies after 90 seconds. Allow Once authorizes one request; approvals are never cached.</p>
     <h3>Grants</h3>
     <p>A grant lets commands from one folder (and its repository's worktrees) read named items without asking, for up to 7 days, and can be narrowed to an agent's session, one command or one request. Grants are kept in a keychain item only Latchkey can read or change, on this Mac only. No file holds them, so no other program can write itself one. Grants an agent asks for through the MCP server cover only its own folder, last a day at most, and can't include production.</p>
     <h3>Agent-safe items</h3>
@@ -237,9 +237,9 @@
     </section>
 
     <section class="topic" id="report" aria-labelledby="report-title">
-      <header><h2 id="report-title">Reporting a problem</h2><p>Privately, through GitHub.</p></header>
+      <header><h2 id="report-title">Reporting a problem</h2><p>Privately, never in public.</p></header>
       <div class="body">
-    <p>Report a vulnerability privately through GitHub: the repository's <b>Security</b> tab › <b>Report a vulnerability</b>. Please don't open a public issue for it. Include the Latchkey and macOS versions, what an attacker can do and what they need first, and steps to reproduce with example values only. Never send a real secret.</p>
+    <p>Latchkey is in development preview and its repository isn't public yet, so there's no public route for reports today. When it opens, report a vulnerability privately through GitHub: the repository's <b>Security</b> tab › <b>Report a vulnerability</b>. Please don't open a public issue for it. Include the Latchkey and macOS versions, what an attacker can do and what they need first, and steps to reproduce with example values only. Never send a real secret.</p>
       </div>
     </section>
 

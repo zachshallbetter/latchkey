@@ -64,13 +64,22 @@
         <li><a href="#credentials">Credentials</a></li><li><a href="#environments">Environments</a></li><li><a href="#devices">Devices</a></li>
         <li><a href="#agents">Agents and tools</a></li><li><a href="#integrations">Integrations</a></li><li><a href="#visibility">Visibility</a></li>
       </ul>
-      <p class="legend"><span><span class="avail">In this build</span> works in the development preview</span><span><span class="avail pending">Pending</span> built, not yet verified for release, or not built yet</span></p>
+      <p class="legend"><span><span class="avail">In this build</span> works in the development preview</span><span><span class="avail pending">Pending</span> built, not yet verified for release, or not built yet</span><span>Scenes replay what Latchkey prints and shows, with example data.</span></p>
     </section>
 
     <section class="group" id="credentials" aria-labelledby="credentials-title">
       <header><p class="eyebrow">Credentials</p><h2 id="credentials-title">Every credential has a name, a place and a past.</h2>
         <p>An item is <code>project/environment/NAME</code>, or just <code>NAME</code> when it's shared by every project. Its kind, service and note travel with it, and replacing its value keeps the old one.</p></header>
-      <div class="appwrap"><div class="appwin" id="appwin" aria-label="The Latchkey window, with example data"></div>
+      <div class="appwrap"><div class="appwin" id="appwin" aria-label="The Latchkey window, with example data"><div class="appwin-static">
+          <p><b>The Latchkey window, with example data.</b> With scripts on, it works: filter by kind, project or service, and open an item. It lists:</p>
+          <ul>
+            <li><b>shop · development:</b> DATABASE_URL (password, Neon), STRIPE_KEY (token, Stripe), PGHOST (plain value, Neon, readable by agents without asking)</li>
+            <li><b>shop · vercel.preview:</b> DATABASE_URL, linked to Vercel</li>
+            <li><b>shop · production:</b> DATABASE_URL and STRIPE_KEY, linked to Vercel</li>
+            <li><b>Shared:</b> OPENAI_API_KEY</li>
+          </ul>
+          <p>Opening an item shows its reference, kind, service, whether agents may read it without asking, where it's used, and its history.</p>
+        </div></div>
         <p class="fine wide-cap">The Latchkey window, working with example data: filter by kind, project or service, open an item to see its reference, where it's used and its history. Revealing a value asks for Touch ID. The values are made up.</p></div>
       <div class="caps">
         <article class="cap"><h3>Store and organize <span class="avail">In this build</span></h3><p>Tokens, passwords, key files and plain values, grouped by project and environment in the app and the CLI. The value is read from standard input or a hidden prompt.</p>

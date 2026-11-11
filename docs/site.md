@@ -7,7 +7,7 @@ served. It isn't hosted or connected to any service yet.
 |---|---|
 | `index.html` | The home page: a hero scene of a reference reaching a command, then four numbered movements (a fresh clone, importing an env file, a second Mac, an agent asking), each beside a scene; the interactive approval panel; the app window; rotation; the key proxy; integrations; security in brief; install. Its CSS is inline |
 | `features.html` | Capabilities in six groups (credentials, environments, devices, agents and tools, integrations, visibility), each with one example, an availability label and a link to its docs. Credentials opens with the working app window (`app-demo.js`); the other groups with scenes |
-| `roadmap.html` | What's built, what's next and what's out of scope, by tier. The items are the `tiers` list in its script; mark one `built: true` only when the docs describe it as shipped |
+| `roadmap.html` | What's built, what's next and what's out of scope, by tier. The items are written in the HTML (the script only filters them); mark one **Built** only when the docs describe it as shipped |
 | `security.html` | What each mechanism protects and doesn't, from `docs/security.md` and `SECURITY.md`: a scene of a script asking directly (the panel's warning), the six distinctions, each topic beside its heading, and the delivery-path and guarantees tables, which become one block per row on phones |
 | `scenes.js` | The self-playing scenes: small drawings of Latchkey in use that play while on screen and start over. Each `.scene-wrap[data-scene]` names a script there; its HTML is the last frame, which is what shows without scripts or with reduced motion. Each has a pause button |
 | `site.css` | Shared styles: colour tokens (light and dark), header, footer, code blocks, the developer docs layout, feature rows, availability labels and the scenes |
@@ -33,6 +33,11 @@ system's, so pages make no third-party requests.
 
 ## Keeping it true
 
+The pages were audited against the Digital Presence Protocol (DPP 0.3.0, working draft): content is in the HTML
+without scripts, scenes say they use example data, the product description matches across pages and `llms.txt`,
+security claims that rest on Apple link to Apple's documentation, and JSON-LD only states what the page shows
+(no offers or ratings). Keep those true when pages change.
+
 Scenes and demos show only what Latchkey prints and shows. Terminal output in `scenes.js` and the home page's script
 is copied from the `print` calls in `Sources/latchkey` (and panel wording from `App/Latchkey/ApprovalPanel.swift`);
 when one changes, change the scene. Example data (project `shop`, values, dates, counts) is illustrative. A capability
@@ -44,7 +49,7 @@ belongs in both places. Every page shares the same header, sidebar and footer; c
 
 ## Before it goes live
 
-- A domain, then canonical URLs, `og:url`, an Open Graph image (the pages use a text-only `summary` card until then)
+- A domain, then canonical URLs, absolute `@id` and `url` values in the JSON-LD (relative until then), `og:url`, an Open Graph image (the pages use a text-only `summary` card until then)
   and a sitemap.
 - Publish a signed and notarized release first (`scripts/release.sh`), then replace the **Preview status**
   actions and source installation instructions with the public download and Homebrew command.

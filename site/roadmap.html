@@ -8,6 +8,7 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Latchkey">
   <meta property="og:title" content="Roadmap · Latchkey">
+  <meta property="og:description" content="What would make Latchkey excellent: what's built, what's next, and what's out of scope.">
   <meta name="twitter:card" content="summary">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
@@ -17,7 +18,7 @@
   <link rel="stylesheet" href="site.css">
   <style>
     /* Roadmap: the pitch beside where things stand, the filters, then each tier with its heading beside its items,
-       and the non-goals as a wide row of cards. Items come from the tiers list in the script below. */
+       and the non-goals as a wide row of cards. Items are written in the page; the script only filters them. */
     .rm .page-hero { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 32px 56px; align-items: start; padding: 48px 0 0; }
     .rm .lede { font-size: 19px; color: var(--muted); }
     .rm .principle { padding: 14px 16px; border-radius: 12px; background: var(--accent-soft); color: var(--ink); }
@@ -111,7 +112,338 @@
       <div class="legend" aria-label="Size key"><span><b>S</b> small</span><span><b>M</b> medium</span><span><b>L</b> large</span></div>
     </div>
 
-    <div id="tiers"></div>
+    <div id="tiers">
+      <section class="tier" id="tier-basics" aria-labelledby="h-basics">
+        <header class="tier-head">
+          <p class="eyebrow">Tier 1</p>
+          <h2 id="h-basics">Fix the basics</h2>
+          <p>Things that undercut daily use or trust today.</p>
+        </header>
+        <ul class="items">
+          <li class="item is-built" data-who="you" data-next="0">
+            <span class="size" title="Small">S</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Sign the app with your team</h3><span class="pill built">Built</span></div>
+              <p class="gap"><b>Gap:</b> unsigned builds can't use iCloud Keychain, so nothing syncs, and every reinstall makes macOS ask for your login password per item.</p>
+              <p class="plan"><b>Built:</b> with <code>DEVELOPMENT_TEAM</code> set in <code>App/project.yml</code>, <code>scripts/install.sh</code> signs with your team and <code>lk status</code> reports iCloud Keychain storage. Notarization only matters for sharing builds.</p>
+            </div>
+            <div class="who"><span class="pill">You</span></div>
+          </li>
+          <li class="item is-built" data-who="you agents" data-next="0">
+            <span class="size" title="Small">S</span>
+            <div class="ibody">
+              <div class="title-row"><h3>CLI starts the app when it isn't running</h3><span class="pill built">Built</span></div>
+              <p class="gap"><b>Gap:</b> if the app is closed, every <code>latchkey</code> command fails with “cannot reach the app”.</p>
+              <p class="plan"><b>Plan:</b> when the socket is missing, launch Latchkey in the background, wait for it to answer, then carry on.</p>
+            </div>
+            <div class="who"><span class="pill">You</span><span class="pill">Agents</span></div>
+          </li>
+          <li class="item is-built" data-who="agents" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Time-limited grants</h3><span class="pill built">Built</span></div>
+              <p class="gap"><b>Gap:</b> when you step away, approval prompts time out and agents stall.</p>
+              <p class="plan"><b>Plan:</b> grants such as “agents in <code>~/Projects/site</code> may read these 4 items for 2 hours”, created from the window or from an approval. Each grant appears in Activity and can be revoked.</p>
+            </div>
+            <div class="who"><span class="pill">Agents</span></div>
+          </li>
+          <li class="item is-built" data-who="you agents" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>“Allow for this project” on the approval</h3><span class="pill built">Built</span></div>
+              <p class="gap"><b>Gap:</b> the system sheet can only say yes or no, with one line of context.</p>
+              <p class="plan"><b>Plan:</b> a Latchkey panel before Touch ID shows who is asking, from which folder and for which command, with Deny, Allow once, and Allow here for 1 hour / today.</p>
+            </div>
+            <div class="who"><span class="pill">You</span><span class="pill">Agents</span></div>
+          </li>
+          <li class="item" data-who="agents" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Verify callers by code signature</h3></div>
+              <p class="gap"><b>Gap:</b> the caller chain is process names, which any program can fake, and callers are identified by PID, which can be reused.</p>
+              <p class="plan"><b>Built:</b> the caller is identified by its audit token and checked by code signature as Latchkey's own tool or not. <b>Next:</b> check the signing team of each parent in the chain (Claude, Cursor, Terminal), which are still named by their files.</p>
+            </div>
+            <div class="who"><span class="pill">Agents</span></div>
+          </li>
+          <li class="empty" hidden>Nothing in this tier matches the filter.</li>
+        </ul>
+      </section>
+      <section class="tier" id="tier-origin" aria-labelledby="h-origin">
+        <header class="tier-head">
+          <p class="eyebrow">Tier 1b</p>
+          <h2 id="h-origin">Where secrets come from and where they go</h2>
+          <p>Know what each key is for, notice when one leaks, and get to the right place to replace it.</p>
+        </header>
+        <ul class="items">
+          <li class="item is-next" data-who="you agents" data-next="1">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Origin and rotation details</h3><span class="pill next">Next up</span></div>
+              <p class="gap"><b>Gap:</b> an item is a name and a value. When one leaks, nothing says which service issued it or where to make a new one.</p>
+              <p class="plan"><b>Plan:</b> record what the Passwords app records for a login, adapted to keys: the service, account or project, the console URL where it's managed, who made it and when, when it was last rotated, and which projects use it. <code>import</code> and the app fill these in where they can (for example from a key's prefix: <code>sk_live_</code> is Stripe, <code>ghp_</code> is GitHub).</p>
+            </div>
+            <div class="who"><span class="pill">You</span><span class="pill">Agents</span></div>
+          </li>
+          <li class="item is-next" data-who="you" data-next="1">
+            <span class="size" title="Large">L</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Leak alerts</h3><span class="pill next">Next up</span></div>
+              <p class="gap"><b>Gap:</b> if a key is pushed to a public repo or pasted somewhere, you find out from the provider, if at all.</p>
+              <p class="plan"><b>Plan:</b> read GitHub secret-scanning alerts for your repos through <code>gh</code>, scan your own repos and history locally (fingerprints only, values never leave the Mac), and match what's found against your items. A match marks the item compromised, notifies you, and shows where it was found.</p>
+            </div>
+            <div class="who"><span class="pill">You</span></div>
+          </li>
+          <li class="item is-built" data-who="you" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Compromised: replace it in one place</h3><span class="pill built">Built</span></div>
+              <p class="gap"><b>Gap:</b> replacing a leaked key means remembering the console, the new value, and every project and service that used it.</p>
+              <p class="plan"><b>Built:</b> <code>lk rotate</code> ends the grants that cover an item, opens its service's page for a new key, saves what you paste with the old value in history, and pushes to linked environments with <code>--push</code>. <code>lk touched</code> lists what an agent was given.</p>
+            </div>
+            <div class="who"><span class="pill">You</span></div>
+          </li>
+          <li class="item is-built" data-who="you agents" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Projects and environments</h3><span class="pill built">Built</span></div>
+              <p class="gap"><b>Gap:</b> one flat list doesn't capture that a project has development, staging and production values.</p>
+              <p class="plan"><b>Built:</b> IDs <code>project/environment/NAME</code> (<code>latchkey://acp/production/DATABASE_URL</code>), import placement from the repo and file name, moving items with their references, project-wide grants, and a service field filled in on import. <b>Next:</b> remote locations (Vercel, GitHub Actions, Fly) recorded alongside local files.</p>
+            </div>
+            <div class="who"><span class="pill">You</span><span class="pill">Agents</span></div>
+          </li>
+          <li class="item is-built" data-who="you agents" data-next="0">
+            <span class="size" title="Large">L</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Remote machines and services</h3><span class="pill built">Built</span></div>
+              <p class="gap"><b>Gap:</b> values are needed on servers, in CI and in hosted environments, and today they're copied by hand.</p>
+              <p class="plan"><b>Built:</b> link an environment to Vercel, GitHub Actions, Railway or Fly; names-only status; push with approval every time and an extra confirmation for production; out-of-date tracking. <b>Also built:</b> forward the Latchkey socket over SSH, so a command on another Mac asks you on yours.</p>
+            </div>
+            <div class="who"><span class="pill">You</span><span class="pill">Agents</span></div>
+          </li>
+          <li class="item is-built" data-who="you" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Version history and recovery</h3><span class="pill built">Built</span></div>
+              <p class="gap"><b>Gap:</b> a changed or deleted value was gone, and a file rewritten to references could lose its only copy.</p>
+              <p class="plan"><b>Built:</b> the last 10 values of each item, Recently Deleted for 30 days, restore with approval, synced like the items.</p>
+            </div>
+            <div class="who"><span class="pill">You</span></div>
+          </li>
+          <li class="empty" hidden>Nothing in this tier matches the filter.</li>
+        </ul>
+      </section>
+      <section class="tier" id="tier-agents" aria-labelledby="h-agents">
+        <header class="tier-head">
+          <p class="eyebrow">Tier 2</p>
+          <h2 id="h-agents">Built for agents</h2>
+          <p>Where Latchkey can be clearly better than a .env file or a password manager.</p>
+        </header>
+        <ul class="items">
+          <li class="item" data-who="agents" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Use a value without holding it</h3></div>
+              <p class="gap"><b>Gap:</b> “agent-safe” means the agent can hold the value: it can call <code>latchkey get</code>, and masking only catches exact copies.</p>
+              <p class="plan"><b>Plan:</b> refuse <code>get</code> to agent callers, and mask base64, URL-encoded and JSON-escaped copies too.</p>
+            </div>
+            <div class="who"><span class="pill">Agents</span></div>
+          </li>
+          <li class="item is-built" data-who="agents" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>MCP server</h3><span class="pill built">Built</span></div>
+              <p class="gap"><b>Gap:</b> agents learn Latchkey from instructions and shell commands.</p>
+              <p class="plan"><b>Built:</b> <code>latchkey mcp</code> with tools for status, listing items, checking and running a command with references filled in, the checkout's project, writing an env file of references, and asking for a grant. No tool returns a value.</p>
+            </div>
+            <div class="who"><span class="pill">Agents</span></div>
+          </li>
+          <li class="item" data-who="agents you" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Secret requests</h3></div>
+              <p class="gap"><b>Gap:</b> to add a key, an agent has to handle the value or ask you to do it out of band.</p>
+              <p class="plan"><b>Plan:</b> the agent asks for <code>STRIPE_KEY</code> for this project, a notification opens a field in the app, you paste the value, and the agent gets back only the reference.</p>
+            </div>
+            <div class="who"><span class="pill">Agents</span><span class="pill">You</span></div>
+          </li>
+          <li class="item" data-who="agents" data-next="0">
+            <span class="size" title="Small">S</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Agent setup kit</h3></div>
+              <p class="gap"><b>Gap:</b> every agent needs to be told how to use Latchkey, and nothing stops it from running <code>cat .env</code>.</p>
+              <p class="plan"><b>Built:</b> the Latchkey skill and Claude Code plugin tell an agent to run through <code>lk run</code>, never print values, and stop on 77 or 66. <b>Next:</b> a hook that blocks commands like <code>cat .env</code> and <code>printenv</code>.</p>
+            </div>
+            <div class="who"><span class="pill">Agents</span></div>
+          </li>
+          <li class="item is-built" data-who="agents you" data-next="0">
+            <span class="size" title="Large">L</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Rules beyond one switch</h3><span class="pill built">Built</span></div>
+              <p class="gap"><b>Gap:</b> agent-safe is one yes/no per item.</p>
+              <p class="plan"><b>Built:</b> grants per folder and its worktrees, for a time, until the agent quits, for one command or one request, e.g. <code>lk grant shop/development/DATABASE_URL --command "npm test"</code>.</p>
+            </div>
+            <div class="who"><span class="pill">Agents</span><span class="pill">You</span></div>
+          </li>
+          <li class="item is-built" data-who="agents" data-next="0">
+            <span class="size" title="Large">L</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Header-injecting proxy</h3><span class="pill built">Built</span></div>
+              <p class="gap"><b>Gap:</b> any value in a process's environment can be printed or written to a file.</p>
+              <p class="plan"><b>Built:</b> <code>lk run --proxy</code> gives the command a placeholder and a local base URL, and adds the real OpenAI or Anthropic key only to requests for the provider's host. <b>Next:</b> more providers.</p>
+            </div>
+            <div class="who"><span class="pill">Agents</span></div>
+          </li>
+          <li class="empty" hidden>Nothing in this tier matches the filter.</li>
+        </ul>
+      </section>
+      <section class="tier" id="tier-daily" aria-labelledby="h-daily">
+        <header class="tier-head">
+          <p class="eyebrow">Tier 3</p>
+          <h2 id="h-daily">Day-to-day use</h2>
+          <p>Smaller features that remove friction.</p>
+        </header>
+        <ul class="items">
+          <li class="item is-built" data-who="you agents" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Key files</h3><span class="pill built">Built</span></div>
+              <p class="gap"><b>Gap:</b> tools that want a file path (.p8, .pem, service-account JSON) can't use an environment value.</p>
+              <p class="plan"><b>Plan:</b> <code>GOOGLE_APPLICATION_CREDENTIALS=latchkey-file://gcp-sa</code> writes a 0600 temporary file and deletes it when the command exits.</p>
+            </div>
+            <div class="who"><span class="pill">You</span><span class="pill">Agents</span></div>
+          </li>
+          <li class="item" data-who="you agents" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Project commands</h3></div>
+              <p class="gap"><b>Gap:</b> there's no standard way to set up a project or check it in CI.</p>
+              <p class="plan"><b>Built:</b> <code>latchkey check</code> confirms what a run would get without reading values, and <code>latchkey export</code> writes an env file of references from the environment's record. <b>Next:</b> <code>latchkey init</code> and a shell hook.</p>
+            </div>
+            <div class="who"><span class="pill">You</span><span class="pill">Agents</span></div>
+          </li>
+          <li class="item" data-who="you" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Last used, expiry and rotation</h3></div>
+              <p class="gap"><b>Gap:</b> nothing says which tokens are stale, unused or about to expire.</p>
+              <p class="plan"><b>Plan:</b> last-used dates from the log, an expiry date per item, reminders before expiry, and a list of items nothing has read in 90 days.</p>
+            </div>
+            <div class="who"><span class="pill">You</span></div>
+          </li>
+          <li class="item" data-who="you" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Items with fields</h3></div>
+              <p class="gap"><b>Gap:</b> AWS and database credentials come in sets that are stored as unrelated items.</p>
+              <p class="plan"><b>Plan:</b> group items such as <code>aws.access_key_id</code> and <code>aws.secret_access_key</code> as one card with fields.</p>
+            </div>
+            <div class="who"><span class="pill">You</span></div>
+          </li>
+          <li class="item" data-who="you agents" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Scan for plain-text secrets</h3></div>
+              <p class="gap"><b>Gap:</b> secrets already sitting in repos and old .env files stay there.</p>
+              <p class="plan"><b>Plan:</b> <code>latchkey scan</code> finds likely secrets and offers to import them, plus a git pre-commit hook.</p>
+            </div>
+            <div class="who"><span class="pill">You</span><span class="pill">Agents</span></div>
+          </li>
+          <li class="item" data-who="you" data-next="0">
+            <span class="size" title="Small">S</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Activity alerts</h3></div>
+              <p class="gap"><b>Gap:</b> denied or unusual reads are only visible if you open Activity.</p>
+              <p class="plan"><b>Plan:</b> notifications for denials and first-time callers, and filters by item, folder and outcome.</p>
+            </div>
+            <div class="who"><span class="pill">You</span></div>
+          </li>
+          <li class="empty" hidden>Nothing in this tier matches the filter.</li>
+        </ul>
+      </section>
+      <section class="tier" id="tier-moving" aria-labelledby="h-moving">
+        <header class="tier-head">
+          <p class="eyebrow">Tier 4</p>
+          <h2 id="h-moving">Moving in</h2>
+          <p>Getting existing secrets into Latchkey, and getting them back out safely.</p>
+        </header>
+        <ul class="items">
+          <li class="item" data-who="you" data-next="0">
+            <span class="size" title="Small">S</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Import from Passwords</h3></div>
+              <p class="gap"><b>Gap:</b> tokens you've saved in the Passwords app can't be read by other apps.</p>
+              <p class="plan"><b>Plan:</b> read a Passwords CSV export (File > Export), pick the entries that are really API tokens, import them, then delete the CSV.</p>
+            </div>
+            <div class="who"><span class="pill">You</span></div>
+          </li>
+          <li class="item" data-who="you" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Import from other managers</h3></div>
+              <p class="gap"><b>Gap:</b> secrets in 1Password or Bitwarden have to be copied over one by one.</p>
+              <p class="plan"><b>Plan:</b> importers that use the <code>op</code> and <code>bw</code> command-line tools.</p>
+            </div>
+            <div class="who"><span class="pill">You</span></div>
+          </li>
+          <li class="item" data-who="you" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Encrypted backup</h3></div>
+              <p class="gap"><b>Gap:</b> until the app is signed, the login keychain is the only copy, with no recovery.</p>
+              <p class="plan"><b>Plan:</b> an export encrypted with a passphrase, and a matching restore.</p>
+            </div>
+            <div class="who"><span class="pill">You</span></div>
+          </li>
+          <li class="empty" hidden>Nothing in this tier matches the filter.</li>
+        </ul>
+      </section>
+      <section class="tier" id="tier-later" aria-labelledby="h-later">
+        <header class="tier-head">
+          <p class="eyebrow">Tier 5</p>
+          <h2 id="h-later">Later</h2>
+          <p>Larger work that builds on everything above.</p>
+        </header>
+        <ul class="items">
+          <li class="item" data-who="you agents" data-next="0">
+            <span class="size" title="Large">L</span>
+            <div class="ibody">
+              <div class="title-row"><h3>SSH agent with Secure Enclave keys</h3></div>
+              <p class="gap"><b>Gap:</b> SSH keys sit on disk as files.</p>
+              <p class="plan"><b>Plan:</b> keys that can't be exported and ask for Touch ID on each use, also usable for git commit signing. Each Mac gets its own key.</p>
+            </div>
+            <div class="who"><span class="pill">You</span><span class="pill">Agents</span></div>
+          </li>
+          <li class="item" data-who="you agents" data-next="0">
+            <span class="size" title="Large">L</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Approve from iPhone</h3></div>
+              <p class="gap"><b>Gap:</b> when you're away from the Mac, only the Apple Watch can approve.</p>
+              <p class="plan"><b>Plan:</b> an iPhone companion that receives approval requests, for agents working while you're out.</p>
+            </div>
+            <div class="who"><span class="pill">You</span><span class="pill">Agents</span></div>
+          </li>
+          <li class="item" data-who="you" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Distribution</h3></div>
+              <p class="gap"><b>Gap:</b> installing means building from source.</p>
+              <p class="plan"><b>Plan:</b> a notarized build, a Homebrew cask, and in-app updates.</p>
+            </div>
+            <div class="who"><span class="pill">You</span></div>
+          </li>
+          <li class="item" data-who="you" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Test coverage</h3></div>
+              <p class="gap"><b>Gap:</b> there are no end-to-end tests for <code>latchkey run</code> or the socket server, and no UI tests.</p>
+              <p class="plan"><b>Plan:</b> tests that run the CLI against a broker with a test approver, plus a few UI tests for the window.</p>
+            </div>
+            <div class="who"><span class="pill">You</span></div>
+          </li>
+          <li class="empty" hidden>Nothing in this tier matches the filter.</li>
+        </ul>
+      </section>
+    </div>
 
     <section class="outside" aria-labelledby="outside-title">
       <div class="shead"><p class="eyebrow">Outside the plan</p><h2 id="outside-title">Limits and non-goals</h2></div>
@@ -137,134 +469,7 @@
   </footer>
   <script src="site.js"></script>
 <script>
-const tiers = [
-  { id: "basics", eyebrow: "Tier 1", title: "Fix the basics", note: "Things that undercut daily use or trust today.", items: [
-    { t: "Sign the app with your team", s: "S", who: ["you"], built: true,
-      gap: "<b>Gap:</b> unsigned builds can't use iCloud Keychain, so nothing syncs, and every reinstall makes macOS ask for your login password per item.",
-      plan: "<b>Built:</b> with <code>DEVELOPMENT_TEAM</code> set in <code>App/project.yml</code>, <code>scripts/install.sh</code> signs with your team and <code>lk status</code> reports iCloud Keychain storage. Notarization only matters for sharing builds." },
-    { t: "CLI starts the app when it isn't running", s: "S", who: ["you", "agents"], built: true,
-      gap: "<b>Gap:</b> if the app is closed, every <code>latchkey</code> command fails with “cannot reach the app”.",
-      plan: "<b>Plan:</b> when the socket is missing, launch Latchkey in the background, wait for it to answer, then carry on." },
-    { t: "Time-limited grants", s: "M", who: ["agents"], built: true,
-      gap: "<b>Gap:</b> when you step away, approval prompts time out and agents stall.",
-      plan: "<b>Plan:</b> grants such as “agents in <code>~/Projects/site</code> may read these 4 items for 2 hours”, created from the window or from an approval. Each grant appears in Activity and can be revoked." },
-    { t: "“Allow for this project” on the approval", s: "M", who: ["you", "agents"], built: true,
-      gap: "<b>Gap:</b> the system sheet can only say yes or no, with one line of context.",
-      plan: "<b>Plan:</b> a Latchkey panel before Touch ID shows who is asking, from which folder and for which command, with Deny, Allow once, and Allow here for 1 hour / today." },
-    { t: "Verify callers by code signature", s: "M", who: ["agents"],
-      gap: "<b>Gap:</b> the caller chain is process names, which any program can fake, and callers are identified by PID, which can be reused.",
-      plan: "<b>Built:</b> the caller is identified by its audit token and checked by code signature as Latchkey's own tool or not. <b>Next:</b> check the signing team of each parent in the chain (Claude, Cursor, Terminal), which are still named by their files." },
-  ]},
-  { id: "origin", eyebrow: "Tier 1b", title: "Where secrets come from and where they go", note: "Know what each key is for, notice when one leaks, and get to the right place to replace it.", items: [
-    { t: "Origin and rotation details", s: "M", who: ["you", "agents"], next: true,
-      gap: "<b>Gap:</b> an item is a name and a value. When one leaks, nothing says which service issued it or where to make a new one.",
-      plan: "<b>Plan:</b> record what the Passwords app records for a login, adapted to keys: the service, account or project, the console URL where it's managed, who made it and when, when it was last rotated, and which projects use it. <code>import</code> and the app fill these in where they can (for example from a key's prefix: <code>sk_live_</code> is Stripe, <code>ghp_</code> is GitHub)." },
-    { t: "Leak alerts", s: "L", who: ["you"], next: true,
-      gap: "<b>Gap:</b> if a key is pushed to a public repo or pasted somewhere, you find out from the provider, if at all.",
-      plan: "<b>Plan:</b> read GitHub secret-scanning alerts for your repos through <code>gh</code>, scan your own repos and history locally (fingerprints only, values never leave the Mac), and match what's found against your items. A match marks the item compromised, notifies you, and shows where it was found." },
-    { t: "Compromised: replace it in one place", s: "M", who: ["you"], built: true,
-      gap: "<b>Gap:</b> replacing a leaked key means remembering the console, the new value, and every project and service that used it.",
-      plan: "<b>Built:</b> <code>lk rotate</code> ends the grants that cover an item, opens its service's page for a new key, saves what you paste with the old value in history, and pushes to linked environments with <code>--push</code>. <code>lk touched</code> lists what an agent was given." },
-    { t: "Projects and environments", s: "M", who: ["you", "agents"], built: true,
-      gap: "<b>Gap:</b> one flat list doesn't capture that a project has development, staging and production values.",
-      plan: "<b>Built:</b> IDs <code>project/environment/NAME</code> (<code>latchkey://acp/production/DATABASE_URL</code>), import placement from the repo and file name, moving items with their references, project-wide grants, and a service field filled in on import. <b>Next:</b> remote locations (Vercel, GitHub Actions, Fly) recorded alongside local files." },
-    { t: "Remote machines and services", s: "L", who: ["you", "agents"], built: true,
-      gap: "<b>Gap:</b> values are needed on servers, in CI and in hosted environments, and today they're copied by hand.",
-      plan: "<b>Built:</b> link an environment to Vercel, GitHub Actions, Railway or Fly; names-only status; push with approval every time and an extra confirmation for production; out-of-date tracking. <b>Also built:</b> forward the Latchkey socket over SSH, so a command on another Mac asks you on yours." },
-    { t: "Version history and recovery", s: "M", who: ["you"], built: true,
-      gap: "<b>Gap:</b> a changed or deleted value was gone, and a file rewritten to references could lose its only copy.",
-      plan: "<b>Built:</b> the last 10 values of each item, Recently Deleted for 30 days, restore with approval, synced like the items." },
-  ]},
-  { id: "agents", eyebrow: "Tier 2", title: "Built for agents", note: "Where Latchkey can be clearly better than a .env file or a password manager.", items: [
-    { t: "Use a value without holding it", s: "M", who: ["agents"],
-      gap: "<b>Gap:</b> “agent-safe” means the agent can hold the value: it can call <code>latchkey get</code>, and masking only catches exact copies.",
-      plan: "<b>Plan:</b> refuse <code>get</code> to agent callers, and mask base64, URL-encoded and JSON-escaped copies too." },
-    { t: "MCP server", s: "M", who: ["agents"], built: true,
-      gap: "<b>Gap:</b> agents learn Latchkey from instructions and shell commands.",
-      plan: "<b>Built:</b> <code>latchkey mcp</code> with tools for status, listing items, checking and running a command with references filled in, the checkout's project, writing an env file of references, and asking for a grant. No tool returns a value." },
-    { t: "Secret requests", s: "M", who: ["agents", "you"],
-      gap: "<b>Gap:</b> to add a key, an agent has to handle the value or ask you to do it out of band.",
-      plan: "<b>Plan:</b> the agent asks for <code>STRIPE_KEY</code> for this project, a notification opens a field in the app, you paste the value, and the agent gets back only the reference." },
-    { t: "Agent setup kit", s: "S", who: ["agents"],
-      gap: "<b>Gap:</b> every agent needs to be told how to use Latchkey, and nothing stops it from running <code>cat .env</code>.",
-      plan: "<b>Built:</b> the Latchkey skill and Claude Code plugin tell an agent to run through <code>lk run</code>, never print values, and stop on 77 or 66. <b>Next:</b> a hook that blocks commands like <code>cat .env</code> and <code>printenv</code>." },
-    { t: "Rules beyond one switch", s: "L", who: ["agents", "you"], built: true,
-      gap: "<b>Gap:</b> agent-safe is one yes/no per item.",
-      plan: "<b>Built:</b> grants per folder and its worktrees, for a time, until the agent quits, for one command or one request, e.g. <code>lk grant shop/development/DATABASE_URL --command \"npm test\"</code>." },
-    { t: "Header-injecting proxy", s: "L", who: ["agents"], built: true,
-      gap: "<b>Gap:</b> any value in a process's environment can be printed or written to a file.",
-      plan: "<b>Built:</b> <code>lk run --proxy</code> gives the command a placeholder and a local base URL, and adds the real OpenAI or Anthropic key only to requests for the provider's host. <b>Next:</b> more providers." },
-  ]},
-  { id: "daily", eyebrow: "Tier 3", title: "Day-to-day use", note: "Smaller features that remove friction.", items: [
-    { t: "Key files", s: "M", who: ["you", "agents"], built: true,
-      gap: "<b>Gap:</b> tools that want a file path (.p8, .pem, service-account JSON) can't use an environment value.",
-      plan: "<b>Plan:</b> <code>GOOGLE_APPLICATION_CREDENTIALS=latchkey-file://gcp-sa</code> writes a 0600 temporary file and deletes it when the command exits." },
-    { t: "Project commands", s: "M", who: ["you", "agents"],
-      gap: "<b>Gap:</b> there's no standard way to set up a project or check it in CI.",
-      plan: "<b>Built:</b> <code>latchkey check</code> confirms what a run would get without reading values, and <code>latchkey export</code> writes an env file of references from the environment's record. <b>Next:</b> <code>latchkey init</code> and a shell hook." },
-    { t: "Last used, expiry and rotation", s: "M", who: ["you"],
-      gap: "<b>Gap:</b> nothing says which tokens are stale, unused or about to expire.",
-      plan: "<b>Plan:</b> last-used dates from the log, an expiry date per item, reminders before expiry, and a list of items nothing has read in 90 days." },
-    { t: "Items with fields", s: "M", who: ["you"],
-      gap: "<b>Gap:</b> AWS and database credentials come in sets that are stored as unrelated items.",
-      plan: "<b>Plan:</b> group items such as <code>aws.access_key_id</code> and <code>aws.secret_access_key</code> as one card with fields." },
-    { t: "Scan for plain-text secrets", s: "M", who: ["you", "agents"],
-      gap: "<b>Gap:</b> secrets already sitting in repos and old .env files stay there.",
-      plan: "<b>Plan:</b> <code>latchkey scan</code> finds likely secrets and offers to import them, plus a git pre-commit hook." },
-    { t: "Activity alerts", s: "S", who: ["you"],
-      gap: "<b>Gap:</b> denied or unusual reads are only visible if you open Activity.",
-      plan: "<b>Plan:</b> notifications for denials and first-time callers, and filters by item, folder and outcome." },
-  ]},
-  { id: "moving", eyebrow: "Tier 4", title: "Moving in", note: "Getting existing secrets into Latchkey, and getting them back out safely.", items: [
-    { t: "Import from Passwords", s: "S", who: ["you"],
-      gap: "<b>Gap:</b> tokens you've saved in the Passwords app can't be read by other apps.",
-      plan: "<b>Plan:</b> read a Passwords CSV export (File > Export), pick the entries that are really API tokens, import them, then delete the CSV." },
-    { t: "Import from other managers", s: "M", who: ["you"],
-      gap: "<b>Gap:</b> secrets in 1Password or Bitwarden have to be copied over one by one.",
-      plan: "<b>Plan:</b> importers that use the <code>op</code> and <code>bw</code> command-line tools." },
-    { t: "Encrypted backup", s: "M", who: ["you"],
-      gap: "<b>Gap:</b> until the app is signed, the login keychain is the only copy, with no recovery.",
-      plan: "<b>Plan:</b> an export encrypted with a passphrase, and a matching restore." },
-  ]},
-  { id: "later", eyebrow: "Tier 5", title: "Later", note: "Larger work that builds on everything above.", items: [
-    { t: "SSH agent with Secure Enclave keys", s: "L", who: ["you", "agents"],
-      gap: "<b>Gap:</b> SSH keys sit on disk as files.",
-      plan: "<b>Plan:</b> keys that can't be exported and ask for Touch ID on each use, also usable for git commit signing. Each Mac gets its own key." },
-    { t: "Approve from iPhone", s: "L", who: ["you", "agents"],
-      gap: "<b>Gap:</b> when you're away from the Mac, only the Apple Watch can approve.",
-      plan: "<b>Plan:</b> an iPhone companion that receives approval requests, for agents working while you're out." },
-    { t: "Distribution", s: "M", who: ["you"],
-      gap: "<b>Gap:</b> installing means building from source.",
-      plan: "<b>Plan:</b> a notarized build, a Homebrew cask, and in-app updates." },
-    { t: "Test coverage", s: "M", who: ["you"],
-      gap: "<b>Gap:</b> there are no end-to-end tests for <code>latchkey run</code> or the socket server, and no UI tests.",
-      plan: "<b>Plan:</b> tests that run the CLI against a broker with a test approver, plus a few UI tests for the window." },
-  ]},
-];
-
-const mount = document.getElementById("tiers");
-mount.innerHTML = tiers.map(tier => `
-  <section class="tier" id="tier-${tier.id}" aria-labelledby="h-${tier.id}">
-    <header class="tier-head">
-      <p class="eyebrow">${tier.eyebrow}</p>
-      <h2 id="h-${tier.id}">${tier.title}</h2>
-      <p>${tier.note}</p>
-    </header>
-    <ul class="items">
-      ${tier.items.map(i => `
-        <li class="item${i.next ? " is-next" : ""}${i.built ? " is-built" : ""}" data-who="${i.who.join(" ")}" data-next="${i.next ? 1 : 0}">
-          <span class="size" title="${{S: "Small", M: "Medium", L: "Large"}[i.s]}">${i.s}</span>
-          <div class="ibody">
-            <div class="title-row"><h3>${i.t}</h3>${i.next ? '<span class="pill next">Next up</span>' : ""}${i.built ? '<span class="pill built">Built</span>' : ""}</div>
-            <p class="gap">${i.gap}</p>
-            <p class="plan">${i.plan}</p>
-          </div>
-          <div class="who">${i.who.map(w => `<span class="pill">${w === "you" ? "You" : "Agents"}</span>`).join("")}</div>
-        </li>`).join("")}
-      <li class="empty" hidden>Nothing in this tier matches the filter.</li>
-    </ul>
-  </section>`).join("");
-
+// The tiers are written into the page above; this only filters them, and remembers the choice in this browser.
 let filter = "all", onlyNext = false;
 try { filter = localStorage.getItem("lk-filter") || "all"; onlyNext = localStorage.getItem("lk-next") === "1"; } catch (e) {}
 

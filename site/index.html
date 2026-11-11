@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Latchkey: development credentials where you need them</title>
-  <meta name="description" content="Latchkey keeps API keys and database URLs in Apple Keychain. Import your env files once, keep latchkey:// references in their place, and let the commands and coding agents you authorize use the values across projects and Macs.">
+  <meta name="description" content="Latchkey keeps API keys and database URLs in iCloud Keychain. Import your env files once, keep latchkey:// references in their place, and let the commands and coding agents you authorize use the values across projects and Macs.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Latchkey">
   <meta property="og:title" content="Latchkey: development credentials where you need them">
@@ -16,6 +16,23 @@
   <link rel="icon" href="logo.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="stylesheet" href="site.css">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "@id": "index.html#latchkey",
+  "name": "Latchkey",
+  "description": "Latchkey keeps API keys, database URLs and key files in iCloud Keychain. Project files keep latchkey:// references, and the commands and coding agents you authorize get the values when they start.",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "macOS 15 or later",
+  "url": "index.html",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Snack Studio",
+    "url": "https://www.snackstud.io"
+  }
+}
+  </script>
   <script>document.documentElement.classList.add("js")</script>
   <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="llms.txt">
   <style>
@@ -216,7 +233,7 @@
       <div class="hero-copy">
       <p class="eyebrow">Development credentials on your Mac</p>
       <h1 id="title">Stop copying secrets between your projects, Macs and agents.</h1>
-      <p class="lede">Latchkey keeps API keys, database URLs and key files in Apple Keychain. Import the env files you already have, keep stable <code>latchkey://</code> references in their place, and let the commands and agents you authorize use the values without anyone copying them around.</p>
+      <p class="lede">Latchkey keeps API keys, database URLs and key files in iCloud Keychain. Import the env files you already have, keep stable <code>latchkey://</code> references in their place, and let the commands and agents you authorize use the values without anyone copying them around.</p>
       <div class="cta">
         <a class="button primary" href="#install">Development preview</a>
         <a class="button secondary" href="#how">Watch it work</a>
@@ -246,7 +263,7 @@
           <span class="chip val">••••••••</span><span class="chip val">••••••••</span><span class="chip val">••••••••</span>
         </div>
       </div>
-      <p class="fine scene-cap">The file keeps references. <code>lk run</code> asks Latchkey for the values, you approve on your Mac (or a grant you made covers it), and the command starts with them in its environment. A value it prints shows up as <code>&lt;concealed by latchkey&gt;</code>.</p>
+      <p class="fine scene-cap">The file keeps references. <code>lk run</code> asks Latchkey for the values, you approve on your Mac (or a grant you made covers it), and the command starts with them in its environment. A value it prints shows up as <code>&lt;concealed by latchkey&gt;</code>. The scenes on this site replay what Latchkey prints and shows, with example data.</p>
       </div>
     </section>
 
@@ -435,7 +452,16 @@ lk import .env.local --rewrite --skip PORT</code></pre></figure>
       <h2 id="app-title">Everything in one window</h2>
       <p class="intro">Items grouped by project and environment, which ones agents may read without asking, where each is used, every request in Activity, and the grants in effect. This window works with example data. What you chose in the panel above is already in its Activity, and a grant you made is under Grants, where Revoke stops future reads through it. Changes ask for Touch ID; revealing a value asks unless its No Approval setting permits it.</p>
       </div>
-      <div class="appwrap"><div class="appwin" id="appwin" aria-label="The Latchkey window, with example data"></div>
+      <div class="appwrap"><div class="appwin" id="appwin" aria-label="The Latchkey window, with example data"><div class="appwin-static">
+          <p><b>The Latchkey window, with example data.</b> With scripts on, it works: filter by kind, project or service, and open an item. It lists:</p>
+          <ul>
+            <li><b>shop · development:</b> DATABASE_URL (password, Neon), STRIPE_KEY (token, Stripe), PGHOST (plain value, Neon, readable by agents without asking)</li>
+            <li><b>shop · vercel.preview:</b> DATABASE_URL, linked to Vercel</li>
+            <li><b>shop · production:</b> DATABASE_URL and STRIPE_KEY, linked to Vercel</li>
+            <li><b>Shared:</b> OPENAI_API_KEY</li>
+          </ul>
+          <p>Opening an item shows its reference, kind, service, whether agents may read it without asking, where it's used, and its history.</p>
+        </div></div>
       <p class="fine cap-row">Example data; the values are made up. The menu bar icon opens a smaller panel with search and recent activity, like the one above the terminal.</p></div>
     </section>
 

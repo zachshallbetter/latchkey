@@ -16,6 +16,32 @@
   <link rel="apple-touch-icon" href="../apple-touch-icon.png">
   <meta name="twitter:card" content="summary">
   <link rel="stylesheet" href="../site.css">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Latchkey",
+      "item": "../index.html"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Developers",
+      "item": "index.html"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Agents and MCP",
+      "item": "agents.html"
+    }
+  ]
+}
+  </script>
   <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="../llms.txt">
   <script defer src="../site.js"></script>
   <script defer src="../scenes.js"></script>
@@ -65,7 +91,7 @@
             <span class="tagnote off" id="agent-note" style="left:330px;top:250px">No panel: the folder grant covers this run</span>
             <svg class="cursor" viewBox="0 0 18 22" style="transform:translate(470px,300px)"><path d="M1.5 1.5v16.2l4.2-4 2.7 6.3 2.8-1.2-2.7-6.2h5.9z" fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/></svg>
           </div>
-        </div><figcaption class="fine wide-cap">An agent runs its tests through <code>lk run</code>; you allow the folder until the agent quits; its next run goes through; a production item isn't covered, so it asks again, and a denial is exit 77.</figcaption></figure>
+        </div><figcaption class="fine wide-cap">An agent runs its tests through <code>lk run</code>; you allow the folder until the agent quits; its next run goes through; a production item isn't covered, so it asks again, and a denial is exit 77. Example data; the output is what Latchkey prints.</figcaption></figure>
 
 <h2 id="skills">Skills and plugins</h2>
 <p>The Latchkey skill tells an agent to run commands through <code>lk run</code>, check before a slow run, never print or write a value, put references in env files, give you the <code>lk set</code> command for a missing key, suggest a session grant when you step away, and stop on 77 or 66.</p>

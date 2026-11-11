@@ -16,6 +16,32 @@
   <link rel="apple-touch-icon" href="../apple-touch-icon.png">
   <meta name="twitter:card" content="summary">
   <link rel="stylesheet" href="../site.css">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Latchkey",
+      "item": "../index.html"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Developers",
+      "item": "index.html"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Quickstart",
+      "item": "quickstart.html"
+    }
+  ]
+}
+  </script>
   <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="../llms.txt">
   <script defer src="../site.js"></script>
   <script defer src="../scenes.js"></script>
@@ -71,7 +97,7 @@ STRIPE_KEY=latchkey://shop/development/STRIPE_KEY</code></pre></figure>
               <p><b>Latchkey is trying to import 3 items</b></p><p>Touch ID or enter your password.</p>
             </div>
           </div>
-        </div><figcaption class="fine wide-cap">The dry run, then the import: one approval, and each value in the file becomes its reference. Here <code>--skip PORT</code> leaves a plain setting as it is.</figcaption></figure>
+        </div><figcaption class="fine wide-cap">The dry run, then the import: one approval, and each value in the file becomes its reference. Here <code>--skip PORT</code> leaves a plain setting as it is. Example data; the output is what Latchkey prints.</figcaption></figure>
 <p>Every project at once: <code>latchkey import --scan ~/Projects --dry-run</code>, then again without <code>--dry-run</code>. Or <code>latchkey import --batch files.txt</code>, one path per line. Either way, one approval. See the <a href="cli.html#import">import options</a>.</p>
 
 <h2 id="run">3. Run a command</h2>
@@ -94,7 +120,7 @@ latchkey run --env shop/development -- npm test      # no env file needed</code>
           <span class="chip ref">DATABASE_URL</span><span class="chip ref">STRIPE_KEY</span><span class="chip ref">OPENAI_API_KEY</span>
           <span class="chip val">••••••••</span><span class="chip val">••••••••</span><span class="chip val">••••••••</span>
         </div>
-      </div><figcaption class="fine wide-cap"><code>lk run</code> reads the references, asks Latchkey for the values, and starts the command with them in its environment; anything it prints of them is concealed.</figcaption></figure>
+      </div><figcaption class="fine wide-cap"><code>lk run</code> reads the references, asks Latchkey for the values, and starts the command with them in its environment; anything it prints of them is concealed. Example data; the output is what Latchkey prints.</figcaption></figure>
 <p>Reads ask unless a grant or the No Approval setting permits them. Values that reach the command&rsquo;s output are replaced with <code>&lt;concealed by latchkey&gt;</code>. The command&rsquo;s exit status becomes <code>latchkey run</code>&rsquo;s.</p>
 
 <h2 id="grant">4. Let an agent work</h2>
