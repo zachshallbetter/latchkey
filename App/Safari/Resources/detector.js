@@ -135,6 +135,7 @@
     }
     if (!result) return null;
     result.score = Math.min(1, result.score + bonus);
+    result.shownOnce = once;
     result.confidence = result.score >= 0.75 ? "high" : result.score >= 0.5 ? "medium" : "low";
     return result.confidence === "low" ? null : result;
   }

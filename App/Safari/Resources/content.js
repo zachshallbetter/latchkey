@@ -47,9 +47,20 @@
     if (r.width < 4 || r.height < 4) return false;
     var doc = document.documentElement;
     if (r.right + window.scrollX <= 0 || r.bottom + window.scrollY <= 0 || r.left + window.scrollX >= doc.scrollWidth) return false;
-    if (el.checkVisibility) return el.checkVisibility({ opacityProperty: true, visibilityProperty: true });
+    if (el.checkVisibility && !el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) return false;
     var cs = getComputedStyle(el);
-    return cs.visibility !== "hidden" && cs.opacity !== "0";
+    if (cs.visibility === "hidden" || cs.opacity === "0") return false;
+    // On screen, it must be what you'd hit there: not clipped away or covered.
+    var x = r.left + Math.min(r.width / 2, 12), y = r.top + r.height / 2;
+    if (x < 0 || y < 0 || x > window.innerWidth || y > window.innerHeight) return true;
+    var hit = document.elementFromPoint(x, y);
+    return !!hit && (hit === el || el.contains(hit));
+  }
+  // Where a key's button goes: the first copy you can see. A page may hold others (a hidden copy for its copy button).
+  function anchorOf(d) {
+    d.elements = (d.elements || [d.element]).filter(function (e) { return document.contains(e); });
+    for (var i = 0; i < d.elements.length; i++) if (visible(d.elements[i])) { d.element = d.elements[i]; return d.element; }
+    return null;
   }
   function live(d) {
     var el = d.element;
@@ -79,14 +90,11 @@
     D.findAll(text, contextFor(el, field)).forEach(function (r) {
       var seen = byValue.get(r.value);
       if (seen) {
-        // The same key shown somewhere you can see it: anchor to that copy, not a hidden one.
-        if (!visible(seen.element) && visible(el)) {
-          seen.element = el;
-          if (pills.has(seen.id)) place(pills.get(seen.id), el, false); else if (seen.result.confidence === "high") showPill(seen);
-        }
+        seen.elements = seen.elements || [seen.element];
+        if (seen.elements.indexOf(el) < 0 && seen.elements.length < 6) seen.elements.push(el);
         return;
       }
-      var d = { id: nextID++, result: r, element: el };
+      var d = { id: nextID++, result: r, element: el, elements: [el] };
       byValue.set(r.value, d);
       if (found.length >= MAX_FOUND) retire(found.shift());
       found.push(d);
@@ -193,16 +201,34 @@
     root.querySelector("button").setAttribute("aria-label", "Save this " + (d.result.service || "secret") + " to Latchkey");
     root.querySelector("button").addEventListener("click", function () { openPanel(d); });
     pills.set(d.id, h);
-    place(h, d.element, false);
+    var a = anchorOf(d);
+    if (a) place(h, a, false); else h.style.display = "none";
   }
   function reposition() {
     prune();
     pills.forEach(function (h, id) {
       var d = found.find(function (x) { return x.id === id; });
-      if (!d || !document.contains(d.element)) { h.remove(); pills.delete(id); return; }
-      place(h, d.element, false);
+      if (!d) { h.remove(); pills.delete(id); return; }
+      var a = anchorOf(d);
+      if (a) place(h, a, false); else h.style.display = "none";
     });
+    offer();
     if (panelHost && panelHost._anchor) place(panelHost, panelHost._anchor, true);
+  }
+  // A key a page says it shows only once (a "your new key" dialog) gets the save panel without a click. Saving still
+  // takes your press and Touch ID. Once per key, and never over a panel you have open.
+  var offered = new Set();
+  function offer() {
+    if (panelHost) return;
+    for (var i = 0; i < found.length; i++) {
+      var d = found[i];
+      if (d.result.confidence !== "high" || !d.result.shownOnce || offered.has(d.result.value)) continue;
+      var a = anchorOf(d);
+      if (!a) continue;
+      offered.add(d.result.value);
+      openPanel(d, a, true);
+      return;
+    }
   }
   var queued = false;
   function soon() { if (!queued) { queued = true; requestAnimationFrame(function () { queued = false; reposition(); }); } }
@@ -211,13 +237,13 @@
   setInterval(reposition, 1000);   // dialogs move and close without scrolling
 
   // ---- Saving
-  function openPanel(d, anchor) {
+  function openPanel(d, anchor, offeredByPage) {
     prune();
     if (!live(d)) return;
     if (panelHost) panelHost.remove();
     var r = d.result;
     var h = host(2147483647);
-    h._anchor = anchor || d.element;
+    h._anchor = anchor || anchorOf(d) || d.element;
     var root = h.attachShadow({ mode: "closed" });
     var label = r.type + (r.environment ? " · " + (r.environment === "production" ? "live" : "test") : "");
     root.innerHTML = "<style>" + STYLE + "</style>" +
@@ -290,7 +316,7 @@
     });
     panelHost = h;
     place(h, h._anchor, true);
-    setTimeout(function () { name.focus(); place(h, h._anchor, true); }, 0);
+    setTimeout(function () { (offeredByPage ? save : name).focus(); place(h, h._anchor, true); }, 0);
   }
 
   window.addEventListener("pagehide", function () {
