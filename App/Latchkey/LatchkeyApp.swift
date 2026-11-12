@@ -55,6 +55,7 @@ struct LatchkeyApp: App {
                 Button("New Item…") { model.showingAdd = true }.keyboardShortcut("n")
                 Button("Import .env File…") { model.chooseImportFile() }.keyboardShortcut("i", modifiers: [.command, .shift])
             }
+            ItemCommands(model: model)
         }
 
         MenuBarExtra("Latchkey", image: "MenuBarIcon") {

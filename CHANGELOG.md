@@ -16,6 +16,9 @@
   disabled until the details are complete.
 
 ### The window
+- An **Item** menu acts on every selected row, with shortcuts: copy value (⌥⌘C), copy references (⇧⌘C), copy as
+  env file lines (⇧⌘E), require approval or let agents read (⌥⌘A), move (⇧⌘M), grant access (⇧⌘G) and delete
+  (⌘⌫ or Delete). The shortcuts work while the list has focus; the right-click menu offers the same.
 - A new layout, arranged like 1Password: All Items, **Review** (what may need a look: values changed since a push,
   values not pushed, grants about to end), Activity, then projects and services, then Grants and Recently Deleted.
   The list is flat and alphabetical, each row with its project and environment, with search (⌘F) and a filter for
