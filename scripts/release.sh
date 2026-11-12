@@ -111,7 +111,8 @@ if (( NOTARIZE )); then
   xcrun stapler staple -q "$DMG"
   spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG" 2>&1 | tail -1
 fi
-shasum -a 256 "$DMG" | tee "$DMG.sha256"
+# Named by file alone, so `shasum -c` works next to a downloaded copy.
+(cd "${DMG:h}" && shasum -a 256 "${DMG:t}") | tee "$DMG.sha256"
 
 # The Homebrew cask, once there's a public place to download from (LATCHKEY_RELEASES_REPO, as owner/name) and a
 # homepage (LATCHKEY_HOMEPAGE).

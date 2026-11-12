@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+- The release checksum file names the disk image alone, so `shasum -a 256 -c` works next to a downloaded copy.
+
 ## 0.2.0 (2026-11-11)
 
 ### Duplicates
