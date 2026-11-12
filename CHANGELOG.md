@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Duplicates
+- `lk duplicates` and **Review › Find Duplicates…** find items holding the same key, with one approval, and say what
+  to do: give production its own key, keep one item where an environment has several names for a value, combine the
+  rest into one shared item (suggested names never collide), or mark identifiers as plain values. The approval says
+  it's comparing values. Values never leave Latchkey, and agents can't ask.
+- `lk combine IDS --into NAME` and **Combine into Shared…** make them one shared item; environments and the files they
+  were imported from follow, and the originals go to Recently Deleted.
+
 ### Remote locations
 - **Add Remote Location** is its own sheet: pick the service, fill in its details (each explained), choose the
   environment, and see whether the service's tool is installed, with a link to install it. **Add Location** stays

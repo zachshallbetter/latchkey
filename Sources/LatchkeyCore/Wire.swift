@@ -145,7 +145,7 @@ public struct Request: Codable, Sendable {
                                      // | history | deleted | version | restore | forget
                                      // | links | link | unlink | remote-status | push
                                      // | environments | environment-add | environment-set | environment-remove | export
-                                     // | projects | project-link | project-unlink | log
+                                     // | projects | project-link | project-unlink | log | duplicates | combine
     public var names: [String]?
     public var value: String?
     public var kind: ItemKind?
@@ -182,6 +182,7 @@ public struct Request: Codable, Sendable {
     public var confirm: [String]?    // environment-set: inferred variables to confirm
     public var destination: String?  // export: the file the values will be written to, as the caller says
     public var origins: [String]?    // project-link, project-unlink: normalized remote URLs
+    public var into: String?         // combine: the shared item the duplicates become
 
     public init(op: String, names: [String]? = nil, value: String? = nil, kind: ItemKind? = nil,
                 agentSafe: Bool? = nil, note: String? = nil,
@@ -191,7 +192,8 @@ public struct Request: Codable, Sendable {
                 only: [String]? = nil, origin: String? = nil, session: Bool? = nil, commands: [[String]]? = nil,
                 uses: Int? = nil, intended: [String]? = nil, remote: RemoteClaim? = nil, page: String? = nil,
                 fillSites: [String]? = nil, environments: [EnvironmentRecord]? = nil, unset: [String]? = nil,
-                confirm: [String]? = nil, destination: String? = nil, origins: [String]? = nil, logLimit: Int? = nil) {
+                confirm: [String]? = nil, destination: String? = nil, origins: [String]? = nil, logLimit: Int? = nil, into: String? = nil) {
+        self.into = into
         self.logLimit = logLimit
         self.op = op
         self.names = names
@@ -274,6 +276,10 @@ public struct Response: Codable, Sendable {
     public var environments: [EnvironmentRecord]?
     public var projects: [ProjectRecord]?
     public var logEntries: [Broker.LogEntry]?
+    /// duplicates: groups of item IDs holding the same value. Never the values.
+    public var groups: [[String]]?
+    /// duplicates: the IDs in `groups` whose values look like identifiers (IDs, hosts, public addresses), not secrets.
+    public var identifiers: [String]?
 
     public init(ok: Bool, error: String? = nil, secrets: [SecretInfo]? = nil, values: [String: String]? = nil,
                 masked: [String]? = nil, denied: [String]? = nil, missing: [String]? = nil,
@@ -282,7 +288,9 @@ public struct Response: Codable, Sendable {
                 versions: [Version]? = nil, links: [RemoteLink]? = nil, remoteStatus: [RemoteStatus]? = nil,
                 pushResults: [PushResult]? = nil, agentSafe: [String]? = nil, granted: [String]? = nil,
                 remembered: [String]? = nil, needsApproval: [String]? = nil,
-                environments: [EnvironmentRecord]? = nil, projects: [ProjectRecord]? = nil, logEntries: [Broker.LogEntry]? = nil) {
+                environments: [EnvironmentRecord]? = nil, projects: [ProjectRecord]? = nil, logEntries: [Broker.LogEntry]? = nil, groups: [[String]]? = nil, identifiers: [String]? = nil) {
+        self.groups = groups
+        self.identifiers = identifiers
         self.logEntries = logEntries
         self.ok = ok
         self.error = error

@@ -37,10 +37,16 @@ access, move, delete. An environment's **Remote Locations…** opens from the Re
 
 Each is a list with the selected entry's detail on the right.
 
-- **Review** lists findings, filtered by **Access**, **Changes**, **Environment** or **Grants**: items any program can
-  read without approval, values changed since a push or not pushed yet, environment variables `lk env migrate` found
-  that nobody has confirmed, and grants ending within a day. A finding's detail lists what it's about and the
-  recommended action (**Require Approval…**, **Push…**, **Confirm All…**).
+- **Review** lists findings, filtered by **Access**, **Duplicates**, **Changes**, **Environment** or **Grants**: items
+  any program can read without approval, values changed since a push or not pushed yet, environment variables
+  `lk env migrate` found that nobody has confirmed, and grants ending within a day. A finding's detail lists what it's
+  about and the recommended action (**Require Approval…**, **Push…**, **Confirm All…**).
+- **Find Duplicates…** (Review) compares every secret's value inside Latchkey, with one Touch ID, and adds a finding
+  for each group holding the same key, with the same advice as `lk duplicates`. A production key used elsewhere is
+  flagged to be replaced; several names for one value in one environment offer **Keep One Item…**; identifiers saved
+  as secrets offer **Mark as Plain Values…**; the rest offer **Combine into Shared…**, which names the shared item.
+  Environments and the files they were imported from follow, and the originals go to Recently Deleted. Groups are kept in memory until the
+  app quits; no value is shown.
 - **Activity** has search and filters by event and project, grouped by day. An entry's detail shows the action, the
   items, the decision, who asked through which programs, the folder and the command. Values are never logged.
 - **Recently Deleted** has search; an item's detail shows when and by whom it was deleted, its ID, service and last

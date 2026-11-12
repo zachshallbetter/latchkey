@@ -4,10 +4,11 @@ import XCTest
 /// Counts approvals, so tests can check that a batch asks once.
 final class CountingApprover: Approver, @unchecked Sendable {
     var reasons: [String] = []
+    var actions: [ApprovalRequest.Action] = []
     let answer: Bool
     init(_ answer: Bool) { self.answer = answer }
     var method: String { "test" }
-    func approve(_ request: ApprovalRequest) -> ApprovalDecision { reasons.append(request.reason); return answer ? .once : .deny }
+    func approve(_ request: ApprovalRequest) -> ApprovalDecision { reasons.append(request.reason); actions.append(request.action); return answer ? .once : .deny }
 }
 
 final class ImportTests: XCTestCase {

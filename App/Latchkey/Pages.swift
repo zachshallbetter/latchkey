@@ -174,7 +174,9 @@ struct DetailHeader<Chips: View, Trailing: View>: View {
 
 /// Something Review asks you to look at.
 struct Finding: Identifiable {
-    enum Area: String, CaseIterable { case access = "Access", changes = "Changes", environment = "Environment", grants = "Grants" }
+    enum Area: String, CaseIterable {
+        case access = "Access", duplicates = "Duplicates", changes = "Changes", environment = "Environment", grants = "Grants"
+    }
     let id: String
     let area: Area
     let symbol: String
@@ -185,6 +187,7 @@ struct Finding: Identifiable {
     var items: [SecretInfo] = []
     var variables: [(scope: String, name: String)] = []
     var grants: [Grant] = []
+    var advice: Duplicates.Advice?
 }
 
 extension AppModel {
@@ -203,6 +206,21 @@ extension AppModel {
                                summary: "\(count(open.count, "item")) · \(places(open))",
                                why: "Any program in your Mac account, agents included, can read these without asking. That's fine for values that aren't really secret, and a risk for anything that is.",
                                items: open))
+        }
+        let byName = Dictionary(items.map { ($0.name, $0) }) { a, _ in a }
+        let groups = (duplicateGroups ?? []).map { $0.filter { byName[$0] != nil } }.filter { $0.count > 1 }
+        let shared = Set(items.filter(\.ref.isShared).map(\.name))
+        for (group, advice) in zip(groups, Duplicates.advice(for: groups, identifiers: duplicateIdentifiers, existing: shared)) {
+            let members = group.compactMap { byName[$0] }
+            let (symbol, tint, title): (String, Color, String) = switch advice {
+            case .separateProduction: ("exclamationmark.triangle", .red, "Production key used elsewhere")
+            case .plain: ("number", .gray, "Identifiers saved as secrets")
+            case .alias: ("link", .indigo, "\(members.count) names for one value")
+            default: ("doc.on.doc", .teal, "Same key in \(count(members.count, "place"))")
+            }
+            out.append(Finding(id: "dup-\(group[0])", area: .duplicates, symbol: symbol, tint: tint, title: title,
+                               summary: "\(members.map(\.ref.name).first ?? "") · \(places(members))",
+                               why: advice.summary, items: members, advice: advice))
         }
         let stale = items.filter { remoteStates[$0.name] == .outOfDate }
         if !stale.isEmpty {
@@ -244,12 +262,21 @@ extension AppModel {
 struct ReviewList: View {
     @Bindable var model: AppModel
     @State private var area: Finding.Area?
+    @State private var finding = false
 
     var body: some View {
         let all = model.findings
         let shown = all.filter { area == nil || $0.area == area }
         VStack(alignment: .leading, spacing: 12) {
-            PageHeader(title: "Review", subtitle: all.isEmpty ? "Nothing needs your attention" : "\(all.count) thing\(all.count == 1 ? "" : "s") need\(all.count == 1 ? "s" : "") your attention")
+            HStack(alignment: .top) {
+                PageHeader(title: "Review", subtitle: all.isEmpty ? "Nothing needs your attention" : "\(all.count) thing\(all.count == 1 ? "" : "s") need\(all.count == 1 ? "s" : "") your attention")
+                Spacer()
+                Button { finding = true; Task { await model.findDuplicates(); finding = false } } label: {
+                    Label("Find Duplicates…", systemImage: "doc.on.doc")
+                }
+                .disabled(finding)
+                .help("Compare values inside Latchkey to find items holding the same key. Asks for Touch ID; no value is shown.")
+            }
             Picker("", selection: $area) {
                 Text("All").tag(Finding.Area?.none)
                 ForEach(Finding.Area.allCases, id: \.self) { Text($0.rawValue).tag(Finding.Area?.some($0)) }
@@ -290,6 +317,7 @@ struct FindingDetail: View {
     let model: AppModel
     let finding: Finding
     @State private var working = false
+    @State private var combining = false
 
     var body: some View {
         ScrollView {
@@ -337,11 +365,39 @@ struct FindingDetail: View {
             .padding(16)
         }
         .disabled(working)
+        .sheet(isPresented: $combining) {
+            let into = finding.advice?.into.flatMap(ItemID.init)
+            CombineSheet(model: model, items: finding.items, scope: into.flatMap { $0.isShared ? nil : "\($0.project)/\($0.environment)" },
+                         name: into?.name ?? "")
+        }
     }
 
     @ViewBuilder
     private var actions: some View {
         switch finding.id {
+        case _ where finding.advice == .separateProduction:
+            let production = finding.items.filter { !$0.ref.isShared && Environments.isProduction($0.ref.environment) }
+            recommended("Make a new key at the service for production and save it there, so a leak elsewhere can't reach it. Combining isn't offered.") {
+                Button { model.filter = .all; model.selection = Set(production.map(\.name)) } label: {
+                    Label("Show Production Item", systemImage: "arrow.right.circle")
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        case _ where finding.advice == .plain:
+            recommended("Mark them plain values. They're shown instead of masked and left out of Find Duplicates; access doesn't change.") {
+                Button { act { await model.makePlain(finding.items.map(\.name)) } } label: { Label("Mark as Plain Values…", systemImage: "number") }
+                    .buttonStyle(.borderedProminent)
+            }
+        case _ where { if case .alias = finding.advice { return true }; return false }():
+            recommended("Keep one item and delete the others. Every variable in the environment, and the files they were imported from, point at the one you keep; the others go to Recently Deleted.") {
+                Button { combining = true } label: { Label("Keep One Item…", systemImage: "link") }
+                    .buttonStyle(.borderedProminent)
+            }
+        case _ where finding.advice != nil:
+            recommended("Combine them into one shared item. Environments and the files they were imported from will point at it, and the originals go to Recently Deleted.") {
+                Button { combining = true } label: { Label("Combine into Shared…", systemImage: "arrow.triangle.merge") }
+                    .buttonStyle(.borderedProminent)
+            }
         case "access":
             recommended("Require approval for these items, so agents need your permission to read their values.") {
                 Button { act { await model.updateItems(finding.items.map(\.name), agentSafe: false) } } label: {
@@ -381,6 +437,56 @@ struct FindingDetail: View {
     private func act(_ work: @escaping @MainActor () async -> Void) {
         working = true
         Task { await work(); working = false }
+    }
+}
+
+/// Names the shared item a group of duplicates becomes.
+struct CombineSheet: View {
+    let model: AppModel
+    let items: [SecretInfo]
+    /// project/environment when they're all in one environment and one is kept there; nil for a shared item.
+    let scope: String?
+    @State var name: String
+    @State private var saving = false
+    @State private var error: String?
+    @Environment(\.dismiss) private var dismiss
+
+    private var target: String { scope.map { "\($0)/\(name)" } ?? name }
+
+    private var problem: String? {
+        guard ItemID.isValidPart(name), Wire.isValidName(target) else { return "A name of letters, digits, _ - . and no slashes." }
+        return nil
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            SheetHeader(symbol: scope == nil ? "arrow.triangle.merge" : "link", tint: scope == nil ? .teal : .indigo,
+                        title: scope == nil ? "Combine into Shared" : "Keep One Item",
+                        subtitle: "\(items.count) items hold the same value\(scope.map { " in \($0)" } ?? "")")
+            Card {
+                FieldRow(label: scope == nil ? "Shared item" : "Keep") { TextField("Name", text: $name, prompt: Text("OPENAI_API_KEY")) }
+                ForEach(Array(items.enumerated()), id: \.element.id) { i, item in
+                    CardRow(label: i == 0 ? "Replaces" : "", last: i == items.count - 1) { Text(item.name).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle) }
+                }
+            }
+            Text("A new item can be read by agents without approval only if every one of these could. References in environments and in the files these were imported from point at the new name.")
+                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            if let error = error ?? (name.isEmpty ? nil : problem) { Text(error).font(.callout).foregroundStyle(.red) }
+            SheetFooter(note: "Combining asks for Touch ID once.", noteSymbol: "touchid") {
+                Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
+                Button("Combine") {
+                    saving = true
+                    Task {
+                        error = await model.combine(items.map(\.name), into: target)
+                        saving = false
+                        if error == nil { dismiss() }
+                    }
+                }
+                .keyboardShortcut(.defaultAction).disabled(saving || problem != nil)
+            }
+        }
+        .padding(24)
+        .frame(width: 540)
     }
 }
 
