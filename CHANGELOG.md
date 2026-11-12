@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Website
+- The home page shows Latchkey in use: self-playing scenes of a fresh clone rebuilt with `lk project` and
+  `lk export`, an env file imported, a second Mac (marked pending until tried), an agent being granted a folder and
+  asked again for production, and rotation. The approval demo follows the one-prompt panel.
+- Leads with "Your projects move. Your secrets don't." New Features, Security, Pricing, For teams and Roadmap pages;
+  every page shares a header (Features, How it works, Pricing, Security, Docs) and one footer, and works on phones
+  and in light mode.
+
 ### Fixes
 - The release checksum file names the disk image alone, so `shasum -a 256 -c` works next to a downloaded copy.
 
@@ -53,12 +61,6 @@
 - Panels name the agent ("Claude wants to use 2 items"), with the process chain under "Asked by".
 - An unanswered sheet denies without opening the panel.
 - A plain-text export no longer offers "Allow from this folder", which it couldn't honour.
-
-### Website
-- The home page shows Latchkey in use: self-playing scenes of a fresh clone rebuilt with `lk project` and
-  `lk export`, an env file imported, a second Mac (marked pending until tried), an agent being granted a folder and
-  asked again for production, and rotation. The approval demo follows the one-prompt panel.
-- New Features and Security pages; every page shares a header with Features, How it works, Security and Docs.
 
 ### App Store groundwork
 - The store experiment has a dedicated, mutually authenticated CLI endpoint. Commands continue to run in the
