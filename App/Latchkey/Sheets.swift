@@ -96,21 +96,19 @@ struct ChangeValueSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             SheetHeader(symbol: ItemType(item).symbol, tint: ItemType(item).tint, title: "New Value", subtitle: "for \(item.name)")
-            Group {
-                if item.kind == .key || item.kind == .value {
-                    TextField("Value", text: $value, prompt: Text("Value"), axis: .vertical).lineLimit(3...10).font(.body.monospaced())
-                } else {
-                    SecureField("Value", text: $value, prompt: Text("Value"))
+            Card {
+                FieldRow(label: "Value", last: true) {
+                    if item.kind == .key || item.kind == .value {
+                        TextField("Value", text: $value, prompt: Text("Paste the new value"), axis: .vertical).lineLimit(3...10).font(.body.monospaced())
+                    } else {
+                        SecureField("Value", text: $value, prompt: Text("Paste the new value"))
+                    }
                 }
             }
-            .textFieldStyle(.plain).font(.title3)
-            .padding(.horizontal, 14).padding(.vertical, 12)
-            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.quaternary.opacity(0.35)))
-            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Color.accentColor, lineWidth: 2))
             Text("Commands pick up the new value the next time they start. The current one is kept in History.")
                 .font(.callout).foregroundStyle(.secondary)
             if let error { Text(error).font(.callout).foregroundStyle(.red) }
-            SheetFooter {
+            SheetFooter(note: "Saving asks for Touch ID.", noteSymbol: "touchid") {
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
                 Button("Save") {
                     Task {
@@ -283,9 +281,7 @@ struct ImportSheet: View {
             Toggle("Overwrite items that already exist", isOn: $replace)
             Toggle("Replace values in the file with latchkey:// references", isOn: $rewrite)
             if let error { Text(error).font(.caption).foregroundStyle(.red) }
-            HStack {
-                Text("One Touch ID approval covers the whole import.").font(.caption).foregroundStyle(.secondary)
-                Spacer()
+            SheetFooter(note: "One Touch ID approval covers the whole import.", noteSymbol: "touchid") {
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
                 Button("Import \(chosen) Item\(chosen == 1 ? "" : "s")") {
                     working = true

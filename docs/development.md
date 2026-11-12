@@ -122,7 +122,7 @@ Debug builds can draw their own UI to a PNG:
 ```bash
 build/DerivedData/Build/Products/Debug/Latchkey.app/Contents/MacOS/Latchkey \
   --snapshot out.png [--sample] [--select ID,...] [--filter all|activity|grants|project:NAME] \
-  [--part sidebar|menubar|approval|list|bulk|move|detail|deleted|remote|pushapproval] -ApplePersistenceIgnoreState YES
+  [--part sidebar|menubar|approval|list|bulk|move|grant|detail|deleted|remote|pushapproval] -ApplePersistenceIgnoreState YES
 ```
 
 `--sample` uses example data and never loads your items, so nothing real is shown. `--part` draws one view off screen (more reliable than the

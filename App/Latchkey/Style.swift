@@ -32,7 +32,7 @@ struct ItemType {
         case .value where Self.namesAddress(name), .token where Self.namesAddress(name): self.init("URL", "globe", .teal)
         case .value: self.init("Plain Value", "tag.fill", .gray)
         case .password where looksLikeDatabase: self.init("Database", "cylinder.split.1x2.fill", .orange)
-        case .password: self.init("Password", "lock.fill", .orange)
+        case .password: self.init("Password", "lock.fill", .yellow)
         case .token where name.hasSuffix("API_KEY") || name.hasSuffix("_KEY"): self.init("API Key", "chevron.left.forwardslash.chevron.right", .indigo)
         case .token: self.init("Token", "key.fill", .blue)
         }

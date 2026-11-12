@@ -19,11 +19,12 @@ Arranged the way 1Password arranges vaults and tags:
 
 ### The list
 
-The list's header names what's shown and how many, with a search field (⌘F) and a **…** menu (New Item, Import,
-Move). Under the search field, **Type**, **Environment**, **Project** and **Service** dropdowns narrow the list and
-show what they're set to, and the button after them holds the sort order, access and **Clear Filters**. Items are
-listed by name, each with an icon for its type (token, API key, database, URL, password, key file, plain value) and a
-line naming its project, environment and service. Long names are shortened in the middle, with
+The list's header names what's shown and how many (items, projects and services), with a **New Item** button and a
+search field (⌘F). Under the search field, **Type**, **Environment**, **Project** and **Service** dropdowns narrow the
+list and show what they're set to, and the button after them holds the sort order, access, **Clear Filters**,
+**Import .env File…** and **Move Selected to a Project…**. Items are listed by name in two lines: an icon for its type
+(token, API key, database, URL, password, key file, plain value; hover for its name) beside the name, and under it its
+project, environment and service. Long names are shortened in the middle, with
 the full ID on hover, and hovering a row shows a button that copies its `latchkey://` reference.
 
 Badges on an item: a green shield for agent-safe, an orange arrow when its value changed since it was last pushed to a
@@ -72,7 +73,7 @@ Right-clicking the selection offers the same.
 
 ### Adding and importing
 
-- **… › New Item…** (⌘N).
+- **New Item** in the list's header, or **File › New Item…** (⌘N).
 - **File › Import .env File…** (⇧⌘I), or drop a file on the window. The sheet proposes the project and environment,
   lists each key with its kind and agent-safe setting, marks keys that already exist, and lists lines it leaves alone
   (empty, already references, or expiring Vercel and Turbo tokens). Import asks once. **Replace values in the file

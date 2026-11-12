@@ -109,32 +109,34 @@ struct MoveSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 10) {
-                SheetHeader(symbol: "folder", tint: .indigo, title: "Move to a Project")
-                Text("Items keep their values and settings; their IDs change, and references in the files below are updated.")
-                    .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            }
-            HStack(spacing: 10) {
-                Picker("", selection: $shared) {
-                    Text("Project").tag(false)
-                    Text("Shared").tag(true)
+            SheetHeader(symbol: "folder", tint: .indigo, title: "Move to a Project",
+                        subtitle: "Items keep their values and settings; their IDs change, and references in the files below are updated.")
+            Card {
+                FieldRow(label: "Move to", last: shared) {
+                    Picker("", selection: $shared) {
+                        Text("Project").tag(false)
+                        Text("Shared").tag(true)
+                    }
+                    .pickerStyle(.segmented).labelsHidden().fixedSize()
+                    Spacer()
                 }
-                .pickerStyle(.segmented).labelsHidden().fixedSize()
                 if !shared {
-                    TextField("Project", text: $project).frame(width: 150)
-                    Menu {
-                        ForEach(model.projects, id: \.self) { p in Button(p) { project = p } }
-                    } label: { Image(systemName: "folder") }
-                    .menuStyle(.borderlessButton).fixedSize().disabled(model.projects.isEmpty)
-                    TextField("Environment", text: $environment).frame(width: 130)
-                    Menu {
-                        ForEach(Environments.known, id: \.self) { e in Button(e) { environment = e } }
-                    } label: { Image(systemName: "chevron.down") }
-                    .menuStyle(.borderlessButton).fixedSize()
+                    FieldRow(label: "Project") {
+                        TextField("Project", text: $project, prompt: Text("Project"))
+                        Menu {
+                            ForEach(model.projects, id: \.self) { p in Button(p) { project = p } }
+                        } label: { Image(systemName: "chevron.up.chevron.down") }
+                        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize().disabled(model.projects.isEmpty)
+                    }
+                    FieldRow(label: "Environment", last: true) {
+                        TextField("Environment", text: $environment, prompt: Text("Environment"))
+                        Menu {
+                            ForEach(Environments.known, id: \.self) { e in Button(e) { environment = e } }
+                        } label: { Image(systemName: "chevron.up.chevron.down") }
+                        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                    }
                 }
-                Spacer()
             }
-            .textFieldStyle(.roundedBorder)
 
             HStack {
                 Text("Items").font(.callout.weight(.medium))
@@ -146,7 +148,7 @@ struct MoveSheet: View {
                 Toggle(isOn: Binding(get: { chosen.contains(item.name) },
                                      set: { if $0 { chosen.insert(item.name) } else { chosen.remove(item.name) } })) {
                     HStack(spacing: 8) {
-                        KindIcon(kind: item.kind, size: 18)
+                        IconTile(symbol: ItemType(item).symbol, tint: ItemType(item).tint, size: 18)
                         Text(item.name).font(.callout.monospaced())
                         Text(item.note).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }
@@ -168,9 +170,7 @@ struct MoveSheet: View {
                 }
             }
             if let error { Text(error).font(.caption).foregroundStyle(.red) }
-            HStack {
-                Text("Moving asks for Touch ID once.").font(.caption).foregroundStyle(.secondary)
-                Spacer()
+            SheetFooter(note: "Moving asks for Touch ID once.", noteSymbol: "touchid") {
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
                 Button("Move \(chosen.count) Item\(chosen.count == 1 ? "" : "s")") {
                     working = true
@@ -185,8 +185,8 @@ struct MoveSheet: View {
                 .disabled(chosen.isEmpty || !placeIsValid || working)
             }
         }
-        .padding(20)
-        .frame(width: 640, height: 620)
+        .padding(24)
+        .frame(width: 640, height: 680)
     }
 
     private func addFile() {

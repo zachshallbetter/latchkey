@@ -28,30 +28,29 @@ struct NewGrantSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 10) {
-                SheetHeader(symbol: "checkmark.shield", tint: .teal, title: "New Grant")
-                Text("Programs in this folder, its subfolders and its repository’s Git worktrees can read these items until the grant ends. Revoking stops future reads, not values already released.")
-                    .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            }
-            HStack {
-                Text("Folder").frame(width: 70, alignment: .leading)
-                Text(folder.map { Broker.tilde($0.path) } ?? "None chosen")
-                    .font(.callout.monospaced()).foregroundStyle(folder == nil ? .secondary : .primary)
-                    .lineLimit(1).truncationMode(.head)
-                Spacer()
-                Button("Choose…") { chooseFolder() }
-            }
-            HStack {
-                Text("For").frame(width: 70, alignment: .leading)
-                Picker("", selection: $duration) {
-                    Text("30 minutes").tag(1800.0)
-                    Text("2 hours").tag(7200.0)
-                    Text("8 hours").tag(28800.0)
-                    Text("1 day").tag(86400.0)
-                    Text("7 days").tag(604800.0)
+            SheetHeader(symbol: "checkmark.shield", tint: .teal, title: "New Grant",
+                        subtitle: "Let one folder read items without asking, for a while")
+            Text("Programs in this folder, its subfolders and its repository’s Git worktrees can read these items until the grant ends. Revoking stops future reads, not values already released.")
+                .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            Card {
+                FieldRow(label: "Folder") {
+                    Text(folder.map { Broker.tilde($0.path) } ?? "None chosen")
+                        .font(.callout.monospaced()).foregroundStyle(folder == nil ? .secondary : .primary)
+                        .lineLimit(1).truncationMode(.head)
+                    Spacer()
+                    Button("Choose…") { chooseFolder() }
                 }
-                .labelsHidden().fixedSize()
-                Spacer()
+                FieldRow(label: "For", last: true) {
+                    Picker("", selection: $duration) {
+                        Text("30 minutes").tag(1800.0)
+                        Text("2 hours").tag(7200.0)
+                        Text("8 hours").tag(28800.0)
+                        Text("1 day").tag(86400.0)
+                        Text("7 days").tag(604800.0)
+                    }
+                    .labelsHidden().fixedSize()
+                    Spacer()
+                }
             }
             if let pattern {
                 VStack(alignment: .leading, spacing: 4) {
@@ -69,7 +68,7 @@ struct NewGrantSheet: View {
                 Toggle(isOn: Binding(get: { chosen.contains(item.name) },
                                      set: { if $0 { chosen.insert(item.name) } else { chosen.remove(item.name) } })) {
                     HStack(spacing: 8) {
-                        KindIcon(kind: item.kind, size: 20)
+                        IconTile(symbol: ItemType(item).symbol, tint: ItemType(item).tint, size: 20)
                         Text(item.name).font(.callout.monospaced())
                     }
                 }
@@ -80,9 +79,7 @@ struct NewGrantSheet: View {
             }
             }
             if let error { Text(error).font(.caption).foregroundStyle(.red) }
-            HStack {
-                Text("Creating it asks for Touch ID.").font(.caption).foregroundStyle(.secondary)
-                Spacer()
+            SheetFooter(note: "Creating it asks for Touch ID.", noteSymbol: "touchid") {
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
                 Button("Create Grant") {
                     guard let folder else { return }
@@ -97,8 +94,8 @@ struct NewGrantSheet: View {
                 .disabled(folder == nil || (pattern == nil && chosen.isEmpty) || working)
             }
         }
-        .padding(20)
-        .frame(width: 480, height: 520)
+        .padding(24)
+        .frame(width: 540, height: 600)
     }
 
     private func chooseFolder() {
