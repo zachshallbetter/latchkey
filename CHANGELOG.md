@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 (2026-11-11)
 
 ### Duplicates
 - `lk duplicates` and **Review › Find Duplicates…** find items holding the same key, with one approval, and say what
