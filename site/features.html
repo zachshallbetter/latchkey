@@ -91,7 +91,7 @@ lk restore shop/development/STRIPE_KEY --version 1</pre><a class="more" href="de
     </section>
 
     <section class="section group" id="environments" aria-labelledby="environments-title">
-      <header class="shead"><p class="eyebrow">Environments</p><h2 id="environments-title">Familiar env files, with references instead of secrets.</h2>
+      <header class="shead"><p class="eyebrow">Environments</p><h2 id="environments-title">References in your files. Values in Keychain.</h2>
         <p>Each environment has a record of its variables: each points at an item or holds a plain setting like <code>PORT=3000</code>. Records sync with your items, so a checkout anywhere can get its env file back.</p></header>
       <div class="feature">
         <div class="copy"><h3>Import, then rewrite</h3><p>The dry run shows where each value goes and sends nothing. One approval saves them, and <code>--rewrite</code> puts a <code>latchkey://</code> reference where each value was. Comments, order and file permissions are kept.</p></div>
@@ -127,7 +127,7 @@ lk project</pre><a class="more" href="developers/cli.html#environments">Projects
     </section>
 
     <section class="section group" id="devices" aria-labelledby="devices-title">
-      <header class="shead"><p class="eyebrow">Devices</p><h2 id="devices-title">Credentials that follow you to the next Mac.</h2>
+      <header class="shead"><p class="eyebrow">Devices</p><h2 id="devices-title">The environment travels with the project. The credential stays in your vault.</h2>
         <p>Values, versions, environment records and project links are keychain items in Latchkey's own access group. iCloud Keychain carries them, end to end encrypted, to every Mac signed in to your Apple Account that has Latchkey installed.</p></header>
       <div class="feature flip">
         <div class="copy"><h3>Clone, export, run</h3><p>On the next Mac the environment record is already there: <code>lk project</code> recognizes the clone and <code>lk export</code> writes its env file. Grants stay on the Mac where you made them.</p>
@@ -168,7 +168,7 @@ lk project</pre><a class="more" href="developers/cli.html#environments">Projects
     </section>
 
     <section class="section group" id="agents" aria-labelledby="agents-title">
-      <header class="shead"><p class="eyebrow">Agents and tools</p><h2 id="agents-title">Agents get the work done without getting the vault.</h2>
+      <header class="shead"><p class="eyebrow">Agents and tools</p><h2 id="agents-title">Grant access for the task. Revoke it when the task is done.</h2>
         <p>Agents run commands through <code>lk run</code>. You decide what reaches those commands: agent-safe items, grants for a folder and a time, or an approval each time.</p></header>
       <div class="feature">
         <div class="copy"><h3>Ask, allow, and ask again when it matters</h3><p>The panel shows the agent, the programs it runs through, the folder and the command, all from macOS. A folder grant until the agent quits covers its next runs; a production item isn't covered, so it asks.</p></div>
@@ -279,10 +279,10 @@ lk rotate --touched --since 4h --by claude --open</pre><a class="more" href="dev
     <section class="section cta-band" aria-labelledby="cta-title">
       <div>
         <p class="eyebrow">Free during the development preview</p>
-        <h2 id="cta-title">Your projects move. Your credentials shouldn't need copying along with them.</h2>
-        <p>Build Latchkey from source today. A signed download comes with the first release; Pro and Teams come later.</p>
+        <h2 id="cta-title">Stop being the credential courier.</h2>
+        <p>Keep your projects, credentials and coding agents working together, with access you can inspect and control. Build Latchkey from source today; Pro comes with the first release.</p>
       </div>
-      <div class="cta-actions"><a class="button primary" href="index.html#install">Install the preview</a><a class="button secondary" href="pricing.html">See pricing</a></div>
+      <div class="cta-actions"><a class="button primary" href="pricing.html#pro">Get early access</a><a class="button secondary" href="index.html#install">Install the preview</a></div>
     </section>
   </main>
 
