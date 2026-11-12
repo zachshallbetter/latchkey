@@ -16,8 +16,35 @@
   <link rel="apple-touch-icon" href="../apple-touch-icon.png">
   <meta name="twitter:card" content="summary">
   <link rel="stylesheet" href="../site.css">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Latchkey",
+      "item": "../index.html"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Developers",
+      "item": "index.html"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Agents and MCP",
+      "item": "agents.html"
+    }
+  ]
+}
+  </script>
   <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="../llms.txt">
   <script defer src="../site.js"></script>
+  <script defer src="../scenes.js"></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -25,8 +52,12 @@
     <nav class="top wrap" aria-label="Main">
       <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
       <ul>
-        <li><a href="index.html" aria-current="page">Docs</a></li>
-        <li><a class="button primary" href="../index.html#install">Preview status</a></li>
+        <li><a href="../features.html">Features</a></li>
+        <li><a href="../index.html#how">How it works</a></li>
+        <li><a href="../pricing.html">Pricing</a></li>
+        <li><a href="../security.html">Security</a></li>
+        <li><a href="index.html">Docs</a></li>
+        <li><a class="button primary" href="../index.html#install">Install the preview</a></li>
       </ul>
     </nav>
   </header>
@@ -45,6 +76,23 @@
 <li>Decide what an agent may read without you: <strong>agent-safe</strong> items for values that aren&rsquo;t secret, <strong>grants</strong> for a folder and a time. Everything else asks you, showing the agent&rsquo;s process chain, folder and command.</li>
 </ol>
 <p>Fresh git worktrees don&rsquo;t have your <code>.env</code> (it&rsquo;s gitignored). <code>latchkey run --env PROJECT/ENV</code> loads an environment&rsquo;s items directly, and a grant for a repository&rsquo;s folder covers its worktrees.</p>
+
+<figure class="doc-scene"><div class="scene-wrap" data-scene="agent" style="--w:600;--h:360" aria-hidden="true">
+          <div class="canvas">
+            <div class="mw tty" style="left:12px;top:12px;width:576px;height:336px">
+              <div class="mw-bar"><i></i><i></i><i></i><span>claude in ~/Projects/shop</span></div>
+<pre id="agent-tty"><span class="l"><span class="p">~/Projects/shop $</span> lk run --env shop/development -- npm test -- --watch=false</span><span class="l"><span class="d"> Test Files  2 passed (2)</span></span><span class="l"><span class="p">~/Projects/shop $</span> lk run --env shop/production -- npm run migrate</span><span class="l"><span class="err">latchkey: refused: shop/production/DATABASE_URL (not agent-safe, not approved, no grant)</span></span><span class="l"><span class="k">⏺ Claude</span> <span class="d">Latchkey refused that (exit 77), so I'll stop and ask you.</span></span></pre>
+            </div>
+            <div class="sheet off" id="agent-panel" style="left:132px;top:34px;width:336px">
+              <div class="sheet-head"><span class="mark"><img src="../logo.svg" alt=""></span><div><h4 id="agent-title">Claude wants to use 2 items</h4><small>Latchkey</small></div></div>
+              <dl><dt>Items</dt><dd id="agent-items">shop/development/DATABASE_URL, shop/development/STRIPE_KEY</dd><dt>Asked by</dt><dd>Claude, via zsh › claude › Terminal</dd><dt>Folder</dt><dd>~/Projects/shop</dd><dt>Command</dt><dd id="agent-cmd">lk run --env shop/development -- npm test</dd></dl>
+              <div class="box"><div class="chk" id="agent-grant"><i></i>Allow from this folder <span class="pop">until claude quits ▾</span></div><div class="chk dim" id="agent-only"><i></i><span>Only for npm test</span></div></div>
+              <div class="acts"><small>Touch ID confirms your choice.</small><span class="b" id="agent-deny">Deny</span><span class="b go" id="agent-allow">Allow Once</span></div>
+            </div>
+            <span class="tagnote off" id="agent-note" style="left:330px;top:250px">No panel: the folder grant covers this run</span>
+            <svg class="cursor" viewBox="0 0 18 22" style="transform:translate(470px,300px)"><path d="M1.5 1.5v16.2l4.2-4 2.7 6.3 2.8-1.2-2.7-6.2h5.9z" fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          </div>
+        </div><figcaption class="fine wide-cap">An agent runs its tests through <code>lk run</code>; you allow the folder until the agent quits; its next run goes through; a production item isn't covered, so it asks again, and a denial is exit 77. Example data; the output is what Latchkey prints.</figcaption></figure>
 
 <h2 id="skills">Skills and plugins</h2>
 <p>The Latchkey skill tells an agent to run commands through <code>lk run</code>, check before a slow run, never print or write a value, put references in env files, give you the <code>lk set</code> command for a missing key, suggest a session grant when you step away, and stop on 77 or 66.</p>
@@ -67,7 +115,7 @@ write values in .env files. If latchkey exits with 77 (refused) or 66
 (missing), stop and ask; don&#x27;t retry.</code></pre></figure>
 
 <h2 id="exit-codes">Exit codes to act on</h2>
-<table><thead><tr><th>Code</th><th>Meaning</th><th>What an agent should do</th></tr></thead><tbody><tr><td>0</td><td>Done</td><td></td></tr><tr><td>64</td><td>Wrong usage</td><td>Fix the command</td></tr><tr><td>66</td><td>No item with that ID</td><td>Stop; ask the person to add it</td></tr><tr><td>69</td><td>The Latchkey app can&rsquo;t be reached</td><td>Stop; ask the person to open Latchkey</td></tr><tr><td>73</td><td>A file couldn&rsquo;t be rewritten</td><td>Stop and report</td></tr><tr><td>77</td><td>Refused: not agent-safe, not approved, no grant</td><td>Stop; ask the person to approve or grant. Don&rsquo;t retry</td></tr><tr><td>127</td><td>The command couldn&rsquo;t start</td><td>Fix the command</td></tr></tbody></table>
+<table><thead><tr><th>Code</th><th>Meaning</th><th>What an agent should do</th></tr></thead><tbody><tr><td data-th="Code">0</td><td data-th="Meaning">Done</td><td data-th="What an agent should do"></td></tr><tr><td data-th="Code">64</td><td data-th="Meaning">Wrong usage</td><td data-th="What an agent should do">Fix the command</td></tr><tr><td data-th="Code">66</td><td data-th="Meaning">No item with that ID</td><td data-th="What an agent should do">Stop; ask the person to add it</td></tr><tr><td data-th="Code">69</td><td data-th="Meaning">The Latchkey app can&rsquo;t be reached</td><td data-th="What an agent should do">Stop; ask the person to open Latchkey</td></tr><tr><td data-th="Code">73</td><td data-th="Meaning">A file couldn&rsquo;t be rewritten</td><td data-th="What an agent should do">Stop and report</td></tr><tr><td data-th="Code">77</td><td data-th="Meaning">Refused: not agent-safe, not approved, no grant</td><td data-th="What an agent should do">Stop; ask the person to approve or grant. Don&rsquo;t retry</td></tr><tr><td data-th="Code">127</td><td data-th="Meaning">The command couldn&rsquo;t start</td><td data-th="What an agent should do">Fix the command</td></tr></tbody></table>
 <p>On 77 and 66 the message names the items and, for 77, the exact <code>latchkey grant</code> command that would allow them, for the person to run.</p>
 
 <h2 id="unattended">Leaving an agent working</h2>
@@ -104,7 +152,7 @@ latchkey run --env shop/development -- npm test</code></pre></figure>
     &quot;latchkey&quot;: { &quot;command&quot;: &quot;/Users/you/.local/bin/latchkey&quot;, &quot;args&quot;: [&quot;mcp&quot;] }
   }
 }</code></pre></figure>
-<table><thead><tr><th>Tool</th><th>What it does</th><th>Asks you?</th></tr></thead><tbody><tr><td><code>latchkey_status</code></td><td>Where values are kept, how you approve, item and grant counts</td><td>No</td></tr><tr><td><code>latchkey_list</code></td><td>Item IDs with kind, service and agent-safe, by <code>project</code> or <code>environment</code>. Never values</td><td>No</td></tr><tr><td><code>latchkey_check</code></td><td>What a run would get without asking, what would ask, and what&rsquo;s missing, for <code>env_files</code>, <code>environments</code>, <code>files</code> or <code>ids</code></td><td>No</td></tr><tr><td><code>latchkey_run</code></td><td>Runs <code>command</code> (an argument array) in <code>cwd</code> with references filled in. Returns the exit code and the output, masked</td><td>When an item isn&rsquo;t agent-safe or granted</td></tr><tr><td><code>latchkey_request_grant</code></td><td>Asks you for a grant on <code>ids</code> in the agent&rsquo;s folder for <code>duration</code></td><td>Always</td></tr><tr><td><code>latchkey_project</code></td><td>Which project the folder&rsquo;s checkout is, from its Git remotes, and its environments</td><td>No</td></tr><tr><td><code>latchkey_export_references</code></td><td>Writes an environment&rsquo;s env file of references and plain settings, never values</td><td>No</td></tr></tbody></table>
+<table><thead><tr><th>Tool</th><th>What it does</th><th>Asks you?</th></tr></thead><tbody><tr><td data-th="Tool"><code>latchkey_status</code></td><td data-th="What it does">Where values are kept, how you approve, item and grant counts</td><td data-th="Asks you?">No</td></tr><tr><td data-th="Tool"><code>latchkey_list</code></td><td data-th="What it does">Item IDs with kind, service and agent-safe, by <code>project</code> or <code>environment</code>. Never values</td><td data-th="Asks you?">No</td></tr><tr><td data-th="Tool"><code>latchkey_check</code></td><td data-th="What it does">What a run would get without asking, what would ask, and what&rsquo;s missing, for <code>env_files</code>, <code>environments</code>, <code>files</code> or <code>ids</code></td><td data-th="Asks you?">No</td></tr><tr><td data-th="Tool"><code>latchkey_run</code></td><td data-th="What it does">Runs <code>command</code> (an argument array) in <code>cwd</code> with references filled in. Returns the exit code and the output, masked</td><td data-th="Asks you?">When an item isn&rsquo;t agent-safe or granted</td></tr><tr><td data-th="Tool"><code>latchkey_request_grant</code></td><td data-th="What it does">Asks you for a grant on <code>ids</code> in the agent&rsquo;s folder for <code>duration</code></td><td data-th="Asks you?">Always</td></tr><tr><td data-th="Tool"><code>latchkey_project</code></td><td data-th="What it does">Which project the folder&rsquo;s checkout is, from its Git remotes, and its environments</td><td data-th="Asks you?">No</td></tr><tr><td data-th="Tool"><code>latchkey_export_references</code></td><td data-th="What it does">Writes an environment&rsquo;s env file of references and plain settings, never values</td><td data-th="Asks you?">No</td></tr></tbody></table>
 <ul>
 <li>Output is always masked, and only the last 64 KB of each stream is returned, with a flag when it was cut. Standard input is empty.</li>
 <li>Commands stop after <code>timeout_seconds</code>: 600 by default, at most 3600. Use it for tests, builds and scripts; run dev servers in a shell with <code>latchkey run</code>. A cancelled request stops its command.</li>
@@ -157,9 +205,14 @@ latchkey run --env shop/development -- npm test</code></pre></figure>
     <div class="wrap">
       <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
       <ul>
-        <li><a href="../index.html">Home</a></li>
+        <li><a href="../features.html">Features</a></li>
+        <li><a href="../pricing.html">Pricing</a></li>
+        <li><a href="../teams.html">Teams</a></li>
+        <li><a href="../security.html">Security</a></li>
+        <li><a href="../roadmap.html">Roadmap</a></li>
+        <li><a href="index.html">Docs</a></li>
         <li><a href="cli.html">CLI reference</a></li>
-        <li><a href="agents.html">Agents and MCP</a></li>
+        <li><a href="agents.html" aria-current="page">Agents and MCP</a></li>
         <li><a href="api.html">References and API</a></li>
       </ul>
     </div>

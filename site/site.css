@@ -10,8 +10,8 @@
   --accent: #0a63d1;
   --accent-ink: #ffffff;
   --accent-soft: #e4effc;
-  --ok: #1f7a4a;
-  --warn: #a35a00;
+  --ok: #176a3f;
+  --warn: #8c4c00;
   --code-bg: #f1f4f8;
   --code-fig: #e7ecf2;
   --code-ink: #1d2733;
@@ -21,6 +21,10 @@
   --t-flag: #7a3cb3;
   --t-val: #1d6b43;
   --t-dim: #5a6472;
+  /* Behind a scene's windows: a little lighter than the page in dark mode, a little deeper in light. */
+  --scene-wash: #d9e1eb;
+  --card-shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 6px 16px rgba(16, 24, 40, .04);
+  --tty-bg: #0f1318;
   --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   --display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
   --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
@@ -33,6 +37,7 @@
     --code-bg: #10151b; --code-fig: #19202a; --code-ink: #dbe3ec;
     --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 16px 40px rgba(0, 0, 0, .45);
     --t-act: #6cb2ff; --t-flag: #c9a2ff; --t-val: #7fd6a4; --t-dim: #98a2b0;
+    --scene-wash: #26303c; --tty-bg: #12171e; --card-shadow: none;
     color-scheme: dark;
   }
 }
@@ -42,6 +47,7 @@
   --code-bg: #10151b; --code-fig: #19202a; --code-ink: #dbe3ec;
   --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 16px 40px rgba(0, 0, 0, .45);
   --t-act: #6cb2ff; --t-flag: #c9a2ff; --t-val: #7fd6a4; --t-dim: #98a2b0;
+  --scene-wash: #26303c; --tty-bg: #12171e; --card-shadow: none;
   color-scheme: dark;
 }
 
@@ -50,8 +56,9 @@ html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 var(--sans); }
 .wrap { width: 100%; max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
 h1, h2, h3 { font-family: var(--display); line-height: 1.12; letter-spacing: -0.02em; text-wrap: balance; margin: 0 0 12px; }
-h1 { font-size: clamp(36px, 6vw, 60px); font-weight: 700; }
-h2 { font-size: clamp(26px, 3.6vw, 36px); font-weight: 700; }
+/* One type scale: page titles, section titles, topic titles (.topic, roadmap tiers), card titles. */
+h1 { font-size: clamp(36px, 4.6vw, 56px); font-weight: 700; }
+h2 { font-size: clamp(28px, 3.4vw, 36px); font-weight: 700; }
 h3 { font-size: 19px; font-weight: 650; letter-spacing: -0.01em; }
 p { margin: 0 0 14px; }
 a { color: var(--accent); text-underline-offset: 3px; }
@@ -124,10 +131,16 @@ article.doc h1 { font-size: clamp(34px, 5vw, 46px); }
 article.doc h2 { font-size: 26px; margin-top: 52px; padding-top: 20px; border-top: 1px solid var(--line); scroll-margin-top: 76px; }
 article.doc h3 { margin-top: 32px; scroll-margin-top: 76px; }
 article.doc .lede { font-size: 19px; color: var(--muted); }
-article.doc table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 15.5px; display: block; overflow-x: auto; }
+article.doc table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 15.5px; }
 article.doc th, article.doc td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
 article.doc th { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); white-space: nowrap; }
-article.doc td:first-child code { white-space: nowrap; }
+article.doc td code { overflow-wrap: break-word; }
+/* Keep a flag or a hyphenated word whole: lines break between words, not at their hyphens. */
+.nw, figure.code .tok.t-flag, figure.code .tok.t-act { white-space: nowrap; }
+article.doc td:first-child:not(:only-child) { width: 38%; }
+/* Code in the docs wraps rather than scrolling; a scene sits in the column with its caption at its width. */
+article.doc figure.code pre code { white-space: pre-wrap; overflow-wrap: break-word; }
+.doc-scene { margin: 22px 0; max-width: 680px; }
 article.doc ul, article.doc ol { padding-left: 22px; }
 article.doc li { margin: 6px 0; }
 .crumbs ol { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0 0 18px; padding: 0; font-size: 14px; color: var(--muted); }
@@ -155,6 +168,14 @@ dl.pages dd { margin: 2px 0 0; color: var(--muted); }
   .side a { min-height: 36px; }
   .side a[aria-current="page"] { box-shadow: none; }
 }
+/* Tables become one block per row on narrow screens, each cell labelled with its column, so nothing scrolls. */
+@media (max-width: 700px) {
+  article.doc table, article.doc tbody, article.doc tr, article.doc td { display: block; }
+  article.doc thead { display: none; }
+  article.doc tr { padding: 10px 0; border-bottom: 1px solid var(--line); }
+  article.doc td, article.doc td:first-child:not(:only-child) { width: auto; padding: 2px 0; border: 0; }
+  article.doc td[data-th]::before { content: attr(data-th); display: block; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+}
 @media (max-width: 560px) {
   body { font-size: 16px; }
   figure.code pre code { font-size: 13px; }
@@ -166,3 +187,416 @@ dl.pages dd { margin: 2px 0 0; color: var(--muted); }
   main.docs { display: block; }
   figure.code pre code { white-space: pre-wrap; }
 }
+
+/* Product pages: the shared header's sections, feature rows, availability labels and the self-playing scenes
+   (scenes.js). A scene is a small drawing of Latchkey in use: Mac windows at a fixed design size, scaled to fit. */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.eyebrow { margin: 0 0 10px; font: 650 13px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.avail { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; font: 600 12.5px/1.4 var(--sans); background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); vertical-align: 2px; }
+.avail::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.avail.pending { background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn); }
+.feature { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 28px 56px; align-items: center; padding: 56px 0; border-top: 1px solid var(--line); }
+.feature.flip { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+.feature.flip > .copy { order: 2; }
+.feature .copy > p { color: var(--muted); }
+.feature .copy h3 { font-size: clamp(22px, 2.6vw, 28px); letter-spacing: -0.02em; margin-top: 10px; }
+.feature figure.code { margin: 14px 0 0; }
+.feature figure.code pre code, .cap pre { white-space: pre-wrap; overflow-wrap: break-word; }
+.step { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); font: 700 14px/1 var(--sans); }
+@media (max-width: 860px) {
+  .feature, .feature.flip { grid-template-columns: minmax(0, 1fr); padding: 40px 0; }
+  .feature.flip > .copy { order: 0; }
+}
+
+/* A scene. The canvas is drawn at --w × --h and scaled to the wrap's width; scenes.js sets --s. Without scripts, or
+   with reduced motion, it shows its last frame. */
+.scene-wrap { position: relative; width: 100%; aspect-ratio: var(--w) / var(--h); border-radius: 24px;
+              background: radial-gradient(62% 58% at 50% 50%, color-mix(in srgb, var(--accent) 9%, var(--scene-wash)), transparent 72%); }
+.scene-wrap .canvas { position: absolute; left: 0; top: 0; width: calc(var(--w) * 1px); height: calc(var(--h) * 1px);
+                      transform: scale(var(--s, 1)); transform-origin: 0 0; font: 13px/1.5 var(--sans); color: var(--ink); }
+.scene-pause { position: absolute; right: 10px; bottom: 10px; z-index: 30; display: grid; place-items: center; width: 30px; height: 30px; padding: 0;
+               border-radius: 50%; border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 88%, transparent); color: var(--muted);
+               cursor: pointer; opacity: 0; transition: opacity .15s; }
+.scene-wrap:hover .scene-pause, .scene-pause:focus-visible, .scene-wrap.paused .scene-pause { opacity: 1; }
+.scene-pause svg { width: 12px; height: 12px; fill: currentColor; }
+.no-js .scene-pause { display: none; }
+
+/* Mac windows inside a scene. */
+.mw { position: absolute; border-radius: 11px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden;
+      transition: opacity .35s ease, transform .35s ease; }
+.mw-bar { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; background: var(--bg-2); border-bottom: 1px solid var(--line); }
+.mw-bar i { width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; flex: none; }
+.mw-bar i:nth-child(2) { background: #febc2e; } .mw-bar i:nth-child(3) { background: #28c840; }
+.mw-bar span { margin: 0 auto; padding-right: 42px; font: 600 12px/1 var(--sans); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mw.tty { background: var(--tty-bg); border-color: #2a333e; color: #d7dee7; }
+.mw.tty .mw-bar { background: #171c22; border-color: #222a33; }
+.mw.tty .mw-bar span { color: #8b95a1; }
+.mw pre { margin: 0; padding: 10px 12px; font: 500 11.5px/1.65 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.mw.tty pre { height: calc(100% - 28px); overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
+.mw.tty pre > span.l { display: block; flex: none; min-height: 1.65em; }
+.mw .p { color: #8ec5ff; } .mw .d { color: #8b95a1; } .mw .c { color: #ffcf6b; } .mw .ok { color: #7fd6a4; } .mw .err { color: #ff9b8f; } .mw .w { color: #f0c27b; }
+.mw .k { color: #c9a2ff; }
+.mw.tty .cur { display: inline-block; width: 7px; height: 13px; vertical-align: -2px; background: #d7dee7; }
+.mw.ed pre { color: var(--code-ink); }
+.mw.ed .ln { display: block; padding: 0 4px; margin: 0 -4px; border-radius: 4px; transition: background-color .3s ease; }
+.mw.ed .ln.hl { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.mw.ed .ln .key { color: var(--t-flag); }
+.mw.ed .ln .ref { color: var(--t-act); }
+.mw.ed .ln .lit { color: var(--muted); }
+.mw.ed .ln.kept .lit { color: var(--ink); }
+.mw.ed .ln .tag { margin-left: 8px; padding: 0 6px; border-radius: 5px; font: 600 10px/1.6 var(--sans); background: var(--bg-2); color: var(--muted); }
+
+/* The Latchkey side of a scene: the app icon on its tile, a line of state, and the approval moment. */
+.lk-card { position: absolute; padding: 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.lk-card .head { display: flex; align-items: center; gap: 10px; }
+.lk-card .mark { width: 36px; height: 36px; border-radius: 9px; }
+.lk-card .mark img { width: 22px; height: 22px; }
+.lk-card b { display: block; font: 700 14px/1.2 var(--display); }
+.lk-card small { display: block; color: var(--muted); font-size: 11.5px; }
+.lk-card .state { margin-top: 10px; display: flex; align-items: center; gap: 8px; min-height: 26px; padding: 4px 8px; border-radius: 8px; background: var(--bg-2); font-size: 12px; color: var(--muted); transition: background-color .3s, color .3s; }
+.lk-card .state.ask { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--ink); }
+.lk-card .state.done { background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ink); }
+.lk-card .state.no { background: color-mix(in srgb, #ff3b30 14%, transparent); color: var(--ink); }
+.fp { width: 18px; height: 18px; flex: none; color: var(--muted); }
+.state.ask .fp { color: #ff3b30; animation: fp-read 1.1s ease-in-out infinite; }
+.state.done .fp { color: #34c759; }
+@keyframes fp-read { 50% { opacity: .45; } }
+
+/* Things in flight between windows: a reference on its way to Latchkey, a value on its way to the process. */
+.chip { position: absolute; z-index: 20; padding: 2px 8px; border-radius: 6px; font: 600 10.5px/1.6 var(--mono); white-space: nowrap;
+        background: var(--accent); color: var(--accent-ink); box-shadow: 0 4px 12px rgba(16, 24, 40, .2); opacity: 0;
+        transition: left .7s cubic-bezier(.5, 0, .2, 1), top .7s cubic-bezier(.5, 0, .2, 1), opacity .25s ease; }
+.chip.val { background: #34c759; color: #06210f; }
+.chip.on { opacity: 1; }
+
+/* The pointer, and the panels and sheets it clicks. */
+.cursor { position: absolute; z-index: 40; left: 0; top: 0; width: 18px; height: 22px; transition: transform .8s cubic-bezier(.45, 0, .2, 1); pointer-events: none;
+          filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, .35)); }
+.cursor.press { animation: press .25s ease; }
+@keyframes press { 50% { scale: .82; } }
+.sheet { position: absolute; z-index: 25; padding: 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 18px 44px rgba(16, 24, 40, .22);
+         transition: opacity .25s ease, transform .25s ease; font-size: 12px; }
+.sheet.off, .mw.off, .lk-card.off { opacity: 0; transform: translateY(6px) scale(.98); }
+.sheet h4 { margin: 0 0 8px; font: 700 13.5px/1.25 var(--display); }
+.sheet dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 0 0 10px; }
+.sheet dt { color: var(--muted); text-align: right; }
+.sheet dd { margin: 0; font: 500 10.5px/1.6 var(--mono); overflow-wrap: anywhere; }
+.sheet .box { padding: 7px 8px; border-radius: 7px; background: var(--bg-2); margin-bottom: 10px; }
+.sheet .chk { display: flex; align-items: center; gap: 6px; }
+.sheet .chk + .chk { margin-top: 4px; }
+.sheet .chk i { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--muted); flex: none; display: grid; place-items: center; }
+.sheet .chk.on i { background: var(--accent); border-color: var(--accent); }
+.sheet .chk.on i::after { content: ""; width: 6px; height: 3px; border-left: 1.6px solid #fff; border-bottom: 1.6px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+.sheet .chk.dim { color: var(--muted); }
+.sheet .pop { margin-left: 4px; padding: 0 6px; border-radius: 5px; border: 1px solid var(--line); background: var(--surface); }
+.sheet .acts { display: flex; align-items: center; gap: 6px; }
+.sheet .acts small { margin-right: auto; color: var(--muted); font-size: 10.5px; }
+.sheet .b { white-space: nowrap; padding: 3px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; transition: filter .15s; }
+.sheet .b.go { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.sheet .b.hit { filter: brightness(.85); }
+.sheet.touch { width: 230px; text-align: center; background: rgba(40, 44, 52, .97); border-color: #3a414b; color: #f1f3f6; }
+.sheet.touch .fp { width: 40px; height: 40px; margin: 2px auto 8px; display: block; color: #ff3b30; }
+.sheet.touch.ok .fp { color: #34c759; }
+.sheet.touch p { margin: 0; font-size: 11.5px; line-height: 1.4; }
+.sheet.touch p + p { margin-top: 4px; color: #c9ced6; font-size: 11px; }
+
+.sheet-head { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+.sheet-head .mark { width: 34px; height: 34px; }
+.sheet-head .mark img { width: 20px; height: 20px; }
+.sheet-head h4 { margin: 0; }
+.sheet-head small { color: var(--muted); }
+/* A caption under a scene or window, at its width. */
+.wide-cap { margin: 12px 0 0; color: var(--muted); }
+/* A note beside a scene's window, for what isn't on screen (a grant covering a run, say). */
+.tagnote { position: absolute; z-index: 22; padding: 4px 10px; border-radius: 999px; background: #34c759; color: #06210f; font: 600 11px/1.4 var(--sans);
+           box-shadow: 0 6px 16px rgba(0, 0, 0, .25); transition: opacity .25s ease, transform .25s ease; }
+.tagnote.off { opacity: 0; transform: translateY(6px); }
+/* "Read more" links under a block of text: small and quiet, so they don't compete with the heading. */
+.more { display: inline-block; margin-top: 4px; font: 600 15px/1.4 var(--sans); color: var(--accent); text-decoration: none; }
+.more:hover { text-decoration: underline; }
+.more::after { content: "→"; margin-left: .3em; }
+figure.code + .more { margin-top: 12px; }
+
+/* A warning in a drawn panel, as the app shows it: orange, with the reason. */
+.sheet .warn { display: flex; gap: 6px; margin: -2px 0 10px; color: #e8890c; font-weight: 600; font-size: 11.5px; line-height: 1.35; }
+.sheet .warn::before { content: "\26A0"; }
+
+/* The hero scene's env file and the inventory's long lines fit their windows. */
+#flow-env pre, .mw.tty #inv-tty { font-size: 10.5px; }
+
+/* An iCloud hop between two Macs. */
+.sync-arc { position: absolute; z-index: 10; height: 2px; background: repeating-linear-gradient(90deg, var(--accent) 0 6px, transparent 6px 11px); opacity: .25; transition: opacity .3s; }
+.sync-arc.on { opacity: 1; animation: march .6s linear infinite; }
+@keyframes march { to { background-position: 11px 0; } }
+.cloud { position: absolute; z-index: 11; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); color: var(--accent); }
+.cloud svg { width: 24px; height: 24px; fill: currentColor; }
+.device { position: absolute; font: 650 11px/1 var(--sans); color: var(--muted); letter-spacing: .02em; }
+
+/* A browser window, for Latchkey for Safari. */
+.mw.web .url { margin: 0 auto; padding: 3px 12px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); font: 500 11px/1.2 var(--sans); color: var(--muted); }
+.mw.web .page { padding: 16px 18px; }
+.mw.web .page h5 { margin: 0 0 4px; font: 700 15px/1.2 var(--display); }
+.mw.web .page p { margin: 0 0 10px; color: var(--muted); font-size: 12px; }
+.mw.web .keybox { position: relative; display: flex; align-items: center; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg-2); font: 500 11.5px/1.3 var(--mono); }
+.mw.web .save { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 999px; background: #0a63d1; color: #fff; font: 600 10.5px/1.4 var(--sans); transition: opacity .3s; }
+.mw.web .save svg { width: 9px; height: 11px; fill: #fff; }
+
+/* The Latchkey window drawn inside a scene, after the app's own layout: a sidebar of filter tiles and projects,
+   then the list grouped by environment, or an item's detail. */
+.mw.app .body { display: grid; grid-template-columns: 96px 1fr; height: calc(100% - 28px); }
+.mw.app .sb { padding: 8px 6px; background: var(--bg-2); border-right: 1px solid var(--line); }
+.mw.app .tl { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
+.mw.app .tl span { position: relative; padding: 14px 5px 3px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); font: 650 8.5px/1.1 var(--sans); }
+.mw.app .tl span.on { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.mw.app .tl span b { position: absolute; top: 3px; right: 5px; font-size: 9px; }
+.mw.app .sh { margin: 4px 3px 3px; font: 650 8.5px/1 var(--sans); color: var(--muted); }
+.mw.app .pj { display: flex; align-items: center; gap: 5px; padding: 3px 4px; border-radius: 5px; background: var(--surface); font-size: 10.5px; font-weight: 600; }
+.mw.app .pj i { width: 10px; height: 10px; border-radius: 3px; background: #6b7cf5; }
+.mw.app .pj em { margin-left: auto; font-style: normal; color: var(--muted); font-weight: 500; }
+.mw.app .icard { display: flex; align-items: center; gap: 8px; margin: 8px; padding: 8px; border-radius: 8px; background: var(--bg-2); }
+.mw.app .icard .ki { width: 28px; height: 28px; border-radius: 8px; }
+.mw.app .icard b { display: block; font-size: 13px; }
+.mw.app .icard small { color: var(--muted); font-size: 10.5px; }
+.mw.app .kv { display: flex; justify-content: space-between; gap: 8px; margin: 0 8px; padding: 5px 2px; border-bottom: 1px solid var(--line); font-size: 11px; }
+.mw.app .kv em { font-style: normal; color: var(--muted); transition: color .3s; }
+.mw.app .kv em.hl { color: var(--ok); font-weight: 600; }
+/* Rows in the Latchkey window drawn inside a scene. */
+.mw.app .rows { padding: 6px; min-width: 0; }
+.mw.app .row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px; transition: background-color .3s; }
+.mw.app .row b { font-weight: 600; font-size: 12px; }
+.mw.app .row span:not(.ki) { min-width: 0; }
+.mw.app .row span b, .mw.app .row span small { display: block; margin: 0; font-size: 11px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mw.app .row span small { font-size: 9.5px; }
+.mw.app .row small { margin-left: auto; color: var(--muted); font-size: 11px; }
+.mw.app .row.hl { background: var(--accent); color: var(--accent-ink); }
+.mw.app .row.hl small { color: inherit; opacity: .85; }
+.mw.app .row.new { animation: row-in .5s ease; }
+@keyframes row-in { from { opacity: 0; transform: translateY(-4px); } }
+.mw.app .ki { width: 20px; height: 20px; border-radius: 6px; flex: none; display: grid; place-items: center; background: #1f7cf0; }
+.mw.app .ki.pw { background: #f2994a; } .mw.app .ki.val { background: #8a929c; }
+.mw.app .ki::after { content: ""; width: 8px; height: 8px; border-radius: 2px; background: rgba(255, 255, 255, .9); }
+.mw.app .sub { padding: 4px 8px 4px; font: 650 9.5px/1 var(--sans); color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mw, .sheet, .chip, .cursor, .lk-card .state, .mw.ed .ln, .scene-pause, .tagnote { transition: none; }
+  .state.ask .fp, .sync-arc.on, .cursor.press, .mw.app .row.new { animation: none; }
+}
+
+/* The header on narrow screens: the sections scroll sideways under the name. */
+/* The header on narrow screens stays one row: the name, then Features, Pricing and Docs. How it works,
+   Security and the preview button are on the pages and in the footer. */
+@media (max-width: 720px) {
+  nav.top { gap: 8px; }
+  .brand { font-size: 17px; }
+  nav.top ul { gap: 0; }
+  nav.top ul a { min-height: 36px; padding: 0 8px; font-size: 14px; white-space: nowrap; }
+  nav.top ul li:has(.button), nav.top ul li:has(a[href$="#how"]), nav.top ul li:has(a[href$="security.html"]) { display: none; }
+}
+
+/* The system's Touch ID sheet, with Latchkey's own words. */
+.touch { position: absolute; z-index: 4; left: 50%; top: 60px; transform: translateX(-50%); width: min(300px, 92%); padding: 18px;
+         border-radius: 16px; background: rgba(40, 44, 52, .98); border: 1px solid #3a414b; box-shadow: 0 20px 50px rgba(0, 0, 0, .55);
+         color: #f1f3f6; text-align: left; }
+.touch-icon { position: relative; width: 56px; height: 56px; border-radius: 50%; background: #e9ebef; color: #9aa1ab; display: grid; place-items: center; margin-bottom: 10px; }
+.touch-icon svg { width: 34px; height: 34px; }
+.touch-icon img { position: absolute; right: -8px; bottom: -4px; width: 16px; height: 17px; padding: 4px; border-radius: 7px; background: #f6f7f9; box-sizing: content-box; }
+.touch.reading .touch-icon { color: #ff3b30; animation: read 1.2s ease-in-out infinite; }
+.touch.ok .touch-icon { color: #34c759; }
+@keyframes read { 50% { color: #ff8a80; } }
+.touch-text { margin: 0 0 6px; font-weight: 700; font-size: 13.5px; line-height: 1.35; }
+.touch-sub { margin: 0 0 12px; font-size: 13px; color: #c9ced6; }
+.touch-btn { display: block; width: 100%; margin-top: 8px; padding: 7px; border-radius: 9px; border: 0; background: #4a505a; color: #fff; font: 600 13px var(--sans); cursor: pointer; }
+.touch-btn:hover { background: #575e69; }
+@media (prefers-reduced-motion: reduce) { .touch.reading .touch-icon { animation: none; } }
+
+/* The Latchkey window (app-demo.js): three panes like the app, at the full width of the page. */
+.appwrap { width: 100%; margin: 0; }
+/* What the window shows when scripts don't run; app-demo.js replaces it with the working window. */
+.appwin-static { padding: 18px 20px; font-size: 15px; }
+.appwin-static ul { margin: 8px 0 12px; padding-left: 20px; }
+.appwin-static li { margin: 4px 0; }
+.appwin { position: relative; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); overflow: hidden;
+          font-size: 13.5px; color: var(--ink); }
+.appwin .chrome { display: flex; align-items: center; gap: 7px; height: 36px; padding: 0 12px; border-bottom: 1px solid var(--line); background: var(--bg-2); }
+.appwin .chrome i { width: 11px; height: 11px; border-radius: 50%; background: #ff5f57; display: block; }
+.appwin .chrome i:nth-child(2) { background: #febc2e; } .appwin .chrome i:nth-child(3) { background: #28c840; }
+.appwin .chrome span { margin-left: 8px; font-weight: 600; color: var(--muted); }
+.appwin .body { display: grid; grid-template-columns: 210px 290px 1fr; height: 560px; }
+.appwin .side, .appwin .list, .appwin .detail { position: static; overflow-y: auto; padding: 12px; min-width: 0; scrollbar-width: none; }
+.appwin .side::-webkit-scrollbar, .appwin .list::-webkit-scrollbar, .appwin .detail::-webkit-scrollbar { display: none; }
+.appwin .side { background: var(--bg-2); border-right: 1px solid var(--line); }
+.appwin .list { border-right: 1px solid var(--line); }
+.appwin .list.wide { grid-column: span 2; border-right: 0; }
+.appwin button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; text-align: left; }
+.appwin .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.appwin .tile { position: relative; padding: 8px 9px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); font-weight: 650; font-size: 12.5px; line-height: 1.2; min-height: 54px; display: flex; align-items: flex-end; }
+.appwin .tile .tn { position: absolute; top: 6px; right: 9px; font-size: 13px; }
+.appwin .tile[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.appwin .sh { margin: 12px 4px 4px; font-size: 11.5px; font-weight: 650; color: var(--muted); }
+.appwin .side ul { list-style: none; margin: 0; padding: 0; }
+.appwin .side li button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 6px; border-radius: 7px; }
+.appwin .side li button span:not(.ki) { flex: 1; }
+.appwin .side li button em { font-style: normal; color: var(--muted); }
+.appwin .side li button[aria-pressed="true"], .appwin .side li button:hover { background: var(--surface); }
+.appwin .sync { margin: 16px 0 0; padding: 10px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+.appwin .sync b { display: block; color: var(--ink); font-size: 13px; }
+.appwin .lt { margin: 0 4px 10px; font-weight: 700; font-size: 15px; }
+.appwin .lt small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
+.appwin .grp { display: flex; align-items: center; gap: 7px; width: 100%; padding: 7px 4px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.appwin .grp b { font-weight: 650; }
+.appwin .grp em { font-style: normal; color: var(--muted); margin-right: auto; }
+.appwin .grp.sub { padding-left: 18px; }
+.appwin .chev { width: 8px; height: 8px; border-right: 1.6px solid var(--muted); border-bottom: 1.6px solid var(--muted); transform: rotate(-45deg); margin-right: 2px; transition: transform .15s; }
+.appwin .grp[aria-expanded="true"] .chev { transform: rotate(45deg); }
+.appwin .place { color: var(--muted); font-size: 12px; }
+.appwin .env { padding: 1px 7px; border-radius: 6px; font-size: 11.5px; font-weight: 600; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--t-act); }
+.appwin .env-preview { background: color-mix(in srgb, var(--t-flag) 18%, transparent); color: var(--t-flag); }
+.appwin .env-production { background: rgba(225, 70, 60, .14); color: #a8291f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .appwin .env-production { color: #ff8a80; } }
+:root[data-theme="dark"] .appwin .env-production { color: #ff8a80; }
+.appwin .item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 8px 7px 30px; border-radius: 8px; }
+.appwin .item span { min-width: 0; }
+.appwin .item b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.appwin .item small { color: var(--muted); font-size: 12px; }
+.appwin .item[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.appwin .item[aria-pressed="true"] small { color: inherit; opacity: .85; }
+.appwin .item:not([aria-pressed="true"]):hover { background: var(--bg-2); }
+.appwin .ki { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; flex: none; color: #fff; }
+.appwin .ki svg { width: 14px; height: 14px; fill: currentColor; }
+.appwin .ki-token { background: #1f7cf0; } .appwin .ki-password { background: #f2994a; } .appwin .ki-key { background: #c94fd8; } .appwin .ki-value { background: #8a929c; }
+.appwin .ki-proj, .appwin .ki-svc, .appwin .ki-grant, .appwin .ki-del, .appwin .ki-shared { width: 18px; height: 18px; border-radius: 5px; background: var(--line); }
+.appwin .ki-grant { background: #2bb3c0; } .appwin .ki-proj { background: #6b7cf5; }
+.appwin .side .ki:not(.ki-proj):not(.ki-svc):not(.ki-grant):not(.ki-del) { width: 20px; height: 20px; border-radius: 6px; }
+.appwin .side .ki svg { width: 11px; height: 11px; }
+.appwin .ki.big { width: 52px; height: 52px; border-radius: 13px; }
+.appwin .ki.big svg { width: 26px; height: 26px; }
+.appwin .pane-card { padding: 10px 12px; border-radius: 10px; background: var(--bg-2); margin-bottom: 10px; }
+.appwin .pane-card.head { display: flex; gap: 12px; align-items: center; }
+.appwin .dn { display: block; font-size: 18px; font-weight: 700; }
+.appwin .kv { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.appwin .kv:last-child { border-bottom: 0; }
+.appwin .kv > span { flex: 1; font-weight: 550; }
+.appwin .kv small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+.appwin .kv em { font-style: normal; color: var(--muted); }
+.appwin .kv code { font-size: 12px; overflow-wrap: anywhere; background: none; border: 0; }
+.appwin .ib { padding: 3px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); font-size: 12px; font-weight: 600; }
+.appwin .switch { width: 38px; height: 22px; border-radius: 11px; background: var(--line); position: relative; flex: none; }
+.appwin .switch i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.appwin .switch[aria-checked="true"] { background: #34c759; }
+.appwin .switch[aria-checked="true"] i { left: 18px; }
+.appwin .dh { margin: 14px 2px 6px; font-weight: 700; }
+.appwin .fn { margin: -4px 4px 10px; font-size: 12px; color: var(--muted); }
+.appwin .muted { margin: 0; color: var(--muted); }
+.appwin .empty { color: var(--muted); padding: 8px 4px; }
+.appwin .entry { display: flex; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--line); }
+.appwin .entry div { flex: 1; min-width: 0; }
+.appwin .entry b { display: block; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.appwin .entry span { display: block; color: var(--muted); font-size: 12px; }
+.appwin .entry .mono { font-family: var(--mono); }
+.appwin .entry time { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.appwin .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex: none; background: #34c759; }
+.appwin .dot.no { background: #ff3b30; }
+.appwin .grantrow { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-bottom: 1px solid var(--line); }
+.appwin .grantrow div { flex: 1; }
+.appwin .grantrow b { display: block; font-family: var(--mono); font-size: 13px; }
+.appwin .grantrow span { display: block; color: var(--muted); font-size: 12px; }
+.appwin .pill { padding: 5px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; }
+.appwin button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.appwin .touch { top: 90px; }
+
+@media (max-width: 860px) {
+  .appwin .body { grid-template-columns: 1fr; height: auto; }
+  .appwin .side { border-right: 0; border-bottom: 1px solid var(--line); max-height: none; }
+  .appwin .side ul, .appwin .side .sh, .appwin .sync { display: none; }
+  .appwin .tiles { grid-template-columns: repeat(4, 1fr); margin: 0; }
+  .appwin .list { border-right: 0; border-bottom: 1px solid var(--line); max-height: 380px; }
+  .appwin .list.wide { grid-column: auto; }
+  .appwin .detail { max-height: 520px; }
+}
+@media (prefers-reduced-motion: reduce) { .appwin .chev, .appwin .switch i { transition: none; } }
+
+
+/* ---- The design system for product pages: one section rhythm, one card, grids of cards, a band, and the closing
+   call to action. Pages compose these; they don't restyle them. */
+:root { --section: 104px; --card-radius: 16px; --card-pad: 22px; --band-radius: 22px; }
+@media (max-width: 760px) { :root { --section: 72px; --card-pad: 18px; } }
+.section { margin-top: var(--section); }
+.shead { max-width: 760px; margin-bottom: 28px; }
+.shead h2 { margin: 0 0 10px; }
+.shead p:not(.eyebrow) { color: var(--muted); font-size: 18px; margin: 0; }
+.topic h2, .tier-head h2 { font-size: clamp(22px, 2.4vw, 28px); }
+
+.card-grid { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; }
+.card-grid.g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.card-grid.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.card-grid.g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.card { display: flex; flex-direction: column; gap: 6px; min-width: 0; margin: 0; padding: var(--card-pad); border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); color: var(--ink); box-shadow: var(--card-shadow); }
+.card > b, .card > h3 { margin: 0; font: 650 17.5px/1.3 var(--display); letter-spacing: -0.01em; }
+.card > span, .card > p { margin: 0; color: var(--muted); font-size: 15.5px; }
+.card .step, .card > span.step { margin-bottom: 6px; color: var(--accent-ink); font-size: 14px; }
+a.card { text-decoration: none; transition: border-color .15s; }
+a.card:hover { border-color: var(--accent); }
+a.card > b::after { content: " →"; color: var(--accent); }
+.card .links { margin-top: auto; padding-top: 10px; display: grid; gap: 2px; }
+@media (max-width: 1000px) { .card-grid.g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .card-grid.g2, .card-grid.g3, .card-grid.g4 { grid-template-columns: minmax(0, 1fr); } }
+
+/* A band: a wide panel holding copy beside an example. */
+.band { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 32px 56px; align-items: center; padding: 36px; border: 1px solid var(--line); border-radius: var(--band-radius); background: var(--surface); box-shadow: var(--card-shadow); }
+.band h2 { margin: 0 0 12px; }
+.band-copy > p:not(.eyebrow) { color: var(--muted); }
+.band-art { margin: 0; min-width: 0; }
+@media (max-width: 1000px) { .band { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) { .band { padding: 22px; } }
+
+/* The closing call to action every product page ends with. */
+.cta-band { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 24px 56px; align-items: center; padding: 44px; border-radius: var(--band-radius);
+            background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--accent) 22%, var(--surface)), var(--surface) 70%); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line)); }
+.cta-band h2 { margin: 0 0 10px; font-size: clamp(26px, 3vw, 34px); }
+.cta-band p { margin: 0; color: var(--muted); font-size: 18px; }
+.cta-actions { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; justify-content: flex-end; }
+@media (max-width: 860px) { .cta-band { grid-template-columns: minmax(0, 1fr); padding: 28px; } .cta-actions { justify-content: flex-start; } }
+
+/* A calm note, for status that isn't a warning (the development preview, say). */
+.note-card { display: flex; gap: 12px; align-items: flex-start; padding: 16px 18px; border-radius: 14px; background: var(--bg-2); border: 1px solid var(--line); color: var(--muted); font-size: 15.5px; }
+.note-card .avail { flex: none; }
+
+/* Linked sections land below the sticky header. */
+main [id] { scroll-margin-top: 84px; }
+
+/* ---- Phones and touch. Targets a finger can hit (44px, as Apple recommends), controls that don't rely on hover,
+   and scenes edge to edge with larger terminal type so their text stays legible when scaled down. */
+@media (hover: none) {
+  .scene-pause { opacity: 1; width: 40px; height: 40px; }
+}
+@media (max-width: 760px) {
+  nav.top ul a, .jump a, .sec .jump a { min-height: 44px; }
+  footer.site ul { gap: 0 4px; }
+  footer.site ul a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; margin-left: -6px; }
+  .more { display: inline-flex; align-items: center; min-height: 44px; }
+  .card .links .more { min-height: 40px; }
+  button.copy { min-height: 36px; padding: 0 12px; }
+  .note-card { flex-direction: column; gap: 8px; }
+  .cta-actions .button { flex: 1 1 auto; }
+}
+@media (max-width: 640px) {
+  .scene-wrap { width: auto; margin-left: -16px; margin-right: -16px; border-radius: 0; overflow-x: clip; }
+  .scene-wrap + .wide-cap, .scene-wrap + figcaption { margin-left: -16px; margin-right: -16px; padding: 0 16px; }
+  .mw.tty pre { font-size: 13px; }
+  .mw.tty #inv-tty { font-size: 12px; }
+}
+@media (max-width: 760px) {
+  footer.site a { display: inline-flex; align-items: center; min-height: 44px; }
+  .button.small { min-height: 40px; }
+  .mb-icon { height: 32px; width: 40px; }
+}
+/* The smallest phones (320px): the header's three links still fit beside the name. */
+@media (max-width: 360px) {
+  .brand { gap: 7px; font-size: 16px; }
+  .brand .logo { width: 22px; height: 23px; }
+  nav.top ul a { padding: 0 6px; font-size: 13.5px; }
+}
+
+/* Portrait scenes (scenes.js) draw at about their natural size on a phone, so terminals keep their normal type. */
+.scene-wrap.portrait .mw.tty pre { font-size: 11.5px; }
+.scene-wrap.portrait .mw.tty #inv-tty { font-size: 10.5px; }

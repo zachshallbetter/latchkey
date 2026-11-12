@@ -16,6 +16,26 @@
   <link rel="apple-touch-icon" href="../apple-touch-icon.png">
   <meta name="twitter:card" content="summary">
   <link rel="stylesheet" href="../site.css">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Latchkey",
+      "item": "../index.html"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Developers",
+      "item": "index.html"
+    }
+  ]
+}
+  </script>
   <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="../llms.txt">
   <script defer src="../site.js"></script>
 </head>
@@ -25,8 +45,12 @@
     <nav class="top wrap" aria-label="Main">
       <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
       <ul>
+        <li><a href="../features.html">Features</a></li>
+        <li><a href="../index.html#how">How it works</a></li>
+        <li><a href="../pricing.html">Pricing</a></li>
+        <li><a href="../security.html">Security</a></li>
         <li><a href="index.html" aria-current="page">Docs</a></li>
-        <li><a class="button primary" href="../index.html#install">Preview status</a></li>
+        <li><a class="button primary" href="../index.html#install">Install the preview</a></li>
       </ul>
     </nav>
   </header>
@@ -61,7 +85,7 @@
 <h2 id="ids">Item IDs</h2>
 <p>An item is either shared, <code>NAME</code>, or belongs to one environment of a project, <code>project/environment/NAME</code>. Each part is letters, digits, <code>_</code>, <code>-</code> and <code>.</code>, at most 64 bytes. The ID is the only place project and environment are stored.</p>
 <p>Environments can be any name; <code>development</code>, <code>preview</code>, <code>staging</code>, <code>production</code> and <code>test</code> sort first. Use names like <code>vercel.preview</code> to tell apart the same environment in different places.</p>
-<table><thead><tr><th>Kind</th><th>For</th><th>Masked in output</th></tr></thead><tbody><tr><td><code>token</code></td><td>API tokens and keys, one line</td><td>Yes</td></tr><tr><td><code>password</code></td><td>Passwords and connection strings, one line</td><td>Yes</td></tr><tr><td><code>key</code></td><td>Key material: SSH, GPG, <code>.p8</code>, <code>.pem</code>. Multi-line</td><td>Yes, line by line</td></tr><tr><td><code>value</code></td><td>Not secret: host names, account IDs</td><td>No</td></tr></tbody></table>
+<table><thead><tr><th>Kind</th><th>For</th><th>Masked in output</th></tr></thead><tbody><tr><td data-th="Kind"><code>token</code></td><td data-th="For">API tokens and keys, one line</td><td data-th="Masked in output">Yes</td></tr><tr><td data-th="Kind"><code>password</code></td><td data-th="For">Passwords and connection strings, one line</td><td data-th="Masked in output">Yes</td></tr><tr><td data-th="Kind"><code>key</code></td><td data-th="For">Key material: SSH, GPG, <code>.p8</code>, <code>.pem</code>. Multi-line</td><td data-th="Masked in output">Yes, line by line</td></tr><tr><td data-th="Kind"><code>value</code></td><td data-th="For">Not secret: host names, account IDs</td><td data-th="Masked in output">No</td></tr></tbody></table>
 
 <h2 id="rules">What&rsquo;s released without asking</h2>
 <p>A read is released without a prompt only when the item is <strong>agent-safe</strong> (No Approval in the app), or a <strong>grant</strong> covers the folder, session and command as applicable. Allow Once authorizes one request; approvals are not cached. Revoking a grant stops future reads through it, but cannot recall released values. Everything else shows the approval panel, then Touch ID, Apple Watch or your password. Earlier values always ask. Changes (set, update, delete, move, import, restore, push) always ask, once per request: the Touch ID sheet alone, with the panel behind its Details&hellip; button (pushes show the panel first).</p>
@@ -73,7 +97,12 @@
     <div class="wrap">
       <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
       <ul>
-        <li><a href="../index.html">Home</a></li>
+        <li><a href="../features.html">Features</a></li>
+        <li><a href="../pricing.html">Pricing</a></li>
+        <li><a href="../teams.html">Teams</a></li>
+        <li><a href="../security.html">Security</a></li>
+        <li><a href="../roadmap.html">Roadmap</a></li>
+        <li><a href="index.html" aria-current="page">Docs</a></li>
         <li><a href="cli.html">CLI reference</a></li>
         <li><a href="agents.html">Agents and MCP</a></li>
         <li><a href="api.html">References and API</a></li>

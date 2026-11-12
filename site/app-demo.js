@@ -1,7 +1,7 @@
 // A working copy of the Latchkey window with example data: the sidebar's filters and counts, projects and
 // environments that open and close, an item's detail, Activity and Grants. What the visitor does in the approval
-// scene above (index.html) arrives here as lk:activity and lk:grant events. Revealing a value or changing a setting
-// asks for Touch ID, as the app does.
+// scene on the home page arrives here as lk:activity and lk:grant events; elsewhere it starts from the example
+// data. Revealing a value or changing a setting asks for Touch ID, as the app does.
 (function () {
   var root = document.getElementById("appwin");
   if (!root) return;
@@ -160,24 +160,24 @@
     var p = parts(i.id), shown = state.revealed[i.id];
     var mine = activity.filter(function (a) { return a.names.indexOf(i.id) >= 0; }).slice(0, 3);
     return '<div class="detail">' +
-      '<div class="card head">' + kindIcon(i.kind).replace("ki ", "ki big ") + '<div><b class="dn">' + esc(p.name) + "</b>" +
+      '<div class="pane-card head">' + kindIcon(i.kind).replace("ki ", "ki big ") + '<div><b class="dn">' + esc(p.name) + "</b>" +
       "<span>" + (p.project ? esc(p.project) + ' <span class="env env-' + p.env.split(".").pop() + '">' + esc(p.env) + "</span>" : "Shared") + "</span></div></div>" +
-      '<div class="card"><div class="kv"><span>Value</span><code class="val">' + (shown ? esc(i.sample) : "••••••••••••••") + "</code>" +
+      '<div class="pane-card"><div class="kv"><span>Value</span><code class="val">' + (shown ? esc(i.sample) : "••••••••••••••") + "</code>" +
       '<button type="button" class="ib" data-reveal="' + esc(i.id) + '" aria-label="' + (shown ? "Hide the value" : "Show the value") + '">' + (shown ? "Hide" : "Show") + "</button></div>" +
       '<div class="kv"><span>Reference</span><code>latchkey://' + esc(i.id) + '</code><button type="button" class="ib" data-copy="latchkey://' + esc(i.id) + '">Copy</button></div></div>' +
-      '<div class="card"><div class="kv"><span>Kind</span><em>' + KINDS[i.kind][1] + "</em></div>" +
+      '<div class="pane-card"><div class="kv"><span>Kind</span><em>' + KINDS[i.kind][1] + "</em></div>" +
       '<div class="kv"><span>Allow reads without approval<small>' + (i.safe ? "Any program in your Mac account may request this value." : "Reads ask unless a grant covers them.") +
       '</small></span><button type="button" class="switch" role="switch" aria-checked="' + i.safe + '" data-safe="' + esc(i.id) + '" aria-label="Allow reads without approval"><i></i></button></div>' +
       '<div class="kv"><span>Project</span><em>' + (p.project ? esc(p.project) + " / " + esc(p.env) : "Shared") + "</em></div>" +
       '<div class="kv"><span>Service</span><em>' + esc(i.service) + "</em></div>" +
       (i.note ? '<div class="kv"><span>Note</span><em>' + esc(i.note) + "</em></div>" : "") + "</div>" +
       '<p class="fn">' + (i.kind === "value" ? "Plain values are not masked in output." : "Masked in command output.") + "</p>" +
-      (i.used.length ? '<p class="dh">Used In</p><div class="card"><code>' + i.used.map(esc).join("<br>") + "</code></div>" : "") +
-      '<p class="dh">Remote</p><div class="card"><p class="muted">' + (i.remote ? "Linked: " + esc(i.remote) : esc(p.project ? p.project + "/" + p.env : "Shared items") + " isn't linked to Vercel, GitHub Actions, Railway or Fly.") + "</p></div>" +
-      '<p class="dh">History</p><div class="card">' + (i.history ? i.history.map(function (h) { return '<p class="muted">' + esc(h.when) + ", " + esc(h.why) + "</p>"; }).join("")
+      (i.used.length ? '<p class="dh">Used In</p><div class="pane-card"><code>' + i.used.map(esc).join("<br>") + "</code></div>" : "") +
+      '<p class="dh">Remote</p><div class="pane-card"><p class="muted">' + (i.remote ? "Linked: " + esc(i.remote) : esc(p.project ? p.project + "/" + p.env : "Shared items") + " isn't linked to Vercel, GitHub Actions, Railway or Fly.") + "</p></div>" +
+      '<p class="dh">History</p><div class="pane-card">' + (i.history ? i.history.map(function (h) { return '<p class="muted">' + esc(h.when) + ", " + esc(h.why) + "</p>"; }).join("")
         : '<p class="muted">No earlier values yet. When this value changes, the old one is kept here.</p>') + "</div>" +
       '<p class="fn">The last 10 values are kept. Restoring keeps the current value too.</p>' +
-      (mine.length ? '<p class="dh">Recent Activity</p><div class="card">' + mine.map(entry).join("") + "</div>" : "") +
+      (mine.length ? '<p class="dh">Recent Activity</p><div class="pane-card">' + mine.map(entry).join("") + "</div>" : "") +
       "</div>";
   }
 
@@ -188,8 +188,13 @@
     if (focusKey) { var el = root.querySelector(focusKey); if (el) el.focus({ preventScroll: true }); }
   }
 
+  // The Touch ID sheet's icon: a fingerprint with Latchkey's mark, as macOS draws it for the app.
+  var FINGERPRINT = '<svg viewBox="0 0 48 48" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">' +
+    '<path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/>' +
+    '<path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg>' +
+    '<img src="' + (document.querySelector('link[rel="icon"]') || { getAttribute: function () { return "logo.svg"; } }).getAttribute("href") + '" alt="">';
   root.innerHTML = '<div class="chrome"><i></i><i></i><i></i><span>Latchkey</span></div><div class="body"></div>' +
-    '<div class="touch" hidden role="dialog" aria-label="Touch ID"><div class="touch-icon">' + document.querySelector("#touch .touch-icon").innerHTML +
+    '<div class="touch" hidden role="dialog" aria-label="Touch ID"><div class="touch-icon">' + FINGERPRINT +
     '</div><p class="touch-text"></p><p class="touch-sub">Touch ID or enter your password to continue with Latchkey.</p>' +
     '<button type="button" class="touch-btn" data-t="pw">Use Password…</button><button type="button" class="touch-btn" data-t="deny">Deny</button></div>';
   render();

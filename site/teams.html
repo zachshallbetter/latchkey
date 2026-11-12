@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>For teams · Latchkey</title>
+  <meta name="description" content="Developer Credential Migration from Snack Studio: a fixed-scope engagement that inventories a small team's env files and moves supported local workflows into Latchkey, from $2,500. And Latchkey Teams, in design with partners.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:title" content="For teams · Latchkey">
+  <meta property="og:description" content="Move your team's development credentials out of scattered env files, with a fixed-scope migration.">
+  <meta name="twitter:card" content="summary">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="site.css">
+  <style>
+    /* For teams: the migration engagement beside a scene of the inventory it starts with, then its deliverables,
+       how it runs, how credentials are handled and its limits; then Latchkey Teams, looking for design partners. */
+    .tm .page-hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 32px 56px; align-items: center; padding: 48px 0 0; }
+    .tm .lede { font-size: 19px; color: var(--muted); }
+    .offer { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 18px 0; }
+    .offer b { font: 700 32px/1 var(--display); letter-spacing: -0.02em; }
+    .offer span { color: var(--muted); }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+    .button[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
+    .topic { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 16px 56px; padding-top: 28px; border-top: 1px solid var(--line); }
+    .topic > header p { color: var(--muted); }
+    .topic ul { margin: 0; padding-left: 20px; }
+    .partner-price { font: 700 26px/1.1 var(--display); }
+    .partner-price small { font: 500 14px var(--sans); color: var(--muted); }
+    .band ul { margin: 8px 0 0; padding-left: 20px; }
+    .tm .feature { border-top: 1px solid var(--line); padding: 28px 0 0; }
+    .tm .feature h2 { margin-top: 0; }
+    .handling { margin: 12px 0 0; padding-left: 20px; color: var(--muted); }
+    .handling li { margin: 0 0 10px; }
+    .topic li { margin: 0 0 10px; max-width: 68ch; }
+    @media (max-width: 1000px) { .tm .page-hero { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 860px) { .topic { grid-template-columns: minmax(0, 1fr); } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site">
+    <nav class="top wrap" aria-label="Main">
+      <a class="brand" href="index.html"><img class="logo" src="logo.svg" alt="">Latchkey</a>
+      <ul>
+        <li><a href="features.html">Features</a></li>
+        <li><a href="index.html#how">How it works</a></li>
+        <li><a href="pricing.html">Pricing</a></li>
+        <li><a href="security.html">Security</a></li>
+        <li><a href="developers/index.html">Docs</a></li>
+        <li><a class="button primary" href="index.html#install">Install the preview</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main" class="wrap tm">
+    <section class="page-hero" aria-labelledby="title" style="margin-top:0">
+      <div>
+        <p class="eyebrow">For teams · Snack Studio</p>
+        <h1 id="title">Developer Credential Migration</h1>
+        <p class="lede">We help a small development team find every env file it depends on, see which credentials are duplicated, stale or in conflict, and move its supported local workflows into Latchkey, with safer access for its coding agents.</p>
+        <p class="offer"><b>From $2,500</b><span>per small-team engagement · fixed scope</span></p>
+        <div class="cta-row"><span class="button primary" role="link" aria-disabled="true">Request an assessment</span><a class="more" href="#scope">What's included</a></div>
+        <p class="fine" style="margin-top:10px">Requests open when the contact address is published. Scope, confidentiality and credential handling are agreed in writing before any work starts.</p>
+      </div>
+      <div>
+        <div class="scene-wrap" data-scene="inventory" style="--w:600;--h:360" aria-hidden="true">
+          <div class="canvas">
+            <div class="mw tty" style="left:12px;top:12px;width:576px;height:336px">
+              <div class="mw-bar"><i></i><i></i><i></i><span>Terminal</span></div>
+<pre id="inv-tty"><span class="l"><span class="p">~ $</span> lk import --scan ~/Projects --share-identical --rewrite</span><span class="l">recorded api/development, blog/development, shop/development</span><span class="l">imported 10 new</span><span class="l">rewrote ~/Projects/api/.env: 3 now latchkey://ID</span><span class="l">rewrote ~/Projects/api/.env.local: 4 now latchkey://ID</span><span class="l">rewrote ~/Projects/blog/.env: 2 now latchkey://ID</span><span class="l">rewrote ~/Projects/shop/.env.local: 4 now latchkey://ID</span></pre>
+            </div>
+          </div>
+        </div>
+        <p class="fine wide-cap">The inventory starts with a dry run that prints names and counts, never values: where each file goes, the key every project shares, what expires, and files that disagree. Example data; the output is what Latchkey prints.</p>
+      </div>
+    </section>
+
+    <section class="section" id="scope" aria-labelledby="scope-title">
+      <div class="shead"><p class="eyebrow">Deliverables</p><h2 id="scope-title">What the engagement leaves you with</h2><p>A result, not a license: your team's credentials organized, its Macs set up, and the procedures written down.</p></div>
+      <ul class="card-grid g3">
+        <li class="card"><b>Credential and environment inventory</b><span>Every env file under your projects, where each value would go, and what's shared, skipped or in conflict.</span></li>
+        <li class="card"><b>Dependency and migration report</b><span>Which projects and environments use which credentials, the duplicates and stale ones, and the order to move them in.</span></li>
+        <li class="card"><b>Latchkey set up on supported Macs</b><span>Projects linked to their repositories, env files of references, and environment records your developers can export on any Mac.</span></li>
+        <li class="card"><b>Access and recovery procedures</b><span>How each developer gets a credential, what agents may read without asking, how grants are made, and how to rotate and restore.</span></li>
+        <li class="card"><b>Onboarding and handoff</b><span>A walkthrough for your developers, and the documentation to bring the next one on without us.</span></li>
+        <li class="card"><b>Safer agent access</b><span>Grants scoped to folders, sessions and commands, and the agent instructions that keep values out of transcripts.</span></li>
+      </ul>
+    </section>
+
+    <section class="section" id="how" aria-labelledby="how-title">
+      <div class="shead"><h2 id="how-title">How it runs</h2></div>
+      <ol class="card-grid g4">
+        <li class="card"><span class="step">1</span><b>Agree scope</b><span>Which projects, Macs and deployment platforms, and how credentials are handled, in writing.</span></li>
+        <li class="card"><span class="step">2</span><b>Inventory</b><span>Dry runs on your team's Macs: names, counts and conflicts, never values.</span></li>
+        <li class="card"><span class="step">3</span><b>Migrate</b><span>Imports with one approval per developer, references in place of values, projects and records set up.</span></li>
+        <li class="card"><span class="step">4</span><b>Hand off</b><span>Procedures, onboarding, and a check that every project runs through Latchkey.</span></li>
+      </ol>
+    </section>
+
+    <section class="section feature flip" id="handling" aria-labelledby="handling-title">
+      <div class="copy">
+        <h2 id="handling-title">How your credentials are handled</h2>
+        <ul class="handling">
+          <li>Values stay on your team's Macs. Latchkey stores them in each developer's iCloud Keychain; the inventory and reports work from names and counts, which is all <code>lk import --dry-run</code> prints.</li>
+          <li>Each import and grant is approved by the developer whose Mac it is, with Touch ID.</li>
+          <li>Scope, confidentiality and credential-handling terms are agreed in writing before we start. We don't accept customer secrets outside those terms.</li>
+        </ul>
+      </div>
+      <figure class="band-art">
+        <div class="scene-wrap" data-scene="importenv" style="--w:600;--h:380" aria-hidden="true">
+          <div class="canvas">
+            <div class="mw ed" id="imp-env" style="left:12px;top:12px;width:576px;height:134px">
+              <div class="mw-bar"><i></i><i></i><i></i><span>shop/.env.local</span></div>
+<pre><span class="ln kept"><span class="key">PORT</span>=<span class="lit">3000</span></span><span class="ln"><span class="key">DATABASE_URL</span>=<span class="v ref" data-before="postgres://app:9fK2…@db.neon.tech/shop" data-after="latchkey://shop/development/DATABASE_URL">latchkey://shop/development/DATABASE_URL</span></span><span class="ln"><span class="key">STRIPE_KEY</span>=<span class="v ref" data-before="sk_test_51Hx…" data-after="latchkey://shop/development/STRIPE_KEY">latchkey://shop/development/STRIPE_KEY</span></span><span class="ln"><span class="key">OPENAI_API_KEY</span>=<span class="v ref" data-before="sk-proj-Qx8…" data-after="latchkey://shop/development/OPENAI_API_KEY">latchkey://shop/development/OPENAI_API_KEY</span></span></pre>
+            </div>
+            <div class="mw tty" style="left:12px;top:158px;width:576px;height:210px">
+              <div class="mw-bar"><i></i><i></i><i></i><span>Terminal — ~/Projects/shop</span></div>
+<pre id="imp-tty"><span class="l"><span class="p">~/Projects/shop $</span> lk import .env.local --rewrite --skip PORT</span><span class="l">recorded shop/development: DATABASE_URL, OPENAI_API_KEY, STRIPE_KEY</span><span class="l">added    shop/development/DATABASE_URL  password</span><span class="l">added    shop/development/OPENAI_API_KEY  token</span><span class="l">added    shop/development/STRIPE_KEY  token</span><span class="l">rewrote .env.local: 3 values now latchkey://ID</span><span class="l"><span class="d">next: lk run --env-file .env.local -- &lt;your command&gt;</span></span></pre>
+            </div>
+            <div class="sheet touch off" id="imp-touch" style="left:185px;top:120px">
+              <svg class="fp" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg>
+              <p><b>Latchkey is trying to import 3 items</b></p><p>Touch ID or enter your password.</p>
+            </div>
+          </div>
+        </div>
+        <figcaption class="fine wide-cap">A dry run lists names, never values; the import asks the developer whose Mac it is for Touch ID, and leaves references in the file. Example data; the output is what Latchkey prints.</figcaption>
+      </figure>
+    </section>
+
+    <section class="section topic" id="limits" aria-labelledby="limits-title" style="--section:48px">
+      <header><h2 id="limits-title">What it covers, and what it doesn't</h2><p>Fixed scope, limited to what Latchkey supports today.</p></header>
+      <ul>
+        <li>Covered: Macs on macOS 15 or later, env files and the local workflows Latchkey supports, and linking environments to Vercel, GitHub Actions, Railway or Fly.</li>
+        <li>Not covered: Windows or Linux machines, production secrets platforms we'd have to replace, or a security audit. It's an implementation engagement, not security consulting.</li>
+        <li>Pricing starts at $2,500 for a small team; larger scopes are quoted before the work is agreed.</li>
+      </ul>
+    </section>
+
+    <section class="section" id="teams" aria-labelledby="teams-title">
+      <div class="band">
+        <div>
+          <p class="eyebrow">Latchkey Teams · in design</p>
+          <h2 id="teams-title">Shared environments for the whole team</h2>
+          <p>Latchkey, and Latchkey Pro after it, are for one developer's Macs. Teams would be a separate product for what organizations automating development ask for:</p>
+          <ul>
+            <li>Shared organizational environments and managed team credentials</li>
+            <li>Membership, roles and team provisioning</li>
+            <li>Approval workflows and central evidence of access</li>
+          </ul>
+        </div>
+        <div>
+          <p class="partner-price">$15 <small>per user a month, billed yearly, planned</small></p>
+          <p>We'll build it with two or three teams who would pay for it, before building a hosted service. If your team wants shared environments, organizational controls and audit evidence, we'd like to hear what it would need to do.</p>
+          <div class="cta-row"><span class="button secondary" role="link" aria-disabled="true">Become a design partner</span></div>
+          <p class="fine" style="margin-top:10px">Not available. Requests open when the contact address is published.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="evaluate" aria-labelledby="evaluate-title">
+      <div class="shead"><h2 id="evaluate-title">Evaluating Latchkey first?</h2><p>Everything an engineer needs to judge it is public on this site.</p></div>
+      <ul class="card-grid g3">
+        <li style="display:contents"><a class="card" href="security.html"><b>The security model</b><span>What each mechanism protects, where it stops, and the trust boundaries.</span></a></li>
+        <li style="display:contents"><a class="card" href="developers/cli.html"><b>The command reference</b><span>Every command, option and exit code, and what each one asks.</span></a></li>
+        <li style="display:contents"><a class="card" href="pricing.html"><b>Plans and pricing</b><span>What stays free, what Pro will add, and how updates work.</span></a></li>
+      </ul>
+    </section>
+    <section class="section cta-band" aria-labelledby="cta-title">
+      <div>
+        <p class="eyebrow">Snack Studio · from $2,500</p>
+        <h2 id="cta-title">Start with an inventory of every env file your team depends on.</h2>
+        <p>A fixed-scope migration that leaves your credentials organized, your Macs set up and the procedures written down.</p>
+      </div>
+      <div class="cta-actions"><span class="button primary" role="link" aria-disabled="true">Request an assessment</span><a class="button secondary" href="index.html#install">Install the preview</a></div>
+    </section>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
+      <ul>
+        <li><a href="features.html">Features</a></li>
+        <li><a href="pricing.html">Pricing</a></li>
+        <li><a href="teams.html" aria-current="page">Teams</a></li>
+        <li><a href="security.html">Security</a></li>
+        <li><a href="roadmap.html">Roadmap</a></li>
+        <li><a href="developers/index.html">Docs</a></li>
+        <li><a href="developers/cli.html">CLI reference</a></li>
+        <li><a href="developers/agents.html">Agents and MCP</a></li>
+        <li><a href="developers/api.html">References and API</a></li>
+      </ul>
+    </div>
+  </footer>
+  <script src="site.js"></script>
+  <script src="scenes.js"></script>
+</body>
+</html>
