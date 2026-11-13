@@ -114,14 +114,17 @@ public struct EnvironmentRecord: Codable, Hashable, Sendable, Identifiable {
         inferred.removeAll { $0 == name }
     }
 
-    /// The record's env file: references and literals, one per line, sorted by name.
-    public func envFile(values: [String: String] = [:]) -> String {
-        var out = "# Latchkey environment \(scope)\n"
-        for name in variables.keys.sorted() {
-            let entry = variables[name]!
-            let value = entry.item.flatMap { values[$0] } ?? entry.envValue
-            out += "\(name)=\(EnvFile.quoted(value))\n"
-        }
+    /// Each variable's value as it goes in an env file: the released value of its item where there is one, else its
+    /// reference (or literal).
+    public func resolved(values: [String: String] = [:]) -> [String: String] {
+        variables.mapValues { $0.item.flatMap { values[$0] } ?? $0.envValue }
+    }
+
+    /// The record's env file: references and literals, one per line, sorted by name. `header` is the comment on top.
+    public func envFile(values: [String: String] = [:], header: Bool = true) -> String {
+        let resolved = resolved(values: values)
+        var out = header ? "# Latchkey environment \(scope)\n" : ""
+        for name in resolved.keys.sorted() { out += "\(name)=\(EnvFile.quoted(resolved[name]!))\n" }
         return out
     }
 }

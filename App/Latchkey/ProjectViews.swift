@@ -64,6 +64,15 @@ struct GroupMenu: View {
         Button("Grant Access to \(title)…") { model.grantRequest = GrantRequest(pattern: pattern) }
         if !isProject {
             Button("Remote Locations…") { model.remoteRequest = RemoteRequest(scope: title) }
+            Button("Export…") { model.exportRequest = ExportRequest(scope: title) }
+            Button("Copy as .env…") { Task { await model.copyAsEnv(title) } }
+        } else if !model.environments(in: title).isEmpty {
+            Menu("Export Environment") {
+                ForEach(model.environments(in: title), id: \.self) { e in Button("\(e)…") { model.exportRequest = ExportRequest(scope: "\(title)/\(e)") } }
+            }
+            Menu("Copy Environment as .env") {
+                ForEach(model.environments(in: title), id: \.self) { e in Button("\(e)…") { Task { await model.copyAsEnv("\(title)/\(e)") } } }
+            }
         }
         Divider()
         Button(isProject ? "Move or Rename Project…" : "Move to Another Environment…") { model.moveRequest = MoveRequest(ids: ids) }

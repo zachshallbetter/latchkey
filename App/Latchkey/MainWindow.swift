@@ -90,6 +90,7 @@ struct MainWindow: View {
         .sheet(item: $model.nextSteps) { NextStepsSheet(steps: $0) }
         .sheet(item: $model.grantRequest) { NewGrantSheet(model: model, request: $0) }
         .sheet(item: $model.remoteRequest) { RemoteSheet(model: model, scope: $0.scope) }
+        .sheet(item: $model.exportRequest) { ExportSheet(model: model, scope: $0.scope) }
         .confirmationDialog(deleteTitle, isPresented: Binding(get: { model.deleteRequest != nil },
                                                               set: { if !$0 { model.deleteRequest = nil } }),
                             presenting: model.deleteRequest) { request in

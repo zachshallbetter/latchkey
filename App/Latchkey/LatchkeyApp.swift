@@ -140,6 +140,12 @@ struct RemoteRequest: Identifiable {
     var scope: String
 }
 
+/// The environment whose Export sheet is open.
+struct ExportRequest: Identifiable {
+    let id = UUID()
+    var scope: String
+}
+
 /// Items waiting for the delete confirmation.
 struct DeleteRequest: Identifiable {
     let id = UUID()
@@ -200,6 +206,7 @@ final class AppModel {
     var revealedVersions: [String: String] = [:]
     var grantRequest: GrantRequest?
     var remoteRequest: RemoteRequest?
+    var exportRequest: ExportRequest?
     var links: [RemoteLink] = []
     /// Each item's worst state across the links covering it; absent when nothing covers it.
     var remoteStates: [String: RemoteState] = [:]
@@ -731,18 +738,58 @@ final class AppModel {
 
     func copyValue(_ name: String) async {
         guard let v = await value(of: name) else { return }
-        let pb = NSPasteboard.general
-        // This Mac only: without it, Universal Clipboard hands the value to your other devices.
-        pb.prepareForNewContents(with: .currentHostOnly)
-        pb.setString(v, forType: .string)
-        // Clipboard managers that honour this skip the entry.
-        pb.setString("", forType: NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType"))
-        let stamp = pb.changeCount
-        notice = "Copied \(name). The clipboard clears in 60 seconds."
+        copyToClipboard(v, notice: "Copied \(name).")
+    }
+
+    /// This Mac only, concealed from clipboard managers, and cleared after a minute if nothing else was copied.
+    private func copyToClipboard(_ text: String, notice message: String) {
+        let stamp = Clipboard.copy(text)
+        notice = "\(message) The clipboard clears in \(Int(Clipboard.clearAfter)) seconds."
         Task {
-            try? await Task.sleep(for: .seconds(60))
-            if pb.changeCount == stamp { pb.clearContents() }
+            try? await Task.sleep(for: .seconds(Clipboard.clearAfter))
+            Clipboard.clear(ifUnchangedSince: stamp)
         }
+    }
+
+    /// The environment as an env block on the clipboard, for a dashboard that takes a pasted one. Asks every time,
+    /// naming the environment and the clipboard; a record with no items to release copies without asking.
+    func copyAsEnv(_ scope: String) async {
+        guard let record = records.first(where: { $0.scope == scope }) else {
+            notice = "\(scope) has no environment record. lk env migrate makes one."
+            return
+        }
+        let credentials = Array(Set(record.variables.values.compactMap(\.item))).sorted()
+        var released: [String: String] = [:]
+        if !credentials.isEmpty {
+            let r = await send(Request(op: "export", names: credentials, project: scope, clipboard: true))
+            if let m = r.missing, !m.isEmpty { notice = "Not in Latchkey: \(m.joined(separator: ", "))."; return }
+            guard r.ok, let values = r.values, credentials.allSatisfy({ values[$0] != nil }) else {
+                notice = r.error ?? "Could not copy \(scope)."
+                return
+            }
+            released = values
+        }
+        copyToClipboard(record.envFile(values: released, header: false), notice: "Copied \(scope) as .env.")
+    }
+
+    /// Writes the environment's env file through the same checks as `lk export`. Returns an error, or nil when written.
+    func exportEnvironment(_ plan: EnvExport.Plan, scope: String, values: Bool) async -> String? {
+        guard let record = records.first(where: { $0.scope == scope }) else { return "\(scope) has no environment record." }
+        let credentials = Array(Set(record.variables.values.compactMap(\.item))).sorted()
+        var released: [String: String] = [:]
+        if values && !credentials.isEmpty {
+            if let problem = EnvExport.gitProblem(plan.path) { return problem }
+            let r = await send(Request(op: "export", names: credentials, project: scope, destination: plan.path))
+            if let m = r.missing, !m.isEmpty { return "Not in Latchkey: \(m.joined(separator: ", "))." }
+            guard r.ok, let v = r.values, credentials.allSatisfy({ v[$0] != nil }) else { return r.error ?? "Not approved." }
+            released = v
+        }
+        do {
+            let result = try EnvExport.write(plan, record: record, released: released)
+            notice = plan.existing != nil ? "Merged \(result.added.count) added, \(result.updated.count) updated into \(Broker.tilde(plan.path))."
+                                          : "Wrote \(Broker.tilde(plan.path))."
+            return nil
+        } catch { return error.localizedDescription }
     }
 
     func copyReference(_ name: String) {

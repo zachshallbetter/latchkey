@@ -64,11 +64,17 @@ Files refer to them as latchkey://ID.
       checkout is. import, set and mv keep them up to date. `env migrate` makes or completes them from your items and
       the files they were imported from (when those are on this Mac); it only adds, and marks what it found through
       old file locations as unconfirmed until `env confirm`. Plain settings that may be secret are refused.
-  latchkey export PROJECT/ENV [--out FILE] [--replace] [--values]
+  latchkey export PROJECT/ENV [--out FILE [--merge [--yes] | --replace]] [--values [--clipboard]]
       Write the environment's env file from its record: latchkey:// references and plain settings, to standard
-      output or FILE. An existing FILE is left alone (and the differences shown) unless --replace; a symbolic link
-      is refused. --values writes the values themselves, in plain text, readable only by you: it asks every time,
-      naming the file, and the access log records it (without the values). Agents can't use --values.
+      output or FILE. An existing FILE is left alone (and the differences shown) unless --merge or --replace; a
+      symbolic link is refused. --merge updates the variables Latchkey manages and appends missing ones, and keeps
+      every other byte (comments, order, other variables, line endings): it lists the names it adds and updates, and
+      asks to go ahead unless --yes. --replace rewrites the whole file.
+      --values writes the values themselves, in plain text, readable only by you: it asks every time, naming the
+      file, and the access log records it (without the values). Agents can't use --values.
+      --values --clipboard copies them as an env block instead, for a dashboard that takes a pasted one: it asks
+      every time, naming the environment; the copy stays on this Mac, is hidden from clipboard managers and clears
+      after 60 seconds if nothing else is copied. The log records "copied to the clipboard", never the values.
   latchkey project [DIR] | project link [NAME] [DIR] [--remote R] | project unlink NAME [DIR] | project list
       Which project a checkout is, from its Git remotes: so a fresh clone on another Mac finds its environments.
       link remembers the checkout's origin (or --remote R) as project NAME (default: the folder's name); a remote
@@ -1392,6 +1398,9 @@ case "env":
 
 case "export":
     exportCommand(args)
+
+case "clipboard-clear":
+    clipboardClearCommand(args)
 
 case "project":
     projectCommand(args)

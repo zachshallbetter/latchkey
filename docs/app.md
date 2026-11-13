@@ -83,7 +83,8 @@ Deleting always asks first. Kind has no shortcut; it's in both menus.
 - **Reference**: the `latchkey://` text to paste into a file.
 - The header shows the item's project, environment and service. **Edit** offers **Change Value…**, **Edit
   Details…** (kind, access, service, note and Safari fill sites, saved together with one Touch ID), **Move…**,
-  **Remote Locations…**, **Copy Reference** and **Delete…** (the item moves to Recently Deleted for 30 days).
+  **Remote Locations…**, **Export Environment…**, **Copy Environment as .env…**, **Copy Reference** and **Delete…**
+  (the item moves to Recently Deleted for 30 days).
 - **Type** (hover for how it's stored and whether it's masked), **Access** (switch it to let any program read it
   without approval), **Service** (with a link to make a new key there), **Project**, **Environment**, **Note**, and
   **Location**: the files it was imported from; click to list them.
@@ -91,6 +92,21 @@ Deleting always asks first. Kind has no shortcut; it's in both menus.
 - **Remote**, when its environment is linked: where the item stands; click to manage the locations.
 - **Recent Activity**, then **History**: click for earlier values, with show and restore; **Forget History…** deletes
   them for good.
+
+### Exporting an environment
+
+**Export Environment…** (in an item's **Edit** menu, and under **Export Environment** in a project's right-click menu)
+writes the environment's env file from its record, as `lk export` does and with the same checks. Choose references or
+values and a file. If the file exists, **Merge** updates the variables Latchkey manages, adds the missing ones and
+keeps everything else in the file as it is, listing the names it adds and updates before you press **Merge**;
+**Replace the file** rewrites it. Values are written in plain text, readable only by you, after an approval that
+names the file; the sheet refuses a file Git tracks or doesn't ignore, and warns about a folder that syncs to a cloud
+service.
+
+**Copy Environment as .env…** puts the environment on the clipboard as an env block for a dashboard that takes a pasted
+one (Vercel, Railway, Netlify, Render). It asks every time, naming the environment and that the values go to the
+clipboard. The copy stays on this Mac, is marked so clipboard managers skip it, and clears after 60 seconds if nothing
+else is copied. The access log says "copied to the clipboard", never the values. Agents can't do this.
 
 ### Adding and importing
 
