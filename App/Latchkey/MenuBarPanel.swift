@@ -70,6 +70,9 @@ struct SettingsView: View {
     @Bindable var model: AppModel
     @State private var atLogin = false
     @State private var loginError: String?
+    #if !LATCHKEY_APP_STORE
+    @State private var checksForUpdates = false
+    #endif
 
     var body: some View {
         Form {
@@ -125,6 +128,14 @@ struct SettingsView: View {
                     Text("Links ~/.local/bin/latchkey to the copy inside Latchkey, so it updates with the app.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
+                #if !LATCHKEY_APP_STORE
+                if let updater = AppUpdater.shared.controller?.updater {
+                    Toggle("Check for updates automatically", isOn: Binding(get: { checksForUpdates }, set: { on in
+                        updater.automaticallyChecksForUpdates = on
+                        checksForUpdates = updater.automaticallyChecksForUpdates
+                    }))
+                }
+                #endif
                 if let loginError { Text(loginError).font(.caption).foregroundStyle(.red) }
                 LabeledContent("Access log") {
                     Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([Paths.accessLog]) }
@@ -135,6 +146,9 @@ struct SettingsView: View {
         .frame(width: 520)
         .onAppear {
             atLogin = model.opensAtLogin
+            #if !LATCHKEY_APP_STORE
+            checksForUpdates = AppUpdater.shared.controller?.updater.automaticallyChecksForUpdates ?? false
+            #endif
             model.checkLegacy()
         }
     }

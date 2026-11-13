@@ -114,6 +114,27 @@ fi
 # Named by file alone, so `shasum -c` works next to a downloaded copy.
 (cd "${DMG:h}" && shasum -a 256 "${DMG:t}") | tee "$DMG.sha256"
 
+# The update feed Latchkey's updater reads (published with the site). Needs Sparkle's sign_update, from the resolved
+# package or SPARKLE_BIN, and the EdDSA key made by generate_keys in your login keychain; without them it's skipped.
+step "Signing the update for the appcast"
+BUILD=$(sed -n 's/^ *CURRENT_PROJECT_VERSION: *"\{0,1\}\([0-9][0-9.]*\)"\{0,1\} *$/\1/p' App/project.yml | head -1)
+MIN_OS=$(sed -n 's/^ *macOS: *"\{0,1\}\([0-9][0-9.]*\)"\{0,1\} *$/\1/p' App/project.yml | head -1)
+SIGN_UPDATE=""
+for candidate in "${SPARKLE_BIN:+$SPARKLE_BIN/sign_update}" \
+    ~/Library/Developer/Xcode/DerivedData/Latchkey-*/SourcePackages/artifacts/sparkle/Sparkle/bin/sign_update(N); do
+  [[ -n "$candidate" && -x "$candidate" ]] && { SIGN_UPDATE="$candidate"; break; }
+done
+if [[ -z "$SIGN_UPDATE" ]]; then
+  print "    (no appcast: sign_update not found. Set SPARKLE_BIN to Sparkle's bin folder, or build the app once so Xcode resolves the package)"
+elif [[ -z "$BUILD" || -z "$MIN_OS" ]]; then
+  print "    (no appcast: couldn't read CURRENT_PROJECT_VERSION and the deployment target from App/project.yml)"
+elif SIGNATURE=$("$SIGN_UPDATE" "$DMG" 2>"$OUT/sign_update.log") && [[ "$SIGNATURE" == *edSignature=* ]]; then
+  python3 scripts/update-appcast.py --appcast site/appcast.xml --version "$VERSION" --build "$BUILD" \
+    --min-os "$MIN_OS" --signature "$SIGNATURE" && print "    site/appcast.xml now lists $VERSION: publish it with the site"
+else
+  print "    (no appcast: sign_update failed, usually because there's no Sparkle key in your keychain; run generate_keys once. See $OUT/sign_update.log)"
+fi
+
 # The Homebrew cask, once there's a public place to download from (LATCHKEY_RELEASES_REPO, as owner/name) and a
 # homepage (LATCHKEY_HOMEPAGE).
 if [[ -n "${LATCHKEY_RELEASES_REPO:-}" && -n "${LATCHKEY_HOMEPAGE:-}" ]]; then

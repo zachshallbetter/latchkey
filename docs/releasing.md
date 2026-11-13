@@ -22,6 +22,17 @@ signed, notarized and stapled disk image.
    The script uses the profile `latchkey-notary`; set `LATCHKEY_NOTARY_PROFILE` to use another.
 3. **Xcode signed in to the team.** Exporting creates the Developer ID provisioning profile that the keychain
    entitlement needs.
+4. **Update signing key** (once, ever). The direct download updates itself with Sparkle, which checks each update
+   against an EdDSA key. Resolve the package once (build the app in Xcode, or `cd App && xcodegen && xcodebuild
+   -resolvePackageDependencies -project Latchkey.xcodeproj -scheme Latchkey`), then run Sparkle's tool:
+
+   ```bash
+   ~/Library/Developer/Xcode/DerivedData/Latchkey-*/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys
+   ```
+
+   It stores the private key in your login keychain (back it up: `generate_keys -x file`; a lost key means users
+   can't update without reinstalling) and prints the public key. Put that in `SPARKLE_PUBLIC_KEY` in
+   `App/project.yml`. While it is empty the updater doesn't start and builds still work. Never commit the private key.
 
 ## Making a release
 
@@ -39,7 +50,17 @@ signed, notarized and stapled disk image.
    builds, signs, notarizes and staples `build/release/VERSION/Latchkey-VERSION.dmg` and writes its SHA-256 next to
    it. `scripts/release.sh --skip-notarize` stops before submitting anything to Apple, to check signing.
 
-4. Check the disk image on a Mac that has never had Latchkey: open it, drag Latchkey to Applications, open it, choose
+   If Sparkle's `sign_update` is found (`SPARKLE_BIN`, the folder holding it, or the package Xcode resolved) and your
+   keychain has the key, it then signs the disk image and adds this version to `site/appcast.xml` through
+   `scripts/update-appcast.py`: the build and version from `App/project.yml`, the GitHub release URL
+   (`https://github.com/zachshallbetter/latchkey/releases/download/vVERSION/Latchkey-VERSION.dmg`), length, signature,
+   `minimumSystemVersion` from the deployment target, and a link to the changelog. Otherwise it prints why it skipped
+   that step; the release itself never fails for it.
+
+4. Upload the disk image to the GitHub release `vVERSION`, then publish `site/appcast.xml` with the site
+   (`https://latchkey.snackstud.io/appcast.xml`). Publish it last: running copies see the new version as soon as the
+   file is live. Check that the enclosure URL downloads.
+5. Check the disk image on a Mac that has never had Latchkey: open it, drag Latchkey to Applications, open it, choose
    **Latchkey › Install Command Line Tool…**, and run `latchkey status`. Gatekeeper should open it without warnings.
 
 ## Homebrew
@@ -57,6 +78,9 @@ PATH, and a `zap` that removes Latchkey's folder and settings (not keychain item
 - The re-signed app still has its `keychain-access-groups` entitlement and passes `codesign --verify --deep
   --strict`.
 - Apple accepted both submissions, and `spctl` accepts the app and the disk image.
+
+The Mac App Store build has no updater: it excludes Sparkle (`App/project.appstore.yml`, checked by
+`scripts/appstore-preflight.py`) and updates through the App Store.
 
 If notarization fails, the JSON for each submission is in `build/release/VERSION/`, and `xcrun notarytool log
 SUBMISSION_ID --keychain-profile latchkey-notary` shows Apple's reasons.

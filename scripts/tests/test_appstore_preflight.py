@@ -1,6 +1,7 @@
 import copy
 import importlib.util
 import pathlib
+import plistlib
 import tempfile
 import unittest
 
@@ -49,6 +50,20 @@ class PreflightTests(unittest.TestCase):
         self.assertTrue(preflight.privacy_errors(manifest))
         manifest["NSPrivacyAccessedAPITypes"] = []
         self.assertTrue(preflight.privacy_errors(manifest))
+
+    def test_store_bundle_rejects_sparkle(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app = pathlib.Path(directory) / "Latchkey.app"
+            (app / "Contents/Resources").mkdir(parents=True)
+            (app / "Contents/Resources/PrivacyInfo.xcprivacy").write_text("")
+            info = {"CFBundleShortVersionString": "1.0", "CFBundleVersion": "1", "CFBundleIdentifier": "io.example.app"}
+            (app / "Contents/Info.plist").write_bytes(plistlib.dumps(info))
+            self.assertFalse(any("Sparkle" in e for e in preflight.bundle_errors(app, dev=True, submission=False)))
+            (app / "Contents/Frameworks/Sparkle.framework").mkdir(parents=True)
+            self.assertTrue(any("Sparkle" in e for e in preflight.bundle_errors(app, dev=True, submission=False)))
+            (app / "Contents/Frameworks/Sparkle.framework").rmdir()
+            (app / "Contents/Info.plist").write_bytes(plistlib.dumps({**info, "SUFeedURL": "https://example.test/appcast.xml"}))
+            self.assertTrue(any("Sparkle" in e for e in preflight.bundle_errors(app, dev=True, submission=False)))
 
 
 if __name__ == "__main__":

@@ -107,6 +107,9 @@ def source_errors(root):
     target = spec["targets"]["Latchkey"]
     if target["entitlements"]["properties"] != load_plist(root / "App/AppStore/Latchkey.entitlements"):
         errors.append("resolved Xcode entitlements differ from their checked-in source")
+    if "Sparkle" in spec.get("packages", {}) or any("Sparkle" in str(d) for d in target.get("dependencies", [])) \
+            or any(key.startswith("SU") for key in info):
+        errors.append("the store build must not include Sparkle; it updates through the App Store")
     settings = target["settings"]["base"]
     if settings.get("ENABLE_APP_SANDBOX") is not True or "LATCHKEY_APP_STORE" not in settings.get("SWIFT_ACTIVE_COMPILATION_CONDITIONS", ""):
         errors.append("sandbox or experimental compilation condition is missing")
@@ -120,6 +123,8 @@ def bundle_errors(app, dev, submission, inspector=None):
     for key in ("CFBundleShortVersionString", "CFBundleVersion"):
         if not re.fullmatch(r"[0-9]+(?:\.[0-9]+){0,2}", str(main.get(key, ""))):
             errors.append(f"unresolved or invalid built {key}")
+    if (app / "Contents/Frameworks/Sparkle.framework").exists() or any(key.startswith("SU") for key in main):
+        errors.append("Sparkle is present in the store bundle")
     main_team = None
     for bundle in bundles:
         info = load_plist(bundle / "Contents/Info.plist")

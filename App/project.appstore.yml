@@ -4,8 +4,17 @@ include:
   - project.yml
 name: LatchkeyAppStoreSandbox
 
+# The App Store updates through the App Store: no Sparkle package, dependency or Info.plist keys.
+packages:REPLACE:
+  LatchkeyCore:
+    path: ..
+
 targets:
   Latchkey:
+    dependencies:REPLACE:
+      - package: LatchkeyCore
+        product: LatchkeyCore
+      - target: LatchkeySafari
     sources:
       - path: Privacy/App/PrivacyInfo.xcprivacy
         buildPhase: resources
@@ -24,10 +33,16 @@ targets:
           - $(AppIdentifierPrefix)io.latchkey.shared
     info:
       path: AppStore/Info.plist
-      properties:
+      properties:REPLACE:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDisplayName: Latchkey
+        LSApplicationCategoryType: public.app-category.developer-tools
+        LSMultipleInstancesProhibited: true
         NSHumanReadableCopyright: Copyright © 2026 Snack Studio
+        LatchkeyAccessGroup: $(AppIdentifierPrefix)io.snackstud.latchkey
+        LatchkeyPreviousAccessGroup: $(AppIdentifierPrefix)io.latchkey.shared
+        LatchkeyAppGroup: $(TeamIdentifierPrefix)io.snackstud.latchkey
         LatchkeyDistributionChannel: app-store-sandbox-experiment
     settings:
       base:

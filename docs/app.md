@@ -161,6 +161,8 @@ After an import or a new item, Latchkey shows what to do next: the reference to 
 
 Click the key: search your items, copy a value, open an item in the window, open Settings, or quit.
 
+**Latchkey › Check for Updates…** (direct download only; the App Store updates it) looks for a newer version now.
+
 Closing the window, or Quit from the Dock, leaves Latchkey in the menu bar without a Dock icon, so the command-line
 tool and agents keep working; **Open Latchkey** brings the window and the Dock icon back. To quit for real, use **Quit** in the menu bar
 or **Latchkey › Quit Latchkey**.
@@ -171,6 +173,8 @@ or **Latchkey › Quit Latchkey**.
 - **Approval**: how you approve (Touch ID, Apple Watch, password), and the difference between one-request approvals and explicit grants.
 - **General**: **Open Latchkey at login**, **Install Command Line Tool** (release builds; links `latchkey` and `lk`), and the activity log in
   Finder. **Latchkey › Install Command Line Tool…** in the menu bar does the same.
+  **Check for updates automatically** (direct download only) lets Latchkey look for a new version in the background;
+  Sparkle asks once on its second launch, and this switch changes the answer. It sends no system profile.
 
 ## Latchkey for Safari
 
