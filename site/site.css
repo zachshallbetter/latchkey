@@ -25,7 +25,7 @@
   --scene-wash: #d9e1eb;
   --card-shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 6px 16px rgba(16, 24, 40, .04);
   --tty-bg: #0f1318;
-  /* Section hues: a section with data-hue tints its eyebrow, steps, card tops and scene wash. Each passes 4.5:1 as
+  /* Section hues: a section with data-hue tints its eyebrow, steps and scene wash. Each passes 4.5:1 as
      text on the page and on cards. */
   --h-blue: #0a63d1; --h-violet: #6a3bcc; --h-teal: #0b746f; --h-green: #1d7238; --h-amber: #9a4d00; --h-rose: #bb2d66; --h-orange: #b04406;
   --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
@@ -40,7 +40,7 @@
     --code-bg: #10151b; --code-fig: #19202a; --code-ink: #dbe3ec;
     --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 16px 40px rgba(0, 0, 0, .45);
     --t-act: #6cb2ff; --t-flag: #c9a2ff; --t-val: #7fd6a4; --t-dim: #98a2b0;
-    --scene-wash: #26303c; --tty-bg: #12171e; --card-shadow: 0 0 0 transparent;
+    --scene-wash: #26303c; --tty-bg: #12171e; --card-shadow: none;
     --h-blue: #4ea1ff; --h-violet: #b597ff; --h-teal: #3ccfc4; --h-green: #6bd88f; --h-amber: #f5b04a; --h-rose: #ff7aa8; --h-orange: #ff9f5a;
     color-scheme: dark;
   }
@@ -51,7 +51,7 @@
   --code-bg: #10151b; --code-fig: #19202a; --code-ink: #dbe3ec;
   --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 16px 40px rgba(0, 0, 0, .45);
   --t-act: #6cb2ff; --t-flag: #c9a2ff; --t-val: #7fd6a4; --t-dim: #98a2b0;
-  --scene-wash: #26303c; --tty-bg: #12171e; --card-shadow: 0 0 0 transparent;
+  --scene-wash: #26303c; --tty-bg: #12171e; --card-shadow: none;
     --h-blue: #4ea1ff; --h-violet: #b597ff; --h-teal: #3ccfc4; --h-green: #6bd88f; --h-amber: #f5b04a; --h-rose: #ff7aa8; --h-orange: #ff9f5a;
   color-scheme: dark;
 }
@@ -130,7 +130,7 @@ main.docs { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 0 4
 .side ul { list-style: none; margin: 0; padding: 0; }
 .side a { display: flex; align-items: center; min-height: 40px; padding: 0 12px; border-radius: 8px; color: var(--muted); font-weight: 550; font-size: 15px; text-decoration: none; }
 .side a:hover, .side a[aria-current="page"] { color: var(--ink); background: var(--bg-2); }
-.side a[aria-current="page"] { box-shadow: inset 3px 0 0 var(--accent); }
+.side a[aria-current="page"] { color: var(--accent); background: var(--accent-soft); }
 article.doc { max-width: 780px; padding: 28px 0 24px; min-width: 0; }
 article.doc h1 { font-size: clamp(34px, 5vw, 46px); }
 article.doc h2 { font-size: 26px; margin-top: 52px; padding-top: 20px; border-top: 1px solid var(--line); scroll-margin-top: 76px; }
@@ -200,9 +200,6 @@ dl.pages dd { margin: 2px 0 0; color: var(--muted); }
 [data-hue="blue"] { --hue: var(--h-blue); } [data-hue="violet"] { --hue: var(--h-violet); } [data-hue="teal"] { --hue: var(--h-teal); }
 [data-hue="green"] { --hue: var(--h-green); } [data-hue="amber"] { --hue: var(--h-amber); } [data-hue="rose"] { --hue: var(--h-rose); }
 [data-hue="orange"] { --hue: var(--h-orange); }
-[data-hue] .card, .card[data-hue] { box-shadow: inset 0 3px 0 var(--hue), var(--card-shadow); }
-[data-hue] .shead h2::after, .group > .shead h2::after { content: ""; display: block; width: 44px; height: 4px; margin-top: 14px; border-radius: 2px;
-  background: linear-gradient(90deg, var(--hue, var(--accent)), color-mix(in srgb, var(--hue, var(--accent)) 25%, transparent)); }
 .avail { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; font: 600 12.5px/1.4 var(--sans); background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); vertical-align: 2px; }
 .avail::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .avail.pending { background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn); }

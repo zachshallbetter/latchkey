@@ -23,7 +23,7 @@
 - Link records gain optional `tokenItem` and `team` fields; links saved before them decode unchanged.
 
 ### Website
-- More colour: each section takes a hue (eyebrow, steps, card tops, scene wash), the hero line and closing band
+- More colour: each section takes a hue (eyebrow, steps, scene wash), the hero line and closing band
   carry a gradient, and Pro is orange as in the app's upgrade sheet.
 - Caught up with the product: Features, the Roadmap, the CLI and agent docs and `llms.txt` cover `lk scan` and its
   pre-commit hook, duplicates and combine, import classes, export merge and clipboard, the proxy's limits and
