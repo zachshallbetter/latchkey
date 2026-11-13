@@ -22,6 +22,13 @@
   make; `latchkey run` says on standard error that they are enforced. The MCP `latchkey_run` tool takes
   `proxy_models` and `proxy_requests`.
 
+### Import
+- Import classes each line as a secret, a setting, a public value or an existing reference, and shows the class in
+  `lk import --dry-run` and in the app's import sheet, where you can change a line's class before saving. Settings
+  (`PORT`, `NODE_ENV`, `LOG_LEVEL`, true/false flags) are left in the file; public values (`NEXT_PUBLIC_*`, `VITE_*`,
+  publishable keys, web addresses without credentials) are saved as plain values; anything unclear is a secret.
+  `--class KEY=secret|setting|public` changes a line from the command line.
+
 ## 0.2.1 (2026-11-12)
 
 ### Website

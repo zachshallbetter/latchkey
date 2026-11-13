@@ -43,9 +43,26 @@ new edits are preserved; review and import the file again.
   imports them; `--skip PATTERN,...` adds your own patterns.
 - Items that already exist, unless you pass `--replace` (the old value is kept as a version).
 
+## Classes
+
+Each line is classed before anything is saved:
+
+| Class | Examples | What import does |
+|---|---|---|
+| Secret | tokens, passwords, connection strings with credentials, key blocks | Saved masked |
+| Setting | `PORT`, `NODE_ENV`, `LOG_LEVEL`, `*_ENABLED`, `*_PORT`, `true`/`false` values | Left in the file |
+| Public | `NEXT_PUBLIC_*`, `VITE_*`, `PUBLIC_*`, `EXPO_PUBLIC_*`, `REACT_APP_*`, publishable and public keys, IDs and hosts, web addresses with no credentials | Saved as a plain value (not masked, not agent-safe unless you say so) |
+| Reference | `latchkey://...` | Left alone |
+
+A value that carries credentials (a key block, a URL with a user or password) is a secret whatever its name says,
+and anything unclear is a secret. `--dry-run` prints a count per class and each setting it would leave. Change a line
+with `--class KEY=secret|setting|public` (or `--kind KEY=...`, which also decides the class); in the app, the Class
+column of the import sheet does the same. Settings stay in the file, so `--rewrite` doesn't touch them. Classes
+aren't remembered between imports yet.
+
 ## Kinds, services and agent-safe
 
-- **Kind** is guessed where it's obvious: a PEM block is a key file; names ending in `PASSWORD`, `_PASS` or `PASSWD`
+- **Kind** (for secrets; public values and settings are plain values) is guessed where it's obvious: a PEM block is a key file; names ending in `PASSWORD`, `_PASS` or `PASSWD`
   are passwords, and so are URL and DSN names whose value carries credentials. Everything else defaults to token.
   Set them with `--kind KIND` (all) or `--kind KEY=KIND` (one).
 - **Service** is guessed from token prefixes (`sk_live_` is Stripe, `ghp_` is GitHub), hosts in connection strings
@@ -82,7 +99,7 @@ and pass `--batch envs.txt`.
 ## In the app
 
 **File › Import .env File…** or drop a file on the window. The sheet does the same as a single-file import, with the
-project, environment, kinds and agent-safe settings editable before you approve.
+project, environment, classes, kinds and agent-safe settings editable before you approve.
 
 ## If something goes wrong
 
