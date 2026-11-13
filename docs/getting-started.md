@@ -10,8 +10,15 @@
 
 ## Install a release
 
-No public release is available yet. These steps apply when a signed disk image is published; use the source
-installation below for the development preview.
+Download the latest `Latchkey-VERSION.dmg` from [Releases](https://github.com/zachshallbetter/latchkey/releases/latest), or install with Homebrew:
+
+```bash
+brew tap zachshallbetter/latchkey
+brew trust zachshallbetter/latchkey
+brew install --cask latchkey
+```
+
+Homebrew asks you to trust a tap before installing from it. With the disk image:
 
 1. Open `Latchkey-VERSION.dmg` and drag **Latchkey** to **Applications**.
 2. Open Latchkey from Applications.

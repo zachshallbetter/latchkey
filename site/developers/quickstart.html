@@ -72,7 +72,7 @@
       <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#install">1. Install</a></li><li><a href="#import">2. Import an env file</a></li><li><a href="#run">3. Run a command</a></li><li><a href="#grant">4. Let an agent work</a></li></ul></nav>
 
 <h2 id="install">1. Install</h2>
-<p>There is no public disk image yet. In a source checkout, install Xcode and XcodeGen, set your signing team in <code>App/project.yml</code>, then run <code>scripts/install.sh</code>. The script builds and installs the app and CLI. Release builds will support choosing <strong>Latchkey › Install Command Line Tool…</strong>, which links <code>~/.local/bin/latchkey</code>, and <code>lk</code> for short, to the copy inside the app so it updates with the app. Make sure <code>~/.local/bin</code> is on your <code>PATH</code>.</p>
+<p>Download the <a href="https://github.com/zachshallbetter/latchkey/releases/latest">latest disk image</a> and drag Latchkey to Applications, or install it with Homebrew: <code>brew tap zachshallbetter/latchkey</code>, <code>brew trust zachshallbetter/latchkey</code>, then <code>brew install --cask latchkey</code>. Open it and choose <strong>Latchkey › Install Command Line Tool…</strong>, which links <code>~/.local/bin/latchkey</code>, and <code>lk</code> for short, to the copy inside the app so it updates with the app. Make sure <code>~/.local/bin</code> is on your <code>PATH</code>.</p>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey status</code></pre></figure>
 <p>You should see <code>storage: iCloud Keychain storage (sync status not verified)</code>.</p>
 

@@ -568,7 +568,7 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
       <h2 id="paths-title">Three ways in</h2>
       </div>
       <div class="card-grid g3">
-        <div class="card"><b>For developers</b><span>Latchkey is free during the development preview. Install it from source, or see what Latchkey Pro will add when it's ready.</span>
+        <div class="card"><b>For developers</b><span>Latchkey is free during the development preview. Download it, or see what Latchkey Pro will add when it's ready.</span>
           <p class="links"><a class="more" href="#install">Install the preview</a><br><a class="more" href="pricing.html">Plans and pricing</a></p></div>
         <div class="card"><b>For teams</b><span>Move a small team's credentials out of scattered env files with a fixed-scope migration from Snack Studio, and help shape Latchkey Teams.</span>
           <p class="links"><a class="more" href="teams.html">Developer Credential Migration</a><br><a class="more" href="teams.html#teams">Latchkey Teams</a></p></div>
@@ -582,16 +582,16 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
         <div>
           <p class="eyebrow">Free during the development preview</p>
           <h2 id="install-title">Stop being the credential courier.</h2>
-          <p>Keep your projects, credentials and coding agents working together, with access you can inspect and control. Build Latchkey from source today; Pro comes with the first release.</p>
+          <p>Keep your projects, credentials and coding agents working together, with access you can inspect and control. Download Latchkey free today; Pro comes later, in the Mac App Store.</p>
         </div>
-        <div class="cta-actions"><a class="button primary" href="pricing.html#pro">Get early access</a><a class="button secondary" href="developers/quickstart.html#install">Install from source</a></div>
+        <div class="cta-actions"><a class="button primary" href="pricing.html#pro">Get early access</a><a class="button secondary" href="https://github.com/zachshallbetter/latchkey/releases/latest">Download for Mac</a></div>
       </div>
       <ol class="card-grid g3" style="margin-top:16px">
-        <li class="card"><span class="step">1</span><b>Build and install</b><span>From a source checkout, with Xcode and XcodeGen installed, run <code>scripts/install.sh</code>. Set your signing team in <code>App/project.yml</code> for iCloud Keychain storage.</span></li>
+        <li class="card"><span class="step">1</span><b>Download and install</b><span>Open the <a href="https://github.com/zachshallbetter/latchkey/releases/latest">latest disk image</a> and drag Latchkey to Applications, or run <code>brew tap zachshallbetter/latchkey</code>, <code>brew trust zachshallbetter/latchkey</code> and <code>brew install --cask latchkey</code>.</span></li>
         <li class="card"><span class="step">2</span><b>Add the command-line tool</b><span>Open Latchkey and choose <b>Latchkey › Install Command Line Tool…</b> to add <code>latchkey</code> and <code>lk</code> to <code>~/.local/bin</code>.</span></li>
         <li class="card"><span class="step">3</span><b>Check it</b><span>Run <code>lk status</code>. It should say <code>storage: iCloud Keychain</code>.</span></li>
       </ol>
-      <p class="note-card" style="margin-top:16px"><span class="avail pending">Development preview</span><span>There's no public disk image or Homebrew release yet. macOS 15 or later; Intel release verification is pending; iCloud Keychain on for sync between Macs. <a href="developers/quickstart.html#install">Source installation steps</a> · <a href="developers/cli.html">Command reference</a></span></p>
+      <p class="note-card" style="margin-top:16px"><span class="avail pending">Development preview</span><span>Notarized by Apple and free. macOS 15 or later; Intel verification is pending; iCloud Keychain on for sync between Macs. <a href="developers/quickstart.html#install">Installation steps</a> · <a href="https://github.com/zachshallbetter/latchkey">Source</a> · <a href="developers/cli.html">Command reference</a></span></p>
     </section>
   </main>
 

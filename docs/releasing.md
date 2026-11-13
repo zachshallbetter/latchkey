@@ -65,11 +65,15 @@ signed, notarized and stapled disk image.
 
 ## Homebrew
 
-With `LATCHKEY_RELEASES_REPO` (a public repository, `owner/name`, whose releases hold the disk image as
-`Latchkey-VERSION.dmg` under the tag `vVERSION`) and `LATCHKEY_HOMEPAGE` set, the script also writes
-`build/release/VERSION/latchkey.rb` from `packaging/homebrew/latchkey.rb.template`: the app, `latchkey` and `lk` on the
-PATH, and a `zap` that removes Latchkey's folder and settings (not keychain items). Put it in a tap repository
-(`owner/homebrew-tap`, `Casks/latchkey.rb`); then `brew install --cask owner/tap/latchkey`.
+The script writes `build/release/VERSION/latchkey.rb` from `packaging/homebrew/latchkey.rb.template`: the app,
+`latchkey` and `lk` on the PATH, and a `zap` that removes Latchkey's folder and settings (not keychain items). The
+download repository and homepage default to `zachshallbetter/latchkey` and https://latchkey.snackstud.io/
+(override with `LATCHKEY_RELEASES_REPO` and `LATCHKEY_HOMEPAGE`).
+
+After the GitHub release is published, copy it to the tap,
+[zachshallbetter/homebrew-latchkey](https://github.com/zachshallbetter/homebrew-latchkey), as `Casks/latchkey.rb`,
+commit and push. People install with `brew tap zachshallbetter/latchkey`, `brew trust zachshallbetter/latchkey` and
+`brew install --cask latchkey`.
 
 ## What the script checks
 
