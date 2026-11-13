@@ -29,8 +29,8 @@ about how a search engine or AI system treats the site.
 | `lk:migration` | Developer Credential Migration | Fixed-scope service | Snack Studio | https://latchkey.snackstud.io/teams.html | None |
 | `lk:snack-studio` | Snack Studio | Organization, publisher | Snack Studio | https://www.snackstud.io | latchkey@snackstud.io |
 
-**Unresolved:** the GitHub repository's description still reads "Secrets manager for one person and their agents
-(working name)" and has no homepage link. Changing it is a public edit for the owner.
+The GitHub repository's description matches the site and links to it (owner updated it on 2026-11-13; it had read
+"Secrets manager for one person and their agents (working name)").
 
 ## Claims (PRP, AEP)
 
@@ -137,5 +137,5 @@ observation window, decision rule and rollback before it starts.
 ## Authority
 
 Publishing the site, robots or canonical changes, Search Console and Bing verification, IndexNow submissions,
-outreach, and public profile edits (the repository description) are the owner's to approve. Automated checks can
+outreach, and public profile edits such as the repository description are the owner's to approve. Automated checks can
 block a release; they can't approve a claim.
