@@ -43,6 +43,8 @@
     .item:first-child { border-top: 0; }
     .item[hidden], .tier[hidden] { display: none; }
     .size { display: grid; place-items: center; width: 32px; height: 26px; border-radius: 7px; font: 650 13px/1 var(--mono); background: var(--accent-soft); color: var(--accent); }
+    .tier[data-hue] .items { box-shadow: inset 3px 0 0 var(--hue), var(--card-shadow); }
+    .tier[data-hue] .size { background: color-mix(in srgb, var(--hue) 13%, var(--surface)); color: var(--hue); }
     .ibody { display: grid; gap: 6px; min-width: 0; }
     .ibody h3 { margin: 0; font-size: 17px; }
     .title-row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
@@ -93,7 +95,7 @@
         <p class="principle"><b>Guiding rule:</b> values move from the keychain straight to the process that needs them. People approve; agents get references.</p>
       </div>
       <ul class="status" aria-label="Where it stands">
-        <li class="card"><span class="k">Built</span><span>CLI: run, check, import, export, environments, grants, rotate, push, log, MCP</span></li>
+        <li class="card"><span class="k">Built</span><span>CLI: run, check, import, export, scan, duplicates, environments, grants, rotate, push, log, MCP</span></li>
         <li class="card"><span class="k">Built</span><span>Mac app: window, import sheet, menu bar, settings, Latchkey for Safari</span></li>
         <li class="card"><span class="k">Built</span><span>Approval panel, then Touch ID, Apple Watch or password; grants; a tamper-evident access log</span></li>
         <li class="card"><span class="k pending">Pending</span><span>A public, notarized release; sync tried end to end on a second Mac</span></li>
@@ -112,7 +114,7 @@
     </div>
 
     <div id="tiers">
-      <section class="tier" id="tier-basics" aria-labelledby="h-basics">
+      <section class="tier" id="tier-basics" aria-labelledby="h-basics" data-hue="blue">
         <header class="tier-head">
           <p class="eyebrow">Tier 1</p>
           <h2 id="h-basics">Fix the basics</h2>
@@ -167,7 +169,7 @@
           <li class="empty" hidden>Nothing in this tier matches the filter.</li>
         </ul>
       </section>
-      <section class="tier" id="tier-origin" aria-labelledby="h-origin">
+      <section class="tier" id="tier-origin" aria-labelledby="h-origin" data-hue="teal">
         <header class="tier-head">
           <p class="eyebrow">Tier 1b</p>
           <h2 id="h-origin">Where secrets come from and where they go</h2>
@@ -228,10 +230,19 @@
             </div>
             <div class="who"><span class="pill">You</span></div>
           </li>
+          <li class="item is-built" data-who="you" data-next="0">
+            <span class="size" title="Medium">M</span>
+            <div class="ibody">
+              <div class="title-row"><h3>Duplicates and combine</h3><span class="pill built">Built</span></div>
+              <p class="gap"><b>Gap:</b> the same key copied into many projects meant many places to rotate it, and production sharing a key with development.</p>
+              <p class="plan"><b>Built:</b> <code>latchkey duplicates</code> compares values inside Latchkey with one approval and recommends what to do; <code>latchkey combine</code> makes them one shared item, and the files follow.</p>
+            </div>
+            <div class="who"><span class="pill">You</span></div>
+          </li>
           <li class="empty" hidden>Nothing in this tier matches the filter.</li>
         </ul>
       </section>
-      <section class="tier" id="tier-agents" aria-labelledby="h-agents">
+      <section class="tier" id="tier-agents" aria-labelledby="h-agents" data-hue="rose">
         <header class="tier-head">
           <p class="eyebrow">Tier 2</p>
           <h2 id="h-agents">Built for agents</h2>
@@ -295,7 +306,7 @@
           <li class="empty" hidden>Nothing in this tier matches the filter.</li>
         </ul>
       </section>
-      <section class="tier" id="tier-daily" aria-labelledby="h-daily">
+      <section class="tier" id="tier-daily" aria-labelledby="h-daily" data-hue="green">
         <header class="tier-head">
           <p class="eyebrow">Tier 3</p>
           <h2 id="h-daily">Day-to-day use</h2>
@@ -338,12 +349,12 @@
             </div>
             <div class="who"><span class="pill">You</span></div>
           </li>
-          <li class="item" data-who="you agents" data-next="0">
+          <li class="item is-built" data-who="you agents" data-next="0">
             <span class="size" title="Medium">M</span>
             <div class="ibody">
-              <div class="title-row"><h3>Scan for plain-text secrets</h3></div>
+              <div class="title-row"><h3>Scan for plain-text secrets</h3><span class="pill built">Built</span></div>
               <p class="gap"><b>Gap:</b> secrets already sitting in repos and old .env files stay there.</p>
-              <p class="plan"><b>Plan:</b> <code>latchkey scan</code> finds likely secrets and offers to import them, plus a git pre-commit hook.</p>
+              <p class="plan"><b>Built:</b> <code>latchkey scan</code> finds env files holding a stored value or one that looks secret, naming file, line and item but never the value, and a pre-commit hook refuses those commits.</p>
             </div>
             <div class="who"><span class="pill">You</span><span class="pill">Agents</span></div>
           </li>
@@ -359,7 +370,7 @@
           <li class="empty" hidden>Nothing in this tier matches the filter.</li>
         </ul>
       </section>
-      <section class="tier" id="tier-moving" aria-labelledby="h-moving">
+      <section class="tier" id="tier-moving" aria-labelledby="h-moving" data-hue="violet">
         <header class="tier-head">
           <p class="eyebrow">Tier 4</p>
           <h2 id="h-moving">Moving in</h2>
@@ -396,7 +407,7 @@
           <li class="empty" hidden>Nothing in this tier matches the filter.</li>
         </ul>
       </section>
-      <section class="tier" id="tier-later" aria-labelledby="h-later">
+      <section class="tier" id="tier-later" aria-labelledby="h-later" data-hue="amber">
         <header class="tier-head">
           <p class="eyebrow">Tier 5</p>
           <h2 id="h-later">Later</h2>
@@ -426,7 +437,7 @@
             <div class="ibody">
               <div class="title-row"><h3>Distribution</h3></div>
               <p class="gap"><b>Built:</b> a notarized disk image, a Homebrew cask, and in-app updates for the download.</p>
-              <p class="plan"><b>Plan:</b> the Mac App Store version, where Pro is sold.</p>
+              <p class="plan"><b>Plan:</b> release the Mac App Store version, where Pro is sold. Its one-time purchase and restore are built.</p>
             </div>
             <div class="who"><span class="pill">You</span></div>
           </li>

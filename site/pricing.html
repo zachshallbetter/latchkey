@@ -29,7 +29,8 @@
     .promise span { color: var(--muted); }
     .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 48px; }
     .plan { display: flex; flex-direction: column; padding: var(--card-pad); border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); min-width: 0;  box-shadow: var(--card-shadow);}
-    .plan.feature-plan { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+    .plan.feature-plan { --hue: var(--h-orange); border-color: var(--hue); box-shadow: 0 0 0 1px var(--hue) inset; background: linear-gradient(180deg, color-mix(in srgb, var(--hue) 9%, var(--surface)), var(--surface) 45%); }
+    .plan.feature-plan .tier { color: var(--hue); }
     .plan .tier { font: 650 12.5px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
     .plan h2 { margin: 10px 0 2px; font-size: 22px; }
     .plan .price { margin: 10px 0 0; font: 700 34px/1.1 var(--display); letter-spacing: -0.02em; }
@@ -115,10 +116,10 @@
         <p class="terms">In the Mac App Store. No subscription; updates included.</p>
         <p class="what">Everything in Latchkey, plus:</p>
         <ul>
-          <li><b>Agent controls:</b> provision credentials for agents and scope what each may use</li>
-          <li><b>Recovery and migration:</b> combine duplicates, relink moved projects, recover on a new Mac</li>
-          <li><b>Rotation and lifecycle:</b> rotation that follows exports, expiry and validity</li>
-          <li><b>Provider integrations:</b> push and pull with Vercel, GitHub, Railway and more</li>
+          <li><b>Agent controls:</b> finer limits on what an agent may read and run</li>
+          <li><b>Recovery and migration:</b> bring secrets in from other tools, and recover from mistakes</li>
+          <li><b>Rotation and lifecycle:</b> rotate keys and track when they expire</li>
+          <li><b>Provider integrations:</b> work with your providers directly</li>
         </ul>
         <div class="cta"><a class="button primary" href="mailto:latchkey@snackstud.io?subject=Latchkey%20Pro%20early%20access">Request early access</a><p class="fine">Not on sale yet. We'll write when Pro is in the Mac App Store.</p></div>
       </article>
@@ -138,7 +139,7 @@
     </div>
     <p class="fine" style="margin-top:14px">Prices are planned, not current offers. Pro will be sold only through the Mac App Store, and no plan's features are promised by a date.</p>
 
-    <section class="section" id="compare" aria-labelledby="compare-title">
+    <section class="section" id="compare" aria-labelledby="compare-title" data-hue="blue">
       <div class="shead"><h2 id="compare-title">What each plan includes</h2><p>The free column is what Latchkey does today. Pro and Teams rows are planned and marked as such.</p></div>
       <div class="grid-table"><table>
         <thead><tr><th>Capability</th><th>Free</th><th>Pro</th><th>Teams</th></tr></thead>
@@ -146,11 +147,12 @@
           <tr><td>Keychain storage and references</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
           <tr><td>Env file import and command execution</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
           <tr><td>Approvals, grants and security protections</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Duplicates, scanning, rotation and pushing to services</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
           <tr><td>Exporting references and values</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>Agent controls<small>Planned: credential provisioning for agents, scoped agent policies</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>Recovery and migration<small>Planned: duplicates and combine, relinking moved projects, recovery on a new Mac</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>Rotation and lifecycle<small>Planned: rotation that follows exports, expiry and validity, activity tools</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>Provider integrations<small>Planned: pushing and pulling with Vercel, GitHub, Railway and more</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Agent controls<small>Planned: finer limits on what an agent may read and run</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Recovery and migration<small>Planned: bringing secrets in from other tools, recovering from mistakes</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Rotation and lifecycle<small>Planned: rotating keys and tracking when they expire</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Provider integrations<small>Planned: working with your providers directly</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
           <tr><td>Organization-wide credential sharing<small>Planned</small></td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
           <tr><td>Central policy administration and evidence<small>Planned</small></td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
           <tr><td>Team provisioning and managed access<small>Planned</small></td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
@@ -158,7 +160,7 @@
       </table></div>
     </section>
 
-    <section class="section" id="updates" aria-labelledby="updates-title">
+    <section class="section" id="updates" aria-labelledby="updates-title" data-hue="orange">
       <div class="shead"><h2 id="updates-title">Buy it once. Keep it.</h2><p>Latchkey runs on your Mac and keeps nothing on a server, so Pro works like a tool you own.</p></div>
       <div class="card-grid g3">
         <div class="card"><b>One purchase</b><span>Pro is a one-time purchase in the Mac App Store, with no subscription or renewal.</span></div>
@@ -167,7 +169,7 @@
       </div>
     </section>
 
-    <section id="teams-path" class="section band" aria-labelledby="teams-path-title">
+    <section id="teams-path" class="section band" aria-labelledby="teams-path-title" data-hue="green">
       <div class="band-copy">
         <p class="eyebrow">For teams · Snack Studio</p>
         <h2 id="teams-path-title">Start with a migration</h2>
@@ -188,7 +190,7 @@
       </figure>
     </section>
 
-    <section class="section" id="faq" aria-labelledby="faq-title">
+    <section class="section" id="faq" aria-labelledby="faq-title" data-hue="violet">
       <div class="shead"><p class="eyebrow">Questions</p><h2 id="faq-title">Good questions, short answers</h2></div>
       <div class="faq">
         <div>

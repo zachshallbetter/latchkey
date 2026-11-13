@@ -107,7 +107,7 @@
       </div>
     </section>
 
-    <section class="section" id="distinctions" aria-labelledby="distinctions-title">
+    <section class="section" id="distinctions" aria-labelledby="distinctions-title" data-hue="violet">
     <div class="shead"><p class="eyebrow">Before anything else</p><h2 id="distinctions-title">Six distinctions worth knowing</h2></div>
     <ul class="card-grid g3">
       <li class="card"><b>The keychain protects stored values, not released ones.</b><span>Once a command has a value, it's in that command's memory and environment, and Latchkey can't control what it does with it.</span></li>
@@ -162,7 +162,7 @@
       </div>
     </section>
 
-    <section class="section" id="paths" aria-labelledby="paths-title">
+    <section class="section" id="paths" aria-labelledby="paths-title" data-hue="teal">
     <div class="shead"><h2 id="paths-title">How a command gets a value</h2><p>The guarantee depends on which path a value takes into the command.</p></div>
     <div class="tablebox"><table>
       <thead><tr><th>Path</th><th>What the command holds</th><th>What it protects</th></tr></thead>
@@ -183,7 +183,7 @@
       </div>
     </section>
 
-    <section class="section feature" id="log" aria-labelledby="log-title">
+    <section class="section feature" id="log" aria-labelledby="log-title" data-hue="amber">
       <div class="copy"><h2 id="log-title">The access log</h2>
         <p>Every read, change, grant, move, import and push is logged with the program chain and folder. Stored values aren't logged; likely secrets in command arguments are replaced with <code>&lt;redacted&gt;</code>, which is heuristic, so keep values out of command arguments. Each entry carries a keyed hash (HMAC-SHA256) of itself and the one before it, with the key kept in the keychain, so <code>lk log --verify</code> finds an entry that was changed, removed or added, or a log cut short. It can't stop a program running as you from deleting the file, only show that it happened.</p>
       </div>
@@ -197,7 +197,7 @@
       </div>
     </section>
 
-    <section class="section" id="table" aria-labelledby="table-title">
+    <section class="section" id="table" aria-labelledby="table-title" data-hue="blue">
     <div class="shead"><h2 id="table-title">Guarantees and limits</h2><p>Each mechanism, what it protects against, and what it doesn't promise.</p></div>
     <div class="tablebox"><table>
       <thead><tr><th>Mechanism</th><th>Protects against</th><th>Doesn't guarantee</th></tr></thead>

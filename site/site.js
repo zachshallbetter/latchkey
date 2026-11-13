@@ -16,6 +16,10 @@
     update: "Change settings on many items at once",
     rm: "Delete items; they can be restored for 30 days",
     mv: "Move items to another project or environment",
+    duplicates: "Find items holding the same value, and what to do about each. Asks every time; values are never shown",
+    combine: "Make items holding one value into one shared item",
+    scan: "Find env files that still hold plain values. Prints file and line, never a value",
+    export: "Write an environment's env file from its record",
     history: "Earlier values of an item: when and by whom. Never values",
     restore: "Put back an earlier value, or a deleted item",
     push: "Send an environment's values to its linked services",
@@ -30,10 +34,23 @@
     "--file": ["Set a variable to the path of a temporary file holding an item", "NAME=ID"],
     "--no-masking": ["Don't hide values in the command's output"],
     "--proxy": ["Keep OpenAI and Anthropic keys out of the command; Latchkey adds them on the way to the provider"],
+    "--proxy-models": ["With --proxy: refuse requests that don't name one of these models", "models, such as gpt-4o-mini,gpt-4o"],
+    "--proxy-requests": ["With --proxy: refuse requests after this many have been forwarded", "a number"],
     "--aws-session": ["Give the command short-lived AWS credentials instead of your key"],
     "--aws-role": ["Assume this AWS role for short-lived credentials", "an IAM role ARN"],
     "--aws-for": ["How long the AWS credentials last (15 minutes by default)", "a time, such as 1h"],
     "--rewrite": ["Replace each imported value in the file with its reference"],
+    "--class": ["Change how an imported line is classed: a secret, a setting left in the file, or a public value", "KEY=secret|setting|public"],
+    "--merge": ["Update the variables Latchkey manages in an existing file and add the missing ones; every other byte stays"],
+    "--replace": ["Overwrite what's already there: the whole env file for export, existing items for import"],
+    "--yes": ["Go ahead without asking first"],
+    "--out": ["Write to this file instead of standard output", "a file"],
+    "--values": ["Write the values themselves in plain text. Asks every time; agents can't"],
+    "--clipboard": ["Copy the values for this Mac only, hidden from clipboard managers and cleared after 60 seconds. Asks every time"],
+    "--staged": ["Scan only the lines a commit would add"],
+    "--install-hook": ["Write a Git pre-commit hook that refuses commits with plain values in env files"],
+    "--force": ["Overwrite a pre-commit hook that isn't Latchkey's"],
+    "--into": ["The shared item (or the item in their environment) to combine into", "a name or ID"],
     "--scan": ["Find every .env and .env.* under this folder", "a folder"],
     "--batch": ["Also import the files listed in this file", "a list of paths"],
     "--dry-run": ["Show what would happen; send nothing"],
@@ -59,6 +76,7 @@
     "--kind": ["token, password, key or value", "a kind"],
     "--agent-safe": ["Any program in your Mac account may request it without approval"]
   };
+  var POSITIONAL = { import: "The env file", scan: "The folder to scan", export: "project/environment" };
   var TIP = {
     program: "Latchkey's command-line tool (latchkey, or lk for short)",
     sep: "Everything after this is the command lk starts",
@@ -98,7 +116,7 @@
       if (!action && ACTIONS[w]) { action = w; html += tok("t-act", w, ACTIONS[w], focusable); continue; }
       // In lk run, the first word that isn't an option starts the command.
       if (action === "run") { child = true; html += tok("t-child", w); continue; }
-      html += tok("t-val", w, action === "import" ? "The env file" : TIP.item, focusable);
+      html += tok("t-val", w, POSITIONAL[action] || TIP.item, focusable);
     }
     return html;
   }

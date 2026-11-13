@@ -59,7 +59,7 @@
     .card .price-line small { font: 500 14px var(--sans); color: var(--muted); letter-spacing: 0; }
     .editions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
     .edition { display: flex; flex-direction: column; gap: 10px; }
-    .edition.pro { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+    .edition.pro { border-color: color-mix(in srgb, var(--hue) 55%, var(--line)); background: linear-gradient(180deg, color-mix(in srgb, var(--hue) 9%, var(--surface)), var(--surface) 45%); }
     .edition-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0; }
     .edition-head b { font-size: 19px; }
     .edition .fine { margin: 0; }
@@ -77,6 +77,8 @@
     /* Hero: the pitch beside the scene on wide screens, so both fit the first screen; stacked below 1000px. */
     .hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 32px 56px; align-items: center; padding-top: 48px; }
     .hero-art { min-width: 0; }
+    .hero h1 .grad { background: linear-gradient(100deg, var(--h-blue), var(--h-violet) 55%, var(--h-rose)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hero .hero-scene { background: radial-gradient(45% 55% at 30% 40%, color-mix(in srgb, var(--h-blue) 20%, transparent), transparent 70%), radial-gradient(40% 50% at 75% 65%, color-mix(in srgb, var(--h-violet) 18%, transparent), transparent 70%), radial-gradient(30% 40% at 80% 15%, color-mix(in srgb, var(--h-teal) 14%, transparent), transparent 70%), var(--scene-wash); }
     @media (max-width: 1000px) {
       .hero { grid-template-columns: minmax(0, 1fr); }
       .hero h1 { max-width: 20ch; }
@@ -242,10 +244,10 @@
   </header>
 
   <main id="main" class="wrap home">
-    <section class="hero" aria-labelledby="title">
+    <section class="hero" aria-labelledby="title" data-hue="blue">
       <div class="hero-copy">
       <p class="eyebrow">A native Mac tool for developers</p>
-      <h1 id="title">Your projects move. Your secrets don't.</h1>
+      <h1 id="title">Your projects move. <span class="grad">Your secrets don't.</span></h1>
       <p class="lede">Latchkey keeps development credentials in your Mac's iCloud Keychain and reconnects them to the projects that need them. Restore an environment on another Mac, run commands with the right values, and let coding agents work through access you control.</p>
       <div class="cta">
         <a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest">Download free</a>
@@ -281,7 +283,7 @@
       </div>
     </section>
 
-    <section class="section" id="how" aria-labelledby="how-title">
+    <section class="section" id="how" aria-labelledby="how-title" data-hue="blue">
       <div class="shead">
         <p class="eyebrow">How it works</p>
         <h2 id="how-title">From scattered .env files to a working project.</h2>
@@ -398,7 +400,7 @@ lk import .env.local --rewrite --skip PORT</code></pre></figure>
       </div>
     </section>
 
-    <section class="section try feature flip" id="demo-section" aria-labelledby="try-title">
+    <section class="section try feature flip" id="demo-section" aria-labelledby="try-title" data-hue="violet">
       <div class="copy">
         <p class="eyebrow">Try it</p>
         <h2 id="try-title">Be the person at the Mac</h2>
@@ -460,7 +462,7 @@ lk import .env.local --rewrite --skip PORT</code></pre></figure>
       </div>
     </section>
 
-    <section class="section" id="app" aria-labelledby="app-title">
+    <section class="section" id="app" aria-labelledby="app-title" data-hue="blue">
       <div class="shead">
       <p class="eyebrow">The app</p>
       <h2 id="app-title">Everything in one window</h2>
@@ -505,7 +507,7 @@ lk import .env.local --rewrite --skip PORT</code></pre></figure>
       </div>
     </div>
 
-    <section class="section" id="proxy" aria-labelledby="proxy-title">
+    <section class="section" id="proxy" aria-labelledby="proxy-title" data-hue="rose">
       <div class="shead">
       <p class="eyebrow">Mediated use</p>
       <h2 id="proxy-title">Keep supported API keys out of agent processes</h2>
@@ -535,7 +537,7 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
       </div>
     </section>
 
-    <section class="section" id="tools" aria-labelledby="tools-title">
+    <section class="section" id="tools" aria-labelledby="tools-title" data-hue="green">
       <div class="shead">
       <p class="eyebrow">Integrations</p>
       <h2 id="tools-title">Built for the tools you already use</h2>
@@ -548,7 +550,7 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
       </div>
     </section>
 
-    <section class="section" id="security" aria-labelledby="security-title">
+    <section class="section" id="security" aria-labelledby="security-title" data-hue="teal">
       <div class="shead">
       <p class="eyebrow">Security</p>
       <h2 id="security-title">What it protects, and where it stops</h2>
@@ -562,7 +564,7 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
       <p style="margin-top:18px"><a class="more" href="security.html">The security model, trust boundaries and limits</a></p>
     </section>
 
-    <section class="section" id="pro" aria-labelledby="pro-title">
+    <section class="section" id="pro" aria-labelledby="pro-title" data-hue="orange">
       <div class="shead">
         <p class="eyebrow">Free and Pro</p>
         <h2 id="pro-title">Free for good. Pro when you want more.</h2>
@@ -585,10 +587,10 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
           <p class="edition-head"><b>Latchkey Pro</b><span class="price-line">$79 <small>one time</small></span></p>
           <p class="fine"><span class="avail pending">Planned</span> Everything in Latchkey, plus:</p>
           <ul>
-            <li><b>Agent controls:</b> provision credentials for agents and scope what each agent may use</li>
-            <li><b>Recovery and migration:</b> find and combine duplicates, relink moved projects, recover on a new Mac</li>
-            <li><b>Rotation and lifecycle:</b> rotation that follows your exports, expiry and validity, activity tools</li>
-            <li><b>Provider integrations:</b> push and pull with Vercel, GitHub, Railway and more</li>
+            <li><b>Agent controls:</b> finer limits on what an agent may read and run</li>
+            <li><b>Recovery and migration:</b> bring secrets in from other tools, and recover from mistakes</li>
+            <li><b>Rotation and lifecycle:</b> rotate keys and track when they expire</li>
+            <li><b>Provider integrations:</b> work with your providers directly</li>
           </ul>
           <a class="button secondary" href="pricing.html#pro">Get early access</a>
         </article>
@@ -602,16 +604,16 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
       <h2 id="paths-title">Three ways in</h2>
       </div>
       <div class="card-grid g3">
-        <div class="card"><b>For developers</b><span>Latchkey is free to download and use. Start there, and see what Latchkey Pro will add when it's ready.</span>
+        <div class="card" data-hue="blue"><b>For developers</b><span>Latchkey is free to download and use. Start there, and see what Latchkey Pro will add when it's ready.</span>
           <p class="links"><a class="more" href="#install">Download free</a><br><a class="more" href="pricing.html">Free and Pro</a></p></div>
-        <div class="card"><b>For teams</b><span>Move a small team's credentials out of scattered env files with a fixed-scope migration from Snack Studio, and help shape Latchkey Teams.</span>
+        <div class="card" data-hue="green"><b>For teams</b><span>Move a small team's credentials out of scattered env files with a fixed-scope migration from Snack Studio, and help shape Latchkey Teams.</span>
           <p class="links"><a class="more" href="teams.html">Developer Credential Migration</a><br><a class="more" href="teams.html#teams">Latchkey Teams</a></p></div>
-        <div class="card"><b>For technical evaluators</b><span>Inspect how values are stored and released, where protection ends, every command, and what's built and what isn't.</span>
+        <div class="card" data-hue="violet"><b>For technical evaluators</b><span>Inspect how values are stored and released, where protection ends, every command, and what's built and what isn't.</span>
           <p class="links"><a class="more" href="security.html">Security model</a><br><a class="more" href="developers/index.html">Developer docs</a><br><a class="more" href="roadmap.html">Roadmap</a></p></div>
       </div>
     </section>
 
-    <section class="section" id="install" aria-labelledby="install-title">
+    <section class="section" id="install" aria-labelledby="install-title" data-hue="blue">
       <div class="cta-band">
         <div>
           <p class="eyebrow">Free download</p>

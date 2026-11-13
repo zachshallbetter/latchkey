@@ -23,6 +23,12 @@
 - Link records gain optional `tokenItem` and `team` fields; links saved before them decode unchanged.
 
 ### Website
+- More colour: each section takes a hue (eyebrow, steps, card tops, scene wash), the hero line and closing band
+  carry a gradient, and Pro is orange as in the app's upgrade sheet.
+- Caught up with the product: Features, the Roadmap, the CLI and agent docs and `llms.txt` cover `lk scan` and its
+  pre-commit hook, duplicates and combine, import classes, export merge and clipboard, the proxy's limits and
+  updates. Pro's four groups use the app's own wording, and duplicates, scanning, rotation and pushing are listed as
+  free.
 - Free leads: every primary button is **Download free**, the home page and Features show what Pro adds
   (marked planned), and Pricing lists Pro's features in place of four labels.
 - Privacy policy, terms and support pages, linked from every footer; canonical URLs and a sitemap for

@@ -65,7 +65,7 @@
       <p class="legend"><span><span class="avail">In this build</span> works in the development preview</span><span><span class="avail pending">Pending</span> built, not yet verified for release, or not built yet</span><span>Everything on this page is free. <a href="#pro">What Pro adds</a></span><span>Scenes replay what Latchkey prints and shows, with example data.</span></p>
     </section>
 
-    <section class="section group" id="credentials" aria-labelledby="credentials-title">
+    <section class="section group" id="credentials" aria-labelledby="credentials-title" data-hue="blue">
       <header class="shead"><p class="eyebrow">Credentials</p><h2 id="credentials-title">Every credential has a name, a place and a past.</h2>
         <p>An item is <code>project/environment/NAME</code>, or just <code>NAME</code> when it's shared by every project. Its kind, service and note travel with it, and replacing its value keeps the old one.</p></header>
       <div class="appwrap"><div class="appwin" id="appwin" aria-label="The Latchkey window, with example data"><div class="appwin-static">
@@ -89,10 +89,16 @@
         <article class="card"><h3>History and restore <span class="avail">In this build</span></h3><p>The last 10 values of each item, and deleted items for 30 days. History lists when and why, never values; Forget History deletes old values for good.</p>
           <pre>lk history shop/development/STRIPE_KEY
 lk restore shop/development/STRIPE_KEY --version 1</pre><a class="more" href="developers/cli.html#history">History</a></article>
+        <article class="card"><h3>Find duplicates and combine them <span class="avail">In this build</span></h3><p>One approval compares values inside Latchkey and says what to do: give production its own key, or combine the rest into one shared item. Files follow, and the originals go to Recently Deleted.</p>
+          <pre>lk duplicates
+lk combine shop/development/STRIPE_KEY blog/development/STRIPE_KEY --into STRIPE_KEY</pre><a class="more" href="developers/cli.html#duplicates">Duplicates</a></article>
+        <article class="card"><h3>Catch plain values before a commit <span class="avail">In this build</span></h3><p><code>lk scan</code> finds env files that still hold a stored value or something that looks secret, and prints file, line and item, never the value. The pre-commit hook refuses those commits.</p>
+          <pre>lk scan ~/Projects
+lk scan --install-hook</pre><a class="more" href="developers/cli.html#scan">Scanning</a></article>
       </div>
     </section>
 
-    <section class="section group" id="environments" aria-labelledby="environments-title">
+    <section class="section group" id="environments" aria-labelledby="environments-title" data-hue="green">
       <header class="shead"><p class="eyebrow">Environments</p><h2 id="environments-title">References in your files. Values in Keychain.</h2>
         <p>Each environment has a record of its variables: each points at an item or holds a plain setting like <code>PORT=3000</code>. Records sync with your items, so a checkout anywhere can get its env file back.</p></header>
       <div class="feature">
@@ -115,20 +121,20 @@ lk restore shop/development/STRIPE_KEY --version 1</pre><a class="more" href="de
         </div>
       </div>
       <div class="card-grid g2">
-        <article class="card"><h3>Import one file or every project <span class="avail">In this build</span></h3><p>The project comes from the repository's folder, the environment from the file name. <code>--scan</code> finds every env file under a folder and skips examples, backups and dependency folders.</p>
+        <article class="card"><h3>Import one file or every project <span class="avail">In this build</span></h3><p>The project comes from the repository's folder, the environment from the file name. Each line is classed as a secret, a setting, a public value or an existing reference: settings like <code>PORT</code> stay in the file, public values are saved plain, and anything unclear is a secret.</p>
           <pre>lk import --scan ~/Projects --agent-safe-pattern 'NEXT_PUBLIC_*' --dry-run</pre><a class="more" href="developers/cli.html#import">Importing</a></article>
         <article class="card"><h3>Run without a file <span class="avail">In this build</span></h3><p><code>--env</code> loads the environment's record, which suits a fresh worktree with no <code>.env</code>. Key files arrive as a temporary path only you can read.</p>
           <pre>lk run --env shop/development -- npm test
 lk run --file ASC_KEY_PATH=shop/production/ASC_P8 -- fastlane beta</pre><a class="more" href="developers/cli.html#running">Running commands</a></article>
-        <article class="card"><h3>Export an env file <span class="avail">In this build</span></h3><p>Writes the environment's file from its record: references and plain settings, sorted, never half-written. <code>--values</code> writes plain values and asks every time, naming the file; agents can't use it.</p>
-          <pre>lk export shop/development --out .env.local</pre><a class="more" href="developers/cli.html#environments">Environments</a></article>
+        <article class="card"><h3>Export an env file <span class="avail">In this build</span></h3><p>Writes the environment's file from its record, or <code>--merge</code>s into the one you have, keeping comments, order and other variables. <code>--values --clipboard</code> copies an env block for a dashboard; it asks every time and clears after 60 seconds.</p>
+          <pre>lk export shop/development --out .env.local --merge</pre><a class="more" href="developers/cli.html#export">Export</a></article>
         <article class="card"><h3>Recognize a checkout <span class="avail">In this build</span></h3><p>A project is linked to its Git remotes, so a clone under any folder name knows which project it is. A match only names the project; it never releases a value or widens a grant.</p>
           <pre>lk project link shop
 lk project</pre><a class="more" href="developers/cli.html#environments">Projects</a></article>
       </div>
     </section>
 
-    <section class="section group" id="devices" aria-labelledby="devices-title">
+    <section class="section group" id="devices" aria-labelledby="devices-title" data-hue="violet">
       <header class="shead"><p class="eyebrow">Devices</p><h2 id="devices-title">The environment travels with the project. The credential stays in your vault.</h2>
         <p>Values, versions, environment records and project links are keychain items in Latchkey's own access group. iCloud Keychain carries them, end to end encrypted, to every Mac signed in to your Apple Account that has Latchkey installed.</p></header>
       <div class="feature flip">
@@ -161,15 +167,17 @@ lk project</pre><a class="more" href="developers/cli.html#environments">Projects
           </div>
         </div>
       </div>
-      <div class="card-grid g3">
+      <div class="card-grid g2">
         <article class="card"><h3>Signed app access <span class="avail">In this build</span></h3><p>Only the signed Latchkey app can read its keychain group. The <code>lk</code> tool never touches the keychain; it checks the app's signature before sending anything.</p><a class="more" href="security.html#storage">Storage and sync</a></article>
         <article class="card"><h3>Use it from another Mac over SSH <span class="avail">In this build</span></h3><p>Forward the app's socket. Each read without the No Approval setting asks you on your own Mac; local grants don't apply over the connection.</p>
           <pre>export LATCHKEY_SOCKET=/tmp/latchkey-$USER.sock</pre><a class="more" href="developers/agents.html#ssh">From another Mac over SSH</a></article>
         <article class="card"><h3>Intel Macs <span class="avail pending">Pending</span></h3><p>The app is built for Apple silicon and Intel. The release hasn't been tried on an Intel Mac yet.</p><a class="more" href="index.html#install">Install</a></article>
+        <article class="card"><h3>Updates itself <span class="avail">In this build</span></h3><p>The direct download checks for updates with Sparkle, or install and upgrade with Homebrew. It sends no system profile; the Mac App Store version updates through the store.</p>
+          <pre>brew install --cask latchkey</pre><a class="more" href="developers/quickstart.html#install">Installing</a></article>
       </div>
     </section>
 
-    <section class="section group" id="agents" aria-labelledby="agents-title">
+    <section class="section group" id="agents" aria-labelledby="agents-title" data-hue="rose">
       <header class="shead"><p class="eyebrow">Agents and tools</p><h2 id="agents-title">Grant access for the task. Revoke it when the task is done.</h2>
         <p>Agents run commands through <code>lk run</code>. You decide what reaches those commands: agent-safe items, grants for a folder and a time, or an approval each time.</p></header>
       <div class="feature">
@@ -205,7 +213,7 @@ lk grant 'shop/development/*' --command "npm test" --for 2h</pre><a class="more"
       </div>
     </section>
 
-    <section class="section group" id="integrations" aria-labelledby="integrations-title">
+    <section class="section group" id="integrations" aria-labelledby="integrations-title" data-hue="teal">
       <header class="shead"><p class="eyebrow">Integrations</p><h2 id="integrations-title">From the dashboard where a key is made to the platform that runs it.</h2>
         <p>Save a new key from the page that shows it, push values to deployment platforms with their own tools, and keep some keys out of the command entirely.</p></header>
       <div class="feature flip" id="safari">
@@ -246,8 +254,8 @@ lk remote status shop/production
 lk push shop/production --dry-run</pre><a class="more" href="developers/cli.html#remote">Remote locations</a></article>
         <article class="card"><h3>Fill a field from Latchkey <span class="avail">In this build</span></h3><p>In a field that takes a key, a badge offers the items that may be filled on that site: the item's service and the deployment platforms, or the sites you choose. Touch ID every time.</p>
           <pre>lk update shop/production/PAYMENTS_KEY --fill-sites vercel.com</pre><a class="more" href="developers/cli.html#items">lk update</a></article>
-        <article class="card"><h3>Key proxy <span class="avail">In this build</span></h3><p>OpenAI and Anthropic keys stay in <code>lk run</code>; the command gets a placeholder and a local base URL, and the real key goes only to the provider's host.</p>
-          <pre>lk run --proxy --env shop/development -- npm test</pre><a class="more" href="developers/cli.html#proxy">--proxy</a></article>
+        <article class="card"><h3>Key proxy <span class="avail">In this build</span></h3><p>OpenAI and Anthropic keys stay in <code>lk run</code>; the command gets a placeholder and a local base URL, and the real key goes only to the provider's host. It serves only the command and what it started, and can limit models and requests.</p>
+          <pre>lk run --proxy --proxy-models gpt-5 --proxy-requests 50 --env shop/development -- npm test</pre><a class="more" href="developers/cli.html#proxy">--proxy</a></article>
         <article class="card"><h3>Short-lived AWS credentials <span class="avail">In this build</span></h3><p>STS credentials that expire after 15 minutes by default, while the long-lived key stays in Latchkey. MFA isn't supported yet.</p>
           <pre>lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</pre><a class="more" href="developers/cli.html#aws">AWS</a></article>
         <article class="card"><h3>Other MCP servers <span class="avail">In this build</span></h3><p>An MCP server started as a command can get its keys through Latchkey: wrap the command and keep references in its environment.</p>
@@ -256,7 +264,7 @@ lk push shop/production --dry-run</pre><a class="more" href="developers/cli.html
       </div>
     </section>
 
-    <section class="section group" id="visibility" aria-labelledby="visibility-title">
+    <section class="section group" id="visibility" aria-labelledby="visibility-title" data-hue="amber">
       <header class="shead"><p class="eyebrow">Visibility</p><h2 id="visibility-title">Know what read what, and prove the record wasn't edited.</h2>
         <p>Every read, change, grant, move, import and push is logged with the program chain and folder, never a value. Each entry is chained to the last, so an edit or deletion shows.</p></header>
       <div class="feature">
@@ -278,17 +286,17 @@ lk rotate --touched --since 4h --by claude --open</pre><a class="more" href="dev
         <article class="card"><h3>Expiry and provider-side usage <span class="avail pending">Pending</span></h3><p>Latchkey records what it released, not what a service saw. Expiry dates, validity checks and provider-side usage aren't tracked yet.</p><a class="more" href="security.html#limits">Where protection ends</a></article>
       </div>
     </section>
-    <section class="section group" id="pro" aria-labelledby="pro-title">
+    <section class="section group" id="pro" aria-labelledby="pro-title" data-hue="orange">
       <header class="shead">
         <p class="eyebrow">Latchkey Pro</p>
         <h2 id="pro-title">Everything above stays free. Pro adds four sets of tools.</h2>
-        <p>Pro is planned as a one-time in-app purchase in the Mac App Store, $79 with updates included. None of it is sold before it exists.</p>
+        <p>Pro is planned as a one-time in-app purchase in the Mac App Store, $79 with updates included. None of it is sold before it exists, and nothing above moves behind it: duplicates, scanning, rotation and pushing to services stay free.</p>
       </header>
       <div class="card-grid g2">
-        <article class="card"><h3>Agent controls <span class="avail pending">Planned</span></h3><p>Provision credentials for agents, and scope what each agent may use with its own policy.</p></article>
-        <article class="card"><h3>Recovery and migration <span class="avail pending">Planned</span></h3><p>Find and combine duplicates, relink projects that moved, and recover everything on a new Mac.</p></article>
-        <article class="card"><h3>Rotation and lifecycle <span class="avail pending">Planned</span></h3><p>Rotation that follows every place a value was exported, with expiry, validity checks and activity tools.</p></article>
-        <article class="card"><h3>Provider integrations <span class="avail pending">Planned</span></h3><p>Push and pull environments with Vercel, GitHub, Railway and more, from the same references.</p></article>
+        <article class="card"><h3>Agent controls <span class="avail pending">Planned</span></h3><p>Finer limits on what an agent may read and run.</p></article>
+        <article class="card"><h3>Recovery and migration <span class="avail pending">Planned</span></h3><p>Bring secrets in from other tools, and recover from mistakes.</p></article>
+        <article class="card"><h3>Rotation and lifecycle <span class="avail pending">Planned</span></h3><p>Rotate keys and track when they expire.</p></article>
+        <article class="card"><h3>Provider integrations <span class="avail pending">Planned</span></h3><p>Work with your providers directly.</p></article>
       </div>
       <p style="margin-top:18px"><a class="more" href="pricing.html#compare">Compare free and Pro</a></p>
     </section>
