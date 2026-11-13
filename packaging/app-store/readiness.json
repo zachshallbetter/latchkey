@@ -5,9 +5,9 @@
   "metadata": {
     "name": "Latchkey",
     "primaryCategory": "public.app-category.developer-tools",
-    "supportURL": null,
-    "privacyPolicyURL": null,
-    "marketingURL": null,
+    "supportURL": "https://latchkey.snackstud.io/support.html",
+    "privacyPolicyURL": "https://latchkey.snackstud.io/privacy.html",
+    "marketingURL": "https://latchkey.snackstud.io/",
     "reviewContactConfirmed": false,
     "exportComplianceReviewed": false
   },

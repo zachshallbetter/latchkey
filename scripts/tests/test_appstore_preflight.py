@@ -1,5 +1,6 @@
 import copy
 import importlib.util
+import json
 import pathlib
 import plistlib
 import tempfile
@@ -50,6 +51,22 @@ class PreflightTests(unittest.TestCase):
         self.assertTrue(preflight.privacy_errors(manifest))
         manifest["NSPrivacyAccessedAPITypes"] = []
         self.assertTrue(preflight.privacy_errors(manifest))
+
+    def test_safari_manifest_declares_no_required_reason_api(self):
+        root = pathlib.Path(__file__).resolve().parents[2]
+        manifest = plistlib.loads((root / "App/Privacy/Safari/PrivacyInfo.xcprivacy").read_bytes())
+        self.assertEqual(preflight.privacy_errors(manifest, expected={}), [])
+        manifest["NSPrivacyAccessedAPITypes"] = [{"NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+                                                  "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]}]
+        self.assertTrue(preflight.privacy_errors(manifest, expected={}))
+
+    def test_recorded_listing_urls_are_public_https(self):
+        root = pathlib.Path(__file__).resolve().parents[2]
+        readiness = json.loads((root / "packaging/app-store/readiness.json").read_text())
+        readiness["submissionEnabled"] = True
+        errors = preflight.submission_errors(readiness, root)
+        self.assertFalse([e for e in errors if "URL" in e])
+        self.assertTrue(readiness["metadata"]["marketingURL"].startswith("https://"))
 
     def test_store_bundle_rejects_sparkle(self):
         with tempfile.TemporaryDirectory() as directory:

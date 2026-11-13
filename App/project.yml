@@ -77,6 +77,8 @@ targets:
       - path: Safari/SafariWebExtensionHandler.swift
       - path: Safari/Resources
         buildPhase: resources
+      - path: Privacy/Safari/PrivacyInfo.xcprivacy
+        buildPhase: resources
     dependencies:
       - package: LatchkeyCore
         product: LatchkeyCore

@@ -66,6 +66,13 @@ struct LatchkeyApp: App {
                 Button("Import .env File…") { model.chooseImportFile() }.keyboardShortcut("i", modifiers: [.command, .shift])
             }
             ItemCommands(model: model)
+            CommandGroup(replacing: .help) {
+                Link("Latchkey Help", destination: URL(string: "https://latchkey.snackstud.io/support.html")!)
+                Link("Privacy Policy", destination: URL(string: "https://latchkey.snackstud.io/privacy.html")!)
+                Link("Terms of Use", destination: URL(string: "https://latchkey.snackstud.io/terms.html")!)
+                Divider()
+                Link("Report a Security Issue", destination: URL(string: "mailto:latchkey@snackstud.io?subject=Security")!)
+            }
         }
 
         MenuBarExtra("Latchkey", image: "MenuBarIcon") {

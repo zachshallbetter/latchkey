@@ -43,7 +43,7 @@ def entitlement_errors(values):
     return errors
 
 
-def privacy_errors(manifest):
+def privacy_errors(manifest, expected=None):
     errors = []
     if manifest.get("NSPrivacyTracking") is not False or manifest.get("NSPrivacyTrackingDomains") != []:
         errors.append("privacy manifest must declare no tracking or tracking domains")
@@ -51,8 +51,9 @@ def privacy_errors(manifest):
         errors.append("collection changed; review the app privacy declaration before proceeding")
     reasons = {row.get("NSPrivacyAccessedAPIType"): row.get("NSPrivacyAccessedAPITypeReasons")
                for row in manifest.get("NSPrivacyAccessedAPITypes", [])}
-    expected = {"NSPrivacyAccessedAPICategoryUserDefaults": ["CA92.1"],
-                "NSPrivacyAccessedAPICategoryFileTimestamp": ["C617.1", "3B52.1"]}
+    if expected is None:
+        expected = {"NSPrivacyAccessedAPICategoryUserDefaults": ["CA92.1"],
+                    "NSPrivacyAccessedAPICategoryFileTimestamp": ["C617.1", "3B52.1"]}
     if reasons != expected:
         errors.append("required-reason inventory differs from the documented app API audit")
     return errors
@@ -92,6 +93,8 @@ def submission_errors(readiness, root):
 def source_errors(root):
     errors = entitlement_errors(load_plist(root / "App/AppStore/Latchkey.entitlements"))
     errors += privacy_errors(load_plist(root / "App/Privacy/App/PrivacyInfo.xcprivacy"))
+    # The extension reaches only the broker socket and reads no timestamps or preferences: no required-reason API.
+    errors += [f"Safari: {e}" for e in privacy_errors(load_plist(root / "App/Privacy/Safari/PrivacyInfo.xcprivacy"), expected={})]
     info = load_plist(root / "App/AppStore/Info.plist")
     if (info.get("CFBundleShortVersionString"), info.get("CFBundleVersion")) != ("$(MARKETING_VERSION)", "$(CURRENT_PROJECT_VERSION)"):
         errors.append("store version and build must come from Xcode settings")
