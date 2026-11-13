@@ -1,7 +1,7 @@
 import AppKit
 
 /// Putting values on the clipboard: this Mac only, hidden from clipboard managers that honour the convention, and
-/// cleared after a minute if nothing else was copied meanwhile.
+/// cleared by callers on their chosen timer if nothing else was copied meanwhile.
 public enum Clipboard {
     public static let concealed = NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType")
     public static let transient = NSPasteboard.PasteboardType("org.nspasteboard.TransientType")

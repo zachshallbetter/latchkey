@@ -109,7 +109,7 @@ struct ItemDetail: View {
                 } label: { Image(systemName: model.revealed[item.name] == nil ? "eye" : "eye.slash") }
                 .help(model.revealed[item.name] == nil ? "Show (asks unless a grant or No Approval setting permits it)" : "Hide")
                 Button { act { await model.copyValue(item.name) } } label: { Image(systemName: "doc.on.doc") }
-                    .help("Copy the value to this Mac's clipboard; it clears after 60 seconds")
+                    .help("Copy the value to this Mac's clipboard; it clears after \(AppPreferences().clipboardSeconds) seconds")
             }
             CardRow(label: "Reference", last: true) {
                 Text(References.scheme + item.name).font(.callout.monospaced()).textSelection(.enabled)

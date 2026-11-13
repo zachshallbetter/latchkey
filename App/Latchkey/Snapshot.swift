@@ -42,6 +42,16 @@ enum Snapshot {
         if let names = arg("--select") {
             model.selection = Set(names.split(separator: ",").map(String.init))
         }
+        if let section = arg("--settings").flatMap(SettingsSection.init(rawValue:)) { model.openSettings(section) }
+        if arg("--part") == "settings-window" {
+            let width = Double(arg("--width") ?? "1080") ?? 1080
+            drawOffscreen(MainWindow(model: model).frame(width: width, height: 720), to: path)
+            return
+        }
+        if arg("--part") == "settings" {
+            drawOffscreen(SettingsView(model: model).frame(width: 660, height: 720), to: path)
+            return
+        }
         if arg("--filter") == "activity" { model.filter = .activity }
         if arg("--filter") == "grants" { model.filter = .grants }
         if let f = arg("--filter"), f.hasPrefix("project:") { model.filter = .project(String(f.dropFirst(8))) }
