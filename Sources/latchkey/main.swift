@@ -37,7 +37,7 @@ Files refer to them as latchkey://ID.
   latchkey import FILE... [--batch LIST] [--scan DIR] [--project P] [--env E | --shared] [--share-identical]
                   [--rewrite] [--replace] [--dry-run] [--only KEY,...] [--kind KIND | --kind KEY=KIND]...
                   [--agent-safe KEY,...|all] [--agent-safe-pattern PATTERN,...] [--skip PATTERN,...]
-                  [--no-default-skip]
+                  [--no-default-skip] [--class KEY=secret|setting|public]...
       Add every KEY=VALUE in a .env file with one approval. Prints IDs, never values.
       The project defaults to the repository's folder name and the environment to what the file
       name says (.env and .env.local: development; .env.production: production). --shared
@@ -53,6 +53,9 @@ Files refer to them as latchkey://ID.
       Skipped by default: VERCEL_OIDC_TOKEN, VERCEL_* and TURBO_* (vercel env pull writes them; they expire);
       --no-default-skip turns that off, --skip adds patterns. --agent-safe-pattern 'NEXT_PUBLIC_*,VITE_*'
       imports matching names as plain values agents may read (they ship to browsers anyway).
+      Each line is classed as a secret (saved masked), a setting such as PORT or NODE_ENV (left in the file), a
+      public value such as NEXT_PUBLIC_* (saved as a plain value) or an existing reference. --dry-run shows the
+      class of every line; --class KEY=secret|setting|public changes one. Anything unclear is a secret.
   latchkey env [list] | env show PROJECT/ENV [--json] | env migrate [--dry-run]
   latchkey env set PROJECT/ENV NAME=latchkey://ID|NAME=VALUE... | env unset PROJECT/ENV NAME... | env confirm PROJECT/ENV [NAME...]
   latchkey env rm PROJECT/ENV     Forget an environment's record (its items stay).
@@ -482,6 +485,7 @@ func importCommand(_ input: [String]) -> Never {
     var only: Set<String>?
     var defaultKind = ItemKind.token
     var kinds: [String: ItemKind] = [:]
+    var classes: [String: ImportClass] = [:]
     var agentSafe: Set<String> = []
     var allAgentSafe = false
     var project: String?, environment: String?, shared = false
@@ -530,6 +534,12 @@ func importCommand(_ input: [String]) -> Never {
             guard !rest.isEmpty else { fail("--agent-safe takes NAME,NAME or all", code: 64) }
             let v = rest.removeFirst()
             if v == "all" { allAgentSafe = true } else { agentSafe.formUnion(names(v)) }
+        case "--class":
+            guard !rest.isEmpty, let eq = rest[0].firstIndex(of: "="),
+                  let c = ImportClass(rawValue: String(rest[0][rest[0].index(after: eq)...])), ImportClass.choices.contains(c) else {
+                fail("--class takes NAME=secret, NAME=setting or NAME=public", code: 64)
+            }
+            classes[String(rest.removeFirst()[..<eq])] = c
         case "--kind":
             guard !rest.isEmpty else { fail("--kind takes KIND or NAME=KIND", code: 64) }
             let v = rest.removeFirst()
@@ -552,7 +562,7 @@ func importCommand(_ input: [String]) -> Never {
     if files.count > 1 {
         batchImport(files, project: project, environment: environment, shared: shared, shareIdentical: shareIdentical,
                     defaultKind: defaultKind, kinds: kinds, agentSafe: agentSafe, allAgentSafe: allAgentSafe, skip: skip,
-                    agentSafePatterns: agentSafePatterns, only: only, rewrite: rewrite, replace: replace, dryRun: dryRun)
+                    agentSafePatterns: agentSafePatterns, classes: classes, only: only, rewrite: rewrite, replace: replace, dryRun: dryRun)
     }
     let file = files[0]
     let url = URL(fileURLWithPath: file).standardizedFileURL
@@ -567,7 +577,7 @@ func importCommand(_ input: [String]) -> Never {
     do { plan = try EnvImport.plan(text, source: url.lastPathComponent, location: url.path, project: placeProject,
                               environment: placeEnv, only: only, defaultKind: defaultKind,
                               kinds: kinds, agentSafe: agentSafe, allAgentSafe: allAgentSafe,
-                              skip: skip, agentSafePatterns: agentSafePatterns) }
+                              skip: skip, agentSafePatterns: agentSafePatterns, classes: classes) }
     catch { fail("cannot import \(url.lastPathComponent): \(error.localizedDescription)", code: 66) }
     let items = Dictionary(uniqueKeysWithValues: plan.items.map { ($0.name, $0) })
     let ignored = plan.ignored
@@ -575,7 +585,7 @@ func importCommand(_ input: [String]) -> Never {
         let unknown = only.subtracting(plan.references.keys).subtracting(ignored.keys)
         if !unknown.isEmpty { fail("not in \(file): \(unknown.sorted().joined(separator: ", "))", code: 66) }
     }
-    for key in Set(kinds.keys).union(agentSafe) where plan.references[key] == nil && ignored[key] == nil {
+    for key in Set(kinds.keys).union(agentSafe).union(classes.keys) where plan.references[key] == nil && ignored[key] == nil {
         fail("\(key) is named in an option but is not in \(file)", code: 64)
     }
     print(placeProject.isEmpty ? "into shared items" : "into project \(placeProject), environment \(placeEnv)")
@@ -585,15 +595,17 @@ func importCommand(_ input: [String]) -> Never {
     guard !items.isEmpty || (record != nil && !dryRun) else { print("Nothing to import."); exit(0) }
 
     func describe(_ i: ImportItem) -> String {
-        "\(i.name)  \(i.kind!.rawValue)\(i.agentSafe == true ? ", agent-safe" : "")"
+        "\(i.name)  \(i.kind == .value ? "public" : "secret"), \(i.kind!.rawValue)\(i.agentSafe == true ? ", agent-safe" : "")"
     }
 
     if dryRun {
         let existing = Set((send(Request(op: "list")).secrets ?? []).map(\.name))
+        print(classSummary(Array(plan.classes.values)))
         for i in items.values.sorted(by: { $0.name < $1.name }) {
             let action = !existing.contains(i.name) ? "add     " : (replace ? "replace " : "skip    ")
             print("\(action) \(describe(i))\(action == "skip    " ? "  (exists; --replace to overwrite)" : "")")
         }
+        for i in plan.settings { print("leave    \(i.name)  setting, left in the file  (--class \(ItemID(i.name)?.name ?? i.name)=public saves it)") }
         if rewrite { print("(would rewrite \(file) for the items added or replaced)") }
         exit(0)
     }
@@ -622,12 +634,22 @@ func importCommand(_ input: [String]) -> Never {
     exit(0)
 }
 
+/// "classes: 3 secret, 1 public, 2 setting (left in the file), 1 reference". Counts only.
+func classSummary(_ all: [ImportClass]) -> String {
+    let parts = ImportClass.allCases.compactMap { c -> String? in
+        let n = all.filter { $0 == c }.count
+        guard n > 0 else { return nil }
+        return "\(n) \(c.rawValue)\(c == .setting ? " (left in the file)" : "")"
+    }
+    return "classes: " + (parts.isEmpty ? "none" : parts.joined(separator: ", "))
+}
+
 // MARK: - several files
 
 func batchImport(_ paths: [String], project: String?, environment: String?, shared: Bool, shareIdentical: Bool,
                  defaultKind: ItemKind, kinds: [String: ItemKind], agentSafe: Set<String>, allAgentSafe: Bool,
-                 skip: [String], agentSafePatterns: [String], only: Set<String>?, rewrite: Bool, replace: Bool,
-                 dryRun: Bool) -> Never {
+                 skip: [String], agentSafePatterns: [String], classes: [String: ImportClass], only: Set<String>?,
+                 rewrite: Bool, replace: Bool, dryRun: Bool) -> Never {
     if only != nil { fail("--only works with one file", code: 64) }
     var files: [(url: URL, text: String)] = []
     var seen = Set<String>()
@@ -641,7 +663,8 @@ func batchImport(_ paths: [String], project: String?, environment: String?, shar
     let plan: EnvImport.BatchPlan
     do { plan = try EnvImport.batch(files, project: project, environment: environment, shared: shared, shareIdentical: shareIdentical,
                                defaultKind: defaultKind, kinds: kinds, agentSafe: agentSafe, allAgentSafe: allAgentSafe,
-                               skip: skip, agentSafePatterns: agentSafePatterns, projectFor: { linkedProject(for: $0, linked) }) }
+                               skip: skip, agentSafePatterns: agentSafePatterns, classes: classes,
+                               projectFor: { linkedProject(for: $0, linked) }) }
     catch { fail("cannot import: \(error.localizedDescription)", code: 66) }
     let existing = Set((send(Request(op: "list")).secrets ?? []).map(\.name))
 
@@ -650,9 +673,11 @@ func batchImport(_ paths: [String], project: String?, environment: String?, shar
         let place = f.project.isEmpty ? "shared" : "\(f.project)/\(f.environment)"
         let sharedHere = f.references.values.filter { !$0.contains("/") }.count
         let skipped = f.ignored.values.filter { $0.hasPrefix("skipped") }.count
+        let settings = f.ignored.values.filter { $0.hasPrefix("setting") }.count
         let conflicts = f.ignored.values.filter { $0.hasPrefix("conflict") }.count
         var parts = ["\(f.references.count) to import"]
         if sharedHere > 0 && !f.project.isEmpty { parts.append("\(sharedHere) shared") }
+        if settings > 0 { parts.append("\(settings) settings left in the file") }
         if skipped > 0 { parts.append("\(skipped) skipped") }
         if conflicts > 0 { parts.append("\(conflicts) in conflict") }
         print("\(Broker.tilde(f.url.path))  →  \(place): \(parts.joined(separator: ", "))")
@@ -669,8 +694,11 @@ func batchImport(_ paths: [String], project: String?, environment: String?, shar
     for (id, where_) in plan.conflicts.sorted(by: { $0.key < $1.key }) {
         print("conflict: \(id) differs between \(where_.map { Broker.tilde($0) }.joined(separator: " and ")); not imported")
     }
-    let publicCount = plan.items.filter { EnvImport.matches(ItemID($0.name)?.name ?? $0.name, agentSafePatterns) }.count
-    if publicCount > 0 { print("\(publicCount) agent-safe plain values from --agent-safe-pattern") }
+    let publicCount = plan.items.filter { $0.kind == .value }.count
+    if publicCount > 0 { print("\(publicCount) public values saved as plain values\(plan.items.contains { $0.kind == .value && $0.agentSafe == true } ? " (agent-safe where --agent-safe-pattern matches)" : "")") }
+    if dryRun {
+        print(classSummary(plan.files.flatMap { $0.classes.values }))
+    }
 
     let toSend = replace ? plan.items : newItems
     let records = plan.files.compactMap { f in

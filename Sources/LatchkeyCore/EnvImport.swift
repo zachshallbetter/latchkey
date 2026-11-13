@@ -1,14 +1,69 @@
 import Foundation
 
+/// What a line of an env file is. Decided by `EnvImport.classify`, shown in reviews, and changeable before saving.
+/// Import-only: never sent to the broker or stored.
+public enum ImportClass: String, CaseIterable, Sendable {
+    /// Saved masked, as a token, password or key file.
+    case secret
+    /// An ordinary setting (`PORT`, `NODE_ENV`): left in the file.
+    case setting
+    /// Not secret, but worth keeping: a client-side key, an ID, a web address. Saved as a plain value.
+    case publicValue = "public"
+    /// Already a `latchkey://` reference. Not a choice.
+    case reference
+
+    public var label: String {
+        switch self {
+        case .secret: return "Secret"
+        case .setting: return "Setting"
+        case .publicValue: return "Public"
+        case .reference: return "Reference"
+        }
+    }
+
+    /// The classes a person can pick for a line.
+    public static let choices: [ImportClass] = [.secret, .setting, .publicValue]
+}
+
 /// Turns a .env file into import items. Shared by `latchkey import` and the app's Import sheet.
 public enum EnvImport {
     public struct Plan: Sendable {
         /// Sorted by id. Later lines win, as when the file is loaded.
         public var items: [ImportItem]
-        /// Lines left alone, key → reason ("empty", "already a reference").
+        /// Lines left alone, key → reason ("empty", "already a reference", "setting: left in the file").
         public var ignored: [String: String]
         /// Each imported key → the id of the item that will hold it.
         public var references: [String: String]
+        /// Each classified line's class, including settings and references. Empty and skipped lines have none.
+        public var classes: [String: ImportClass] = [:]
+        /// What each setting would be saved as if you changed its class, sorted by id.
+        public var settings: [ImportItem] = []
+    }
+
+    /// Names whose values reach browsers or apps; their values are public by design.
+    public static let publicPrefixes = ["NEXT_PUBLIC_", "NUXT_PUBLIC_", "VITE_", "PUBLIC_", "EXPO_PUBLIC_", "REACT_APP_"]
+    static let settingNames: Set<String> = ["PORT", "HOST", "HOSTNAME", "NODE_ENV", "APP_ENV", "ENV", "ENVIRONMENT", "LOG_LEVEL",
+                                            "LOG_FORMAT", "DEBUG", "TZ", "LANG", "CI", "TIMEOUT", "WORKERS", "VERBOSE"]
+    static let settingSuffixes = ["_PORT", "_ENABLED", "_DISABLED", "_LEVEL", "_TIMEOUT", "_TIMEOUT_MS", "_MODE", "_ENV", "_DEBUG", "_VERBOSE"]
+
+    /// Decides a line's class from its name and value, never by sending them anywhere. Anything unclear is a secret.
+    /// A value that looks like credentials (a key block, a connection string with a password) is a secret whatever
+    /// its name says.
+    public static func classify(key: String, value: String, agentSafePatterns: [String] = []) -> ImportClass {
+        if value.contains(References.scheme) { return .reference }
+        if guessKind(key, value) != nil { return .secret }
+        if let url = URL(string: value), url.host != nil, url.user != nil || url.password != nil { return .secret }
+        let k = key.uppercased()
+        if matches(key, agentSafePatterns) || publicPrefixes.contains(where: k.hasPrefix) { return .publicValue }
+        if k.contains("PUBLISHABLE") || k.hasSuffix("PUBLIC_KEY") || value.hasPrefix("pk_live_") || value.hasPrefix("pk_test_") {
+            return .publicValue
+        }
+        if EnvironmentRecord.mayBeSecret(name: key, value: value) { return .secret }
+        if Duplicates.looksLikeIdentifier(name: key, value: value) { return .publicValue }
+        if settingNames.contains(k) || settingSuffixes.contains(where: k.hasSuffix) || ["true", "false"].contains(value.lowercased()) {
+            return .setting
+        }
+        return .secret
     }
 
     /// `project` and `environment` place every item; both empty makes them shared items named after their keys.
@@ -25,27 +80,45 @@ public enum EnvImport {
                             project: String = "", environment: String = "",
                             only: Set<String>? = nil, defaultKind: ItemKind = .token, kinds: [String: ItemKind] = [:],
                             agentSafe: Set<String> = [], allAgentSafe: Bool = false,
-                            skip: [String] = defaultSkip, agentSafePatterns: [String] = []) throws -> Plan {
+                            skip: [String] = defaultSkip, agentSafePatterns: [String] = [],
+                            classes overrides: [String: ImportClass] = [:]) throws -> Plan {
         var items: [String: ImportItem] = [:]
+        var settings: [String: ImportItem] = [:]
         var ignored: [String: String] = [:]
+        var classes: [String: ImportClass] = [:]
         for (key, value) in try EnvFile.parse(text) {
             if let only, !only.contains(key) { continue }
             items[key] = nil
+            settings[key] = nil
             ignored[key] = nil
+            classes[key] = nil
             if matches(key, skip) { ignored[key] = "skipped: expires, or excluded by --skip"; continue }
             if value.isEmpty { ignored[key] = "empty"; continue }
-            if value.contains(References.scheme) { ignored[key] = "already a reference"; continue }
+            var cls = classify(key: key, value: value, agentSafePatterns: agentSafePatterns)
+            if cls == .reference { classes[key] = cls; ignored[key] = "already a reference"; continue }
+            // A line you chose a class for, or named in --kind or --agent-safe, is what you said it is.
+            if let chosen = overrides[key], chosen != .reference { cls = chosen }
+            else if let kind = kinds[key] { cls = kind == .value ? .publicValue : .secret }
+            else if agentSafe.contains(key), cls == .setting { cls = .publicValue }
+            classes[key] = cls
             let id = ItemID(project: project, environment: project.isEmpty ? "" : environment, name: key).string
-            // Names that end up in client bundles anyway (NEXT_PUBLIC_*, VITE_*): plain values agents may read.
-            let isPublic = matches(key, agentSafePatterns)
-            items[key] = ImportItem(name: id, value: value,
-                                    kind: kinds[key] ?? (isPublic ? .value : (guessKind(key, value) ?? defaultKind)),
-                                    agentSafe: allAgentSafe || agentSafe.contains(key) || isPublic,
-                                    note: "imported from \(source)", usedIn: location.map { [$0] },
-                                    service: Services.guess(key: key, value: value))
+            let isSecret = cls == .secret
+            // Public values (NEXT_PUBLIC_*, VITE_*) are saved as plain values; only the names you pass are agent-safe.
+            let item = ImportItem(name: id, value: value,
+                                  kind: isSecret ? (kinds[key] ?? guessKind(key, value) ?? defaultKind) : .value,
+                                  agentSafe: allAgentSafe || agentSafe.contains(key) || (cls == .publicValue && matches(key, agentSafePatterns)),
+                                  note: "imported from \(source)", usedIn: location.map { [$0] },
+                                  service: Services.guess(key: key, value: value))
+            if cls == .setting {
+                ignored[key] = "setting: left in the file"
+                settings[key] = item
+            } else {
+                items[key] = item
+            }
         }
         return Plan(items: items.values.sorted { $0.name < $1.name }, ignored: ignored,
-                    references: items.mapValues(\.name))
+                    references: items.mapValues(\.name), classes: classes,
+                    settings: settings.values.sorted { $0.name < $1.name })
     }
 
     // MARK: several files
@@ -58,6 +131,8 @@ public enum EnvImport {
         /// Each imported key → the id of the item that holds it, after sharing and conflicts.
         public var references: [String: String]
         public var ignored: [String: String]
+        /// Each classified line's class, including settings and references.
+        public var classes: [String: ImportClass] = [:]
     }
 
     public struct BatchPlan: Sendable {
@@ -80,6 +155,7 @@ public enum EnvImport {
                              defaultKind: ItemKind = .token, kinds: [String: ItemKind] = [:],
                              agentSafe: Set<String> = [], allAgentSafe: Bool = false,
                              skip: [String] = defaultSkip, agentSafePatterns: [String] = [],
+                             classes: [String: ImportClass] = [:],
                              projectFor: (URL) -> String? = { _ in nil }) throws -> BatchPlan {
         var filePlans: [FilePlan] = []
         var itemsByFile: [[String: ImportItem]] = []   // key → item, per file
@@ -88,11 +164,11 @@ public enum EnvImport {
             let env = allShared ? "" : (environment ?? self.environment(forFile: f.url.lastPathComponent))
             let p = try plan(f.text, source: f.url.lastPathComponent, location: f.url.path, project: proj, environment: env,
                          defaultKind: defaultKind, kinds: kinds, agentSafe: agentSafe, allAgentSafe: allAgentSafe,
-                         skip: skip, agentSafePatterns: agentSafePatterns)
+                         skip: skip, agentSafePatterns: agentSafePatterns, classes: classes)
             var byKey: [String: ImportItem] = [:]
             for (key, id) in p.references { byKey[key] = p.items.first { $0.name == id } }
             itemsByFile.append(byKey)
-            filePlans.append(FilePlan(url: f.url, text: f.text, project: proj, environment: env, references: p.references, ignored: p.ignored))
+            filePlans.append(FilePlan(url: f.url, text: f.text, project: proj, environment: env, references: p.references, ignored: p.ignored, classes: p.classes))
         }
 
         // Same value everywhere a name appears (two files or more): one shared item.

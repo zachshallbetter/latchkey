@@ -156,8 +156,18 @@ struct ImportDraft: Identifiable {
         /// The .env key; the item id comes from the draft's project and environment.
         let key: String
         var item: ImportItem
+        /// What the line is. Settings stay in the file, so they start unchecked.
+        var cls: ImportClass
         var include = true
         var id: String { key }
+
+        /// Changes the class and the kind and checkbox that go with it: secrets are masked, anything else is a plain
+        /// value, and a setting is left in the file.
+        mutating func setClass(_ c: ImportClass) {
+            cls = c
+            item.kind = c == .secret ? .token : .value
+            include = c != .setting
+        }
     }
     let id = UUID()
     let url: URL
@@ -779,14 +789,17 @@ final class AppModel {
         let plan: EnvImport.Plan
         do { plan = try EnvImport.plan(text, source: url.lastPathComponent, location: url.path) }
         catch { notice = "Could not import \(url.lastPathComponent): \(error.localizedDescription)"; return }
-        guard !plan.items.isEmpty else {
+        guard !plan.items.isEmpty || !plan.settings.isEmpty else {
             notice = "Nothing to import in \(url.lastPathComponent)."
             return
         }
-        var draft = ImportDraft(url: url, text: text, rows: plan.items.map { .init(key: $0.name, item: $0) },
-                                ignored: plan.ignored, project: project, environment: environment)
+        let rows = (plan.items + plan.settings).sorted { $0.name < $1.name }
+            .map { ImportDraft.Row(key: $0.name, item: $0, cls: plan.classes[$0.name] ?? .secret) }
+        var draft = ImportDraft(url: url, text: text, rows: rows,
+                                ignored: plan.ignored.filter { plan.classes[$0.key] != .setting },
+                                project: project, environment: environment)
         let existing = Set(items.map(\.name))
-        for i in draft.rows.indices { draft.rows[i].include = !existing.contains(draft.itemID(draft.rows[i].key)) }
+        for i in draft.rows.indices { draft.rows[i].include = draft.rows[i].cls != .setting && !existing.contains(draft.itemID(draft.rows[i].key)) }
         importDraft = draft
     }
 

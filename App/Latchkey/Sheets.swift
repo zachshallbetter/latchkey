@@ -246,7 +246,7 @@ struct ImportSheet: View {
                 .font(.caption).foregroundStyle(.secondary)
             Table($draft.rows) {
                 TableColumn("") { $row in
-                    Toggle("", isOn: $row.include).labelsHidden()
+                    Toggle("", isOn: $row.include).labelsHidden().disabled(row.cls == .setting)
                 }
                 .width(24)
                 TableColumn("Key") { $row in
@@ -259,11 +259,20 @@ struct ImportSheet: View {
                         }
                     }
                 }
+                TableColumn("Class") { $row in
+                    Picker("", selection: Binding(get: { row.cls }, set: { row.setClass($0) })) {
+                        ForEach(ImportClass.choices, id: \.self) { Text($0.label).tag($0) }
+                    }
+                    .labelsHidden()
+                    .help("Secret: saved masked. Setting: left in the file. Public: saved as a plain value.")
+                }
+                .width(100)
                 TableColumn("Kind") { $row in
                     Picker("", selection: Binding(get: { row.item.kind ?? .token }, set: { row.item.kind = $0 })) {
                         ForEach(ItemKind.allCases, id: \.self) { Text($0.label).tag($0) }
                     }
                     .labelsHidden()
+                    .disabled(row.cls != .secret)
                 }
                 .width(120)
                 TableColumn("Agents") { $row in
