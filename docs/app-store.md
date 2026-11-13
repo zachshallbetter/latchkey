@@ -21,7 +21,7 @@ export-compliance answer, or claims that its tests passed as evidence about Latc
 | External CLI / MCP connection | App Group UNIX socket; Security audit-token dynamic code identity | Signed terminal CLI probes pass; packaging, MCP and full acceptance remain pending |
 | Network / service APIs | Foundation `URLSession`; Network framework where a listener is needed | Existing proxy/STS code; native remote push redesign still required |
 | Login/background service | ServiceManagement `SMAppService`, with explicit user consent | Current login setting exists; a broker service design needs separate validation |
-| Optional paid features | StoreKit only if pricing later requires it | No purchase flow is being added or assumed |
+| Optional paid features | StoreKit 2: `Transaction.currentEntitlements`, `Transaction.updates`, `AppStore.sync()` | Implemented for Latchkey Pro (see Latchkey Pro purchase); real purchases need App Store Connect |
 
 ## What this slice implements
 
@@ -42,6 +42,27 @@ export-compliance answer, or claims that its tests passed as evidence about Latc
 The standard CLI installer is not run by the sandbox experiment: writing links under `~/.local/bin` from the
 store app is not an approved distribution design. This is a visible experiment limitation, not a decision to
 remove CLI functionality from the eventual store product.
+
+## Latchkey Pro purchase
+
+Latchkey Pro is one non-consumable in-app purchase, `io.snackstud.latchkey.pro`, in this build only. The direct
+build compiles no purchase code (`LATCHKEY_APP_STORE`) and its Settings shows a link to the App Store version.
+
+- `ProEntitlement` (`App/Latchkey/ProEntitlement.swift`) is the one resolver: `Transaction.currentEntitlements`,
+  accepting only `.verified` transactions for the product that aren't revoked. A `Transaction.updates` listener
+  picks up refunds and purchases made elsewhere. A failed or unverified lookup means not Pro and never throws into a
+  caller. Nothing about the purchase is stored by Latchkey.
+- The broker enforces Pro in one place, `Broker.handle`, through `ProGate.features` (op name to feature name) and its
+  injected `hasPro` check, which the app wires to `ProEntitlement`. `ProGate.features` is empty: duplicates, combine
+  and everything else shipped stays free, and storing, reading, approving, granting, running, importing, exporting,
+  deleting, history and restore can never be gated (`ProGateTests`). A gated op without Pro returns `ok: false` with
+  an error naming Latchkey Pro and the feature; the app shows the Upgrade sheet.
+- Settings › Latchkey Pro: status, Buy (price from `Product.displayPrice`), Restore Purchases, purchase date.
+- `App/AppStore/Latchkey.storekit` holds the product (USD 79.99) for local testing; the overlay's `Latchkey` scheme
+  runs with it. In Xcode, run the store scheme and use Debug > StoreKit > Manage Transactions.
+
+Not verified without App Store Connect: a real purchase, Restore Purchases against a real account, refunds and
+Family Sharing (off). Create the product, price and review screenshot there before submission.
 
 ## Build and inspect without changing the installed app
 

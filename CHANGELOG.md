@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Latchkey Pro
+- Mac App Store version: Latchkey Pro as a one-time in-app purchase (`io.snackstud.latchkey.pro`), checked with
+  StoreKit 2 (Apple-signed, verified on the Mac, works offline, drops on refund). Settings › Latchkey Pro shows the
+  status, **Buy** with the App Store price, **Restore Purchases** and the purchase date. The direct download has no
+  purchase code and links to the App Store version.
+- The broker refuses Pro operations without Pro, naming Latchkey Pro and the feature, and the app shows an Upgrade
+  sheet. No Pro operations exist yet: everything shipped so far, including duplicates and combine, stays free, and
+  storing, reading, approving, running, importing, exporting, deleting and restoring can never require Pro.
+
 ### Website
 - Privacy policy, terms and support pages, linked from every footer; canonical URLs and a sitemap for
   latchkey.snackstud.io, published from Vercel on request only.

@@ -57,3 +57,21 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSHumanReadableCopyright: Copyright © 2026 Snack Studio
+
+# Same scheme XcodeGen would generate, plus the local StoreKit configuration for testing Latchkey Pro (Debug runs only).
+schemes:
+  Latchkey:
+    build:
+      targets:
+        Latchkey: all
+    run:
+      config: Debug
+      storeKitConfiguration: AppStore/Latchkey.storekit
+    test:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

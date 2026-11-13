@@ -30,13 +30,21 @@ public final class Broker: @unchecked Sendable {
     public var onChange: (@Sendable () -> Void)?
     /// One request at a time, so approval sheets never stack.
     private let serial = NSLock()
+    /// Whether this Mac has Latchkey Pro. The app passes its StoreKit resolver in the App Store build; everywhere else
+    /// nothing grants it, so a Pro op is refused.
+    private let hasPro: @Sendable () -> Bool
+    /// Pro ops and the feature each is named by in the refusal. `ProGate.features` outside tests.
+    private let proFeatures: [String: String]
 
     /// Without a log (tests), grants are kept in memory too unless a store is passed.
     public init(store: SecretStore, approver: Approver,
                 logURL: URL? = Paths.accessLog, grants: GrantStore? = nil, versions: VersionStore? = nil,
                 remotes: RemoteStore? = nil, runner: RemoteRunner = ProcessRunner(), allowsPush: Bool = true,
-                logKeys: LogKeyStore? = nil, records: EnvironmentStore? = nil, socketPath: String = Paths.socket) {
+                logKeys: LogKeyStore? = nil, records: EnvironmentStore? = nil, socketPath: String = Paths.socket,
+                hasPro: @escaping @Sendable () -> Bool = { false }, proFeatures: [String: String] = ProGate.features) {
         self.socketPath = socketPath
+        self.hasPro = hasPro
+        self.proFeatures = proFeatures
         self.store = store
         if let records {
             self.records = records
@@ -84,6 +92,7 @@ public final class Broker: @unchecked Sendable {
     public func handle(_ req: Request, peer: PeerInfo) -> Response {
         serial.lock()
         defer { serial.unlock() }
+        if let feature = proFeatures[req.op], !hasPro() { return Response(ok: false, error: ProGate.refusal(feature: feature)) }
         do {
             switch req.op {
             case "status": return status(peer)

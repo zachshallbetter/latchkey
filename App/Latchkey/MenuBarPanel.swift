@@ -72,6 +72,8 @@ struct SettingsView: View {
     @State private var loginError: String?
     #if !LATCHKEY_APP_STORE
     @State private var checksForUpdates = false
+    #else
+    @ObservedObject private var pro = ProEntitlement.shared
     #endif
 
     var body: some View {
@@ -108,6 +110,33 @@ struct SettingsView: View {
                     }
                 }
                 Button("Allow Project Folder…") { model.chooseProjectFolder() }
+            }
+            #endif
+            #if LATCHKEY_APP_STORE
+            Section("Latchkey Pro") {
+                LabeledContent("Status", value: pro.isPro ? "Latchkey Pro is on" : "Not purchased")
+                if let date = pro.purchaseDate {
+                    LabeledContent("Purchased", value: date.formatted(date: .long, time: .omitted))
+                }
+                if !pro.isPro {
+                    LabeledContent {
+                        Button(pro.product.map { "Buy for \($0.displayPrice)" } ?? "Buy") { Task { await pro.buy() } }
+                            .disabled(pro.product == nil || pro.busy)
+                    } label: {
+                        Text("Latchkey Pro")
+                        Text("One purchase, no subscription. Everything in Latchkey today stays free.")
+                    }
+                }
+                LabeledContent("Already bought it?") {
+                    Button("Restore Purchases") { Task { await pro.restore() } }.disabled(pro.busy)
+                }
+                if let message = pro.message { Text(message).font(.caption).foregroundStyle(.secondary) }
+            }
+            #else
+            Section("Latchkey Pro") {
+                Text("Latchkey Pro is in the Mac App Store version.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Link("Learn more", destination: ProLinks.pricing)
             }
             #endif
             Section("Approval") {
