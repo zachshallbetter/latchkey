@@ -10,7 +10,7 @@ import LatchkeyCore
 /// request reaches the app like any other `latchkey` call, marked as coming from an agent.
 final class MCPServer: @unchecked Sendable {
     /// Keep in step with MARKETING_VERSION in App/project.yml.
-    static let version = "0.2.1"
+    static let version = "0.3.0"
     static let protocolVersions = ["2025-06-18", "2025-03-26", "2024-11-05"]
     static let defaultTimeout: TimeInterval = 600
     static let longestTimeout: TimeInterval = 3600

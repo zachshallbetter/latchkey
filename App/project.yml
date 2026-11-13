@@ -15,8 +15,8 @@ packages:
 settings:
   base:
     DEVELOPMENT_TEAM: "PKH7G93GGD"
-    MARKETING_VERSION: "0.2.1"
-    CURRENT_PROJECT_VERSION: "3"
+    MARKETING_VERSION: "0.3.0"
+    CURRENT_PROJECT_VERSION: "4"
     # Sparkle's EdDSA public key, from `generate_keys --account latchkey -p` (the private half stays in the owner's
     # login keychain). If it's emptied, the updater doesn't start and builds still work.
     SPARKLE_PUBLIC_KEY: "eJTn6VgMvJ0jEYhutrXtdQPVw9scUNCBPltNl62wpTY="
