@@ -41,10 +41,33 @@ command gets which value. This page says what it protects against, how, and wher
 - **Grants** are kept in a keychain item only Latchkey can read or change, on this Mac only, and last at most 7 days.
   No file holds them, so no other program can write itself one.
 - **The key proxy** (`latchkey run --proxy`) keeps OpenAI and Anthropic keys in the signed `latchkey` process, which
-  other programs can't read. The command gets a random placeholder; the proxy listens on 127.0.0.1 only, refuses
-  requests without that run's placeholder, and sends the real key only to the provider's own host.
+  other programs can't read. The command gets a random placeholder (122 bits from the system generator, new each
+  run); the proxy listens on 127.0.0.1 only, on a port the system picks, refuses requests without that run's
+  placeholder, and sends the real key only to the provider's own host.
   It refuses custom base URLs, plaintext supported keys and duplicate variable or file deliveries of a protected
   key. It never follows upstream redirects. Other credentials are delivered normally.
+  The placeholder is a bearer token, and macOS lets any program running as you read another same-user program's
+  environment (`ps eww`, `sysctl KERN_PROCARGS2`), apart from some Apple-protected binaries. So the placeholder alone
+  isn't trusted: a request is also served only if its connection comes from the command or a process it started.
+  The proxy finds the process holding the client end of each connection in the kernel's socket table, requires every
+  holder to descend from the command (matching process ID and start time, so a reused ID never qualifies), and
+  refuses the request if no holder is found or the table can't be read. A program that reads the placeholder from
+  the environment and connects to the port gets a 403. The proxy stops, and cancels open connections, the moment
+  the command exits.
+  `--proxy-models A,B` refuses any request whose JSON body doesn't name exactly one of those models (no body,
+  compressed or malformed JSON, a repeated `model` key, and requests like `GET /v1/models` are all refused), and
+  `--proxy-requests N` refuses requests after N have been forwarded, across both providers; refused requests aren't
+  counted. `latchkey run` prints `latchkey: proxy limits enforced: ...` on standard error when either is set.
+  What the proxy doesn't protect:
+  - The command and everything it starts can use the key, within those limits. A descendant that detaches (a
+    daemon that launchd adopts) is no longer served, and neither is a server that was already running.
+  - Beyond the model name, the proxy doesn't look inside requests: the command can send any prompt or file to the
+    provider, and spend is capped only by `--proxy-requests`, not by tokens or money. Without `--proxy-models` it
+    doesn't restrict paths or methods on the provider's API.
+  - A descendant can relay requests for an outsider, and a program running as you that can attach a debugger to
+    the command or read its memory gets whatever the command has. That is the same boundary as the rest of this page.
+  - The placeholder can still appear in the command's output or logs. It is useless outside the tree, but it
+    isn't concealed.
 - **Short-lived AWS credentials** (`--aws-session`, `--aws-role`) are minted by STS with the long-lived key, which
   stays in `latchkey run`; the command gets credentials that expire in 15 minutes by default.
 - **The Safari extension** is sandboxed and reaches the app through its own socket in the App Group container

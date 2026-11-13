@@ -13,6 +13,15 @@
 - Source-available under the Functional Source License (FSL-1.1-ALv2); security reports can also go to
   latchkey@snackstud.io.
 
+### Security
+- `latchkey run --proxy` serves a request only when its connection comes from the command or a process it started,
+  found in the kernel's socket table with process start times so a reused process ID can't qualify. A program that
+  reads the placeholder from the command's environment is refused. The proxy stops, and closes open connections,
+  when the command exits.
+- New `--proxy-models A,B` and `--proxy-requests N` limit the models a run may name and how many requests it may
+  make; `latchkey run` says on standard error that they are enforced. The MCP `latchkey_run` tool takes
+  `proxy_models` and `proxy_requests`.
+
 ## 0.2.1 (2026-11-12)
 
 ### Website
@@ -128,7 +137,6 @@ The first release.
 - A main-app privacy manifest and explicit full-functionality runtime/submission gates. No store submission
   is enabled, and the shipping direct build and Safari extension remain separate from this experiment.
 
-
 ### Security and reliability fixes
 - **Allow Once** authorizes one read request. Implicit approval caching is removed; repeat access needs an
   explicit grant or the **No Approval** setting. Revoking a grant stops future reads through it immediately,
@@ -146,7 +154,6 @@ The first release.
 - App, website and guides describe effective access, proxy limits, unverified sync delivery, and preview-only
   installation. Regression coverage includes authorization, imports, file delivery, proxy configuration and
   Safari capture lifecycle.
-
 
 ### Storage and sync
 - Values in iCloud Keychain, in Latchkey's own access group, synced to every Mac signed in to your Apple Account.

@@ -42,7 +42,7 @@ public struct PeerInfo: Codable, Sendable, Hashable {
         while i < arguments.count {
             let a = arguments[i]
             if a == "--" { i += 1; break }
-            if ["--env-file", "--env", "--file", "--aws-role", "--aws-for"].contains(a) {
+            if ["--env-file", "--env", "--file", "--aws-role", "--aws-for", "--proxy-models", "--proxy-requests"].contains(a) {
                 guard i + 1 < arguments.count else { return nil }
                 i += 2; continue
             }
