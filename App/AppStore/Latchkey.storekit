@@ -1,0 +1,36 @@
+{
+  "identifier" : "A1C4E5B2",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "79.99",
+      "familyShareable" : false,
+      "internalID" : "6746102345",
+      "localizations" : [
+        {
+          "description" : "One purchase, no subscription: Latchkey Pro features as they are added.",
+          "displayName" : "Latchkey Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "io.snackstud.latchkey.pro",
+      "referenceName" : "Latchkey Pro",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

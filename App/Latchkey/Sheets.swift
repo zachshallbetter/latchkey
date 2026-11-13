@@ -388,3 +388,49 @@ struct NextStepsSheet: View {
         .frame(width: 520)
     }
 }
+
+enum ProLinks {
+    static let pricing = URL(string: "https://latchkey.snackstud.io/pricing.html#pro")!
+}
+
+/// Shown when the broker refuses an op that needs Latchkey Pro. Buying happens in Settings (App Store build only).
+struct UpgradeSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    #if LATCHKEY_APP_STORE
+    @Environment(\.openSettings) private var openSettings
+    #endif
+
+    private static let groups: [(title: String, detail: String)] = [
+        ("Agent controls", "Finer limits on what an agent may read and run."),
+        ("Recovery and migration", "Bring secrets in from other tools and recover from mistakes."),
+        ("Rotation and lifecycle", "Rotate keys and track when they expire."),
+        ("Provider integrations", "Work with your providers directly."),
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            SheetHeader(symbol: "star.fill", tint: .orange, title: "Latchkey Pro",
+                        subtitle: "This feature is part of Latchkey Pro.")
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(Self.groups, id: \.title) { group in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(group.title).font(.callout.weight(.semibold))
+                        Text(group.detail).font(.callout).foregroundStyle(.secondary)
+                    }
+                }
+            }
+            Text("Everything Latchkey does today stays free, and so do storing, reading, approving, running, importing, exporting and restoring your secrets.")
+                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            SheetFooter {
+                Button("Not Now") { dismiss() }
+                #if LATCHKEY_APP_STORE
+                Button("Open Settings") { dismiss(); openSettings() }.keyboardShortcut(.defaultAction)
+                #else
+                Link("Latchkey Pro in the Mac App Store", destination: ProLinks.pricing)
+                #endif
+            }
+        }
+        .padding(24)
+        .frame(width: 460)
+    }
+}

@@ -88,6 +88,7 @@ struct MainWindow: View {
         .sheet(isPresented: $model.showingAdd) { AddItemSheet(model: model) }
         .sheet(item: $model.importDraft) { ImportSheet(model: model, draft: $0) }
         .sheet(item: $model.nextSteps) { NextStepsSheet(steps: $0) }
+        .sheet(isPresented: $model.showingUpgrade) { UpgradeSheet() }
         .sheet(item: $model.grantRequest) { NewGrantSheet(model: model, request: $0) }
         .sheet(item: $model.remoteRequest) { RemoteSheet(model: model, scope: $0.scope) }
         .sheet(item: $model.exportRequest) { ExportSheet(model: model, scope: $0.scope) }

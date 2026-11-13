@@ -176,6 +176,11 @@ or **Latchkey › Quit Latchkey**.
   **Check for updates automatically** (direct download only) lets Latchkey look for a new version in the background;
   Sparkle asks once on its second launch, and this switch changes the answer. It sends no system profile.
 
+- **Latchkey Pro**: in the Mac App Store version, whether Pro is on, **Buy** with the App Store price, **Restore
+  Purchases** and the purchase date. Everything Latchkey does today is free; Pro covers new features as they are added,
+  and when you use one without Pro an Upgrade sheet lists what Pro includes. The direct download shows a link to the
+  App Store version instead.
+
 ## Latchkey for Safari
 
 Latchkey comes with a Safari extension that spots a new key on the page where you made it and saves it when you say

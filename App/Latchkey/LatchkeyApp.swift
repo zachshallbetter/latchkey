@@ -226,6 +226,8 @@ final class AppModel {
     var search = ""
     var sort: SortOrder = .name
     var showingAdd = false
+    /// Set when the broker refuses an op that needs Latchkey Pro.
+    var showingUpgrade = false
     var importDraft: ImportDraft?
     /// What to do now that keys are in Latchkey, shown after an import or an item added in the window.
     var nextSteps: NextSteps?
@@ -258,7 +260,9 @@ final class AppModel {
         let brokerPath = (Bundle.main.object(forInfoDictionaryKey: "LatchkeyAppGroup") as? String)
             .flatMap { FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: $0) }
             .map { BrokerEndpoint.appStorePath(container: $0) } ?? ""
-        broker = Broker(store: store, approver: PanelApprover(), socketPath: brokerPath)
+        broker = Broker(store: store, approver: PanelApprover(), socketPath: brokerPath,
+                        hasPro: { ProEntitlement.shared.current() })
+        ProEntitlement.shared.start()
         #else
         broker = Broker(store: store, approver: PanelApprover())
         #endif
@@ -807,6 +811,7 @@ final class AppModel {
     private func send(_ req: Request) async -> Response {
         let broker = broker, me = me
         let r = await Task.detached { broker.handle(req, peer: me) }.value
+        if ProGate.isRefusal(r.error) { showingUpgrade = true }
         refresh()
         return r
     }

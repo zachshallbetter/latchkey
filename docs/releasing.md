@@ -27,12 +27,14 @@ signed, notarized and stapled disk image.
    -resolvePackageDependencies -project Latchkey.xcodeproj -scheme Latchkey`), then run Sparkle's tool:
 
    ```bash
-   ~/Library/Developer/Xcode/DerivedData/Latchkey-*/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys
+   ~/Library/Developer/Xcode/DerivedData/Latchkey-*/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys --account latchkey
    ```
 
-   It stores the private key in your login keychain (back it up: `generate_keys -x file`; a lost key means users
+   It stores the private key in your login keychain under the `latchkey` account, which `release.sh` signs with
+   (back it up: `generate_keys --account latchkey -x file`; a lost key means users
    can't update without reinstalling) and prints the public key. Put that in `SPARKLE_PUBLIC_KEY` in
    `App/project.yml`. While it is empty the updater doesn't start and builds still work. Never commit the private key.
+   The key was made on 2026-11-13; `generate_keys --account latchkey -p` prints its public half.
 
 ## Making a release
 
