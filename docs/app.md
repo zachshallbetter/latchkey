@@ -145,6 +145,10 @@ After an import or a new item, Latchkey shows what to do next: the reference to 
 
 Click the key: search your items, copy a value, open an item in the window, open Settings, or quit.
 
+Quit from the Dock closes the window and leaves Latchkey in the menu bar, so the command-line tool and agents keep
+working; **Open Latchkey** brings the window and the Dock icon back. To quit for real, use **Quit** in the menu bar
+or **Latchkey › Quit Latchkey**.
+
 ## Settings
 
 - **Storage**: where values are kept, and **Move to iCloud Keychain** for items saved before the app was signed.
