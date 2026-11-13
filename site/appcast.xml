@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+  <channel>
+    <title>Latchkey</title>
+    <link>https://latchkey.snackstud.io/</link>
+    <description>Latchkey releases</description>
+    <item>
+      <title>Latchkey 0.3.0</title>
+      <pubDate>Fri, 13 Nov 2026 21:47:42 GMT</pubDate>
+      <sparkle:version>4</sparkle:version>
+      <sparkle:shortVersionString>0.3.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <sparkle:releaseNotesLink>https://github.com/zachshallbetter/latchkey/blob/main/CHANGELOG.md</sparkle:releaseNotesLink>
+      <enclosure url="https://github.com/zachshallbetter/latchkey/releases/download/v0.3.0/Latchkey-0.3.0.dmg" length="10729829" type="application/octet-stream" sparkle:edSignature="Q4gqwGc6YFIG3xJnF1ZcuQ9Ba7xQTtIUkf3gciTEjzAiytn3O5axnZhhpE0OJshqQ4/XfcCFj7bEpXAHdLwLDQ==" />
+    </item>
+  </channel>
+</rss>
