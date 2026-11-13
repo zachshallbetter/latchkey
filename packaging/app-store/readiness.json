@@ -13,8 +13,10 @@
   },
   "runtimeGates": {
     "vaultAndHistory": {
-      "status": "pending",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "docs/evidence/app-store/2026-11-13-vault-history.json"
+      ]
     },
     "signedFileAccessAndRevocation": {
       "status": "pending",
@@ -58,5 +60,19 @@
       "docs/evidence/app-store/2026-11-11-cli-transport.json"
     ],
     "covers": "Fixture-only signed terminal CLI to sandbox broker: mutual identity, shell/Node/npm, logs, masking, key files, signals, command/folder grants and revocation. Full runtime gates remain pending."
+  },
+  "fileAccessProbe": {
+    "status": "passed",
+    "evidence": [
+      "docs/evidence/app-store/2026-11-13-file-access.json"
+    ],
+    "covers": "Fixture-only, three launches of the development-signed sandbox build with harness-issued sandbox extensions in place of the Open panel: selected file, parent grant, atomic rewrite keeping permissions, restore after relaunch, removal across relaunch, unselected sibling denied. NSOpenPanel, volume disconnect and moved references remain manual; the gate stays pending."
+  },
+  "cliAdversarialProbe": {
+    "status": "passed",
+    "evidence": [
+      "docs/evidence/app-store/2026-11-13-cli-adversarial.json"
+    ],
+    "covers": "The transport suite plus unsigned forged context and grant fields, claimed folder and origin, single-use grant replay and a vanishing caller. Real PID reuse, MCP and SSH remain pending; the gate stays pending."
   }
 }

@@ -117,12 +117,14 @@ public enum Versions {
 public final class KeychainVersionStore: VersionStore, @unchecked Sendable {
     public static let service = "latchkey.history"
     let items: KeychainStore
+    let service: String
 
-    public init(mode: KeychainStore.Mode) {
-        items = KeychainStore(mode: mode)
+    public init(mode: KeychainStore.Mode, service: String = KeychainVersionStore.service, synchronizable: Bool = true) {
+        items = KeychainStore(mode: mode, service: service, synchronizable: synchronizable)
+        self.service = service
     }
 
-    func query(_ id: String? = nil) -> [String: Any] { items.query(id, service: Self.service) }
+    func query(_ id: String? = nil) -> [String: Any] { items.query(id, service: service) }
 
     public func list(item: String?) throws -> [Version] {
         var q = query()
@@ -158,7 +160,7 @@ public final class KeychainVersionStore: VersionStore, @unchecked Sendable {
         add[kSecAttrGeneric as String] = try Wire.encoder().encode(version)
         add[kSecAttrLabel as String] = "Latchkey history: \(version.item)"
         if case .iCloud = items.mode {
-            add[kSecAttrSynchronizable as String] = true
+            add[kSecAttrSynchronizable as String] = items.synchronizable
             add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
         }
         let status = SecItemAdd(add as CFDictionary, nil)

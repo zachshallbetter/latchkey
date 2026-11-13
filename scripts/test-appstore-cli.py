@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Fixture-only signed terminal CLI -> sandboxed broker integration, with no real vault, UI or app registration.
+"""Fixture-only signed terminal CLI -> sandboxed broker integration, including adversarial caller cases, with no real vault, UI or app registration.
 
 Pass an already development-signed sandbox Debug app and same-team signed CLI. This script never signs,
 installs, launches the normal app, creates Apple account resources or sets submission readiness.
 """
 import argparse
+import datetime
 import json
 import os
 import pathlib
@@ -21,6 +22,14 @@ import uuid
 
 SECRET = "fixture-secret-transport-12345"
 FILE_SECRET = "fixture-private-key-67890"
+
+
+def provenance(info):
+    """Where the evidence came from: the signed build and the source commit the probes were built from."""
+    commit = subprocess.run(["git", "-C", str(pathlib.Path(__file__).resolve().parent), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    dirty = bool(subprocess.run(["git", "-C", str(pathlib.Path(__file__).resolve().parent), "status", "--porcelain", "--", ".", ":!docs/evidence"], capture_output=True, text=True).stdout.strip())
+    return {"build": f"{info['CFBundleShortVersionString']} ({info['CFBundleVersion']}), development-signed sandbox Debug experiment",
+            "sourceCommit": commit, "sourceClean": not dirty, "verifiedOn": datetime.date.today().isoformat()}
 
 
 def main():
@@ -143,6 +152,45 @@ def main():
                   run(["run", "--file", "KEY=GRANTED_KEY", "--", "/usr/bin/false"]).returncode == 77)
             check("folder grant refuses other folder", lambda:
                   run(["run", "--file", "KEY=GRANTED_KEY", "--", "/usr/bin/true"], cwd=outside).returncode == 77)
+            def forged_unsigned():
+                # Caller-supplied context and grant fields from an unsigned process: refused, and no grant appears.
+                lines = [{"op": "grant", "names": ["GRANTED_KEY"], "folder": str(outside), "duration": 3600},
+                         {"op": "get", "names": ["GRANTED_KEY"], "origin": "cli", "remote": {"host": "fixture", "folder": str(project)}},
+                         {"op": "check", "names": ["GRANTED_KEY"], "intended": ["/usr/bin/true"], "folder": str(project)}]
+                for line in lines:
+                    with socket.socket(socket.AF_UNIX) as connection:
+                        connection.settimeout(3)
+                        connection.connect(str(endpoint))
+                        try:
+                            connection.sendall(json.dumps(line).encode() + b"\n")
+                            if connection.recv(4096) != b"":
+                                return False
+                        except (BrokenPipeError, ConnectionResetError):
+                            pass
+                return run(["run", "--file", "KEY=GRANTED_KEY", "--", "/usr/bin/true"], cwd=outside).returncode == 77
+            check("forged context and grant fields from an unsigned caller are refused", forged_unsigned)
+
+            def forged_grant_request():
+                # The signed tool may ask for a grant over another folder, but only the approver can create it.
+                asked = run(["grant", "GRANTED_KEY", "--folder", str(outside), "--for", "1h"])
+                return asked.returncode != 0 and SECRET.encode() not in asked.stdout + asked.stderr and \
+                    run(["run", "--file", "KEY=GRANTED_KEY", "--", "/usr/bin/true"], cwd=outside,
+                        env=environment | {"LATCHKEY_ORIGIN": "mcp"}).returncode == 77
+            check("claimed folder and origin cannot create or widen a grant", forged_grant_request)
+
+            check("single-use grant is not replayable", lambda:
+                  run(["run", "--file", "KEY=ONCE_KEY", "--", "/usr/bin/true"]).returncode == 0 and
+                  run(["run", "--file", "KEY=ONCE_KEY", "--", "/usr/bin/true"]).returncode == 77)
+
+            def vanished_caller():
+                # A caller that writes a request and disappears before it is read gets nothing and breaks nothing.
+                with socket.socket(socket.AF_UNIX) as connection:
+                    connection.connect(str(endpoint))
+                    connection.sendall(b'{"op":"get","names":["GRANTED_KEY"]}\n')
+                time.sleep(0.3)
+                return run(["status"]).returncode == 0 and server.poll() is None
+            check("caller that vanishes after sending leaves the broker serving", vanished_caller)
+
             check("grant revocation stops future reads", lambda:
                   run(["revoke", "all"]).returncode == 0 and
                   run(["run", "--file", "KEY=GRANTED_KEY", "--", "/usr/bin/true"]).returncode == 77)
@@ -176,7 +224,8 @@ def main():
     report = {"passed": all(item["passed"] for item in checks), "submissionReady": False, "checks": checks,
               "boundary": "An independently signed terminal CLI executes commands; the sandboxed app only serves fixture credentials.",
               "notCovered": ["App Store CLI packaging and review", "TestFlight", "real vault and approval UI", "SSH forwarding to store",
-                             "proxy upstream traffic", "live AWS STS", "session PID reuse", "remote pushes", "migration and sync"]}
+                             "proxy upstream traffic", "live AWS STS", "real PID reuse of a signed caller (wrap-around)", "MCP server entry point", "ancestor-bound session grants", "remote pushes", "migration and sync"]}
+    report.update(provenance(info))
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     for item in checks:

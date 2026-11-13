@@ -22,6 +22,22 @@ struct LatchkeyApp: App {
             exit(64)
             #endif
         }
+        if CommandLine.arguments.contains("--vault-self-test") {
+            #if DEBUG && LATCHKEY_APP_STORE
+            SandboxSelfTest.runVaultAndExit()
+            #else
+            FileHandle.standardError.write(Data("Vault probes require a development-signed sandbox Debug build.\n".utf8))
+            exit(64)
+            #endif
+        }
+        if let flag = CommandLine.arguments.firstIndex(of: "--file-access-self-test") {
+            #if DEBUG && LATCHKEY_APP_STORE
+            SandboxSelfTest.runFileAccessAndExit(phase: CommandLine.arguments.dropFirst(flag + 1).first ?? "")
+            #else
+            FileHandle.standardError.write(Data("File access probes require a development-signed sandbox Debug build.\n".utf8))
+            exit(64)
+            #endif
+        }
         // A second copy started outside Launch Services (from a shell, another build) hands over to the one
         // already running and quits, before it touches the keychain or the broker socket.
         #if DEBUG

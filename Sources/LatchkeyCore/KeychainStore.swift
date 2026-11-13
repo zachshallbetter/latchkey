@@ -69,9 +69,14 @@ public final class KeychainStore: SecretStore, @unchecked Sendable {
 
     public static let service = "latchkey"
     public let mode: Mode
+    let service: String
+    let synchronizable: Bool
 
-    public init(mode: Mode) {
+    /// `service` and `synchronizable` exist so a probe can use a fixture service that never reaches iCloud.
+    public init(mode: Mode, service: String = KeychainStore.service, synchronizable: Bool = true) {
         self.mode = mode
+        self.service = service
+        self.synchronizable = synchronizable
     }
 
     /// iCloud Keychain when this process is entitled to it, otherwise the login keychain.
@@ -104,15 +109,15 @@ public final class KeychainStore: SecretStore, @unchecked Sendable {
         var fillSites: [String]?
     }
 
-    func query(_ name: String? = nil, service: String = KeychainStore.service) -> [String: Any] {
+    func query(_ name: String? = nil, service: String? = nil) -> [String: Any] {
         var q: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
+            kSecAttrService as String: service ?? self.service,
         ]
         if let name { q[kSecAttrAccount as String] = name }
         if case .iCloud(let group) = mode {
             q[kSecUseDataProtectionKeychain as String] = true
-            q[kSecAttrSynchronizable as String] = kSecAttrSynchronizableAny
+            q[kSecAttrSynchronizable as String] = synchronizable ? kSecAttrSynchronizableAny : false
             if let group { q[kSecAttrAccessGroup as String] = group }
         }
         return q
@@ -181,7 +186,7 @@ public final class KeychainStore: SecretStore, @unchecked Sendable {
         }
         var add = query(name).merging(attrs) { $1 }
         if case .iCloud = mode {
-            add[kSecAttrSynchronizable as String] = true
+            add[kSecAttrSynchronizable as String] = synchronizable
             // Synced items cannot be device-only; this is the strictest class that still syncs and
             // still lets the broker answer while the screen is locked (for scheduled jobs).
             add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock

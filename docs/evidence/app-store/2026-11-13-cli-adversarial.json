@@ -1,0 +1,96 @@
+{
+  "boundary": "An independently signed terminal CLI executes commands; the sandboxed app only serves fixture credentials.",
+  "build": "0.2.1 (3), development-signed sandbox Debug experiment",
+  "checks": [
+    {
+      "name": "signed CLI and sandbox broker authenticate",
+      "passed": true
+    },
+    {
+      "name": "log reads through the selected broker",
+      "passed": true
+    },
+    {
+      "name": "invalid log limit is refused",
+      "passed": true
+    },
+    {
+      "name": "fixture secret read",
+      "passed": true
+    },
+    {
+      "name": "unsigned caller refused before request handling",
+      "passed": true
+    },
+    {
+      "name": "impostor broker receives zero request bytes",
+      "passed": true
+    },
+    {
+      "name": "shell execution masking and exit status",
+      "passed": true
+    },
+    {
+      "name": "Node key-file delivery and cleanup",
+      "passed": true
+    },
+    {
+      "name": "npm project execution",
+      "passed": true
+    },
+    {
+      "name": "kernel command and folder grant matches",
+      "passed": true
+    },
+    {
+      "name": "command grant refuses other command",
+      "passed": true
+    },
+    {
+      "name": "folder grant refuses other folder",
+      "passed": true
+    },
+    {
+      "name": "forged context and grant fields from an unsigned caller are refused",
+      "passed": true
+    },
+    {
+      "name": "claimed folder and origin cannot create or widen a grant",
+      "passed": true
+    },
+    {
+      "name": "single-use grant is not replayable",
+      "passed": true
+    },
+    {
+      "name": "caller that vanishes after sending leaves the broker serving",
+      "passed": true
+    },
+    {
+      "name": "grant revocation stops future reads",
+      "passed": true
+    },
+    {
+      "name": "SIGTERM reaches child and cleans key files",
+      "passed": true
+    }
+  ],
+  "notCovered": [
+    "App Store CLI packaging and review",
+    "TestFlight",
+    "real vault and approval UI",
+    "SSH forwarding to store",
+    "proxy upstream traffic",
+    "live AWS STS",
+    "real PID reuse of a signed caller (wrap-around)",
+    "MCP server entry point",
+    "ancestor-bound session grants",
+    "remote pushes",
+    "migration and sync"
+  ],
+  "passed": true,
+  "sourceClean": true,
+  "sourceCommit": "23a7baeb6a7f101924de198cebe1588b291faa08",
+  "submissionReady": false,
+  "verifiedOn": "2026-11-13"
+}
