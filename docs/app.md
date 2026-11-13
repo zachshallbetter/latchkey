@@ -169,9 +169,18 @@ Closing the window, or Quit from the Dock, leaves Latchkey in the menu bar witho
 tool and agents keep working; **Open Latchkey** brings the window and the Dock icon back. To quit for real, use **Quit** in the menu bar
 or **Latchkey › Quit Latchkey**.
 
+## The welcome
+
+The direct download opens a short welcome after the installer package, and on the first launch of a copy with no
+items. It shows what's installed, checked live (Latchkey in Applications, `latchkey` and `lk` in `~/.local/bin` and
+on your Terminal `PATH`, iCloud Keychain), then three optional steps: turning on Latchkey for Safari (**Open Safari
+Settings**), connecting Claude Code (a command with **Copy**), and importing a first `.env` file through the usual
+import sheet. It never turns anything on itself. **Help › Welcome to Latchkey** and **Settings › About & Updates ›
+Show Welcome…** open it again. See [Installer](installer.md).
+
 ## The Help menu
 
-**Help** has **Latchkey Help** (the support page), **Privacy Policy**, **Terms of Use** and **Report a Security
+**Help** has **Welcome to Latchkey** (direct download), **Latchkey Help** (the support page), **Privacy Policy**, **Terms of Use** and **Report a Security
 Issue**, which opens a message to latchkey@snackstud.io with the subject "Security". The first three open
 latchkey.snackstud.io in your browser.
 
@@ -196,7 +205,8 @@ Settings command. The same destination opens each time, including when the windo
   itself and links to the plans page; it does not claim to verify App Store purchases. Pro is a non-consumable
   purchase, with no recurring subscription or renewal. All current features remain free; planned additions are
   described as planned. No purchase state is stored as an editable preference.
-- **About & Updates**: app version, distribution, direct-build automatic updates and manual update checks, help,
+- **About & Updates**: app version, distribution, **Show Welcome…** (direct download), direct-build automatic updates
+  and manual update checks, help,
   privacy policy, terms and security reporting. The App Store build gets updates through the App Store.
 
 Preferences are saved on this Mac. Clipboard clearing defaults to 60 seconds, revealed values to 30 seconds,

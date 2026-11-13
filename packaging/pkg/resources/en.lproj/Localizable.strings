@@ -1,0 +1,3 @@
+/* Shown by the Installer before the Welcome screen on an older Mac. scripts/build-pkg.sh fills in @MIN_OS@. */
+"REQUIRES_MACOS_TITLE" = "Latchkey needs macOS @MIN_OS@ or later";
+"REQUIRES_MACOS_MESSAGE" = "This Mac runs an older version of macOS. Update macOS in System Settings › General › Software Update, then open this installer again.";

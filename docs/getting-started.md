@@ -10,21 +10,17 @@
 
 ## Install a release
 
-Download the latest `Latchkey-VERSION.dmg` from [Releases](https://github.com/zachshallbetter/latchkey/releases/latest), or install with Homebrew:
+Download the latest `Latchkey-VERSION.pkg` from [Releases](https://github.com/zachshallbetter/latchkey/releases/latest)
+and open it:
 
-```bash
-brew tap zachshallbetter/latchkey
-brew trust zachshallbetter/latchkey
-brew install --cask latchkey
-```
-
-Homebrew asks you to trust a tap before installing from it. With the disk image:
-
-1. Open `Latchkey-VERSION.dmg` and drag **Latchkey** to **Applications**.
-2. Open Latchkey from Applications.
-3. Choose **Latchkey › Install Command Line Tool…** (also in Settings). It links `~/.local/bin/latchkey`, and `lk`
-   for short, to the copy inside the app, so it updates when the app does. Make sure `~/.local/bin` is on your `PATH`.
-4. Check it:
+1. The Installer asks for your password once. It installs Latchkey in Applications and links `~/.local/bin/latchkey`,
+   and `lk` for short, to the copy inside the app, so they update when the app does. A file you already had under
+   either name is left alone.
+2. When the Installer closes, Latchkey opens a short welcome. It checks the install (including whether
+   `~/.local/bin` is on your `PATH`, with the line to add if it isn't), then offers the Safari extension, the command
+   that connects Claude Code, and importing your first `.env` file. Each is optional. It's in **Settings › About &
+   Updates › Show Welcome…** later.
+3. Check it in a new Terminal window:
 
    ```bash
    latchkey status
@@ -32,7 +28,19 @@ Homebrew asks you to trust a tap before installing from it. With the disk image:
 
    You should see `storage: iCloud Keychain storage (sync status not verified)`.
 
-Install it the same way on each Mac signed in to your Apple Account; items sync between them.
+Install it the same way on each Mac signed in to your Apple Account; items sync between them. What the Installer
+runs, and as whom, is in [Installer](installer.md).
+
+If you'd rather drag it in, open `Latchkey-VERSION.dmg` from the same release, drag **Latchkey** to **Applications**
+and open it: the welcome offers **Install Command Line Tool** (also **Latchkey › Install Command Line Tool…** and
+Settings). Or install with Homebrew, which asks you to trust a tap before installing from it and puts `latchkey` and
+`lk` in Homebrew's own `bin`:
+
+```bash
+brew tap zachshallbetter/latchkey
+brew trust zachshallbetter/latchkey
+brew install --cask latchkey
+```
 
 ## Install from source
 
@@ -135,7 +143,16 @@ would go; run it without `--dry-run` (and with `--rewrite`) to bring them all in
    defaults delete io.snackstud.latchkey
    ```
 
-   The folder holds the access log and the broker socket.
+   The folder holds the access log and the broker socket. If you installed with the package, also remove its log
+   and receipt:
+
+   ```bash
+   rm -rf ~/Library/Logs/Latchkey
+   ```
+
+   ```bash
+   sudo pkgutil --forget io.snackstud.latchkey.pkg
+   ```
 
 Items left in iCloud Keychain show in Keychain Access as "Latchkey: ID", "Latchkey history: ID" and "Latchkey link:
 …" (and grants on this Mac as "Latchkey grants"), and come back if you install Latchkey again with the same Apple Account. Delete them there to remove them

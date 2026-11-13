@@ -1,0 +1,83 @@
+#!/bin/bash
+# Runs as root after Latchkey.app is in /Applications (docs/installer.md).
+#
+# 1. Sets the app's owner so Sparkle can update it without an administrator
+#    password (app_owner below):
+#    - Installed from the Installer app by someone at the screen: that user
+#      owns it, group admin, group-writable, as if they had dragged it in.
+#    - Command-line and MDM installs (COMMAND_LINE_INSTALL set, or nobody
+#      logged in at the screen): root owns it, group admin, group-writable, so
+#      a shared copy belongs to no one account and any administrator's Sparkle
+#      can update it. Standard users get Sparkle's password prompt.
+# 2. Starts Latchkey's own setup helper as the user at the screen, in the
+#    background: it lives inside the signed app
+#    (Contents/Resources/latchkey-setup.sh), so nothing is copied to a shared
+#    folder like /tmp, and it only runs if the app's signature still verifies.
+#    Command-line and MDM installs start it without opening Latchkey. With
+#    nobody logged in at the screen it doesn't run at all; Latchkey › Install
+#    Command Line Tool… and the welcome do the same later.
+#
+# Sourcing it (as scripts/test-installer.sh does) defines the functions and
+# runs nothing.
+set -euo pipefail
+
+# The user at the screen, or nothing (login window, Setup Assistant, root).
+console_user() {
+  local name
+  name="$(/usr/bin/stat -f%Su /dev/console 2>/dev/null || true)"
+  case "$name" in
+    ""|root|loginwindow|_mbsetupuser) ;;
+    *) printf '%s\n' "$name" ;;
+  esac
+}
+
+# owner:group for the app, given the console user ("" for none) and whether
+# this is a command-line or MDM install (non-empty COMMAND_LINE_INSTALL).
+app_owner() {
+  local user="$1" command_line="$2"
+  if [[ -n "$command_line" || -z "$user" ]]; then
+    printf 'root:admin\n'
+  else
+    printf '%s:admin\n' "$user"
+  fi
+}
+
+# The helper's arguments: Latchkey opens its welcome only for an install from
+# the Installer app.
+helper_args() {
+  local app="$1" command_line="$2"
+  printf '%s\n' --app "$app"
+  [[ -n "$command_line" ]] || printf '%s\n' --open
+}
+
+main() {
+  local app="${2:-/}"
+  app="${app%/}/Applications/Latchkey.app"
+  [[ -d "$app" ]] || exit 0
+
+  local user command_line="${COMMAND_LINE_INSTALL:-}"
+  user="$(console_user)"
+
+  # A failure here leaves Installer's ownership; it shouldn't fail the install.
+  /usr/sbin/chown -R "$(app_owner "$user" "$command_line")" "$app" || true
+  /bin/chmod -R g+w "$app" || true
+
+  [[ -n "$user" ]] || exit 0
+  local user_id
+  user_id="$(/usr/bin/id -u "$user")" || exit 0
+
+  local helper="$app/Contents/Resources/latchkey-setup.sh"
+  [[ -f "$helper" ]] || exit 0
+  /usr/bin/codesign --verify --strict "$app" 2>/dev/null || exit 0
+
+  local args=()
+  while IFS= read -r arg; do args+=("$arg"); done < <(helper_args "$app" "$command_line")
+
+  /bin/launchctl asuser "$user_id" /usr/bin/sudo -H -u "$user" \
+    /usr/bin/nohup /bin/bash "$helper" "${args[@]}" >/dev/null 2>&1 &
+  exit 0
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi

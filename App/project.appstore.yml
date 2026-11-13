@@ -15,7 +15,9 @@ targets:
       - package: LatchkeyCore
         product: LatchkeyCore
       - target: LatchkeySafari
-    sources:
+    # Not the installer package's setup helper (project.yml): the App Store installs and updates this build.
+    sources:REPLACE:
+      - Latchkey
       - path: Privacy/App/PrivacyInfo.xcprivacy
         buildPhase: resources
     entitlements:

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!--
+  Installer draws these pages with macOS's basic HTML renderer, not a browser:
+  no grid or flex, table cell widths are ignored, and a background on a block
+  shades each line of text. In dark mode Installer also draws all text white.
+  Keep to headings, paragraphs and lists.
+-->
+<style>
+  body { margin: 0; font: 13px/1.45 -apple-system, sans-serif; }
+  h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+  .accent { color: #1f7cf0; }
+  .lead { font-size: 13.5px; color: #8a8a8e; margin: 0 0 16px; }
+  .item { margin: 0 0 10px; }
+  .muted { color: #8a8a8e; font-size: 12px; }
+  h2 { font-size: 13px; font-weight: 600; margin: 6px 0 4px; }
+  ol { margin: 0 0 12px; padding-left: 22px; }
+  li { margin: 0 0 4px; }
+  .note { color: #8a8a8e; font-size: 11.5px; margin: 0; }
+  code { font: 11.5px ui-monospace, Menlo, monospace; }
+</style>
+</head>
+<body>
+  <h1>Secrets out of <span class="accent">.env</span> files.</h1>
+  <p class="lead">Your projects keep references like <code>latchkey://shop/production/DATABASE_URL</code>. Latchkey keeps the values in iCloud Keychain and fills them in when a command starts.</p>
+  <p class="item"><b>Asks before it shares</b><br><span class="muted">Touch ID, with the program, folder and command that’s asking. Allow once, or a folder for a while.</span></p>
+  <p class="item"><b>Made for coding agents</b><br><span class="muted">An agent gets only what you’ve allowed, and values it prints are hidden.</span></p>
+  <p class="item"><b>On every Mac you use</b><br><span class="muted">End-to-end encrypted in iCloud Keychain, on each Mac signed in to your Apple Account.</span></p>
+
+  <h2>What happens next</h2>
+  <ol>
+    <li>Latchkey is installed in Applications. You’ll be asked for an administrator password once.</li>
+    <li>The <code>latchkey</code> command, and <code>lk</code> for short, are linked in <code>~/.local/bin</code>.</li>
+    <li>When the Installer closes, Latchkey opens a short welcome: the Safari extension, your coding agent and your first <code>.env</code> file, each only if you want them.</li>
+  </ol>
+
+  <p class="note">Latchkey needs macOS @MIN_OS@ or later. Values go only to the commands and services you approve.</p>
+</body>
+</html>

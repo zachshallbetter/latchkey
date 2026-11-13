@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+### Installer and welcome
+- The direct download has an installer package, `Latchkey-VERSION.pkg`, now the recommended download. It needs macOS
+  15 or later, asks to quit a running Latchkey, installs it in Applications, links `latchkey` and `lk` in
+  `~/.local/bin` for the person installing (the same code as **Install Command Line Tool…**, which leaves a file of
+  either name alone), unregisters other copies of Latchkey from Launch Services, and opens the welcome when the
+  Installer closes. Its setup helper runs from inside the signed app as that person, after the app's signature is
+  verified, and logs to `~/Library/Logs/Latchkey/setup.log`. Command-line and MDM installs don't open anything.
+- A welcome window shows what's installed, checked live: Latchkey in Applications, the command-line tool and whether
+  `~/.local/bin` is on your Terminal `PATH` (with the line to add), and iCloud Keychain. Then three optional steps:
+  Latchkey for Safari with **Open Safari Settings**, the command that connects Claude Code with **Copy**, and a first
+  `.env` import. It opens after the package and on the first launch of a copy with no items, and from **Help ›
+  Welcome to Latchkey** and **Settings › About & Updates › Show Welcome…**. It never turns a switch on itself.
+- The disk image opens on a laid-out window: a blue background, Latchkey and Applications either side of an arrow,
+  at larger icons. It stays the Sparkle update and the Homebrew cask's download.
+- `scripts/release.sh --skip-notarize` no longer adds a signed-but-unnotarized build to the appcast.
+
 ### In-app settings
 - Settings now lives in the main window, with General, Privacy & Approval, Storage & File Access, Developer Tools,
   Membership, and About & Updates sections. Sidebar, menu bar, Command-comma and upgrade actions share it.

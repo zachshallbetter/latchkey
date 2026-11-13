@@ -5,13 +5,15 @@ full-functionality submission gates are in [App Store preparation](app-store.md)
 App Store upload, and the direct release script must not be used to manufacture a store package.
 
 A release is a Developer ID-signed, notarized and stapled `Latchkey.app`, with the command-line tool inside it, in a
-signed, notarized and stapled disk image.
+signed, notarized and stapled installer package (the recommended download; see [Installer](installer.md)) and a
+signed, notarized and stapled disk image (drag installs, Sparkle updates and the Homebrew cask).
 
 ## Once per Mac
 
-1. **Developer ID certificate.** Xcode › Settings › Accounts › your team › **Manage Certificates** › **+** ›
-   **Developer ID Application**. Only the account holder or an admin of a paid Apple Developer Program team can make
-   one. `security find-identity -v -p codesigning` should list `Developer ID Application: … (TEAM)`.
+1. **Developer ID certificates.** Xcode › Settings › Accounts › your team › **Manage Certificates** › **+** ›
+   **Developer ID Application**, then **+** › **Developer ID Installer** for the package. Only the account holder or
+   an admin of a paid Apple Developer Program team can make them. `security find-identity -v` should list
+   `Developer ID Application: … (TEAM)` and `Developer ID Installer: … (TEAM)`.
 2. **Notary credentials.** Make an app-specific password at appleid.apple.com › Sign-In and Security ›
    App-Specific Passwords, then save it in your keychain:
 
@@ -47,10 +49,13 @@ signed, notarized and stapled disk image.
    scripts/release.sh
    ```
 
-   It builds a universal (Apple silicon and Intel) command-line tool, archives the app, exports it with Developer
-   ID, puts the tool in `Latchkey.app/Contents/Helpers/latchkey` and signs both, notarizes and staples the app, then
-   builds, signs, notarizes and staples `build/release/VERSION/Latchkey-VERSION.dmg` and writes its SHA-256 next to
-   it. `scripts/release.sh --skip-notarize` stops before submitting anything to Apple, to check signing.
+   It builds a universal (Apple silicon and Intel) command-line tool, archives the app (which carries the package's
+   setup helper in `Contents/Resources/latchkey-setup.sh`), exports it with Developer ID, puts the tool in
+   `Latchkey.app/Contents/Helpers/latchkey` and signs both, and notarizes and staples the app. Then it builds
+   `build/release/VERSION/Latchkey-VERSION.pkg` with `scripts/build-pkg.sh` (signed with Developer ID Installer) and
+   `Latchkey-VERSION.dmg` with `scripts/make-dmg.sh` (the laid-out window), notarizes and staples both, and writes
+   each one's SHA-256 next to it. `scripts/release.sh --skip-notarize` stops before submitting anything to Apple, to
+   check signing, and writes no appcast entry.
 
    If Sparkle's `sign_update` is found (`SPARKLE_BIN`, the folder holding it, or the package Xcode resolved) and your
    keychain has the key, it then signs the disk image and adds this version to `site/appcast.xml` through
@@ -59,13 +64,22 @@ signed, notarized and stapled disk image.
    `minimumSystemVersion` from the deployment target, and a link to the changelog. Otherwise it prints why it skipped
    that step; the release itself never fails for it.
 
-4. Upload the disk image to the GitHub release `vVERSION`, then publish `site/appcast.xml` with the site
+4. Upload the package and the disk image (and their `.sha256` files) to the GitHub release `vVERSION`, then publish `site/appcast.xml` with the site
    (`https://latchkey.snackstud.io/appcast.xml`). Publish it last: running copies see the new version as soon as the
    file is live. Check that the enclosure URL downloads.
-5. Check the disk image on a Mac that has never had Latchkey: open it, drag Latchkey to Applications, open it, choose
-   **Latchkey › Install Command Line Tool…**, and run `latchkey status`. Gatekeeper should open it without warnings.
+5. Check both on a Mac that has never had Latchkey; Gatekeeper should open each without warnings:
+   - Open the package: Installer shows the welcome page, asks for a password, and when it closes Latchkey opens its
+     welcome with every check green except the optional steps. Run `latchkey status` in a new Terminal window, and
+     read `~/Library/Logs/Latchkey/setup.log`.
+   - Open the disk image: the window shows the background with Latchkey and Applications either side of the arrow.
+     Drag Latchkey to Applications and open it: the welcome opens and offers **Install Command Line Tool**.
+   `scripts/test-installer.sh` checks the built package's contents and signature.
 
 ## Homebrew
+
+The cask installs from the disk image, not the package: its `app` stanza copies Latchkey to Applications and its
+`binary` stanzas link `latchkey` and `lk` into Homebrew's own `bin`, so the package's root `postinstall` and setup
+helper would add nothing for brew users. The welcome opens on Latchkey's first launch either way.
 
 The script writes `build/release/VERSION/latchkey.rb` from `packaging/homebrew/latchkey.rb.template`: the app,
 `latchkey` and `lk` on the PATH, and a `zap` that removes Latchkey's folder and settings (not keychain items). The
@@ -79,11 +93,13 @@ commit and push. People install with `brew tap zachshallbetter/latchkey`, `brew 
 
 ## What the script checks
 
-- A Developer ID Application certificate for `DEVELOPMENT_TEAM` exists.
+- Developer ID Application and Developer ID Installer certificates for `DEVELOPMENT_TEAM` exist.
+- The app carries the current setup helper and the command-line tool (`scripts/build-pkg.sh`).
 - The notary profile works (unless `--skip-notarize`).
 - The re-signed app still has its `keychain-access-groups` entitlement and passes `codesign --verify --deep
   --strict`.
-- Apple accepted both submissions, and `spctl` accepts the app and the disk image.
+- Apple accepted all three submissions (app, package, disk image), and `spctl` accepts the app, the package (`--type
+  install`) and the disk image.
 
 The Mac App Store build has no updater: it excludes Sparkle (`App/project.appstore.yml`, checked by
 `scripts/appstore-preflight.py`) and updates through the App Store.

@@ -1,13 +1,17 @@
 #!/bin/zsh
 # Builds a Developer ID release: a notarized, stapled Latchkey.app with the command-line tool inside it, in a
-# notarized, stapled disk image.
+# notarized, stapled installer package (the recommended download, docs/installer.md) and a notarized, stapled disk
+# image (drag installs, Sparkle updates and the Homebrew cask).
 #
-#   scripts/release.sh                  build, sign, notarize, staple → build/release/<version>/Latchkey-<version>.dmg
-#   scripts/release.sh --skip-notarize  build and sign only (to check signing without submitting to Apple)
+#   scripts/release.sh                  build, sign, notarize, staple → build/release/<version>/Latchkey-<version>.pkg
+#                                       and Latchkey-<version>.dmg
+#   scripts/release.sh --skip-notarize  build and sign only (to check signing without submitting to Apple); writes no
+#                                       appcast entry
 #
 # Needs, once per Mac:
-#   - A "Developer ID Application" certificate for DEVELOPMENT_TEAM (App/project.yml), in your login keychain.
-#     Xcode › Settings › Accounts › your team › Manage Certificates › + › Developer ID Application.
+#   - "Developer ID Application" and "Developer ID Installer" certificates for DEVELOPMENT_TEAM (App/project.yml), in
+#     your login keychain. Xcode › Settings › Accounts › your team › Manage Certificates › + › Developer ID
+#     Application, and again for Developer ID Installer.
 #   - Xcode signed in to that team (exporting creates the Developer ID provisioning profile the keychain
 #     entitlement needs).
 #   - Notary credentials saved under a keychain profile (default name latchkey-notary; override with
@@ -33,6 +37,8 @@ die() { print -u2 "release: $1"; exit 1 }
 [[ -n "$VERSION" ]] || die "set MARKETING_VERSION in App/project.yml"
 IDENTITY=$(security find-identity -v -p codesigning | awk -v t="($TEAM)\"" '/"Developer ID Application:/ && index($0, t) {print $2; exit}')
 [[ -n "$IDENTITY" ]] || die "no Developer ID Application certificate for team $TEAM in your keychain (see the top of this script)"
+security find-identity -v | grep -q "\"Developer ID Installer:.*($TEAM)\"" \
+  || die "no Developer ID Installer certificate for team $TEAM in your keychain (see the top of this script)"
 if (( NOTARIZE )); then
   xcrun notarytool history --keychain-profile "$PROFILE" >/dev/null 2>&1 \
     || die "no notary credentials under keychain profile '$PROFILE' (see the top of this script)"
@@ -96,14 +102,24 @@ if (( NOTARIZE )); then
   spctl --assess --type execute --verbose=2 "$APP" 2>&1 | tail -1
 fi
 
+# ---------------------------------------------------------------- installer package
+# The recommended download: installs the app, links the command-line tool and opens the welcome (docs/installer.md).
+step "Building the installer package"
+PKG="$OUT/Latchkey-$VERSION.pkg"
+scripts/build-pkg.sh "$APP" "$PKG"
+if (( NOTARIZE )); then
+  step "Notarizing the installer package"
+  notarize "$PKG"
+  xcrun stapler staple -q "$PKG"
+  spctl --assess --type install --verbose=2 "$PKG" 2>&1 | tail -1
+fi
+(cd "${PKG:h}" && shasum -a 256 "${PKG:t}") | tee "$PKG.sha256"
+
 # ---------------------------------------------------------------- disk image
+# For people who prefer to drag, for Sparkle updates and for the Homebrew cask. Laid out by packaging/dmg/settings.py.
 step "Building the disk image"
-STAGE="$OUT/dmg"
-mkdir -p "$STAGE"
-ditto "$APP" "$STAGE/Latchkey.app"
-ln -s /Applications "$STAGE/Applications"
 DMG="$OUT/Latchkey-$VERSION.dmg"
-hdiutil create -quiet -volname "Latchkey $VERSION" -srcfolder "$STAGE" -fs HFS+ -format UDZO "$DMG"
+scripts/make-dmg.sh "$APP" "$DMG" "Latchkey $VERSION"
 codesign --force --timestamp --sign "$IDENTITY" "$DMG"
 if (( NOTARIZE )); then
   step "Notarizing the disk image"
@@ -124,7 +140,9 @@ for candidate in "${SPARKLE_BIN:+$SPARKLE_BIN/sign_update}" \
     ~/Library/Developer/Xcode/DerivedData/Latchkey-*/SourcePackages/artifacts/sparkle/Sparkle/bin/sign_update(N); do
   [[ -n "$candidate" && -x "$candidate" ]] && { SIGN_UPDATE="$candidate"; break; }
 done
-if [[ -z "$SIGN_UPDATE" ]]; then
+if (( ! NOTARIZE )); then
+  print "    (no appcast: --skip-notarize builds are never offered as updates)"
+elif [[ -z "$SIGN_UPDATE" ]]; then
   print "    (no appcast: sign_update not found. Set SPARKLE_BIN to Sparkle's bin folder, or build the app once so Xcode resolves the package)"
 elif [[ -z "$BUILD" || -z "$MIN_OS" ]]; then
   print "    (no appcast: couldn't read CURRENT_PROJECT_VERSION and the deployment target from App/project.yml)"
@@ -147,4 +165,4 @@ if [[ -n "${LATCHKEY_RELEASES_REPO:-}" && -n "${LATCHKEY_HOMEPAGE:-}" ]]; then
 else
   print "    (no Homebrew cask: set LATCHKEY_RELEASES_REPO and LATCHKEY_HOMEPAGE to write one)"
 fi
-step "Done: $DMG"
+step "Done: $PKG and $DMG"

@@ -13,7 +13,9 @@ App/Latchkey/              the SwiftUI app
 App/Safari/                Latchkey for Safari: the native handler and the extension's manifest and scripts
 App/Branding/logo.svg      the logo source: a key on a ring
 scripts/install.sh         build and install the app and CLI (development)
-scripts/release.sh         Developer ID build, notarized, in a disk image (see docs/releasing.md)
+scripts/release.sh         Developer ID build, notarized, in an installer package and a disk image (docs/releasing.md)
+packaging/pkg/             the installer package: Distribution, pages, postinstall and setup helper (docs/installer.md)
+packaging/dmg/             the disk image's window layout and background
 docs/                      user and developer documentation
 site/                      the product website and developer docs, static HTML (see docs/site.md)
 ```
@@ -24,6 +26,7 @@ site/                      the product website and developer docs, static HTML (
 swift build
 swift test                                  # unit tests
 node App/Safari/detector.test.js            # the Safari extension's key detector
+scripts/test-installer.sh                   # the installer package's scripts and sources (docs/installer.md)
 LATCHKEY_KEYCHAIN_TESTS=1 swift test        # also round-trips through your real login keychain
 cd App && xcodegen && open Latchkey.xcodeproj
 scripts/install.sh                          # build Release, install the app and CLI, restart the app

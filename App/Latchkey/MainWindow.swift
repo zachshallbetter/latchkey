@@ -44,6 +44,7 @@ struct LogoMark: View {
 
 struct MainWindow: View {
     @Bindable var model: AppModel
+    @Environment(\.openWindow) private var openWindow
     @AppStorage(AppPreferences.Key.appearance) private var appearance = "system"
 
     var body: some View {
@@ -121,6 +122,9 @@ struct MainWindow: View {
         .onAppear {
             applyAppearance(appearance)
             model.refresh()
+            #if !LATCHKEY_APP_STORE
+            if Welcome.shouldOpenAtLaunch(hasItems: !model.items.isEmpty) { openWindow(id: Welcome.windowID) }
+            #endif
             #if DEBUG
             Snapshot.runIfRequested(model)
             #endif

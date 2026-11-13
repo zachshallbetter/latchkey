@@ -75,6 +75,7 @@ struct SettingsSectionList: View {
 
 struct SettingsView: View {
     @Bindable var model: AppModel
+    @Environment(\.openWindow) private var openWindow
     @AppStorage(AppPreferences.Key.appearance) private var appearance = "system"
     @AppStorage(AppPreferences.Key.clipboardSeconds) private var clipboardSeconds = AppPreferences.defaultClipboardSeconds
     @AppStorage(AppPreferences.Key.revealSeconds) private var revealSeconds = AppPreferences.defaultRevealSeconds
@@ -227,6 +228,8 @@ struct SettingsView: View {
             SettingsNote("Updates are delivered through the Mac App Store.")
             #else
             LabeledContent("Distribution", value: "Direct download")
+            Button("Show Welcome…") { openWindow(id: Welcome.windowID) }
+            SettingsNote("What's installed, the Safari extension, connecting a coding agent and importing a first .env file.")
             if let updater = AppUpdater.shared.controller?.updater {
                 Toggle("Check for updates automatically", isOn: Binding(get: { checksForUpdates }, set: { on in
                     updater.automaticallyChecksForUpdates = on

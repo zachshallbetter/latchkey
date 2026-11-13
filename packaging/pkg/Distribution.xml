@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!-- Latchkey's Installer: Welcome → Install (password) → done. scripts/build-pkg.sh fills
+     in @VERSION@ and @MIN_OS@ (the deployment target in App/project.yml). Afterwards the
+     postinstall starts Latchkey's setup helper, which links the command-line tool and opens
+     Latchkey's welcome once the Installer has closed (docs/installer.md). -->
+<installer-gui-script minSpecVersion="2">
+    <title>Latchkey</title>
+    <welcome file="welcome.html" mime-type="text/html"/>
+    <conclusion file="conclusion.html" mime-type="text/html"/>
+    <!-- The key in the lower-left corner, behind the step list (scripts/make-installer-art.swift). -->
+    <background file="background.png" mime-type="image/png" alignment="bottomleft" scaling="none"/>
+    <background-darkAqua file="background-dark.png" mime-type="image/png" alignment="bottomleft" scaling="none"/>
+    <options customize="never" require-scripts="false" hostArchitectures="arm64,x86_64" rootVolumeOnly="true"/>
+    <domains enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true"/>
+    <!-- Checked as the Installer opens, so an older Mac is told before the Welcome
+         screen. The volume check is the backstop. Messages: Localizable.strings. -->
+    <installation-check script="requireMinimumMacOS()"/>
+    <script>
+    function requireMinimumMacOS() {
+        if (system.compareVersions(system.version.ProductVersion, '@MIN_OS@') &gt;= 0) return true;
+        my.result.type = 'Fatal';
+        my.result.title = system.localizedString('REQUIRES_MACOS_TITLE');
+        my.result.message = system.localizedString('REQUIRES_MACOS_MESSAGE');
+        return false;
+    }
+    </script>
+    <volume-check>
+        <allowed-os-versions>
+            <os-version min="@MIN_OS@"/>
+        </allowed-os-versions>
+    </volume-check>
+    <choices-outline>
+        <line choice="default">
+            <line choice="io.snackstud.latchkey.pkg"/>
+        </line>
+    </choices-outline>
+    <choice id="default"/>
+    <choice id="io.snackstud.latchkey.pkg" visible="false">
+        <pkg-ref id="io.snackstud.latchkey.pkg"/>
+    </choice>
+    <pkg-ref id="io.snackstud.latchkey.pkg" version="@VERSION@" onConclusion="none">Latchkey-component.pkg</pkg-ref>
+    <!-- A running Latchkey is quit first (the Installer asks), so it is never replaced while
+         it holds the broker socket or an approval is waiting. -->
+    <pkg-ref id="io.snackstud.latchkey.pkg">
+        <must-close>
+            <app id="io.snackstud.latchkey"/>
+        </must-close>
+    </pkg-ref>
+</installer-gui-script>

@@ -48,6 +48,13 @@ enum Snapshot {
             drawOffscreen(MainWindow(model: model).frame(width: width, height: 720), to: path)
             return
         }
+        #if !LATCHKEY_APP_STORE
+        if arg("--part") == "welcome" {
+            let page = arg("--page").flatMap(Int.init).flatMap(WelcomeView.Page.init(rawValue:)) ?? .installed
+            drawOffscreen(WelcomeView(model: model, page: page), to: path)
+            return
+        }
+        #endif
         if arg("--part") == "settings" {
             drawOffscreen(SettingsView(model: model).frame(width: 660, height: 720), to: path)
             return

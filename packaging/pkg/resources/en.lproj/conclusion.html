@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Installer's basic HTML renderer: see the note in welcome.html. -->
+<style>
+  body { margin: 0; font: 13px/1.45 -apple-system, sans-serif; }
+  h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+  .lead { font-size: 13.5px; color: #8a8a8e; margin: 0 0 16px; }
+  .item { margin: 0 0 10px; }
+  .muted { color: #8a8a8e; font-size: 12px; }
+  .tip { color: #8a8a8e; font-size: 11.5px; margin: 4px 0 0; }
+  code { font: 11.5px ui-monospace, Menlo, monospace; }
+</style>
+</head>
+<body>
+  <h1>Latchkey is installed.</h1>
+  <p class="lead">Close the Installer and Latchkey opens a short welcome to finish setting up.</p>
+  <p class="item"><b>✓ Installed in Applications</b><br><span class="muted">Updates install without asking for a password.</span></p>
+  <p class="item"><b>✓ <code>latchkey</code> and <code>lk</code> in ~/.local/bin</b><br><span class="muted">Linked to the copy inside Latchkey, so they update with the app. A file you already had under either name is left alone.</span></p>
+  <p class="item"><b>→ Optional: the Safari extension and your coding agent</b><br><span class="muted">The welcome shows where Safari’s switch is and the one command that connects Claude Code.</span></p>
+
+  <p class="tip">Check it in Terminal with <code>latchkey status</code>. If the command isn’t found, add ~/.local/bin to your PATH; the welcome shows how.</p>
+</body>
+</html>

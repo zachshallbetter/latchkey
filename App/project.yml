@@ -25,7 +25,11 @@ targets:
   Latchkey:
     type: application
     platform: macOS
-    sources: [Latchkey]
+    sources:
+      - Latchkey
+      # The installer package's setup helper (docs/installer.md), in Resources so the app's signature seals it.
+      - path: ../packaging/pkg/latchkey-setup.sh
+        buildPhase: resources
     dependencies:
       - package: LatchkeyCore
         product: LatchkeyCore

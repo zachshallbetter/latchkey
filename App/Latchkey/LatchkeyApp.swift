@@ -38,6 +38,24 @@ struct LatchkeyApp: App {
             exit(64)
             #endif
         }
+        #if !LATCHKEY_APP_STORE
+        // The installer package's setup helper (packaging/pkg/latchkey-setup.sh) links the command-line tool through
+        // the same code as Latchkey › Install Command Line Tool…, then exits without opening a window.
+        if CommandLine.arguments.contains("--install-command-line-tool") {
+            let tool = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/latchkey")
+            guard FileManager.default.isExecutableFile(atPath: tool.path) else {
+                FileHandle.standardError.write(Data("This copy of Latchkey doesn't include the command-line tool.\n".utf8))
+                exit(1)
+            }
+            do {
+                print(try CommandLineToolLinks.install(tool: tool, home: NSHomeDirectory()).message)
+                exit(0)
+            } catch {
+                FileHandle.standardError.write(Data("Couldn't install the command-line tool: \(error.localizedDescription)\n".utf8))
+                exit(1)
+            }
+        }
+        #endif
         // A second copy started outside Launch Services (from a shell, another build) hands over to the one
         // already running and quits, before it touches the keychain or the broker socket.
         #if DEBUG
@@ -56,7 +74,9 @@ struct LatchkeyApp: App {
     @State private var model: AppModel
     @NSApplicationDelegateAdaptor private var delegate: AppDelegate
     #if !LATCHKEY_APP_STORE
-    private let updater = AppUpdater.shared
+    // Started when the scenes are built, not as a stored property, so `--install-command-line-tool` exits before
+    // Sparkle starts.
+    private var updater: AppUpdater { AppUpdater.shared }
     #endif
 
     var body: some Scene {
@@ -84,6 +104,9 @@ struct LatchkeyApp: App {
             SettingsCommands(model: model)
             ItemCommands(model: model)
             CommandGroup(replacing: .help) {
+                #if !LATCHKEY_APP_STORE
+                WelcomeCommand()
+                #endif
                 Link("Latchkey Help", destination: URL(string: "https://latchkey.snackstud.io/support.html")!)
                 Link("Privacy Policy", destination: URL(string: "https://latchkey.snackstud.io/privacy.html")!)
                 Link("Terms of Use", destination: URL(string: "https://latchkey.snackstud.io/terms.html")!)
@@ -91,6 +114,17 @@ struct LatchkeyApp: App {
                 Link("Report a Security Issue", destination: URL(string: "mailto:latchkey@snackstud.io?subject=Security")!)
             }
         }
+
+        #if !LATCHKEY_APP_STORE
+        // Opened by MainWindow at launch when it's needed (Welcome.shouldOpenAtLaunch), and from Settings and Help.
+        Window("Welcome to Latchkey", id: Welcome.windowID) {
+            WelcomeView(model: model)
+        }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
+        .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
+        #endif
 
         MenuBarExtra("Latchkey", image: "MenuBarIcon") {
             MenuBarPanel(model: model)
@@ -527,13 +561,8 @@ final class AppModel {
         return FileManager.default.isExecutableFile(atPath: url.path) ? url : nil
     }
 
-    /// `latchkey`, and `lk` for short, in ~/.local/bin.
-    static var toolLinks: [URL] {
-        ["latchkey", "lk"].map { URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".local/bin/\($0)") }
-    }
-
     /// Links ~/.local/bin/latchkey and ~/.local/bin/lk to the tool inside the app, so it updates with the app. Replaces
-    /// only links; a file of either name is left alone and reported.
+    /// only links; a file of either name is left alone and reported (`CommandLineToolLinks`).
     func installCommandLineTool() {
         #if LATCHKEY_APP_STORE
         notice = "Command-line installation is not yet validated for the App Store sandbox experiment. Use the direct build for production CLI work."
@@ -542,29 +571,8 @@ final class AppModel {
             notice = "This copy of Latchkey doesn't include the command-line tool; scripts/install.sh installs it."
             return
         }
-        let fm = FileManager.default
-        var installed: [String] = [], inTheWay: [String] = []
-        do {
-            try fm.createDirectory(at: Self.toolLinks[0].deletingLastPathComponent(), withIntermediateDirectories: true)
-            for link in Self.toolLinks {
-                let name = "~/.local/bin/" + link.lastPathComponent
-                if let dest = try? fm.destinationOfSymbolicLink(atPath: link.path) {
-                    if dest == tool.path { installed.append(name); continue }
-                    try fm.removeItem(at: link)
-                } else if fm.fileExists(atPath: link.path) {
-                    inTheWay.append(name)
-                    continue
-                }
-                try fm.createSymbolicLink(at: link, withDestinationURL: tool)
-                installed.append(name)
-            }
-        } catch {
-            notice = "Couldn't install the command-line tool: \(error.localizedDescription)"
-            return
-        }
-        var text = installed.isEmpty ? "" : "Installed \(installed.joined(separator: " and ")). Make sure ~/.local/bin is on your PATH."
-        if !inTheWay.isEmpty { text += (text.isEmpty ? "" : " ") + "\(inTheWay.joined(separator: " and ")) already exists and isn't a link to Latchkey; left as is." }
-        notice = text
+        do { notice = try CommandLineToolLinks.install(tool: tool, home: NSHomeDirectory()).message }
+        catch { notice = "Couldn't install the command-line tool: \(error.localizedDescription)" }
         #endif
     }
 
