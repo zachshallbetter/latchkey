@@ -60,8 +60,9 @@
     .editions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
     .edition { display: flex; flex-direction: column; gap: 10px; }
     .edition.pro { border-color: color-mix(in srgb, var(--hue) 55%, var(--line)); background: linear-gradient(180deg, color-mix(in srgb, var(--hue) 9%, var(--surface)), var(--surface) 45%); }
-    .edition-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0; }
-    .edition-head b { font-size: 19px; }
+    .edition-head { display: flex; align-items: center; gap: 12px; margin: 0; }
+    .edition-head b { font-size: 19px; margin-right: auto; }
+    .edition-head .cico { margin: 0; }
     .edition .fine { margin: 0; }
     .edition ul { margin: 4px 0 8px; padding-left: 1.1em; display: grid; gap: 8px; }
     .edition .button { margin-top: auto; align-self: flex-start; }
@@ -85,7 +86,7 @@
       .hero-art { max-width: 720px; }
     }
     .facts-row { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 18px 0 0; padding: 0; }
-    .facts-row li { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 13.5px; color: var(--muted); }
+    .facts-row li { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 13.5px; color: var(--muted); }
 
     .scene-cap { max-width: 70ch; margin-top: 12px; }
     .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin: 24px 0 8px; }
@@ -238,7 +239,7 @@
         <li><a href="pricing.html">Pricing</a></li>
         <li><a href="security.html">Security</a></li>
         <li><a href="developers/index.html">Docs</a></li>
-        <li><a class="button primary" href="index.html#install">Download free</a></li>
+        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
       </ul>
     </nav>
   </header>
@@ -250,13 +251,13 @@
       <h1 id="title">Your projects move. <span class="grad">Your secrets don't.</span></h1>
       <p class="lede">Latchkey keeps development credentials in your Mac's iCloud Keychain and reconnects them to the projects that need them. Restore an environment on another Mac, run commands with the right values, and let coding agents work through access you control.</p>
       <div class="cta">
-        <a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest">Download free</a>
+        <a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
         <a class="button secondary" href="#how">See how it works</a>
         <a href="#pro">What Pro adds</a>
       </div>
       <p class="fine">Free and notarized by Apple. The core stays free; Pro will be a one-time purchase.</p>
       <ul class="facts-row" aria-label="At a glance">
-        <li>macOS 15 or later</li><li>iCloud Keychain</li><li>CLI and MCP</li><li>No account or server</li>
+        <li><i class="ic ic-laptop" aria-hidden="true"></i>macOS 15 or later</li><li><i class="ic ic-cloud" aria-hidden="true"></i>iCloud Keychain</li><li><i class="ic ic-terminal" aria-hidden="true"></i>CLI and MCP</li><li><i class="ic ic-ban" aria-hidden="true"></i>No account or server</li>
       </ul>
       </div>
 
@@ -469,14 +470,14 @@ lk import .env.local --rewrite --skip PORT</code></pre></figure>
       <p class="intro">Items grouped by project and environment, which ones agents may read without asking, where each is used, every request in Activity, and the grants in effect. This window works with example data. What you chose in the panel above is already in its Activity, and a grant you made is under Grants, where Revoke stops future reads through it. Changes ask for Touch ID; revealing a value asks unless its No Approval setting permits it.</p>
       </div>
       <div class="appwrap"><div class="appwin" id="appwin" aria-label="The Latchkey window, with example data"><div class="appwin-static">
-          <p><b>The Latchkey window, with example data.</b> With scripts on, it works: filter by kind, project or service, and open an item. It lists:</p>
+          <p><b>The Latchkey window, with example data.</b> With scripts on, it works: search, filter by type or environment, pick a project or service in the sidebar, and open an item. It lists:</p>
           <ul>
-            <li><b>shop · development:</b> DATABASE_URL (password, Neon), STRIPE_KEY (token, Stripe), PGHOST (plain value, Neon, readable by agents without asking)</li>
-            <li><b>shop · vercel.preview:</b> DATABASE_URL, linked to Vercel</li>
-            <li><b>shop · production:</b> DATABASE_URL and STRIPE_KEY, linked to Vercel</li>
-            <li><b>Shared:</b> OPENAI_API_KEY</li>
+            <li><b>shop:</b> DATABASE_URL, STRIPE_KEY, PGHOST and NEXT_PUBLIC_SITE_URL for development; DATABASE_URL for preview, not pushed yet; DATABASE_URL and STRIPE_KEY for production, the key changed since its last push</li>
+            <li><b>blog:</b> ADMIN_PASSWORD, SENTRY_DSN and GITHUB_TOKEN</li>
+            <li><b>api:</b> the ASC_P8 key file and API_BASE_URL</li>
+            <li><b>Shared:</b> OPENAI_API_KEY and ANTHROPIC_API_KEY</li>
           </ul>
-          <p>Opening an item shows its reference, kind, service, whether agents may read it without asking, where it's used, and its history.</p>
+          <p>Opening an item shows its value (hidden until Touch ID), reference, type, access, service, project, environment, note, location, history and recent activity. Review lists what may need a look.</p>
         </div></div>
       <p class="fine cap-row">Example data; the values are made up. The menu bar icon opens a smaller panel with search and recent activity, like the one above the terminal.</p></div>
     </section>
@@ -543,10 +544,10 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
       <h2 id="tools-title">Built for the tools you already use</h2>
       </div>
       <div class="card-grid g4">
-        <a class="card" href="developers/cli.html"><b>Terminal and CLI</b><span>Run commands with values filled in, check what a run would get, and manage items, environments and history with <code>lk</code>.</span></a>
-        <a class="card" href="developers/agents.html"><b>Coding agents</b><span>A skill for Claude Code, Codex, Gemini CLI and Cursor; an MCP server with no secret-read tool; approvals and scoped grants.</span></a>
-        <a class="card" href="features.html#integrations"><b>Deployment platforms</b><span>Link an environment to Vercel, GitHub Actions, Railway or Fly, see what's missing, and push with each service's own tool.</span></a>
-        <a class="card" href="features.html#safari"><b>Browser and providers</b><span>Latchkey for Safari saves a new key from the page where you made it. The proxy covers OpenAI and Anthropic; STS covers AWS.</span></a>
+        <a class="card" href="developers/cli.html"><span class="cico" aria-hidden="true"><i class="ic ic-terminal"></i></span><b>Terminal and CLI</b><span>Run commands with values filled in, check what a run would get, and manage items, environments and history with <code>lk</code>.</span></a>
+        <a class="card" href="developers/agents.html"><span class="cico" aria-hidden="true"><i class="ic ic-sparkles"></i></span><b>Coding agents</b><span>A skill for Claude Code, Codex, Gemini CLI and Cursor; an MCP server with no secret-read tool; approvals and scoped grants.</span></a>
+        <a class="card" href="features.html#integrations"><span class="cico" aria-hidden="true"><i class="ic ic-upload"></i></span><b>Deployment platforms</b><span>Link an environment to Vercel, GitHub Actions, Railway or Fly, see what's missing, and push with each service's own tool.</span></a>
+        <a class="card" href="features.html#safari"><span class="cico" aria-hidden="true"><i class="ic ic-safari"></i></span><b>Browser and providers</b><span>Latchkey for Safari saves a new key from the page where you made it. The proxy covers OpenAI and Anthropic; STS covers AWS.</span></a>
       </div>
     </section>
 
@@ -557,9 +558,9 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
       <p class="intro">Values live in iCloud Keychain in an access group only the signed Latchkey app can read. The <code>lk</code> tool checks the app's signature before sending anything, the app reads each caller's identity from the kernel, and every release, change and refusal goes in a tamper-evident log. Latchkey is as precise about its limits.</p>
       </div>
       <div class="card-grid g3">
-        <div class="card"><b>A released value is out of its hands</b><span>A command you allowed has the key, and Latchkey can't control what it does with it. <code>--proxy</code> is the exception, for OpenAI and Anthropic.</span></div>
-        <div class="card"><b>A reference isn't permission</b><span>It names a secret; it doesn't grant access to it. Every read that isn't agent-safe or granted still asks.</span></div>
-        <div class="card"><b>Anything running as you can ask</b><span>Keep grants narrow and short, and deny requests you don't recognize.</span></div>
+        <div class="card"><span class="cico" aria-hidden="true"><i class="ic ic-export"></i></span><b>A released value is out of its hands</b><span>A command you allowed has the key, and Latchkey can't control what it does with it. <code>--proxy</code> is the exception, for OpenAI and Anthropic.</span></div>
+        <div class="card"><span class="cico" aria-hidden="true"><i class="ic ic-link"></i></span><b>A reference isn't permission</b><span>It names a secret; it doesn't grant access to it. Every read that isn't agent-safe or granted still asks.</span></div>
+        <div class="card"><span class="cico" aria-hidden="true"><i class="ic ic-hand"></i></span><b>Anything running as you can ask</b><span>Keep grants narrow and short, and deny requests you don't recognize.</span></div>
       </div>
       <p style="margin-top:18px"><a class="more" href="security.html">The security model, trust boundaries and limits</a></p>
     </section>
@@ -572,7 +573,7 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
       </div>
       <div class="editions">
         <article class="card edition">
-          <p class="edition-head"><b>Latchkey</b><span class="price-line">Free</span></p>
+          <p class="edition-head"><span class="cico" aria-hidden="true"><i class="ic ic-download"></i></span><b>Latchkey</b><span class="price-line">Free</span></p>
           <p class="fine">Available now, and it stays free.</p>
           <ul>
             <li>iCloud Keychain storage and <code>latchkey://</code> references</li>
@@ -581,10 +582,10 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
             <li>The CLI, the MCP server and the header-injecting proxy</li>
             <li>Exporting references and your own values</li>
           </ul>
-          <a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest">Download free</a>
+          <a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
         </article>
         <article class="card edition pro">
-          <p class="edition-head"><b>Latchkey Pro</b><span class="price-line">$79 <small>one time</small></span></p>
+          <p class="edition-head"><span class="cico" aria-hidden="true"><i class="ic ic-star"></i></span><b>Latchkey Pro</b><span class="price-line">$79 <small>one time</small></span></p>
           <p class="fine"><span class="avail pending">Planned</span> Everything in Latchkey, plus:</p>
           <ul>
             <li><b>Agent controls:</b> finer limits on what an agent may read and run</li>
@@ -592,7 +593,7 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
             <li><b>Rotation and lifecycle:</b> rotate keys and track when they expire</li>
             <li><b>Provider integrations:</b> work with your providers directly</li>
           </ul>
-          <a class="button secondary" href="pricing.html#pro">Get early access</a>
+          <a class="button secondary" href="pricing.html#pro"><i class="ic ic-star" aria-hidden="true"></i>Get early access</a>
         </article>
       </div>
       <p class="fine" style="margin-top:14px">Pro isn't on sale yet; the price is proposed. <a href="pricing.html#compare">Compare editions</a></p>
@@ -604,11 +605,11 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
       <h2 id="paths-title">Three ways in</h2>
       </div>
       <div class="card-grid g3">
-        <div class="card" data-hue="blue"><b>For developers</b><span>Latchkey is free to download and use. Start there, and see what Latchkey Pro will add when it's ready.</span>
+        <div class="card" data-hue="blue"><span class="cico" aria-hidden="true"><i class="ic ic-terminal"></i></span><b>For developers</b><span>Latchkey is free to download and use. Start there, and see what Latchkey Pro will add when it's ready.</span>
           <p class="links"><a class="more" href="#install">Download free</a><br><a class="more" href="pricing.html">Free and Pro</a></p></div>
-        <div class="card" data-hue="green"><b>For teams</b><span>Move a small team's credentials out of scattered env files with a fixed-scope migration from Snack Studio, and help shape Latchkey Teams.</span>
+        <div class="card" data-hue="green"><span class="cico" aria-hidden="true"><i class="ic ic-people"></i></span><b>For teams</b><span>Move a small team's credentials out of scattered env files with a fixed-scope migration from Snack Studio, and help shape Latchkey Teams.</span>
           <p class="links"><a class="more" href="teams.html">Developer Credential Migration</a><br><a class="more" href="teams.html#teams">Latchkey Teams</a></p></div>
-        <div class="card" data-hue="violet"><b>For technical evaluators</b><span>Inspect how values are stored and released, where protection ends, every command, and what's built and what isn't.</span>
+        <div class="card" data-hue="violet"><span class="cico" aria-hidden="true"><i class="ic ic-shieldcheck"></i></span><b>For technical evaluators</b><span>Inspect how values are stored and released, where protection ends, every command, and what's built and what isn't.</span>
           <p class="links"><a class="more" href="security.html">Security model</a><br><a class="more" href="developers/index.html">Developer docs</a><br><a class="more" href="roadmap.html">Roadmap</a></p></div>
       </div>
     </section>
@@ -620,7 +621,7 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
           <h2 id="install-title">Stop being the credential courier.</h2>
           <p>Keep your projects, credentials and coding agents working together, with access you can inspect and control. Latchkey is free to download and use, and the core stays free. Pro will add more for a one-time price in the Mac App Store.</p>
         </div>
-        <div class="cta-actions"><a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest">Download free</a><a class="button secondary" href="pricing.html#pro">See what Pro adds</a></div>
+        <div class="cta-actions"><a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a><a class="button secondary" href="pricing.html#pro"><i class="ic ic-star" aria-hidden="true"></i>See what Pro adds</a></div>
       </div>
       <ol class="card-grid g3" style="margin-top:16px">
         <li class="card"><span class="step">1</span><b>Download and install</b><span>Open the <a href="https://github.com/zachshallbetter/latchkey/releases/latest">latest disk image</a> and drag Latchkey to Applications, or run <code>brew tap zachshallbetter/latchkey</code>, <code>brew trust zachshallbetter/latchkey</code> and <code>brew install --cask latchkey</code>.</span></li>

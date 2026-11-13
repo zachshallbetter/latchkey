@@ -23,6 +23,9 @@
 - Link records gain optional `tokenItem` and `team` fields; links saved before them decode unchanged.
 
 ### Website
+- The app window on the home page and Features follows the app's current layout: sidebar with Review and the
+  iCloud Keychain badge, a flat list with search, filters and the app's type icons, and the detail as cards with
+  recent activity. One icon set, after the app's SF Symbols, gives every card, button and fact a symbol.
 - Every code block explains its parts on hover or focus, not only `lk` lines: Features examples, CLI synopses and
   their placeholders, env files, JSON, `brew`, `ssh`, `claude` and `export`, the agent note and the architecture
   diagram.
