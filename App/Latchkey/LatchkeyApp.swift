@@ -38,11 +38,15 @@ struct LatchkeyApp: App {
     }
 
     @State private var model: AppModel
+    @NSApplicationDelegateAdaptor private var delegate: AppDelegate
 
     var body: some Scene {
         Window("Latchkey", id: "main") {
             MainWindow(model: model)
                 .frame(minWidth: 860, minHeight: 520)
+                // In the Dock while the window is open; closing it (or quitting from the Dock) leaves the menu bar icon.
+                .onAppear { NSApp.setActivationPolicy(.regular) }
+                .onDisappear { NSApp.setActivationPolicy(.accessory) }
         }
         .defaultSize(width: 1080, height: 680)
         // Open the window on every launch, even if it was closed when Latchkey last quit.
@@ -66,6 +70,26 @@ struct LatchkeyApp: App {
         Settings {
             SettingsView(model: model)
         }
+    }
+}
+
+/// Quit from the Dock closes the window, which leaves Latchkey in the menu bar, still answering the command-line tool and
+/// agents; Quit in the menu bar, the app menu, logging out and scripts quit it.
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard Self.quitFromDock else { return .terminateNow }
+        for window in NSApp.windows where window.isVisible && window.canBecomeMain { window.close() }
+        NSApp.setActivationPolicy(.accessory)
+        return .terminateCancel
+    }
+
+    /// Whether the quit being handled is the Dock's: a quit Apple event sent by the Dock process.
+    private static var quitFromDock: Bool {
+        guard let event = NSAppleEventManager.shared().currentAppleEvent,
+              event.eventClass == AEEventClass(kCoreEventClass), event.eventID == AEEventID(kAEQuitApplication),
+              let pid = event.attributeDescriptor(forKeyword: AEKeyword(keySenderPIDAttr))?.int32Value
+        else { return false }
+        return NSRunningApplication(processIdentifier: pid)?.bundleIdentifier == "com.apple.dock"
     }
 }
 
