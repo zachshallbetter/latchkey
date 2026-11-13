@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### Security
+- An approval now names every change to who may read an item without asking, or to whether it's treated as a secret:
+  `set` (including one with no value) and `import --replace` say "let agents read ... without approval" or "make it
+  a plain value", as `update` already did. The approval panel shows the request's wording too, not just the verb.
+- Restoring an earlier version of an item that still exists changes only its value. It no longer re-applies that
+  version's agent-safe, kind, service or Safari fill sites, so a restore can't quietly undo a later tightening.
+  Bringing back a deleted agent-safe item says so in the approval.
+- The MCP tool `latchkey_export_references` writes only inside its `cwd` (symlinked folders are followed before the
+  check) and is marked destructive, since it can replace a file there without asking.
+- Latchkey for Safari no longer offers fills on sites a platform hosts for its customers. The default fill sites are
+  each service's own key page host and the platforms' dashboards (app.netlify.com, dashboard.render.com,
+  dashboard.heroku.com, railway.com), not every subdomain of railway.app, google.com or amazon.com.
+
 ## 0.3.0 (2026-11-13)
 
 ### Latchkey Pro

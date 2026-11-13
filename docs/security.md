@@ -74,7 +74,7 @@ command gets which value. This page says what it protects against, how, and wher
   both share. The app admits only Latchkey's signed extension there (checked by code signature), and only to list
   item names, save a value, which asks like any change, and fill one item into the page you're on. Fill asks every
   time (no grant, recent approval or agent-safe setting stands in), works only on the item's own fill sites if it has any, else
-  its service's own site and deployment platforms (decided by the app from the origin Safari reports, https only, never in a frame), and is
+  its service's own key page host and deployment platforms' dashboards, never a customer-hosted subdomain (decided by the app from the origin Safari reports, https only, never in a frame), and is
   logged. Otherwise it can't read a stored value. The page's site it reports is
   shown in the approval as Safari reported it. Its key detection runs inside the page: a value goes to the app only
   when you press Save, and its toolbar panel gets a short preview, never the value. Password fields are not read. Fields that expect a key are recognized by their labels and attributes only.

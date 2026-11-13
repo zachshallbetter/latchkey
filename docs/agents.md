@@ -147,7 +147,7 @@ claude mcp add latchkey -- ~/.local/bin/latchkey mcp
 | `latchkey_run` | Runs a command with references filled in, in a given folder, from env files, environments or key files. Returns the exit code and the output, masked | When an item isn't agent-safe or granted |
 | `latchkey_request_grant` | Asks you for a grant on items in the agent's folder | Always |
 | `latchkey_project` | Which project the folder's checkout is, from its Git remotes, and its environments | No |
-| `latchkey_export_references` | Writes an environment's env file of references and plain settings, never values; an existing file only with `replace` | No |
+| `latchkey_export_references` | Writes an environment's env file of references and plain settings, never values, inside the tool's `cwd` only; an existing file only with `replace` | No |
 
 - **Output** is always masked, and only the last 64 KB of each stream is returned. Standard input is empty.
 - **Commands stop** after 10 minutes by default, at most 60. Use it for tests, builds and scripts; run dev servers in

@@ -245,9 +245,11 @@ public final class Broker: @unchecked Sendable {
     func set(_ req: Request, peer: PeerInfo) throws -> Response {
         guard let name = req.names?.first, req.names?.count == 1 else { return Response(ok: false, error: "set takes one name") }
         guard Wire.isValidName(name) else { throw StoreError.badName(name) }
-        let isNew = (try store.info(name)) == nil
-        let verb = isNew ? "add" : "change"
-        guard ask(isNew ? .add : .change, [name], peer, req, "\(verb) \(name), asked by \(Self.describe(peer, req))").allowed else {
+        let current = try store.info(name)
+        let isNew = current == nil
+        var what = isNew ? "add \(name)" : req.value == nil ? "change the settings of \(name)" : "change \(name)"
+        what += Self.settingChanges(agentSafe: req.agentSafe, kind: req.kind, from: current)
+        guard ask(isNew ? .add : .change, [name], peer, req, "\(what), asked by \(Self.describe(peer, req))").allowed else {
             log("set", [name], "denied", peer, req)
             return Response(ok: false, error: "change to \(name) was not approved")
         }
@@ -310,6 +312,19 @@ public final class Broker: @unchecked Sendable {
         log("rm", names, "approved", peer, req)
         pruneVersions()
         return Response(ok: true)
+    }
+
+    /// The part of an approval that names a change to who may read an item without asking, or to whether it's treated
+    /// as a secret: these change protection, so an approval never applies them unnamed.
+    static func settingChanges(agentSafe: Bool?, kind: ItemKind?, from current: SecretInfo?) -> String {
+        var parts: [String] = []
+        if let a = agentSafe, a != (current?.agentSafe ?? false) {
+            parts.append(a ? "let agents read it without approval" : "require approval to read it")
+        }
+        if let k = kind, current == nil ? !k.isSecret : k != current!.kind {
+            parts.append("make it a \(k.label.lowercased())" + (k.isSecret ? "" : " (not masked, pushed as plain text)"))
+        }
+        return parts.isEmpty ? "" : " and " + parts.joined(separator: " and ")
     }
 
     /// Changes agent-safe, kind, service, note or fill sites on many items with one approval. Values are untouched.
@@ -381,6 +396,11 @@ public final class Broker: @unchecked Sendable {
         var what: [String] = []
         if !toAdd.isEmpty { what.append("add \(Self.count(toAdd))") }
         if !toReplace.isEmpty { what.append("overwrite \(Self.count(toReplace))") }
+        let infos = Dictionary(try store.list().map { ($0.name, $0) }, uniquingKeysWith: { a, _ in a })
+        let opened = writing.filter { byName[$0]!.agentSafe == true && infos[$0]?.agentSafe != true }
+        let plain = writing.filter { n in byName[n]!.kind.map { !$0.isSecret && (infos[n]?.kind.isSecret ?? true) } ?? false }
+        if !opened.isEmpty { what.append("let agents read \(Self.count(opened)) without approval") }
+        if !plain.isEmpty { what.append("save \(Self.count(plain)) as plain values (not masked, pushed as plain text)") }
         var from = ""
         if let src = req.source, !src.isEmpty { from = " from \(Self.tilde(src))" }
         if !given.isEmpty { from += " and record which variables \(Self.describeScopes(given)) has" }
@@ -876,21 +896,27 @@ public final class Broker: @unchecked Sendable {
         return Response(ok: true, values: [v.id: try versions.value(v.id) ?? ""])
     }
 
-    /// Puts a version back. If the item exists, its current value becomes a version first; if it was deleted,
-    /// it comes back with the settings it had.
+    /// Puts a version back. If the item exists, its current value becomes a version first and only the value changes:
+    /// its settings stay as they are now, so a restore can't quietly undo a later tightening. If it was deleted, it
+    /// comes back with the settings it had, which the approval names when they let agents read it.
     func restore(_ req: Request, peer: PeerInfo) throws -> Response {
         guard let v = try version(req), let value = try versions.value(v.id) else { return Response(ok: false, error: "no such version") }
         let exists = try store.info(v.item) != nil
         let when = v.savedAt.formatted(date: .abbreviated, time: .shortened)
-        let reason = exists ? "restore \(v.item) to its value from \(when), asked by \(Self.who(peer))"
-                            : "bring back \(v.item), deleted \(when), asked by \(Self.who(peer))"
+        let back = exists ? "restore \(v.item) to its value from \(when)"
+                          : "bring back \(v.item), deleted \(when)" + Self.settingChanges(agentSafe: v.agentSafe, kind: v.kind, from: nil)
+        let reason = "\(back), asked by \(Self.who(peer))"
         guard ask(.restore, [v.item], peer, req, reason).allowed else {
             log("restore", [v.item], "denied", peer, req)
             return Response(ok: false, error: "the restore was not approved")
         }
-        if exists { try keepCurrent(v.item, reason: .restored, by: Self.who(peer), unlessEqualTo: value) }
-        try store.save(name: v.item, value: value, kind: v.kind, agentSafe: v.agentSafe, note: v.note, usedIn: v.usedIn,
-                       service: v.service ?? "", fillSites: v.fillSites ?? [])
+        if exists {
+            try keepCurrent(v.item, reason: .restored, by: Self.who(peer), unlessEqualTo: value)
+            try store.save(name: v.item, value: value, kind: nil, agentSafe: nil, note: nil, usedIn: nil, service: nil, fillSites: nil)
+        } else {
+            try store.save(name: v.item, value: value, kind: v.kind, agentSafe: v.agentSafe, note: v.note, usedIn: v.usedIn,
+                           service: v.service ?? "", fillSites: v.fillSites ?? [])
+        }
         log("restore", [v.item], "approved (value from \(when))", peer, req)
         pruneVersions()
         return Response(ok: true)

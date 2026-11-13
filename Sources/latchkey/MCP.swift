@@ -230,9 +230,10 @@ final class MCPServer: @unchecked Sendable {
         guard let scope = args["environment"] as? String, RemoteLink.isValidScope(scope) else {
             throw RunError.usage("environment is required: PROJECT/ENV, such as shop/development")
         }
-        let file = args["file"] as? String ?? ".env.local"
+        let dir = try folder(args)
+        let file = try Self.inside(dir, args["file"] as? String ?? ".env.local")
         let cli = ["export", scope, "--out", file] + (args["replace"] as? Bool == true ? ["--replace"] : [])
-        let result = try latchkey(cli, in: try folder(args), timeout: 60, id: nil)
+        let result = try latchkey(cli, in: dir, timeout: 60, id: nil)
         guard result.code == 0 else { throw Self.failure(result) }
         let text = [result.stdout.text, result.stderr.text].filter { !$0.isEmpty }.joined(separator: "\n")
         return Self.toolResult(text, ["output": text])
@@ -321,6 +322,18 @@ final class MCPServer: @unchecked Sendable {
             throw RunError.usage("cwd must be an absolute path to a folder: \(given)")
         }
         return URL(fileURLWithPath: path).standardizedFileURL.path
+    }
+
+    /// A file path for the agent to write, resolved against `dir` and required to stay inside it, after following
+    /// symlinks in its folder: the export tool writes without asking the owner, so it may only write where the agent
+    /// is already working.
+    static func inside(_ dir: String, _ file: String) throws -> String {
+        guard !file.isEmpty, !file.hasPrefix("~") else { throw RunError.usage("file must be a path inside cwd: \(file)") }
+        let url = URL(fileURLWithPath: file, relativeTo: URL(fileURLWithPath: dir, isDirectory: true)).standardizedFileURL
+        let root = URL(fileURLWithPath: dir).resolvingSymlinksInPath().path
+        let parent = url.deletingLastPathComponent().resolvingSymlinksInPath().path
+        guard parent == root || parent.hasPrefix(root + "/") else { throw RunError.usage("file must be inside cwd: \(file)") }
+        return url.path
     }
 
     /// env_files, environments and files as `latchkey run` / `latchkey check` options.
@@ -467,11 +480,11 @@ final class MCPServer: @unchecked Sendable {
             "description": "Write an environment's env file from its Latchkey record, for a fresh checkout or worktree: latchkey:// references and plain settings such as PORT, never secret values. Run commands with it through latchkey_run (env_files). An existing file is left alone unless replace is true.",
             "inputSchema": ["type": "object", "required": ["environment"], "properties": [
                 "environment": ["type": "string", "description": "PROJECT/ENV, such as shop/development (see latchkey_project)."],
-                "file": ["type": "string", "description": "Where to write it, relative to cwd. Default .env.local."],
-                "replace": ["type": "boolean", "description": "Replace an existing file."],
+                "file": ["type": "string", "description": "Where to write it, relative to cwd and inside it. Default .env.local."],
+                "replace": ["type": "boolean", "description": "Replace an existing file inside cwd."],
                 "cwd": cwdProperty,
             ]],
-            "annotations": ["readOnlyHint": false, "destructiveHint": false, "openWorldHint": false],
+            "annotations": ["readOnlyHint": false, "destructiveHint": true, "openWorldHint": false],
         ],
         [
             "name": "latchkey_request_grant",

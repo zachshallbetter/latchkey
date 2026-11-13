@@ -60,3 +60,23 @@ final class RunTests: XCTestCase {
         XCTAssertEqual(calls, 0)
     }
 }
+
+/// The MCP export tool writes without asking the owner, so only inside the folder the agent works in.
+final class MCPExportPathTests: XCTestCase {
+    func testExportPathStaysInsideTheFolder() throws {
+        let fm = FileManager.default
+        let root = fm.temporaryDirectory.appendingPathComponent("latchkey-mcp-\(UUID().uuidString)")
+        let dir = root.appendingPathComponent("project"), outside = root.appendingPathComponent("outside")
+        try fm.createDirectory(at: dir.appendingPathComponent("sub"), withIntermediateDirectories: true)
+        try fm.createDirectory(at: outside, withIntermediateDirectories: true)
+        try fm.createSymbolicLink(at: dir.appendingPathComponent("link"), withDestinationURL: outside)
+        defer { try? fm.removeItem(at: root) }
+
+        XCTAssertEqual(try MCPServer.inside(dir.path, ".env.local"), dir.appendingPathComponent(".env.local").path)
+        XCTAssertNoThrow(try MCPServer.inside(dir.path, "sub/.env"))
+        XCTAssertNoThrow(try MCPServer.inside(dir.path, dir.appendingPathComponent(".env").path))
+        for escape in ["../outside/.env", outside.appendingPathComponent(".env").path, "link/.env", "~/.zshrc", "/etc/hosts", ""] {
+            XCTAssertThrowsError(try MCPServer.inside(dir.path, escape), escape)
+        }
+    }
+}

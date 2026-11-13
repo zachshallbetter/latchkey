@@ -96,8 +96,8 @@ Adds or changes an item. The value is read from standard input, or prompted for 
 
 Changes settings on many items with one approval. Values are untouched. `--service ""` clears the service.
 `--fill-sites vercel.com,app.netlify.com` sets the only sites Latchkey for Safari may fill the items on (each covers
-its subdomains; up to 20); `--fill-sites ""` goes back to the default, the item's service's own site and the
-deployment platforms.
+its subdomains; up to 20); `--fill-sites ""` goes back to the default, the item's service's own key page host and
+the deployment platforms' dashboards.
 
 ### `latchkey rm IDS|PATTERN...`
 
@@ -260,7 +260,7 @@ See [Importing](import.md) for how projects and environments are chosen, and how
 | Command | |
 |---|---|
 | `latchkey history ID` | Earlier values: when, why (replaced, deleted, replaced by a restore) and by whom. Never values. |
-| `latchkey restore ID [--version N]` | Put back version N (1 is the most recent), or bring back a deleted item with its settings. The current value is kept as a version first. Asks. |
+| `latchkey restore ID [--version N]` | Put back version N (1 is the most recent), or bring back a deleted item with its settings. Restoring an item that still exists changes only its value; its agent-safe, kind and fill-site settings stay as they are now. The current value is kept as a version first. Asks. |
 | `latchkey deleted` | Items deleted in the last 30 days, with days left. |
 | `latchkey forget IDS` | Delete earlier values for good. Asks. |
 
