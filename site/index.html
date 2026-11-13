@@ -558,9 +558,9 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
       <p class="intro">Values live in iCloud Keychain in an access group only the signed Latchkey app can read. The <code>lk</code> tool checks the app's signature before sending anything, the app reads each caller's identity from the kernel, and every release, change and refusal goes in a tamper-evident log. Latchkey is as precise about its limits.</p>
       </div>
       <div class="card-grid g3">
-        <div class="card"><span class="cico" aria-hidden="true"><i class="ic ic-export"></i></span><b>A released value is out of its hands</b><span>A command you allowed has the key, and Latchkey can't control what it does with it. <code>--proxy</code> is the exception, for OpenAI and Anthropic.</span></div>
-        <div class="card"><span class="cico" aria-hidden="true"><i class="ic ic-link"></i></span><b>A reference isn't permission</b><span>It names a secret; it doesn't grant access to it. Every read that isn't agent-safe or granted still asks.</span></div>
-        <div class="card"><span class="cico" aria-hidden="true"><i class="ic ic-hand"></i></span><b>Anything running as you can ask</b><span>Keep grants narrow and short, and deny requests you don't recognize.</span></div>
+        <div class="card"><span class="cico" aria-hidden="true"><i class="ic ic-export"></i></span><b>A released value is out of its hands</b><span>A command you allowed has the key, and Latchkey can't control what it does with it. <code>--proxy</code> is the exception, for OpenAI and Anthropic: the command gets a placeholder, never the key.</span></div>
+        <div class="card"><span class="cico" aria-hidden="true"><i class="ic ic-link"></i></span><b>A reference isn't permission</b><span>It names a secret; it doesn't grant access to it. A committed file of references gives away names, not values, and every read that isn't agent-safe or granted still asks.</span></div>
+        <div class="card"><span class="cico" aria-hidden="true"><i class="ic ic-hand"></i></span><b>Anything running as you can ask</b><span>Any program in your Mac account can ask, not only agents. The panel names who asked and from where; keep grants narrow and short, and deny what you don't recognize.</span></div>
       </div>
       <p style="margin-top:18px"><a class="more" href="security.html">The security model, trust boundaries and limits</a></p>
     </section>
@@ -625,8 +625,8 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
       </div>
       <ol class="card-grid g3" style="margin-top:16px">
         <li class="card"><span class="step">1</span><b>Download and install</b><span>Open the <a href="https://github.com/zachshallbetter/latchkey/releases/latest">latest disk image</a> and drag Latchkey to Applications, or run <code>brew tap zachshallbetter/latchkey</code>, <code>brew trust zachshallbetter/latchkey</code> and <code>brew install --cask latchkey</code>.</span></li>
-        <li class="card"><span class="step">2</span><b>Add the command-line tool</b><span>Open Latchkey and choose <b>Latchkey › Install Command Line Tool…</b> to add <code>latchkey</code> and <code>lk</code> to <code>~/.local/bin</code>.</span></li>
-        <li class="card"><span class="step">3</span><b>Check it</b><span>Run <code>lk status</code>. It should say <code>storage: iCloud Keychain</code>.</span></li>
+        <li class="card"><span class="step">2</span><b>Add the command-line tool</b><span>Open Latchkey and choose <b>Latchkey › Install Command Line Tool…</b> to add <code>latchkey</code> and <code>lk</code> to <code>~/.local/bin</code>. They link to the tool inside the app, so they update with it.</span></li>
+        <li class="card"><span class="step">3</span><b>Check it</b><span>Run <code>lk status</code>. Beside how you approve, your item and grant counts and the socket, it should say <code>storage: iCloud Keychain</code> and that the app's signature was checked.</span></li>
       </ol>
       <p class="note-card" style="margin-top:16px"><span class="avail pending">Development preview</span><span>Notarized by Apple and free. macOS 15 or later; Intel verification is pending; iCloud Keychain on for sync between Macs. <a href="developers/quickstart.html#install">Installation steps</a> · <a href="https://github.com/zachshallbetter/latchkey">Source</a> · <a href="developers/cli.html">Command reference</a></span></p>
     </section>

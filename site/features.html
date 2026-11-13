@@ -282,8 +282,10 @@ lk push shop/production --dry-run</pre><a class="more" href="developers/cli.html
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-sparkles"></i></span><h3>After an agent session <span class="avail">In this build</span></h3><p>Every key released to programs an agent started, from the access log, then a guided rotation that ends the grants covering them.</p>
           <pre>lk touched --since 4h --by claude
 lk rotate --touched --since 4h --by claude --open</pre><a class="more" href="developers/cli.html#rotating">Rotating</a></article>
-        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-pulse"></i></span><h3>Activity and the menu bar <span class="avail">In this build</span></h3><p>Every request in the app's Activity, with what asked and from where; the menu bar panel shows the latest and searches your items.</p><a class="more" href="index.html#app">The app</a></article>
-        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-gauge"></i></span><h3>Expiry and provider-side usage <span class="avail pending">Pending</span></h3><p>Latchkey records what it released, not what a service saw. Expiry dates, validity checks and provider-side usage aren't tracked yet.</p><a class="more" href="security.html#limits">Where protection ends</a></article>
+        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-pulse"></i></span><h3>Activity and the menu bar <span class="avail">In this build</span></h3><p>Every request in the app's Activity, with what asked and from where; the menu bar panel shows the latest and searches your items. The same log is in the terminal.</p>
+          <pre>lk log --limit 20</pre><a class="more" href="index.html#app">The app</a></article>
+        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-gauge"></i></span><h3>Expiry and provider-side usage <span class="avail pending">Pending</span></h3><p>Latchkey records what it released, not what a service saw. Expiry dates, validity checks and provider-side usage aren't tracked yet; until they are, a note on the item can carry the date.</p>
+          <pre>lk update shop/production/STRIPE_KEY --note "expires March 2027"</pre><a class="more" href="security.html#limits">Where protection ends</a></article>
       </div>
     </section>
     <section class="section group" id="pro" aria-labelledby="pro-title" data-hue="orange">

@@ -73,6 +73,7 @@
     "--json": ["Print JSON"],
     "--verify": ["Check that no entry was changed, removed or added"],
     "--limit": ["How many", "a number"],
+    "--note": ["Free text kept with the item", "text"],
     "--kind": ["token, password, key or value", "a kind"],
     "--agent-safe": ["Any program in your Mac account may request it without approval"]
   };
@@ -354,6 +355,35 @@
   document.addEventListener("focusout", function (e) { if (e.target === shown) hide(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") hide(); });
   window.addEventListener("scroll", hide, { passive: true });
+
+  // ---- Keep the last two words of a paragraph, list item, cell or caption together, so none ends with one word on a
+  // line of its own. A last word longer than 28 characters may still go alone, rather than push the line wider. Text in
+  // a block inside the element (a note under a table cell, a label beside a heading) is its own paragraph.
+  var measure = document.createElement("canvas").getContext("2d");
+  function ownBlock(node, el) {
+    for (var e = node.parentElement; e && e !== el; e = e.parentElement) if (!/^inline/.test(getComputedStyle(e).display)) return false;
+    return true;
+  }
+  document.querySelectorAll("main h1, main h2, main h3, main p, main li, main td, main dd, main figcaption, main summary, main .card > span, main small").forEach(function (el) {
+    if (el.closest("pre, .scene-wrap, .appwin, .term, .scene")) return;
+    var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), nodes = [], n;
+    while ((n = walker.nextNode())) if (ownBlock(n, el)) nodes.push(n);
+    var tail = 0;
+    for (var i = nodes.length - 1; i >= 0; i--) {
+      var t = nodes[i].data, end = t.length;
+      if (!tail) { end = t.replace(/\s+$/, "").length; if (!end) continue; }
+      var at = t.lastIndexOf(" ", end - 1);
+      if (at < 0 || (!tail && at === end - 1)) { tail += end; if (tail > 28) return; continue; }
+      if (tail + (end - at - 1) > 28) return;
+      // Two words held together must fit the element's width as laid out now, or they'd widen a narrow column (a
+      // table cell on a phone).
+      var cs = getComputedStyle(el), pair = t.slice(0, at).match(/\S*$/)[0] + " " + t.slice(at + 1, end) + "x".repeat(tail);
+      measure.font = cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
+      if (measure.measureText(pair).width > (el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)) * 0.9) return;
+      nodes[i].data = t.slice(0, at) + "\u00a0" + t.slice(at + 1);
+      return;
+    }
+  });
 
   // ---- Copy buttons. Copy only the block's own text.
   document.querySelectorAll("button.copy").forEach(function (btn) {

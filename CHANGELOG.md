@@ -23,6 +23,8 @@
 - Link records gain optional `tokenItem` and `team` fields; links saved before them decode unchanged.
 
 ### Website
+- Layout pass: no single words on their own line, card links and plan buttons line up across each row, availability
+  labels sit beside each card's symbol, and the lightest cards gained a real example or detail.
 - The app window on the home page and Features follows the app's current layout: sidebar with Review and the
   iCloud Keychain badge, a flat list with search, filters and the app's type icons, and the detail as cards with
   recent activity. One icon set, after the app's SF Symbols, gives every card, button and fact a symbol.

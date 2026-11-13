@@ -39,6 +39,8 @@
     .handling { margin: 12px 0 0; padding-left: 20px; color: var(--muted); }
     .handling li { margin: 0 0 10px; }
     .topic li { margin: 0 0 10px; max-width: 68ch; }
+    /* The service's name is three long words; at the page-title size each would sit on a line of its own beside the scene. */
+    .tm .page-hero h1 { font-size: clamp(34px, 3.8vw, 46px); }
     @media (max-width: 1000px) { .tm .page-hero { grid-template-columns: minmax(0, 1fr); } }
     @media (max-width: 860px) { .topic { grid-template-columns: minmax(0, 1fr); } }
   </style>
@@ -98,7 +100,7 @@
       <div class="shead"><h2 id="how-title">How it runs</h2></div>
       <ol class="card-grid g4">
         <li class="card"><span class="step">1</span><b>Agree scope</b><span>Which projects, Macs and deployment platforms, and how credentials are handled, in writing.</span></li>
-        <li class="card"><span class="step">2</span><b>Inventory</b><span>Dry runs on your team's Macs: names, counts and conflicts, never values.</span></li>
+        <li class="card"><span class="step">2</span><b>Inventory</b><span>Dry runs on your team's Macs: names, counts, duplicates and conflicts, never values.</span></li>
         <li class="card"><span class="step">3</span><b>Migrate</b><span>Imports with one approval per developer, references in place of values, projects and records set up.</span></li>
         <li class="card"><span class="step">4</span><b>Hand off</b><span>Procedures, onboarding, and a check that every project runs through Latchkey.</span></li>
       </ol>

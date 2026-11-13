@@ -31,6 +31,7 @@
     .plan { display: flex; flex-direction: column; padding: var(--card-pad); border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); min-width: 0;  box-shadow: var(--card-shadow);}
     .plan.feature-plan { --hue: var(--h-orange); border-color: var(--hue); box-shadow: 0 0 0 1px var(--hue) inset; background: linear-gradient(180deg, color-mix(in srgb, var(--hue) 9%, var(--surface)), var(--surface) 45%); }
     .plan.feature-plan .tier { color: var(--hue); }
+    .plan .cico { margin-bottom: 14px; }
     .plan .tier { font: 650 12.5px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
     .plan h2 { margin: 10px 0 2px; font-size: 22px; }
     .plan .price { margin: 10px 0 0; font: 700 34px/1.1 var(--display); letter-spacing: -0.02em; }
@@ -65,6 +66,9 @@
     @media (max-width: 760px) {
       .plans, .policy, .faq { grid-template-columns: minmax(0, 1fr); }
         .grid-table th, .grid-table td { padding: 10px 8px; }
+        .grid-table th { font-size: 11px; letter-spacing: .02em; }
+        .grid-table th:not(:first-child), .grid-table td:not(:first-child) { padding-left: 4px; padding-right: 4px; }
+        .grid-table td:first-child { font-size: 14px; }
     }
   </style>
 </head>
@@ -96,8 +100,9 @@
 
     <div class="plans section" style="--section:56px" aria-label="Plans">
       <article class="plan">
+        <span class="cico" aria-hidden="true"><i class="ic ic-download"></i></span>
         <span class="tier">Free</span>
-        <span class="cico" aria-hidden="true"><i class="ic ic-download"></i></span><h2>Latchkey</h2>
+        <h2>Latchkey</h2>
         <p class="price">$0</p>
         <p class="terms">Available now. Free for every developer, for good.</p>
         <ul>
@@ -107,11 +112,12 @@
           <li>The CLI and the MCP server</li>
           <li>Exporting references and your own values</li>
         </ul>
-        <div class="cta"><a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a><p class="fine">A free download, notarized by Apple.</p></div>
+        <div class="cta"><p class="fine">A free download, notarized by Apple.</p><a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></div>
       </article>
       <article class="plan feature-plan" id="pro">
+        <span class="cico" aria-hidden="true"><i class="ic ic-star"></i></span>
         <span class="tier">One-time purchase</span>
-        <span class="cico" aria-hidden="true"><i class="ic ic-star"></i></span><h2>Latchkey Pro</h2>
+        <h2>Latchkey Pro</h2>
         <p class="price">$79 <small>one time</small></p>
         <p class="terms">In the Mac App Store. No subscription; updates included.</p>
         <p class="what">Everything in Latchkey, plus:</p>
@@ -121,20 +127,22 @@
           <li><b>Rotation and lifecycle:</b> rotate keys and track when they expire</li>
           <li><b>Provider integrations:</b> work with your providers directly</li>
         </ul>
-        <div class="cta"><a class="button primary" href="mailto:latchkey@snackstud.io?subject=Latchkey%20Pro%20early%20access"><i class="ic ic-star" aria-hidden="true"></i>Request early access</a><p class="fine">Not on sale yet. We'll write when Pro is in the Mac App Store.</p></div>
+        <div class="cta"><p class="fine">Not on sale yet. We'll write when Pro is in the Mac App Store.</p><a class="button primary" href="mailto:latchkey@snackstud.io?subject=Latchkey%20Pro%20early%20access"><i class="ic ic-star" aria-hidden="true"></i>Request early access</a></div>
       </article>
       <article class="plan">
+        <span class="cico" aria-hidden="true"><i class="ic ic-people"></i></span>
         <span class="tier">Team subscription</span>
-        <span class="cico" aria-hidden="true"><i class="ic ic-people"></i></span><h2>Latchkey Teams</h2>
+        <h2>Latchkey Teams</h2>
         <p class="price">$15 <small>per user a month</small></p>
         <p class="terms">Billed yearly, when it's ready.</p>
+        <p class="what">Everything in Latchkey Pro, plus:</p>
         <ul>
           <li>Shared organizational environments</li>
           <li>Membership and roles</li>
           <li>Approval workflows and central evidence</li>
           <li>Managed team credentials</li>
         </ul>
-        <div class="cta"><a class="button secondary" href="teams.html#teams"><i class="ic ic-people" aria-hidden="true"></i>Become a design partner</a><p class="fine">In design. Teams needs substantial new engineering.</p></div>
+        <div class="cta"><p class="fine">In design. Teams needs substantial new engineering.</p><a class="button secondary" href="teams.html#teams"><i class="ic ic-people" aria-hidden="true"></i>Become a design partner</a></div>
       </article>
     </div>
     <p class="fine" style="margin-top:14px">Prices are planned, not current offers. Pro will be sold only through the Mac App Store, and no plan's features are promised by a date.</p>

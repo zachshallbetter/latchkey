@@ -41,6 +41,10 @@ light and dark:
 
 - One header (Features, How it works, Pricing, Security, Docs, and **Download free**) and one footer on every
   page; product pages end with the closing call-to-action band (`.cta-band`): **Download free** first, **See what Pro adds** second. Free leads every primary button; Pro is shown as planned until it is on sale.
+- No single word on a line of its own: text wraps `pretty`, and `site.js` holds each paragraph's, item's, cell's and
+  heading's last two words together where they fit. Cards in a row end level: a card's example and link sit at its foot,
+  its availability label sits beside its symbol, and plan notes sit above their buttons so the buttons line up. A card
+  much lighter than its neighbours gets a real example or detail, never filler.
 - One type scale and rhythm from `site.css`: page titles 56px, section titles 36px, topic titles 28px, card titles
   17.5px; sections are `.section` (104px apart, 72px on phones). Cards are `.card` in a `.card-grid` (`g2`, `g3`,
   `g4`, chosen so rows balance); wide copy-beside-example panels are `.band`. Pages compose these and don't restyle
