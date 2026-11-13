@@ -128,6 +128,7 @@ public final class Broker: @unchecked Sendable {
             case "project-unlink": return try unlinkProject(req, peer: peer)
             case "duplicates": return try duplicates(req, peer: peer)
             case "combine": return try combine(req, peer: peer)
+            case "scan": return try scan(req, peer: peer)
             default: return Response(ok: false, error: "unknown op \(req.op)")
             }
         } catch {
@@ -734,6 +735,28 @@ public final class Broker: @unchecked Sendable {
         return Response(ok: true, groups: groups, identifiers: identifiers)
     }
 
+    /// Which values found in files equal a stored item. Like `duplicates`, the comparison happens here: the caller sends
+    /// the values it found (`items`, each named by its position) and gets back only the IDs of the items they equal,
+    /// never a stored value. It asks every time, and agents can't ask.
+    func scan(_ req: Request, peer: PeerInfo) throws -> Response {
+        guard req.origin != "mcp" else { return Response(ok: false, error: "an agent can't compare values; ask the owner to run lk scan") }
+        guard !peer.isSafariExtension else { return Response(ok: false, error: "scanning files isn't available to Safari") }
+        let found = (req.items ?? []).filter { $0.value.count >= Duplicates.shortest && !$0.value.contains(References.scheme) }
+        let items = try store.list().filter { $0.kind.isSecret }
+        guard !found.isEmpty, !items.isEmpty else { return Response(ok: true, matches: [:]) }
+        let names = items.map(\.name)
+        guard ask(.compare, names, peer, req, "compare \(found.count) value\(found.count == 1 ? "" : "s") found in files with the values of \(Self.count(names)) (no stored value leaves Latchkey), asked by \(Self.describe(peer, req))").allowed else {
+            log("scan", [], "denied", peer, req)
+            return Response(ok: false, error: "scanning was not approved")
+        }
+        var byValue: [String: [String]] = [:]
+        for (id, value) in try store.values(names) where value.count >= Duplicates.shortest { byValue[value, default: []].append(id) }
+        var matches: [String: [String]] = [:]
+        for item in found { if let ids = byValue[item.value] { matches[item.name] = ids.sorted() } }
+        log("scan", Set(matches.values.joined()).sorted(), "approved (\(matches.count) of \(found.count) match)", peer, req)
+        return Response(ok: true, matches: matches)
+    }
+
     /// Makes items holding one value into one shared item, `into`: it's created from them (or must already hold the same
     /// value), the others are deleted (kept in Recently Deleted), and environment records follow. Files are the caller's
     /// to update, from `moved` and each item's `usedIn`, as after a move.
@@ -1236,7 +1259,7 @@ public final class Broker: @unchecked Sendable {
             "status", "list", "check", "verify-log", "log", "get", "set", "rm", "import", "grants", "grant", "revoke",
             "move", "update", "history", "deleted", "version", "restore", "forget", "links", "link", "unlink", "remote-status", "push",
             "environments", "environment-add", "environment-set", "environment-remove", "export", "projects", "project-link", "project-unlink",
-            "duplicates", "combine"
+            "duplicates", "combine", "scan"
         ])
         public static let safariExtension = Gate(identifier: CodeIdentity.safariExtensionIdentifier, ops: ["status", "list", "set", "fill"])
     }

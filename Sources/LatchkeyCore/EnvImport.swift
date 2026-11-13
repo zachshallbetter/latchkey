@@ -279,7 +279,7 @@ public enum EnvScan {
         return !skippedSuffixes.contains { lower.hasSuffix($0) }
     }
 
-    public static func files(under root: URL, depth: Int = 4) -> [String] {
+    public static func files(under root: URL, depth: Int = 4, matching isMatch: (String) -> Bool = isEnvFile) -> [String] {
         var out: [String] = []
         func walk(_ dir: URL, _ level: Int) {
             guard level <= depth,
@@ -290,7 +290,7 @@ public enum EnvScan {
                 let name = e.lastPathComponent
                 if values?.isDirectory == true {
                     if !skippedFolders.contains(name) && !(name.hasPrefix(".") && name != ".config") { walk(e, level + 1) }
-                } else if isEnvFile(name) {
+                } else if isMatch(name) {
                     out.append(e.path)
                 }
             }

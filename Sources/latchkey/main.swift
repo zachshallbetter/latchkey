@@ -86,6 +86,15 @@ Files refer to them as latchkey://ID.
       Make items holding one value into one shared item NAME (new, or already holding that value) with one approval,
       or into one item of the environment they're all in (ID), when one value has several names there.
       The others go to Recently Deleted; environments and the files each was imported from (and --file files) follow.
+  latchkey scan [DIR] [--json]    Find env files under DIR (default: here; not examples, not in node_modules, build or
+      .git folders) that still hold plain values: ones that equal a stored item, and ones that look secret (known
+      token prefixes, passwords, private keys, long values under names like *_TOKEN). Prints FILE:LINE and the item or
+      the reason, never a value, and exits 1 when anything is found. Values are compared inside Latchkey; it asks every
+      time, and agents can't ask.
+  latchkey scan --staged          The same for lines added to env files in the Git index (what a commit would add).
+  latchkey scan --install-hook [--force]
+      Write a Git pre-commit hook that runs `latchkey scan --staged` and refuses the commit on findings. An existing
+      hook not written by this command is left alone unless --force. Skip it once with `git commit --no-verify`.
   latchkey history ID             Earlier values of an item: when and by whom they were replaced. Never values.
   latchkey restore ID [--version N]
       Put back version N (1 = most recent) of ID, or bring back a deleted item. The current value
@@ -1038,6 +1047,115 @@ func duplicatesCommand(_ input: [String]) -> Never {
     exit(0)
 }
 
+// MARK: - scan
+
+/// Runs git in `folder`; nil unless it exits 0.
+func git(_ arguments: [String], in folder: String) -> Data? {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+    process.arguments = ["-C", folder] + arguments
+    let out = Pipe()
+    process.standardOutput = out
+    process.standardError = FileHandle.nullDevice
+    guard (try? process.run()) != nil else { return nil }
+    let data = out.fileHandleForReading.readDataToEndOfFile()
+    process.waitUntilExit()
+    return process.terminationStatus == 0 ? data : nil
+}
+
+/// Finds plain values in env files: those equal to a stored item (compared inside Latchkey, which returns only item IDs)
+/// and those that look secret. Prints positions and reasons, never values.
+func scanCommand(_ input: [String]) -> Never {
+    var dir: String?, staged = false, install = false, force = false, json = false
+    for arg in input {
+        switch arg {
+        case "--staged": staged = true
+        case "--install-hook": install = true
+        case "--force": force = true
+        case "--json": json = true
+        default:
+            guard !arg.hasPrefix("-") else { fail("unknown option \(arg)", code: 64) }
+            guard dir == nil else { fail("scan takes one folder", code: 64) }
+            dir = arg
+        }
+    }
+    if staged && install { fail("--staged and --install-hook don't go together", code: 64) }
+    if force && !install { fail("--force goes with --install-hook", code: 64) }
+    let root = URL(fileURLWithPath: ((dir ?? ".") as NSString).expandingTildeInPath).standardizedFileURL
+    var isDirectory: ObjCBool = false
+    guard FileManager.default.fileExists(atPath: root.path, isDirectory: &isDirectory), isDirectory.boolValue else { fail("no folder \(dir ?? ".")", code: 66) }
+
+    if install {
+        guard let hooks = git(["rev-parse", "--path-format=absolute", "--git-path", "hooks"], in: root.path).map({ String(decoding: $0, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines) }),
+              !hooks.isEmpty else { fail("\(Broker.tilde(root.path)) isn't in a Git repository", code: 66) }
+        let path = hooks + "/pre-commit"
+        if let existing = try? String(contentsOfFile: path, encoding: .utf8), !existing.contains(Scan.hookMarker), !force {
+            fail("\(Broker.tilde(path)) already exists and isn't Latchkey's; --force replaces it", code: 1)
+        }
+        do {
+            try FileManager.default.createDirectory(atPath: hooks, withIntermediateDirectories: true)
+            try EnvFile.writeAtomically(Scan.hook, to: path, mode: 0o755, replace: true)
+        } catch { fail("couldn't write \(Broker.tilde(path)): \(error.localizedDescription)", code: 73) }
+        print("installed \(Broker.tilde(path)): commits that add plain values to env files are refused (git commit --no-verify skips it once)")
+        exit(0)
+    }
+
+    var candidates: [Scan.Candidate] = []
+    if staged {
+        guard let top = git(["rev-parse", "--show-toplevel"], in: root.path).map({ String(decoding: $0, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines) }),
+              let diff = git(["diff", "--cached", "--unified=0", "--diff-filter=ACM", "--no-color", "--no-ext-diff", "--no-renames"], in: top) else {
+            fail("\(Broker.tilde(root.path)) isn't in a Git repository", code: 66)
+        }
+        for (path, lines) in Scan.addedLines(inDiff: String(decoding: diff, as: UTF8.self)).sorted(by: { $0.key < $1.key })
+        where Scan.isScannable((path as NSString).lastPathComponent) {
+            guard let blob = git(["show", ":" + path], in: top), let text = String(data: blob, encoding: .utf8) else { continue }
+            candidates += Scan.candidates(in: text, path: path, only: lines)
+        }
+    } else {
+        for path in EnvScan.files(under: root, depth: 8, matching: Scan.isScannable) {
+            guard let text = try? String(contentsOfFile: path, encoding: .utf8) else { continue }
+            let shown = path.hasPrefix(root.path + "/") ? String(path.dropFirst(root.path.count + 1)) : path
+            candidates += Scan.candidates(in: text, path: shown)
+        }
+    }
+
+    var matches: [String: [String]] = [:]
+    var note: String?
+    if !candidates.isEmpty {
+        let items = candidates.indices.map { ImportItem(name: String($0), value: candidates[$0].value) }
+        do {
+            let r = try call(Request(op: "scan", items: items))
+            if r.ok { matches = r.matches ?? [:] } else { note = r.error ?? "the app refused the request" }
+        } catch { note = "\(error)" }
+    }
+
+    struct Finding { var place: String, key: String, reason: String, items: [String] }
+    var findings: [Finding] = []
+    for (i, c) in candidates.enumerated() {
+        let place = "\(c.path):\(c.line)"
+        if let ids = matches[String(i)] {
+            findings.append(Finding(place: place, key: c.key, reason: "stored", items: ids))
+        } else if Scan.looksSecret(key: c.key, value: c.value) {
+            findings.append(Finding(place: place, key: c.key, reason: "looks-secret", items: []))
+        }
+    }
+    if json {
+        let rows: [[String: Any]] = findings.map { ["place": $0.place, "key": $0.key, "reason": $0.reason, "items": $0.items] }
+        print(String(decoding: try! JSONSerialization.data(withJSONObject: rows, options: [.prettyPrinted, .sortedKeys]), as: UTF8.self))
+    } else {
+        for f in findings {
+            print("\(f.place)  \(f.key)  " + (f.reason == "stored" ? "holds the value of \(f.items.joined(separator: ", "))" : "looks like a secret"))
+        }
+        if findings.isEmpty && note == nil { print(candidates.isEmpty ? "No plain values in env files." : "No plain values that match a stored item or look secret.") }
+        else if !findings.isEmpty { print("\(findings.count) plain value\(findings.count == 1 ? "" : "s") in env files. `latchkey import --rewrite FILE` moves them into Latchkey.") }
+    }
+    if let note {
+        FileHandle.standardError.write(Data("latchkey: couldn't compare with stored items (\(note)); only values that look secret were checked\n".utf8))
+        exit(1)
+    }
+    exit(findings.isEmpty ? 0 : 1)
+}
+
 /// Makes items holding one value into one shared item, then points references at it in the files each was imported
 /// from and in --file files.
 func combineCommand(_ input: [String]) -> Never {
@@ -1265,6 +1383,9 @@ case "duplicates":
 
 case "combine":
     combineCommand(args)
+
+case "scan":
+    scanCommand(args)
 
 case "env":
     envCommand(args)
