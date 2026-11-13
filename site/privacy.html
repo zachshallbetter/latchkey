@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Privacy · Latchkey</title>
+  <meta name="description" content="Latchkey collects nothing. There is no Latchkey server, account, telemetry or analytics; your values stay in your keychain and go only where you send them.">
+  <link rel="canonical" href="https://latchkey.snackstud.io/privacy.html">
+  <meta property="og:url" content="https://latchkey.snackstud.io/privacy.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:title" content="Privacy · Latchkey">
+  <meta property="og:description" content="Latchkey collects nothing. There is no Latchkey server, account, telemetry or analytics; your values stay in your keychain and go only where you send them.">
+  <meta name="twitter:card" content="summary">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site">
+    <nav class="top wrap" aria-label="Main">
+      <a class="brand" href="index.html"><img class="logo" src="logo.svg" alt="">Latchkey</a>
+      <ul>
+        <li><a href="features.html">Features</a></li>
+        <li><a href="index.html#how">How it works</a></li>
+        <li><a href="pricing.html">Pricing</a></li>
+        <li><a href="security.html">Security</a></li>
+        <li><a href="developers/index.html">Docs</a></li>
+        <li><a class="button primary" href="index.html#install">Install the preview</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main" class="wrap">
+    <article class="doc">
+      <p class="eyebrow">Privacy</p>
+      <h1>Privacy policy</h1>
+      <p class="lede">Latchkey collects nothing about you. There is no Latchkey server, account, telemetry, analytics or advertising. Snack Studio never receives your credentials or anything about how you use them.</p>
+      <p class="fine">Effective 12 November 2026. Applies to the Latchkey app, its command-line tool, MCP server and Safari extension, and to this website.</p>
+
+      <h2>What stays on your Macs</h2>
+      <ul>
+        <li><b>Your values</b> are kept in your keychain: iCloud Keychain, which syncs them end to end encrypted between your own Apple devices, or this Mac's login keychain. Apple can't read iCloud Keychain contents, and neither can we.</li>
+        <li><b>Item details, environment records, grants and the access log</b> are kept in your keychain and in Latchkey's folder on your Mac. They never leave it except through iCloud Keychain sync or an export you ask for.</li>
+        <li><b>Folders and files you choose</b> are remembered on your Mac so Latchkey can rewrite them later. Removing the permission forgets them.</li>
+      </ul>
+
+      <h2>When values leave your Mac</h2>
+      <p>Only when you, or a command you allowed, sends them:</p>
+      <ul>
+        <li><b>Commands you run</b> with <code>lk run</code> receive the values you approved, and do with them what they do.</li>
+        <li><b>Deployment platforms you push to</b> (Vercel, GitHub, Railway, Fly) receive the values you push, through their own command-line tools and your own sign-in to them. Their privacy policies apply.</li>
+        <li><b>The key proxy</b> forwards your requests to OpenAI or Anthropic with your key, when you run a command with <code>--proxy</code>.</li>
+        <li><b>Short-lived AWS credentials</b> are requested from AWS (<code>sts.amazonaws.com</code>) with your key, when you ask for them.</li>
+        <li><b>The Safari extension</b> fills or saves values on the pages you choose, after your approval.</li>
+        <li><b>The clipboard</b>: copied values stay on this Mac, are hidden from clipboard history apps, and are cleared after a short time.</li>
+      </ul>
+
+      <h2>Updates</h2>
+      <p>The copy of Latchkey downloaded from this site checks <code>https://latchkey.snackstud.io/appcast.xml</code> for new versions. That's a standard web request with Latchkey's version number; no system profile (hardware, operating system or usage details) is sent. Turn it off in Settings with <b>Check for updates automatically</b>, or check by hand with <b>Check for Updates…</b>. The Mac App Store version is updated by the App Store.</p>
+
+      <h2>Purchases</h2>
+      <p>Latchkey Pro will be sold by Apple through the Mac App Store; it isn't on sale yet. Apple processes the payment and tells the app, on your Mac, that Pro is unlocked; we receive Apple's standard sales reports, which don't identify you. <a href="https://www.apple.com/legal/privacy/">Apple's privacy policy</a> applies to the purchase.</p>
+
+      <h2>Crash reports</h2>
+      <p>If you share crash reports and analytics with app developers in macOS settings, Apple may pass us anonymous crash reports for Latchkey. They never contain your values.</p>
+
+      <h2>This website</h2>
+      <p>The site uses no cookies, analytics or third-party requests: fonts are your system's, and every script is served from this site. The host keeps standard request logs (address, page, time) for operating the site.</p>
+
+      <h2>Email</h2>
+      <p>If you write to <a href="mailto:latchkey@snackstud.io">latchkey@snackstud.io</a>, we keep the conversation to answer you and delete it when it's no longer needed. Never send a real secret.</p>
+
+      <h2>Children</h2>
+      <p>Latchkey is a developer tool and isn't directed at children.</p>
+
+      <h2>Changes and contact</h2>
+      <p>Changes to this policy are published on this page with a new effective date. Latchkey is made by Snack Studio. Questions: <a href="mailto:latchkey@snackstud.io">latchkey@snackstud.io</a>.</p>
+    </article>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
+      <ul>
+        <li><a href="features.html">Features</a></li>
+        <li><a href="pricing.html">Pricing</a></li>
+        <li><a href="teams.html">Teams</a></li>
+        <li><a href="security.html">Security</a></li>
+        <li><a href="roadmap.html">Roadmap</a></li>
+        <li><a href="developers/index.html">Docs</a></li>
+        <li><a href="developers/cli.html">CLI reference</a></li>
+        <li><a href="developers/agents.html">Agents and MCP</a></li>
+        <li><a href="developers/api.html">References and API</a></li>
+        <li><a href="support.html">Support</a></li>
+        <li><a href="privacy.html" aria-current="page">Privacy</a></li>
+        <li><a href="terms.html">Terms</a></li>
+      </ul>
+    </div>
+  </footer>
+  <script src="site.js"></script>
+  <script src="scenes.js"></script>
+</body>
+</html>

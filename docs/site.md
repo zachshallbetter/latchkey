@@ -1,20 +1,21 @@
 # The website
 
 The product site is static HTML in [`site/`](../site). There is no build step: what's in the folder is what is
-served. It isn't hosted or connected to any service yet.
+served. It's published at https://latchkey.snackstud.io from a Vercel project that never builds on push: deploys are manual (see Publishing below).
 
 | File | What it is |
 |---|---|
 | `index.html` | The home page, led by "Your projects move. Your secrets don't.": a hero scene of a reference reaching a command, then four numbered movements (importing an env file, bringing the environment to a fresh clone, a second Mac, an agent asking), each beside a scene; the interactive approval panel; the app window; rotation; the key proxy; integrations; security in brief; Latchkey Pro's planned pricing; three ways in; and the closing band with install. Its CSS is inline |
 | `features.html` | Capabilities in six groups (credentials, environments, devices, agents and tools, integrations, visibility), each with one example, an availability label and a link to its docs. Credentials opens with the working app window (`app-demo.js`); the other groups with scenes |
 | `roadmap.html` | What's built, what's next and what's out of scope, by tier. The items are written in the HTML (the script only filters them); mark one **Built** only when the docs describe it as shipped |
-| `pricing.html` | Plans modelled on Peel's: what stays free (storage, references, import, run, approvals, export), Latchkey Pro as a planned one-time license ($59 early, $79) with a year of updates, optional Pro Updates ($39 a year), Latchkey Teams ($15 per user a month, planned), a comparison marking planned rows, the update policy and short answers. Nothing is on sale; request buttons are disabled until a contact address is published |
+| `pricing.html` | Plans modelled on Peel's: what stays free (storage, references, import, run, approvals, export), Latchkey Pro as a planned one-time in-app purchase in the Mac App Store ($79, updates included, no subscription), Latchkey Teams ($15 per user a month, planned), a comparison marking planned rows, the purchase policy and short answers. Nothing is on sale; early-access requests go to latchkey@snackstud.io |
 | `teams.html` | Developer Credential Migration from Snack Studio (from $2,500, fixed scope) beside the inventory scene: deliverables, steps, credential handling beside the import scene, and limits; Latchkey Teams, looking for design partners |
 | `security.html` | What each mechanism protects and doesn't, from `docs/security.md` and `SECURITY.md`: a scene of a script asking directly (the panel's warning), the six distinctions, each topic beside its heading, and the delivery-path and guarantees tables, which become one block per row on phones |
 | `scenes.js` | The self-playing scenes: small drawings of Latchkey in use that play while on screen and start over. Each `.scene-wrap[data-scene]` names a script there; its HTML is the last frame in the landscape layout, which is what shows without scripts or with reduced motion. In a column narrower than 480px (a phone) each scene switches to its portrait layout in `PORTRAIT`, the same windows stacked in a canvas 360 wide so terminal text stays about 12px; motion is placed relative to the windows, so it works in both. Each has a pause button |
 | `site.css` | Shared styles: colour tokens (light and dark), header, footer, code blocks, the developer docs layout, feature rows, availability labels and the scenes |
 | `app-demo.js` | A working copy of the Latchkey window on the home page and Features, with example data: sidebar filters and counts, the project and environment tree, item detail, Activity and Grants. It listens for the approval scene's `lk:activity` and `lk:grant` events, and sends `lk:revoke` when a grant is revoked there. Showing a value or changing a setting goes through a Touch ID sheet, as in the app |
 | `site.js` | Copy buttons, and `lk` commands coloured by part (action, option, value, the program it runs) with an explanation of each on hover or focus. The explanations live in its `ACTIONS` and `FLAGS`; keep them in step with the CLI. On the home page each code block is one keyboard stop and the arrow keys move between parts; on the developer pages explanations are hover-only, since the tables there cover every option |
+| `privacy.html`, `terms.html`, `support.html` | The privacy policy, terms of use (the App Store EULA for store copies, FSL for the source) and support, linked from every footer. Keep the privacy policy in step with every network request the app or tool makes |
 | `logo.svg` | The mark, used in the header, the drawn approval panel and the favicon. Replace this one file to change the logo |
 | `apple-touch-icon.png` | 180×180, rendered from the app icon (`sips -s format png -z 180 180 …/AppIcon.icns`) |
 | `developers/` | Developer docs: overview, quickstart, CLI reference, agents and MCP, references and API. The Quickstart plays the import and run scenes, Agents and MCP the agent scene. Code wraps instead of scrolling, and tables become one labelled block per row on phones (each `td` carries `data-th`) |
@@ -75,18 +76,25 @@ belongs in both places. Every page shares the same header, sidebar and footer; c
 
 ## Before it goes live
 
-- A contact address for early-access, migration and design-partner requests (and security reports): it enables
-  the disabled request buttons on `pricing.html` and `teams.html`.
-- Pro's purchase channel, refund and restore terms, published on `pricing.html` before it goes on sale; and a
-  source license, so the source-available statement can name it.
-- A domain, then canonical URLs, absolute `@id` and `url` values in the JSON-LD (relative until then), `og:url`, an Open Graph image (the pages use a text-only `summary` card until then)
-  and a sitemap.
+- An Open Graph image (the pages use a text-only `summary` card until then).
 - Publish a signed and notarized release first (`scripts/release.sh`), then replace the **Preview status**
   actions and source installation instructions with the public download and Homebrew command.
 - The page says Apple silicon and Intel: try the release on an Intel Mac.
 - The pages say keys and environment records sync to every Mac: try clone, export and run on a second Mac, then
   remove the **Second-Mac test pending** labels from `index.html`, `features.html` and `security.html`.
-- Hosting, with deploys run on request rather than on every push.
+
+## Publishing
+
+The site is a Vercel project with its root directory set to the repository root; `vercel.json` serves `site/` as is,
+with no build, and turns off Git deployments, so pushes and merges never deploy. Publish from a clean checkout of
+`main`, on request:
+
+```bash
+vercel deploy --prod
+```
+
+Canonical URLs, `og:url`, the JSON-LD `@id` and `sitemap.xml` use https://latchkey.snackstud.io/; a new page
+needs its canonical link and a sitemap entry.
 
 ## Previewing
 

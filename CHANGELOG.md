@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Website
+- Privacy policy, terms and support pages, linked from every footer; canonical URLs and a sitemap for
+  latchkey.snackstud.io, published from Vercel on request only.
+- Pricing: Latchkey Pro is a one-time in-app purchase ($79) in the Mac App Store version, with updates included and
+  no subscription; the direct download stays free. Early-access, migration and design-partner requests go to
+  latchkey@snackstud.io.
+
+### Project
+- Source-available under the Functional Source License (FSL-1.1-ALv2); security reports can also go to
+  latchkey@snackstud.io.
+
 ## 0.2.1 (2026-11-12)
 
 ### Website
