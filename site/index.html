@@ -97,7 +97,7 @@
     .edition ul { margin: 4px 0 8px; padding-left: 1.1em; display: grid; gap: 8px; }
     .edition .button { margin-top: auto; align-self: flex-start; }
     @media (max-width: 760px) { .editions { grid-template-columns: minmax(0, 1fr); } }
-    .hero h1 { max-width: none; font-size: clamp(32px, 3.6vw, 48px); font-weight: 680; letter-spacing: -0.025em; line-height: 1.1; text-wrap: initial; }
+    .hero h1 { max-width: none; margin-bottom: 18px; font-size: clamp(32px, 3.6vw, 48px); font-weight: 680; letter-spacing: -0.025em; line-height: 1.1; text-wrap: initial; }
     .hero h1 .soft { display: block; color: var(--muted); }
     .home .eyebrow + h2 { margin-top: 0; }
     .home .col > p, .home .col li { max-width: 66ch; }
@@ -107,7 +107,7 @@
     .intro { font-size: 19px; color: var(--muted); }
     .lede { font-size: 19px; color: var(--muted); max-width: 62ch; }
     /* Hero: the pitch beside the scene on wide screens, so both fit the first screen; stacked below 1000px. */
-    .hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 32px 56px; align-items: center; padding-top: 48px; }
+    .hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 40px 72px; align-items: center; padding-top: 72px; }
     .hero-art { min-width: 0; }
     .hero .hero-scene { background: radial-gradient(45% 55% at 30% 40%, color-mix(in srgb, var(--h-blue) 20%, transparent), transparent 70%), radial-gradient(40% 50% at 75% 65%, color-mix(in srgb, var(--h-violet) 18%, transparent), transparent 70%), radial-gradient(30% 40% at 80% 15%, color-mix(in srgb, var(--h-teal) 14%, transparent), transparent 70%), var(--scene-wash); }
     @media (max-width: 1000px) {
@@ -115,9 +115,7 @@
       .hero h1 { max-width: none; }
       .hero-art { max-width: 720px; }
     }
-    .facts-row { display: flex; flex-wrap: wrap; gap: 8px 16px; list-style: none; margin: 28px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); }
-    .facts-row li { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--muted); }
-    .facts-row .ic { color: var(--accent); }
+    .hero-facts { margin: 18px 0 0; font-size: 14px; color: var(--muted); }
 
     .scene-cap { max-width: 70ch; margin-top: 12px; }
     .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin: 24px 0 8px; }
@@ -280,15 +278,12 @@
       <div class="hero-copy">
       <p class="eyebrow">A native Mac tool for developers</p>
       <h1 id="title">Your projects move. <span class="soft">Your secrets don't.</span></h1>
-      <p class="lede">Latchkey keeps development credentials in your Mac's iCloud Keychain and fills them in when a command starts: on every Mac you use, and for the coding agents you allow.</p>
+      <p class="lede">Development credentials live in your Mac's iCloud Keychain. Latchkey fills them in when a command starts.</p>
       <div class="cta">
         <a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
         <a class="button secondary" href="#how">See how it works</a>
       </div>
-      <p class="fine">Free and notarized by Apple. Pro will be a one-time purchase; <a href="#pro">see what it adds</a>.</p>
-      <ul class="facts-row" aria-label="At a glance">
-        <li><i class="ic ic-laptop" aria-hidden="true"></i>macOS 15 or later</li><li><i class="ic ic-terminal" aria-hidden="true"></i>CLI and MCP</li><li><i class="ic ic-ban" aria-hidden="true"></i>No account or server</li>
-      </ul>
+      <p class="hero-facts">Free · Notarized by Apple · macOS 15 or later</p>
       </div>
 
       <div class="hero-art">
@@ -310,7 +305,7 @@
           <span class="chip val">••••••••</span><span class="chip val">••••••••</span><span class="chip val">••••••••</span>
         </div>
       </div>
-      <p class="fine scene-cap"><b>Run the tools you already use.</b> Latchkey resolves references when a command starts. Your app still receives the environment variables it expects; you don't rewrite it around a new secrets API. The scenes on this site replay what Latchkey prints and shows, with example data.</p>
+      <p class="fine scene-cap">Your app gets the variables it expects; nothing is rewritten around a new secrets API. Example data.</p>
       </div>
     </section>
 

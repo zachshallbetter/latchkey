@@ -23,9 +23,8 @@
 - Link records gain optional `tokenItem` and `team` fields; links saved before them decode unchanged.
 
 ### Website
-- A quieter home page header: the title in one colour, its second sentence muted on its own line, a shorter
-  introduction, the Pro link folded into the note under the buttons, and the facts as a plain row. The social image
-  matches.
+- A quieter home page header: the title in one colour with its second sentence muted on its own line, a two-sentence
+  introduction, the buttons, and one line of facts; the scene's caption is one line. The social image matches.
 - A footer with the download and Product, Developers and Trust and help columns on every page, and a 404 page that
   shows what `lk get` prints for a name it doesn't have, with links onward.
 - Digital Presence Protocol pass: a social preview image and large card on every page, descriptions under 170
