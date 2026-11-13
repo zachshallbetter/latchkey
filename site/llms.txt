@@ -26,7 +26,8 @@
 - [Features](features.html)
 - [Security](security.html)
 - [Roadmap](roadmap.html)
-- [Pricing](pricing.html): free during the development preview; Latchkey Pro (the premium individual Mac tool) and Latchkey Teams (shared team environments) are planned, not on sale
+- [Pricing](pricing.html): free during the development preview; Latchkey Pro (the premium individual Mac tool, a planned one-time in-app purchase in the Mac App Store) and Latchkey Teams (shared team environments) are planned, not on sale
+- [Support](support.html), [Privacy](privacy.html) and [Terms](terms.html); contact latchkey@snackstud.io
 - [For teams](teams.html): Developer Credential Migration, a fixed-scope engagement from Snack Studio
 - [Developers overview](developers/index.html)
 - [Quickstart](developers/quickstart.html)

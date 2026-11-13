@@ -69,3 +69,9 @@ Codex CLI, Gemini CLI, Cursor and other tools that read Agent Skills can use the
 | [Website](docs/site.md) | The product site and developer docs in `site/` |
 | [Changelog](CHANGELOG.md) | What changed in each release |
 
+
+## License
+
+Latchkey is source-available under the [Functional Source License, Version 1.1, ALv2 Future License](LICENSE.md)
+(FSL-1.1-ALv2): you may use, change and share it for any purpose except a competing product, and each version
+becomes available under the Apache License 2.0 two years after its release. Copyright 2026 Snack Studio.
