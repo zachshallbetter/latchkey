@@ -11,7 +11,8 @@
   and in light mode.
 
 ### App
-- Quit from the Dock leaves Latchkey in the menu bar; Quit there (or in the app menu) quits it.
+- Closing the window or Quit from the Dock leaves Latchkey in the menu bar, without a Dock icon; Quit there (or in
+  the app menu) quits it.
 
 ### Fixes
 - The release checksum file names the disk image alone, so `shasum -a 256 -c` works next to a downloaded copy.

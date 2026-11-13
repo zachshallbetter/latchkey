@@ -44,8 +44,9 @@ struct LatchkeyApp: App {
         Window("Latchkey", id: "main") {
             MainWindow(model: model)
                 .frame(minWidth: 860, minHeight: 520)
-                // Back in the Dock whenever the window opens, after a Dock quit took it out.
+                // In the Dock while the window is open; closing it (or quitting from the Dock) leaves the menu bar icon.
                 .onAppear { NSApp.setActivationPolicy(.regular) }
+                .onDisappear { NSApp.setActivationPolicy(.accessory) }
         }
         .defaultSize(width: 1080, height: 680)
         // Open the window on every launch, even if it was closed when Latchkey last quit.
@@ -72,7 +73,7 @@ struct LatchkeyApp: App {
     }
 }
 
-/// Quit from the Dock closes the window and leaves Latchkey in the menu bar, still answering the command-line tool and
+/// Quit from the Dock closes the window, which leaves Latchkey in the menu bar, still answering the command-line tool and
 /// agents; Quit in the menu bar, the app menu, logging out and scripts quit it.
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
