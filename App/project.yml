@@ -8,11 +8,18 @@ options:
 packages:
   LatchkeyCore:
     path: ..
+  # Automatic updates for the direct download only; project.appstore.yml removes it.
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.10.1
 settings:
   base:
     DEVELOPMENT_TEAM: "PKH7G93GGD"
     MARKETING_VERSION: "0.2.1"
     CURRENT_PROJECT_VERSION: "3"
+    # Sparkle's EdDSA public key. The owner fills it after running Sparkle's `generate_keys` (the private half stays
+    # in the owner's login keychain). While it is empty the updater doesn't start, so builds still work.
+    SPARKLE_PUBLIC_KEY: ""
     SWIFT_VERSION: "5.0"
 targets:
   Latchkey:
@@ -22,6 +29,7 @@ targets:
     dependencies:
       - package: LatchkeyCore
         product: LatchkeyCore
+      - package: Sparkle
       - target: LatchkeySafari
     entitlements:
       path: Latchkey/Latchkey.entitlements
@@ -49,6 +57,10 @@ targets:
         LatchkeyAccessGroup: $(AppIdentifierPrefix)io.snackstud.latchkey
         LatchkeyPreviousAccessGroup: $(AppIdentifierPrefix)io.latchkey.shared
         LatchkeyAppGroup: $(TeamIdentifierPrefix)io.snackstud.latchkey
+        SUFeedURL: https://latchkey.snackstud.io/appcast.xml
+        SUPublicEDKey: $(SPARKLE_PUBLIC_KEY)
+        # Sparkle's system profile (OS, model, RAM) is never sent: an update check is the plain request and app version.
+        SUEnableSystemProfiling: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.snackstud.latchkey

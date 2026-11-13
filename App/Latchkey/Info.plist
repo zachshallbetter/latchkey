@@ -32,5 +32,11 @@
 	<string>$(AppIdentifierPrefix)io.latchkey.shared</string>
 	<key>NSHumanReadableCopyright</key>
 	<string></string>
+	<key>SUEnableSystemProfiling</key>
+	<false/>
+	<key>SUFeedURL</key>
+	<string>https://latchkey.snackstud.io/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>$(SPARKLE_PUBLIC_KEY)</string>
 </dict>
 </plist>

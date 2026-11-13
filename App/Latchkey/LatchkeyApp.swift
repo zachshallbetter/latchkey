@@ -39,6 +39,9 @@ struct LatchkeyApp: App {
 
     @State private var model: AppModel
     @NSApplicationDelegateAdaptor private var delegate: AppDelegate
+    #if !LATCHKEY_APP_STORE
+    private let updater = AppUpdater.shared
+    #endif
 
     var body: some Scene {
         Window("Latchkey", id: "main") {
@@ -53,6 +56,9 @@ struct LatchkeyApp: App {
         .defaultLaunchBehavior(.presented)
         .commands {
             CommandGroup(after: .appInfo) {
+                #if !LATCHKEY_APP_STORE
+                CheckForUpdatesButton(updater: updater)
+                #endif
                 Button("Install Command Line Tool…") { model.installCommandLineTool() }
             }
             CommandGroup(replacing: .newItem) {
