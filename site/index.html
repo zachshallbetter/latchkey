@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Latchkey: your projects move, your secrets don't</title>
-  <meta name="description" content="Latchkey keeps development credentials in your Mac's iCloud Keychain and reconnects them to the projects that need them. Restore an environment on another Mac, run commands with the right values, and let coding agents work through access you control.">
+  <meta name="description" content="Latchkey keeps development credentials in your Mac's iCloud Keychain and reconnects them to the projects that need them. Restore an environment on another Mac, run commands with the right values, and let coding agents work through access you control. Free to download; Pro will add more as a one-time purchase.">
   <link rel="canonical" href="https://latchkey.snackstud.io/">
   <meta property="og:url" content="https://latchkey.snackstud.io/">
   <meta property="og:type" content="website">
@@ -28,6 +28,12 @@
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "macOS 15 or later",
   "url": "https://latchkey.snackstud.io/",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD",
+    "url": "https://github.com/zachshallbetter/latchkey/releases/latest"
+  },
   "publisher": {
     "@type": "Organization",
     "name": "Snack Studio",
@@ -51,7 +57,15 @@
     .card code { font-size: .86em; }
     .card .price-line { font: 700 30px/1.1 var(--display); color: var(--ink); letter-spacing: -0.02em; margin: 4px 0 6px; }
     .card .price-line small { font: 500 14px var(--sans); color: var(--muted); letter-spacing: 0; }
-    .pro-actions { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; margin-top: 18px; }
+    .editions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .edition { display: flex; flex-direction: column; gap: 10px; }
+    .edition.pro { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+    .edition-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0; }
+    .edition-head b { font-size: 19px; }
+    .edition .fine { margin: 0; }
+    .edition ul { margin: 4px 0 8px; padding-left: 1.1em; display: grid; gap: 8px; }
+    .edition .button { margin-top: auto; align-self: flex-start; }
+    @media (max-width: 760px) { .editions { grid-template-columns: minmax(0, 1fr); } }
     .hero h1 { max-width: 16ch; }
     .home .eyebrow + h2 { margin-top: 0; }
     .home .col > p, .home .col li { max-width: 66ch; }
@@ -222,7 +236,7 @@
         <li><a href="pricing.html">Pricing</a></li>
         <li><a href="security.html">Security</a></li>
         <li><a href="developers/index.html">Docs</a></li>
-        <li><a class="button primary" href="index.html#install">Install the preview</a></li>
+        <li><a class="button primary" href="index.html#install">Download free</a></li>
       </ul>
     </nav>
   </header>
@@ -234,11 +248,11 @@
       <h1 id="title">Your projects move. Your secrets don't.</h1>
       <p class="lede">Latchkey keeps development credentials in your Mac's iCloud Keychain and reconnects them to the projects that need them. Restore an environment on another Mac, run commands with the right values, and let coding agents work through access you control.</p>
       <div class="cta">
-        <a class="button primary" href="pricing.html#pro">Get early access</a>
+        <a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest">Download free</a>
         <a class="button secondary" href="#how">See how it works</a>
-        <a href="#install">Install the preview</a>
+        <a href="#pro">What Pro adds</a>
       </div>
-      <p class="fine">For developers working across projects, machines and coding agents.</p>
+      <p class="fine">Free and notarized by Apple. The core stays free; Pro will be a one-time purchase.</p>
       <ul class="facts-row" aria-label="At a glance">
         <li>macOS 15 or later</li><li>iCloud Keychain</li><li>CLI and MCP</li><li>No account or server</li>
       </ul>
@@ -550,16 +564,36 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
 
     <section class="section" id="pro" aria-labelledby="pro-title">
       <div class="shead">
-        <p class="eyebrow">Latchkey Pro</p>
-        <h2 id="pro-title">Buy it once. Keep it.</h2>
-        <p>Latchkey Pro is planned as a one-time purchase in the Mac App Store for developers working across projects, Macs and agents, with updates included and no subscription. Storage, references, import, running commands, approvals and export stay free, and the direct download stays free.</p>
+        <p class="eyebrow">Free and Pro</p>
+        <h2 id="pro-title">Free for good. Pro when you want more.</h2>
+        <p>Everything above is free: in the direct download and in the Mac App Store version, with no account and no trial. Latchkey Pro adds four sets of tools on top, as a one-time in-app purchase in the Mac App Store, with updates included and no subscription.</p>
       </div>
-      <div class="card-grid g3">
-        <div class="card"><b>Latchkey Core</b><span class="price-line">$0</span><span>Everything Latchkey does today, in the free download and the Mac App Store version, for good.</span></div>
-        <div class="card"><b>Latchkey Pro</b><span class="price-line">$79 <small>one time</small></span><span>Agent controls, recovery and migration, rotation and lifecycle, and provider integrations. An in-app purchase in the Mac App Store.</span></div>
-        <div class="card"><b>No subscription</b><span class="price-line">Updates included</span><span>Updates arrive through the Mac App Store, and the purchase restores on your other Macs.</span></div>
+      <div class="editions">
+        <article class="card edition">
+          <p class="edition-head"><b>Latchkey</b><span class="price-line">Free</span></p>
+          <p class="fine">Available now, and it stays free.</p>
+          <ul>
+            <li>iCloud Keychain storage and <code>latchkey://</code> references</li>
+            <li>Env file import and <code>lk run</code></li>
+            <li>Approvals, grants and the security protections</li>
+            <li>The CLI, the MCP server and the header-injecting proxy</li>
+            <li>Exporting references and your own values</li>
+          </ul>
+          <a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest">Download free</a>
+        </article>
+        <article class="card edition pro">
+          <p class="edition-head"><b>Latchkey Pro</b><span class="price-line">$79 <small>one time</small></span></p>
+          <p class="fine"><span class="avail pending">Planned</span> Everything in Latchkey, plus:</p>
+          <ul>
+            <li><b>Agent controls:</b> provision credentials for agents and scope what each agent may use</li>
+            <li><b>Recovery and migration:</b> find and combine duplicates, relink moved projects, recover on a new Mac</li>
+            <li><b>Rotation and lifecycle:</b> rotation that follows your exports, expiry and validity, activity tools</li>
+            <li><b>Provider integrations:</b> push and pull with Vercel, GitHub, Railway and more</li>
+          </ul>
+          <a class="button secondary" href="pricing.html#pro">Get early access</a>
+        </article>
       </div>
-      <div class="pro-actions"><a class="button primary" href="pricing.html#pro">Get early access</a><a class="button secondary" href="pricing.html#compare">Compare editions</a><span class="fine">Proposed prices, not a live offer yet.</span></div>
+      <p class="fine" style="margin-top:14px">Pro isn't on sale yet; the price is proposed. <a href="pricing.html#compare">Compare editions</a></p>
     </section>
 
     <section class="section" id="paths" aria-labelledby="paths-title">
@@ -568,8 +602,8 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
       <h2 id="paths-title">Three ways in</h2>
       </div>
       <div class="card-grid g3">
-        <div class="card"><b>For developers</b><span>Latchkey is free during the development preview. Download it, or see what Latchkey Pro will add when it's ready.</span>
-          <p class="links"><a class="more" href="#install">Install the preview</a><br><a class="more" href="pricing.html">Plans and pricing</a></p></div>
+        <div class="card"><b>For developers</b><span>Latchkey is free to download and use. Start there, and see what Latchkey Pro will add when it's ready.</span>
+          <p class="links"><a class="more" href="#install">Download free</a><br><a class="more" href="pricing.html">Free and Pro</a></p></div>
         <div class="card"><b>For teams</b><span>Move a small team's credentials out of scattered env files with a fixed-scope migration from Snack Studio, and help shape Latchkey Teams.</span>
           <p class="links"><a class="more" href="teams.html">Developer Credential Migration</a><br><a class="more" href="teams.html#teams">Latchkey Teams</a></p></div>
         <div class="card"><b>For technical evaluators</b><span>Inspect how values are stored and released, where protection ends, every command, and what's built and what isn't.</span>
@@ -580,11 +614,11 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
     <section class="section" id="install" aria-labelledby="install-title">
       <div class="cta-band">
         <div>
-          <p class="eyebrow">Free during the development preview</p>
+          <p class="eyebrow">Free download</p>
           <h2 id="install-title">Stop being the credential courier.</h2>
-          <p>Keep your projects, credentials and coding agents working together, with access you can inspect and control. Download Latchkey free today; Pro comes later, in the Mac App Store.</p>
+          <p>Keep your projects, credentials and coding agents working together, with access you can inspect and control. Latchkey is free to download and use, and the core stays free. Pro will add more for a one-time price in the Mac App Store.</p>
         </div>
-        <div class="cta-actions"><a class="button primary" href="pricing.html#pro">Get early access</a><a class="button secondary" href="https://github.com/zachshallbetter/latchkey/releases/latest">Download for Mac</a></div>
+        <div class="cta-actions"><a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest">Download free</a><a class="button secondary" href="pricing.html#pro">See what Pro adds</a></div>
       </div>
       <ol class="card-grid g3" style="margin-top:16px">
         <li class="card"><span class="step">1</span><b>Download and install</b><span>Open the <a href="https://github.com/zachshallbetter/latchkey/releases/latest">latest disk image</a> and drag Latchkey to Applications, or run <code>brew tap zachshallbetter/latchkey</code>, <code>brew trust zachshallbetter/latchkey</code> and <code>brew install --cask latchkey</code>.</span></li>

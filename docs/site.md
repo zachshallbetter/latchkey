@@ -39,8 +39,8 @@ system's, so pages make no third-party requests.
 Every page keeps to these; they're what the layout passes checked, page by page, at 1440 and 375 pixels wide, in
 light and dark:
 
-- One header (Features, How it works, Pricing, Security, Docs, and **Install the preview**) and one footer on every
-  page; product pages end with the closing call-to-action band (`.cta-band`).
+- One header (Features, How it works, Pricing, Security, Docs, and **Download free**) and one footer on every
+  page; product pages end with the closing call-to-action band (`.cta-band`): **Download free** first, **See what Pro adds** second. Free leads every primary button; Pro is shown as planned until it is on sale.
 - One type scale and rhythm from `site.css`: page titles 56px, section titles 36px, topic titles 28px, card titles
   17.5px; sections are `.section` (104px apart, 72px on phones). Cards are `.card` in a `.card-grid` (`g2`, `g3`,
   `g4`, chosen so rows balance); wide copy-beside-example panels are `.band`. Pages compose these and don't restyle

@@ -23,6 +23,8 @@
 - Link records gain optional `tokenItem` and `team` fields; links saved before them decode unchanged.
 
 ### Website
+- Free leads: every primary button is **Download free**, the home page and Features show what Pro adds
+  (marked planned), and Pricing lists Pro's features in place of four labels.
 - Privacy policy, terms and support pages, linked from every footer; canonical URLs and a sitemap for
   latchkey.snackstud.io, published from Vercel on request only.
 - Pricing: Latchkey Pro is a one-time in-app purchase ($79) in the Mac App Store version, with updates included and
