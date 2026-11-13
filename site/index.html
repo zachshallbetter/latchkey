@@ -4,14 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Latchkey: your projects move, your secrets don't</title>
-  <meta name="description" content="Latchkey keeps development credentials in your Mac's iCloud Keychain and reconnects them to the projects that need them. Restore an environment on another Mac, run commands with the right values, and let coding agents work through access you control. Free to download; Pro will add more as a one-time purchase.">
+  <meta name="description" content="Latchkey keeps API keys, database URLs and key files in your Mac's iCloud Keychain and fills them in when a command starts. Free to download.">
   <link rel="canonical" href="https://latchkey.snackstud.io/">
   <meta property="og:url" content="https://latchkey.snackstud.io/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Latchkey">
+  <meta property="og:image" content="https://latchkey.snackstud.io/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Latchkey: your projects move, your secrets don't. A free Mac app that keeps development credentials in iCloud Keychain.">
   <meta property="og:title" content="Latchkey: your projects move, your secrets don't">
   <meta property="og:description" content="References in your files. Values in Keychain. A native Mac tool for developers working across projects, machines and coding agents.">
-  <meta name="twitter:card" content="summary">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
@@ -21,24 +25,50 @@
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "@id": "https://latchkey.snackstud.io/#latchkey",
-  "name": "Latchkey",
-  "description": "Latchkey keeps API keys, database URLs and key files in iCloud Keychain. Project files keep latchkey:// references, and the commands and coding agents you authorize get the values when they start.",
-  "applicationCategory": "DeveloperApplication",
-  "operatingSystem": "macOS 15 or later",
-  "url": "https://latchkey.snackstud.io/",
-  "offers": {
-    "@type": "Offer",
-    "price": "0",
-    "priceCurrency": "USD",
-    "url": "https://github.com/zachshallbetter/latchkey/releases/latest"
-  },
-  "publisher": {
-    "@type": "Organization",
-    "name": "Snack Studio",
-    "url": "https://www.snackstud.io"
-  }
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://latchkey.snackstud.io/#snack-studio",
+      "name": "Snack Studio",
+      "url": "https://www.snackstud.io",
+      "email": "latchkey@snackstud.io"
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://latchkey.snackstud.io/#website",
+      "name": "Latchkey",
+      "url": "https://latchkey.snackstud.io/",
+      "inLanguage": "en",
+      "publisher": {
+        "@id": "https://latchkey.snackstud.io/#snack-studio"
+      }
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://latchkey.snackstud.io/#latchkey",
+      "name": "Latchkey",
+      "description": "Latchkey keeps API keys, database URLs and key files in iCloud Keychain. Project files keep latchkey:// references, and the commands and coding agents you authorize get the values when they start.",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "macOS 15 or later",
+      "url": "https://latchkey.snackstud.io/",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "url": "https://github.com/zachshallbetter/latchkey/releases/latest"
+      },
+      "publisher": {
+        "@id": "https://latchkey.snackstud.io/#snack-studio"
+      },
+      "isAccessibleForFree": true,
+      "license": "https://fsl.software/",
+      "downloadUrl": "https://github.com/zachshallbetter/latchkey/releases/latest",
+      "sameAs": [
+        "https://github.com/zachshallbetter/latchkey"
+      ],
+      "image": "https://latchkey.snackstud.io/og.png"
+    }
+  ]
 }
   </script>
   <script>document.documentElement.classList.add("js")</script>
@@ -641,6 +671,7 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
         <li><a href="teams.html">Teams</a></li>
         <li><a href="security.html">Security</a></li>
         <li><a href="roadmap.html">Roadmap</a></li>
+        <li><a href="https://github.com/zachshallbetter/latchkey/blob/main/CHANGELOG.md">Changelog</a></li>
         <li><a href="developers/index.html">Docs</a></li>
         <li><a href="developers/cli.html">CLI reference</a></li>
         <li><a href="developers/agents.html">Agents and MCP</a></li>

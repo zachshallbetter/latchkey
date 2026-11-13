@@ -16,6 +16,8 @@ served. It's published at https://latchkey.snackstud.io from a Vercel project th
 | `app-demo.js` | A working copy of the Latchkey window on the home page and Features, laid out as the app is, with example data: the sidebar (All Items, Review, Activity, projects, services, Grants, Recently Deleted, the iCloud Keychain badge), a flat list of two-line rows with search and Type and Environment filters, and the item's detail as cards (value, reference, type, access, service, project, environment, note, location, history, recent activity). Row icons and colours follow the app's `ItemType` in `App/Latchkey/Style.swift`; keep them in step. It listens for the approval scene's `lk:activity` and `lk:grant` events, and sends `lk:revoke` when a grant is revoked there. Showing or copying a value and changing access go through a Touch ID sheet, as in the app |
 | `site.js` | Copy buttons, and every code block coloured by part with an explanation of each on hover or focus: `lk` commands (action, option, value, the program it runs) and their synopses' placeholders, the other programs beside them (`SHELL`), env files and references, JSON fields (`JSONKEYS`), the agent note and the architecture diagram. Only the scenes and the home page's live demos are left alone. The explanations live in its `ACTIONS`, `FLAGS` and `ACTION_FLAGS`; keep them in step with the CLI and the API. On the home page each code block is one keyboard stop and the arrow keys move between parts; on the developer pages explanations are hover-only, since the tables there cover every option |
 | `privacy.html`, `terms.html`, `support.html` | The privacy policy, terms of use (the App Store EULA for store copies, FSL for the source) and support, linked from every footer. Keep the privacy policy in step with every network request the app or tool makes |
+| `404.html` | The page for a missing path: `noindex`, links to Home, Features and Docs, and root-absolute links |
+| `og.png` | The social preview for every page, 1200×630, rendered from `scripts/og-image.html` |
 | `logo.svg` | The mark, used in the header, the drawn approval panel and the favicon. Replace this one file to change the logo |
 | `apple-touch-icon.png` | 180×180, rendered from the app icon (`sips -s format png -z 180 180 …/AppIcon.icns`) |
 | `developers/` | Developer docs: overview, quickstart, CLI reference, agents and MCP, references and API. The Quickstart plays the import and run scenes, Agents and MCP the agent scene. Code wraps instead of scrolling, and tables become one labelled block per row on phones (each `td` carries `data-th`) |
@@ -67,7 +69,15 @@ light and dark:
 The pages were audited against the Digital Presence Protocol (DPP 0.3.0, working draft): content is in the HTML
 without scripts, scenes say they use example data, the product description matches across pages and `llms.txt`,
 security claims that rest on Apple link to Apple's documentation, and JSON-LD only states what the page shows
-(no offers or ratings). Keep those true when pages change.
+(no ratings, and the only offer is the free download). Keep those true when pages change. [presence.md](presence.md)
+holds the records the protocol asks for: the entities, every public claim with its evidence and the surfaces that
+carry it, the surface list with correction routes, the access checks, and the metrics and query panel, none of which
+has data yet. A claim that changes is corrected everywhere that table lists it, and noted in `CHANGELOG.md`.
+
+Every page has a title, a description under about 170 characters, a canonical link, the Open Graph image
+(`og.png`, rendered from `scripts/og-image.html` by headless Chrome at 1200×630) and a `summary_large_image` card.
+The home page's JSON-LD is one graph (Snack Studio, the website, the app); every other page has breadcrumbs. Support
+has the route for reporting a mistake on the site.
 
 Scenes and demos show only what Latchkey prints and shows. Terminal output in `scenes.js` and the home page's script
 is copied from the `print` calls in `Sources/latchkey` (and panel wording from `App/Latchkey/ApprovalPanel.swift`);
@@ -80,7 +90,6 @@ belongs in both places. Every page shares the same header, sidebar and footer; c
 
 ## Before it goes live
 
-- An Open Graph image (the pages use a text-only `summary` card until then).
 - The page says Apple silicon and Intel: try the release on an Intel Mac.
 - The pages say keys and environment records sync to every Mac: try clone, export and run on a second Mac, then
   remove the **Second-Mac test pending** labels from `index.html`, `features.html` and `security.html`.
@@ -95,8 +104,16 @@ with no build, and turns off Git deployments, so pushes and merges never deploy.
 vercel deploy --prod
 ```
 
+Before publishing, regenerate the sitemap so each page's date is its last change:
+
+```bash
+python3 scripts/sitemap.py
+```
+
 Canonical URLs, `og:url`, the JSON-LD `@id` and `sitemap.xml` use https://latchkey.snackstud.io/; a new page
-needs its canonical link and a sitemap entry.
+needs its canonical link (the sitemap script picks it up). After a publish, fetch each sitemap URL and record the
+result in [presence.md](presence.md); that's the first production observation. `404.html` is served for missing
+paths at any depth, so unlike every other page its links start at `/`.
 
 ## Previewing
 

@@ -23,6 +23,11 @@
 - Link records gain optional `tokenItem` and `team` fields; links saved before them decode unchanged.
 
 ### Website
+- Digital Presence Protocol pass: a social preview image and large card on every page, descriptions under 170
+  characters, breadcrumbs on every page and one organization, website and app graph on the home page, a sitemap with
+  each page's last change (`scripts/sitemap.py`), a 404 page, a route for reporting mistakes and a changelog link in
+  every footer. `docs/presence.md` records the entities, claims and their evidence, surfaces, access checks, and the
+  metrics and query panel still to run. Pricing no longer says the source "will be" available: it is.
 - Layout pass: no single words on their own line, card links and plan buttons line up across each row, availability
   labels sit beside each card's symbol, and the lightest cards gained a real example or detail.
 - The app window on the home page and Features follows the app's current layout: sidebar with Review and the
