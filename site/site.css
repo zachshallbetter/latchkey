@@ -120,6 +120,11 @@ button.copy[data-done] { color: var(--ok); border-color: var(--ok); }
 .t-val { color: var(--t-val); }
 .t-sep, .t-child, .t-comment { color: var(--t-dim); }
 .t-child { color: inherit; }
+.t-key { color: var(--t-flag); }
+.t-ref { color: var(--t-act); }
+.t-str { color: var(--t-val); }
+.t-punct { color: var(--t-dim); }
+.t-ph { color: var(--t-val); font-style: italic; }
 .tok-tip { position: absolute; z-index: 20; max-width: 300px; padding: 7px 10px; border-radius: 8px; background: var(--ink);
            color: var(--bg); font: 500 13px/1.4 var(--sans); box-shadow: var(--shadow); pointer-events: none; }
 
