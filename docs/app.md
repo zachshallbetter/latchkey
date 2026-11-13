@@ -167,6 +167,12 @@ Closing the window, or Quit from the Dock, leaves Latchkey in the menu bar witho
 tool and agents keep working; **Open Latchkey** brings the window and the Dock icon back. To quit for real, use **Quit** in the menu bar
 or **Latchkey › Quit Latchkey**.
 
+## The Help menu
+
+**Help** has **Latchkey Help** (the support page), **Privacy Policy**, **Terms of Use** and **Report a Security
+Issue**, which opens a message to latchkey@snackstud.io with the subject "Security". The first three open
+latchkey.snackstud.io in your browser.
+
 ## Settings
 
 - **Storage**: where values are kept, and **Move to iCloud Keychain** for items saved before the app was signed.

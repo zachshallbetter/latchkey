@@ -118,8 +118,8 @@ needs its own test. The first IPC fixture exceeded the UNIX socket path-length l
 name fixed the fixture. Preserve that limit in the final transport design.
 
 [The recorded report](evidence/app-store/2026-11-11-component-probes.json) lists what was and was not tested.
-The built-bundle preflight currently reports the Safari bundle's missing privacy manifest, which belongs to the
-extension integration. Every full-functionality gate in readiness.json remains pending.
+The built-bundle preflight passes for the Safari bundle's privacy manifest. Every full-functionality gate in
+readiness.json remains pending.
 
 ## Terminal execution and broker transport
 
@@ -173,13 +173,15 @@ SSH, real approval UI and vault, packaging and TestFlight remain pending.
 | Remote pushes | Current `ProcessRunner` discovers Homebrew/mise tools and their sign-ins outside the app container. Plan native provider APIs and authentication, or establish a reviewable supported boundary; do not secretly delegate around the sandbox. Test all four providers and production confirmation. |
 | File access | In a signed sandbox build, read an explicitly selected env file, grant its parent, rewrite it, restart, restore permissions, move references, disconnect/reconnect a volume, and remove permission. Verify an unselected folder remains inaccessible. |
 | Migration and sync | Preserve item identity and access groups; handle the old Application Support log and preferences, old login-keychain items and history without silently falling back to a second empty vault. Test both directions on a separate Mac. |
-| Safari | The extension owner integrates and validates its signing, App Group transport, resource membership and privacy manifest with the chosen final store target. Do not copy the direct app's entitlements into the extension. |
+| Safari | Source side done: the extension has its own privacy manifest (`App/Privacy/Safari/PrivacyInfo.xcprivacy`: no tracking, no collected data, no required-reason API) in its resources, and its overlay entitlements are the sandbox plus the App Group only. Still to prove on a signed build: App Group transport to the sandboxed app, enabling it in Safari, and an end-to-end save and fill. Do not copy the direct app's entitlements into the extension. |
 | Clean-machine review | Full flow on a clean Mac via Apple Distribution/TestFlight, no development entitlements or pre-existing file grants, usable without Touch ID hardware, no hidden prerequisites or unsupported installer. |
 
 ## Privacy, export compliance and listing
 
-The draft state lives in `packaging/app-store/readiness.json`. Support/privacy URLs, review contact confirmation,
-export classification, screenshots and reviewer steps remain to be completed. There is no upload command in this
+The draft state lives in `packaging/app-store/readiness.json`. The support, privacy and marketing URLs are recorded
+(the app's Help menu links the first two and the terms); review contact confirmation, export classification and
+screenshots remain to be completed. Listing text drafts (name, subtitle, promotional text, description, keywords,
+what's new and reviewer notes) are in `packaging/app-store/listing.md`. There is no upload command in this
 preparation tooling.
 
 The privacy inventory is specific to Latchkey:
@@ -191,7 +193,7 @@ The privacy inventory is specific to Latchkey:
   mobile platforms; keep the macOS inventory truthful without assuming every mobile upload rule applies unchanged.
 - No telemetry, ads or developer-operated data backend is present. Explain iCloud Keychain and user-requested
   provider traffic in the public privacy policy. Confirm the final data-flow inventory before publishing privacy
-  labels; the Safari bundle has its own inventory and owner.
+  labels. The Safari bundle's inventory is empty: it only relays messages to the app over the App Group socket.
 - Review encryption export compliance for **this** app, including Security/CryptoKit, STS signing and networking.
   Peel's owner-approved answer does not establish Latchkey's classification. The experiment does not set
   `ITSAppUsesNonExemptEncryption` prematurely.

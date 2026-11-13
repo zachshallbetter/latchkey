@@ -62,6 +62,9 @@
   automatically** in Settings. It reads https://latchkey.snackstud.io/appcast.xml and sends no system profile. The
   App Store build has no updater. `scripts/release.sh` signs the disk image and writes `site/appcast.xml` when
   Sparkle's `sign_update` and key are available.
+- **Help** menu: Latchkey Help, Privacy Policy, Terms of Use and Report a Security Issue.
+- App Store build: Latchkey for Safari carries its own privacy manifest (no tracking, no data collected, no
+  required-reason API), and `packaging/app-store/listing.md` drafts the store listing.
 
 ## 0.2.1 (2026-11-12)
 
