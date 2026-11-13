@@ -5,7 +5,6 @@ import AppKit
 public enum Clipboard {
     public static let concealed = NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType")
     public static let transient = NSPasteboard.PasteboardType("org.nspasteboard.TransientType")
-    public static let clearAfter: TimeInterval = 60
 
     /// Replaces the clipboard with `text`. Without `.currentHostOnly`, Universal Clipboard hands it to the owner's other
     /// devices. Returns the change count to give `clear(ifUnchangedSince:)`.

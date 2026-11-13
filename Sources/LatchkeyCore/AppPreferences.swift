@@ -17,9 +17,12 @@ public struct AppPreferences {
 
     public init(defaults: UserDefaults = .standard) { self.defaults = defaults }
 
-    public var clipboardSeconds: Int {
-        let value = defaults.integer(forKey: Key.clipboardSeconds)
-        return Self.clipboardChoices.contains(value) ? value : Self.defaultClipboardSeconds
+    public var clipboardSeconds: Int { Self.clipboardSeconds(defaults.integer(forKey: Key.clipboardSeconds)) }
+
+    /// A clipboard delay as given (a preference, or a request's `clearAfter`), or the default when it isn't a choice.
+    public static func clipboardSeconds(_ value: Int?) -> Int {
+        guard let value, clipboardChoices.contains(value) else { return defaultClipboardSeconds }
+        return value
     }
     public var revealSeconds: Int {
         let value = defaults.integer(forKey: Key.revealSeconds)

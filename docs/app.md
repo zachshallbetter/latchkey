@@ -77,8 +77,10 @@ Deleting always asks first. Kind has no shortcut; it's in both menus.
 
 ### An item's detail
 
-- **Value**: hidden. The eye shows it for 30 seconds by default (configurable in Settings); the copy button copies it to this Mac's clipboard only (not
-  to your other devices through Universal Clipboard), marks it so clipboard managers skip it, and clears it after the configured delay (60 seconds by default). Both ask unless the item is agent-safe.
+- **Value**: hidden. The eye shows it for 30 seconds (Settings › Privacy & Approval changes this); the copy button
+  copies it to this Mac's clipboard only (not to your other devices through Universal Clipboard), marks it so clipboard
+  managers skip it, and clears it after the chosen delay, 60 seconds unless changed. Both ask unless the item is
+  agent-safe.
 - **Reference**: the `latchkey://` text to paste into a file.
 - The header shows the item's project, environment and service. **Edit** offers **Change Value…**, **Edit
   Details…** (kind, access, service, note and Safari fill sites, saved together with one Touch ID), **Move…**,
@@ -104,8 +106,8 @@ service.
 
 **Copy Environment as .env…** puts the environment on the clipboard as an env block for a dashboard that takes a pasted
 one (Vercel, Railway, Netlify, Render). It asks every time, naming the environment and that the values go to the
-clipboard. The copy stays on this Mac, is marked so clipboard managers skip it, and clears after the configured delay (60 seconds by default) if nothing
-else is copied. The access log says "copied to the clipboard", never the values. Agents can't do this.
+clipboard, and when it clears. The copy stays on this Mac, is marked so clipboard managers skip it, and clears after
+the chosen delay (60 seconds unless changed) if nothing else is copied. The access log says "copied to the clipboard", never the values. Agents can't do this.
 
 ### Adding and importing
 

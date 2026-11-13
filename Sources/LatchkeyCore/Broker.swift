@@ -706,7 +706,7 @@ public final class Broker: @unchecked Sendable {
         let dest = req.destination ?? ""
         let reason: String
         if clipboard {
-            reason = "copy \(Self.count(names))\(scope) to the clipboard in plain text, for this Mac only and cleared after \(Int(Clipboard.clearAfter)) seconds, asked by \(Self.describe(peer, req))"
+            reason = "copy \(Self.count(names))\(scope) to the clipboard in plain text, for this Mac only and cleared after \(AppPreferences.clipboardSeconds(req.clearAfter)) seconds, asked by \(Self.describe(peer, req))"
         } else {
             let place = peer.isSSHForward ? "\(dest) on another computer" : Self.tilde(dest)
             reason = "write \(Self.count(names))\(scope) in plain text to \(place), asked by \(Self.describe(peer, req))"

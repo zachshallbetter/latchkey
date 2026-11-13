@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### In-app settings
+- Settings now lives in the main window, with General, Privacy & Approval, Storage & File Access, Developer Tools,
+  Membership, and About & Updates sections. Sidebar, menu bar, Command-comma and upgrade actions share it.
+- Appearance, clipboard and reveal timers, hiding values when Latchkey loses focus, and Dock quit behaviour are
+  saved on this Mac. Copying an environment names the chosen clear time in its approval; `lk export --clipboard`
+  keeps 60 seconds. A value approved while Latchkey isn't in front is hidden with a notice. Authorization is
+  unchanged.
+- Membership shows verified one-time App Store ownership and the App Store price, with Buy, Restore Purchases,
+  availability checks and purchase support links.
+
 ### Security
 - An approval now names every change to who may read an item without asking, or to whether it's treated as a secret:
   `set` (including one with no value) and `import --replace` say "let agents read ... without approval" or "make it
@@ -16,13 +26,6 @@
   dashboard.heroku.com, railway.com), not every subdomain of railway.app, google.com or amazon.com.
 
 ## 0.3.0 (2026-11-13)
-
-### In-app settings
-- Settings now lives in the main window, with General, Privacy & Approval, Storage & File Access, Developer Tools,
-  Membership, and About & Updates sections. Sidebar, menu bar, Command-comma and upgrade actions share it.
-- Appearance, clipboard/reveal timers, hide-on-focus-loss and Dock quit behavior are saved locally. Authorization
-  remains unchanged; the Membership screen uses verified one-time App Store ownership and pricing, with restore
-  and availability controls and purchase support links.
 
 ### Latchkey Pro
 - Mac App Store version: Latchkey Pro as a one-time in-app purchase (`io.snackstud.latchkey.pro`), checked with
