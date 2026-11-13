@@ -23,6 +23,8 @@
 - Link records gain optional `tokenItem` and `team` fields; links saved before them decode unchanged.
 
 ### Website
+- A footer with the download and Product, Developers and Trust and help columns on every page, and a 404 page that
+  shows what `lk get` prints for a name it doesn't have, with links onward.
 - Digital Presence Protocol pass: a social preview image and large card on every page, descriptions under 170
   characters, breadcrumbs on every page and one organization, website and app graph on the home page, a sitemap with
   each page's last change (`scripts/sitemap.py`), a 404 page, a route for reporting mistakes and a changelog link in

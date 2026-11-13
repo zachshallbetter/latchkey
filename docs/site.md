@@ -16,7 +16,7 @@ served. It's published at https://latchkey.snackstud.io from a Vercel project th
 | `app-demo.js` | A working copy of the Latchkey window on the home page and Features, laid out as the app is, with example data: the sidebar (All Items, Review, Activity, projects, services, Grants, Recently Deleted, the iCloud Keychain badge), a flat list of two-line rows with search and Type and Environment filters, and the item's detail as cards (value, reference, type, access, service, project, environment, note, location, history, recent activity). Row icons and colours follow the app's `ItemType` in `App/Latchkey/Style.swift`; keep them in step. It listens for the approval scene's `lk:activity` and `lk:grant` events, and sends `lk:revoke` when a grant is revoked there. Showing or copying a value and changing access go through a Touch ID sheet, as in the app |
 | `site.js` | Copy buttons, and every code block coloured by part with an explanation of each on hover or focus: `lk` commands (action, option, value, the program it runs) and their synopses' placeholders, the other programs beside them (`SHELL`), env files and references, JSON fields (`JSONKEYS`), the agent note and the architecture diagram. Only the scenes and the home page's live demos are left alone. The explanations live in its `ACTIONS`, `FLAGS` and `ACTION_FLAGS`; keep them in step with the CLI and the API. On the home page each code block is one keyboard stop and the arrow keys move between parts; on the developer pages explanations are hover-only, since the tables there cover every option |
 | `privacy.html`, `terms.html`, `support.html` | The privacy policy, terms of use (the App Store EULA for store copies, FSL for the source) and support, linked from every footer. Keep the privacy policy in step with every network request the app or tool makes |
-| `404.html` | The page for a missing path: `noindex`, links to Home, Features and Docs, and root-absolute links |
+| `404.html` | The page for a missing path: `noindex`, root-absolute links, what `lk get` prints for a missing name (copied from `failMissing` in `Sources/latchkey/main.swift`), and cards to Features, Pricing, Security and reporting a broken link |
 | `og.png` | The social preview for every page, 1200×630, rendered from `scripts/og-image.html` |
 | `logo.svg` | The mark, used in the header, the drawn approval panel and the favicon. Replace this one file to change the logo |
 | `apple-touch-icon.png` | 180×180, rendered from the app icon (`sips -s format png -z 180 180 …/AppIcon.icns`) |
@@ -42,7 +42,9 @@ Every page keeps to these; they're what the layout passes checked, page by page,
 light and dark:
 
 - One header (Features, How it works, Pricing, Security, Docs, and **Download free**) and one footer on every
-  page; product pages end with the closing call-to-action band (`.cta-band`): **Download free** first, **See what Pro adds** second. Free leads every primary button; Pro is shown as planned until it is on sale.
+  page. The footer has the mark, a line on what Latchkey does and the download, then Product, Developers and Trust and
+  help columns, and a base line with the publisher and license; generate it for every page at once, since docs pages
+  link with `../` and the 404 with `/`. Product pages end with the closing call-to-action band (`.cta-band`): **Download free** first, **See what Pro adds** second. Free leads every primary button; Pro is shown as planned until it is on sale.
 - No single word on a line of its own: text wraps `pretty`, and `site.js` holds each paragraph's, item's, cell's and
   heading's last two words together where they fit. Cards in a row end level: a card's example and link sit at its foot,
   its availability label sits beside its symbol, and plan notes sit above their buttons so the buttons line up. A card

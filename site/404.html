@@ -21,6 +21,21 @@
   <link rel="icon" href="/logo.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/site.css">
+  <style>
+    .nf-hero { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 32px 56px; align-items: center; padding-top: 72px; }
+    .nf-hero h1 { max-width: 14ch; }
+    .nf-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+    .nf-term { margin: 0; border-radius: 14px; border: 1px solid var(--line); background: var(--tty-bg); box-shadow: var(--shadow); overflow: hidden; }
+    .nf-bar { display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; background: color-mix(in srgb, #fff 6%, var(--tty-bg)); color: #8b95a3; font-size: 12.5px; }
+    .nf-bar i { width: 11px; height: 11px; border-radius: 50%; background: #ff5f57; } .nf-bar i:nth-child(2) { background: #febc2e; } .nf-bar i:nth-child(3) { background: #28c840; }
+    .nf-bar span { margin-left: 8px; }
+    .nf-term pre { margin: 0; padding: 16px 18px; background: none; border: 0; color: #dbe3ec; font: 13px/1.6 var(--mono); white-space: pre-wrap; }
+    .nf-term pre code { background: none; border: 0; padding: 0; color: inherit; font: inherit; }
+    .nf-term figcaption { padding: 12px 18px 16px; color: #98a2b0; font-size: 13.5px; border-top: 1px solid rgba(255, 255, 255, .08); }
+    .nf-term figcaption code { background: rgba(255, 255, 255, .08); border-color: transparent; color: #dbe3ec; }
+    .nf-h { font-size: 22px; margin-bottom: 18px; }
+    @media (max-width: 900px) { .nf-hero { grid-template-columns: minmax(0, 1fr); padding-top: 40px; } }
+  </style>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -38,38 +53,84 @@
     </nav>
   </header>
 
-  <main id="main" class="wrap">
-    <section class="page-hero" aria-labelledby="title">
-      <p class="eyebrow">404</p>
-      <h1 id="title">This page doesn't exist.</h1>
-      <p class="lede">It may have moved when the site changed. Everything is a click from here:</p>
+  <main id="main" class="wrap nf">
+    <section class="nf-hero" aria-labelledby="title">
+      <div class="nf-copy">
+        <p class="eyebrow">404 · Page not found</p>
+        <h1 id="title">There's no page at this address.</h1>
+        <p class="lede">It may have moved when the site changed, or the link has a typo. Everything Latchkey does is a click from here.</p>
+        <div class="nf-cta">
+          <a class="button primary" href="/"><i class="ic ic-key" aria-hidden="true"></i>Go to the home page</a>
+          <a class="button secondary" href="/developers/"><i class="ic ic-book" aria-hidden="true"></i>Read the docs</a>
+        </div>
+      </div>
+      <figure class="nf-term">
+        <div class="nf-bar" aria-hidden="true"><i></i><i></i><i></i><span>Terminal</span></div>
+<pre><code data-lang="text">$ lk get site/production/THIS_PAGE
+latchkey: no item named: site/production/THIS_PAGE
+  Ask the owner to add it in Latchkey (latchkey set ID) or check the name. Don't retry.
+$ echo $?
+66</code></pre>
+        <figcaption>What <code>lk</code> prints for a name it doesn't have. Same advice here: check the address, or start from a link below.</figcaption>
+      </figure>
     </section>
-    <div class="card-grid g3 section" style="--section:40px">
-      <a class="card" href="/"><span class="cico" aria-hidden="true"><i class="ic ic-key"></i></span><b>Home</b><span>What Latchkey does, and the free download.</span></a>
-      <a class="card" href="/features.html"><span class="cico" aria-hidden="true"><i class="ic ic-grid"></i></span><b>Features</b><span>Everything it does today, with examples.</span></a>
-      <a class="card" href="/developers/"><span class="cico" aria-hidden="true"><i class="ic ic-book"></i></span><b>Docs</b><span>Quickstart, the CLI reference, agents and the API.</span></a>
-    </div>
-    <p style="margin-top:24px">A link here that should work? <a href="/support.html">Tell us</a>.</p>
+
+    <section class="section" style="--section:64px" aria-labelledby="where-title">
+      <h2 id="where-title" class="nf-h">Where to go next</h2>
+      <div class="card-grid g4">
+        <a class="card" href="/features.html"><span class="cico" aria-hidden="true"><i class="ic ic-grid"></i></span><b>Features</b><span>Everything Latchkey does today, each with an example.</span></a>
+        <a class="card" href="/pricing.html"><span class="cico" aria-hidden="true"><i class="ic ic-receipt"></i></span><b>Pricing</b><span>What's free for good, and what Pro will add.</span></a>
+        <a class="card" href="/security.html"><span class="cico" aria-hidden="true"><i class="ic ic-shieldcheck"></i></span><b>Security</b><span>What each protection covers, and where it ends.</span></a>
+        <a class="card" href="/support.html#mistake"><span class="cico" aria-hidden="true"><i class="ic ic-chat"></i></span><b>Report a broken link</b><span>A link that brought you here and shouldn't have? Tell us.</span></a>
+      </div>
+    </section>
   </main>
 
   <footer class="site">
     <div class="wrap">
-      <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
-      <ul>
-        <li><a href="/features.html">Features</a></li>
-        <li><a href="/pricing.html">Pricing</a></li>
-        <li><a href="/teams.html">Teams</a></li>
-        <li><a href="/security.html">Security</a></li>
-        <li><a href="/roadmap.html">Roadmap</a></li>
-        <li><a href="https://github.com/zachshallbetter/latchkey/blob/main/CHANGELOG.md">Changelog</a></li>
-        <li><a href="/developers/index.html">Docs</a></li>
-        <li><a href="/developers/cli.html">CLI reference</a></li>
-        <li><a href="/developers/agents.html">Agents and MCP</a></li>
-        <li><a href="/developers/api.html">References and API</a></li>
-        <li><a href="/support.html">Support</a></li>
-        <li><a href="/privacy.html">Privacy</a></li>
-        <li><a href="/terms.html">Terms</a></li>
-      </ul>
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <a class="brand" href="/"><img class="logo" src="/logo.svg" alt="">Latchkey</a>
+          <p>Development credentials in your Mac's iCloud Keychain, filled in when a command starts.</p>
+          <a class="button primary small" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
+        </div>
+        <nav class="foot-col" aria-label="Product">
+          <h2>Product</h2>
+          <ul>
+            <li><a href="/features.html">Features</a></li>
+            <li><a href="/index.html#how">How it works</a></li>
+            <li><a href="/pricing.html">Pricing</a></li>
+            <li><a href="/teams.html">For teams</a></li>
+            <li><a href="/roadmap.html">Roadmap</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey/blob/main/CHANGELOG.md">Changelog</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Developers">
+          <h2>Developers</h2>
+          <ul>
+            <li><a href="/developers/index.html">Docs</a></li>
+            <li><a href="/developers/quickstart.html">Quickstart</a></li>
+            <li><a href="/developers/cli.html">CLI reference</a></li>
+            <li><a href="/developers/agents.html">Agents and MCP</a></li>
+            <li><a href="/developers/api.html">References and API</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey">Source on GitHub</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Trust and help">
+          <h2>Trust and help</h2>
+          <ul>
+            <li><a href="/security.html">Security</a></li>
+            <li><a href="/support.html">Support</a></li>
+            <li><a href="/support.html#mistake">Report a mistake</a></li>
+            <li><a href="/privacy.html">Privacy</a></li>
+            <li><a href="/terms.html">Terms</a></li>
+          </ul>
+        </nav>
+      </div>
+      <div class="foot-base">
+        <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
+        <span>Source-available under FSL-1.1-ALv2. This site makes no third-party requests.</span>
+      </div>
     </div>
   </footer>
   <script src="/site.js"></script>

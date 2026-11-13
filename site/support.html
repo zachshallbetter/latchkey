@@ -82,7 +82,7 @@
       <h2>Latchkey Pro</h2>
       <p>Pro isn't on sale yet. When it is, it's bought in the Mac App Store. To unlock it on another Mac, sign in with the same Apple Account and choose <b>Restore Purchases</b> in Latchkey's Settings. Refunds go through Apple at <a href="https://reportaproblem.apple.com/">reportaproblem.apple.com</a>.</p>
 
-      <h2>Report a mistake on this site</h2>
+      <h2 id="mistake">Report a mistake on this site</h2>
       <p>If a page says something Latchkey doesn't do, or leaves out a limit, email <a href="mailto:latchkey@snackstud.io?subject=Site%20correction">latchkey@snackstud.io</a> with the page and what's wrong, or <a href="https://github.com/zachshallbetter/latchkey/issues">open an issue</a>. Corrections are listed in the <a href="https://github.com/zachshallbetter/latchkey/blob/main/CHANGELOG.md">changelog</a>.</p>
 
       <h2>Report a security issue</h2>
@@ -95,22 +95,49 @@
 
   <footer class="site">
     <div class="wrap">
-      <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
-      <ul>
-        <li><a href="features.html">Features</a></li>
-        <li><a href="pricing.html">Pricing</a></li>
-        <li><a href="teams.html">Teams</a></li>
-        <li><a href="security.html">Security</a></li>
-        <li><a href="roadmap.html">Roadmap</a></li>
-        <li><a href="https://github.com/zachshallbetter/latchkey/blob/main/CHANGELOG.md">Changelog</a></li>
-        <li><a href="developers/index.html">Docs</a></li>
-        <li><a href="developers/cli.html">CLI reference</a></li>
-        <li><a href="developers/agents.html">Agents and MCP</a></li>
-        <li><a href="developers/api.html">References and API</a></li>
-        <li><a href="support.html" aria-current="page">Support</a></li>
-        <li><a href="privacy.html">Privacy</a></li>
-        <li><a href="terms.html">Terms</a></li>
-      </ul>
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <a class="brand" href="index.html"><img class="logo" src="logo.svg" alt="">Latchkey</a>
+          <p>Development credentials in your Mac's iCloud Keychain, filled in when a command starts.</p>
+          <a class="button primary small" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
+        </div>
+        <nav class="foot-col" aria-label="Product">
+          <h2>Product</h2>
+          <ul>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="index.html#how">How it works</a></li>
+            <li><a href="pricing.html">Pricing</a></li>
+            <li><a href="teams.html">For teams</a></li>
+            <li><a href="roadmap.html">Roadmap</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey/blob/main/CHANGELOG.md">Changelog</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Developers">
+          <h2>Developers</h2>
+          <ul>
+            <li><a href="developers/index.html">Docs</a></li>
+            <li><a href="developers/quickstart.html">Quickstart</a></li>
+            <li><a href="developers/cli.html">CLI reference</a></li>
+            <li><a href="developers/agents.html">Agents and MCP</a></li>
+            <li><a href="developers/api.html">References and API</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey">Source on GitHub</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Trust and help">
+          <h2>Trust and help</h2>
+          <ul>
+            <li><a href="security.html">Security</a></li>
+            <li><a href="support.html" aria-current="page">Support</a></li>
+            <li><a href="support.html#mistake">Report a mistake</a></li>
+            <li><a href="privacy.html">Privacy</a></li>
+            <li><a href="terms.html">Terms</a></li>
+          </ul>
+        </nav>
+      </div>
+      <div class="foot-base">
+        <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
+        <span>Source-available under FSL-1.1-ALv2. This site makes no third-party requests.</span>
+      </div>
     </div>
   </footer>
   <script src="site.js"></script>
