@@ -29,6 +29,12 @@
   publishable keys, web addresses without credentials) are saved as plain values; anything unclear is a secret.
   `--class KEY=secret|setting|public` changes a line from the command line.
 
+### CLI
+- `lk scan [DIR]` finds env files that still hold plain values: ones equal to a stored item (compared inside Latchkey;
+  only item names come back, and it asks every time) and ones that look secret. It prints file, line and the item,
+  never a value, and exits 1 when it finds any. `--staged` scans only what a commit would add, and
+  `lk scan --install-hook` writes a pre-commit hook that refuses such commits.
+
 ## 0.2.1 (2026-11-12)
 
 ### Website

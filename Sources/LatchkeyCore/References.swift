@@ -186,6 +186,11 @@ public enum EnvFile {
         try entries(lines(text)).map { ($0.key, $0.value) }
     }
 
+    /// `parse`, with the line (1-based) each assignment starts on.
+    public static func located(_ text: String) throws -> [(key: String, value: String, line: Int)] {
+        try entries(lines(text)).map { ($0.key, $0.value, $0.first + 1) }
+    }
+
     public static func load(_ path: String) throws -> [(key: String, value: String)] {
         try parse(String(contentsOfFile: path, encoding: .utf8))
     }

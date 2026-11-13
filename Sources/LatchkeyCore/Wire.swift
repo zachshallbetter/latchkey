@@ -145,13 +145,13 @@ public struct Request: Codable, Sendable {
                                      // | history | deleted | version | restore | forget
                                      // | links | link | unlink | remote-status | push
                                      // | environments | environment-add | environment-set | environment-remove | export
-                                     // | projects | project-link | project-unlink | log | duplicates | combine
+                                     // | projects | project-link | project-unlink | log | duplicates | combine | scan
     public var names: [String]?
     public var value: String?
     public var kind: ItemKind?
     public var agentSafe: Bool?
     public var note: String?
-    public var items: [ImportItem]?  // import
+    public var items: [ImportItem]?  // import; scan: values found in files, each named by its position in the list
     public var replace: Bool?        // import: overwrite items that already exist
     public var source: String?       // import: the file the items came from, for the approval and the log
     public var folder: String?       // grant: the folder it covers (defaults to the caller's working folder)
@@ -280,6 +280,8 @@ public struct Response: Codable, Sendable {
     public var groups: [[String]]?
     /// duplicates: the IDs in `groups` whose values look like identifiers (IDs, hosts, public addresses), not secrets.
     public var identifiers: [String]?
+    /// scan: for each position in the request's `items` that equals stored items, those items' IDs. Never the values.
+    public var matches: [String: [String]]?
 
     public init(ok: Bool, error: String? = nil, secrets: [SecretInfo]? = nil, values: [String: String]? = nil,
                 masked: [String]? = nil, denied: [String]? = nil, missing: [String]? = nil,
@@ -288,7 +290,9 @@ public struct Response: Codable, Sendable {
                 versions: [Version]? = nil, links: [RemoteLink]? = nil, remoteStatus: [RemoteStatus]? = nil,
                 pushResults: [PushResult]? = nil, agentSafe: [String]? = nil, granted: [String]? = nil,
                 remembered: [String]? = nil, needsApproval: [String]? = nil,
-                environments: [EnvironmentRecord]? = nil, projects: [ProjectRecord]? = nil, logEntries: [Broker.LogEntry]? = nil, groups: [[String]]? = nil, identifiers: [String]? = nil) {
+                environments: [EnvironmentRecord]? = nil, projects: [ProjectRecord]? = nil, logEntries: [Broker.LogEntry]? = nil, groups: [[String]]? = nil, identifiers: [String]? = nil,
+                matches: [String: [String]]? = nil) {
+        self.matches = matches
         self.groups = groups
         self.identifiers = identifiers
         self.logEntries = logEntries

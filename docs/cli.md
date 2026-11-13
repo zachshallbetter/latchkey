@@ -127,6 +127,31 @@ Values are compared inside Latchkey and never shown; plain values and values sho
 It asks for approval every time (grants and agent-safe settings don't stand in), and agents can't ask. `--json` gives
 `items`, `advice`, `summary` and `into` for each group.
 
+### `latchkey scan [DIR] [--json]` | `scan --staged` | `scan --install-hook [--force]`
+
+Finds env files under DIR (default: the current folder; `.env`, `.env.*` and `*.env`, not examples, templates or
+backups, not in `node_modules`, build or `.git` folders) that still hold plain values, and prints each as
+`FILE:LINE  NAME` with the reason, never a value:
+
+- the value equals a stored item: the line names the item(s). The values are compared inside Latchkey, which receives
+  the values found in the files and returns only item IDs. Like `duplicates`, it asks every time (grants and
+  agent-safe settings don't stand in), and agents can't ask. Plain items and values shorter than 8 characters are
+  left out;
+- the value looks secret: a private key, a password or a connection string with credentials, a token with a known
+  prefix (`sk_live_`, `ghp_`, `AKIA`...), or a long value under a name such as `*_TOKEN`, `*_SECRET` or `*_API_KEY`.
+  Identifiers (IDs, hosts, public addresses) and `latchkey://` references are not findings. This check is local.
+
+Exits 1 when anything is found, so it works in scripts; if Latchkey can't compare (not approved, not running), the
+values that look secret are still reported, and it exits 1. `--json` gives `place`, `key`, `reason` (`stored` or
+`looks-secret`) and `items` for each finding.
+
+`--staged` scans only the lines a commit would add, from the Git index, in env files that are staged.
+
+`--install-hook` writes a Git pre-commit hook (honoring `core.hooksPath`, and worktrees) that runs
+`latchkey scan --staged` and refuses the commit on findings. A hook that isn't Latchkey's is left alone unless
+`--force`. If neither `lk` nor `latchkey` is on the PATH, the hook says so and lets the commit through. Skip it for one
+commit with `git commit --no-verify`.
+
 ### `latchkey combine IDS --into NAME|ID [--file FILE]...`
 
 Makes items holding one value into one shared item NAME, or into one item ID of the environment they're all in, with
