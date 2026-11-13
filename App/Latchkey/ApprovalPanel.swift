@@ -134,6 +134,7 @@ struct ApprovalView: View {
         case .link: return "link \(items())"
         case .push: return "push \(items("value"))"
         case .compare: return "compare \(items()) to find duplicates"
+        case .scan: return "compare values found in files with \(items())"
         }
     }
 
@@ -173,6 +174,9 @@ struct ApprovalView: View {
                 row("Items", request.names.joined(separator: ", "), mono: true)
                 if request.action == .compare {
                     row("Purpose", "Compare their values inside Latchkey to find items holding the same key. Only which items match is shown; no value leaves Latchkey.")
+                }
+                if request.action == .scan {
+                    row("Purpose", "Check whether env files still hold these items' values in plain text. Only which items match is shown; no stored value leaves Latchkey.")
                 }
                 if request.fromSafari {
                     row("Asked by", "Latchkey's Safari extension")
@@ -238,7 +242,7 @@ struct ApprovalView: View {
     private var allowLabel: String {
         switch request.action {
         case .push: return "Push"
-        case .compare: return "Compare"
+        case .compare, .scan: return "Compare"
         case .read where choice.grant: return "Allow from Folder"
         case .read: return "Allow Once"
         default: return "Allow"

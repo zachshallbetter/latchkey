@@ -23,7 +23,7 @@ final class ScanTests: XCTestCase {
         XCTAssertTrue(r.ok, r.error ?? "")
         XCTAssertEqual(r.matches, ["0": ["OPENAI_API_KEY", "a/development/OPENAI_API_KEY"]], "plain items aren't compared; references are left out")
         XCTAssertNil(r.values)
-        XCTAssertEqual(approver.actions, [.compare])
+        XCTAssertEqual(approver.actions, [.scan])
         XCTAssertTrue(approver.reasons[0].contains("no stored value leaves Latchkey"), approver.reasons[0])
     }
 

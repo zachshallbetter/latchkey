@@ -745,7 +745,7 @@ public final class Broker: @unchecked Sendable {
         let items = try store.list().filter { $0.kind.isSecret }
         guard !found.isEmpty, !items.isEmpty else { return Response(ok: true, matches: [:]) }
         let names = items.map(\.name)
-        guard ask(.compare, names, peer, req, "compare \(found.count) value\(found.count == 1 ? "" : "s") found in files with the values of \(Self.count(names)) (no stored value leaves Latchkey), asked by \(Self.describe(peer, req))").allowed else {
+        guard ask(.scan, names, peer, req, "compare \(found.count) value\(found.count == 1 ? "" : "s") found in files with the values of \(Self.count(names)) (no stored value leaves Latchkey), asked by \(Self.describe(peer, req))").allowed else {
             log("scan", [], "denied", peer, req)
             return Response(ok: false, error: "scanning was not approved")
         }
