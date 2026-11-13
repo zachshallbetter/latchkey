@@ -110,16 +110,19 @@ Files refer to them as latchkey://ID.
   latchkey remote list [PROJECT/ENV]
   latchkey remote link PROJECT/ENV vercel|github|railway|fly KEY=VALUE...
       Link an environment to a place that holds its values. Keys: project, environment, repo, service, app,
-      branch, dir (a folder linked with `vercel link` or `railway link`). For example:
+      branch, dir (a folder linked with `vercel link` or `railway link`), token (the item that holds the service's
+      access token: pushes then go straight to the service's API, as the App Store build always does), team (Vercel
+      team, with a token). For example:
         latchkey remote link shop/vercel.preview vercel project=shop environment=preview
         latchkey remote link shop/production github repo=me/shop environment=production
         latchkey remote link shop/railway.production railway environment=production service=api dir=~/Projects/shop
         latchkey remote link shop/production fly app=shop-api
+        latchkey remote link shop/vercel.preview vercel project=shop environment=preview token=VERCEL_TOKEN
   latchkey remote unlink LINK
   latchkey remote status PROJECT/ENV   Names missing on each side and values changed since the last push.
   latchkey push PROJECT/ENV [--to LINK] [--only ID,...] [--dry-run]
-      Send the environment's values to its links with each service's own tool, signed in as you. Asks every
-      time; production needs its own confirmation in the app. Nothing is deployed: Railway and Fly changes are
+      Send the environment's values to its links with each service's own tool, signed in as you (or, for a link
+      with a token item, through the service's API). Asks every time; production needs its own confirmation in the app. Nothing is deployed: Railway and Fly changes are
       staged until your next deploy.
   latchkey grant ID[,ID...] [--folder DIR] [--for 2h] [--session] [--command CMD]... [--once]
       Let commands run from DIR (default: here) and the folders inside it read these items
@@ -832,7 +835,7 @@ func printLinks(_ links: [RemoteLink]) {
     for l in links.sorted(by: { ($0.scope, $0.target.label) < ($1.scope, $1.target.label) }) {
         if l.scope != scope { if scope != nil { print("") }; print(l.scope); scope = l.scope }
         let last = l.pushed.values.max().map { "last pushed \($0.formatted(date: .abbreviated, time: .shortened))" } ?? "never pushed"
-        print("  \(l.id)  \(l.target.label)\(l.target.isProduction ? "  [production]" : "")  (\(last))")
+        print("  \(l.id)  \(l.target.label)\(l.target.isProduction ? "  [production]" : "")  (\(last))\(l.target.tokenItem.map { "  token: \($0)" } ?? "")")
     }
 }
 
@@ -857,8 +860,10 @@ func remoteCommand(_ args: [String]) -> Never {
             case "service": t.serviceName = value
             case "app": t.app = value
             case "branch": t.branch = value
+            case "token": t.tokenItem = value
+            case "team": t.team = value
             case "dir": t.directory = URL(fileURLWithPath: (value as NSString).expandingTildeInPath).standardizedFileURL.path
-            default: fail("unknown key \(key) (project, environment, repo, service, app, branch, dir)", code: 64)
+            default: fail("unknown key \(key) (project, environment, repo, service, app, branch, dir, token, team)", code: 64)
             }
         }
         if let problem = t.problem { fail(problem, code: 64) }

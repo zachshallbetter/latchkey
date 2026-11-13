@@ -65,7 +65,7 @@ struct RemoteSheet: View {
                 }
             }
             Spacer(minLength: 0)
-            SheetFooter(note: "Values go through each service's own tool, signed in as you. Nothing is deployed.") {
+            SheetFooter(note: "Values go through each service's own tool, signed in as you, or to its API with the token item you chose. Nothing is deployed.") {
                 Button("Done") { dismiss() }.keyboardShortcut(.cancelAction)
                 if !links.isEmpty {
                     Button(working ? "Pushing…" : "Push to All") { pushTo(nil) }
@@ -188,8 +188,9 @@ extension RemoteTarget.Service {
     }
 }
 
-/// Links an environment to Vercel, GitHub Actions, Railway or Fly. Nothing here signs in or stores a token: pushes run
-/// each service's own tool, signed in as you, so the sheet checks the tool is installed and the details are complete.
+/// Links an environment to Vercel, GitHub Actions, Railway or Fly. Nothing here signs in or stores a token. Pushes run
+/// each service's own tool, signed in as you (so the sheet checks it's installed), or, with a token item chosen, go to
+/// the service's API with the token in that item. The App Store build only does the second.
 struct AddLocationSheet: View {
     let model: AppModel
     let scope: String
@@ -203,6 +204,8 @@ struct AddLocationSheet: View {
     @State private var app = ""
     @State private var branch = ""
     @State private var directory = ""
+    @State private var tokenItem = ""
+    @State private var team = ""
     @State private var error: String?
     @State private var working = false
     /// The service's tool: its version when installed, nil while checking, "" when it isn't installed.
@@ -226,7 +229,51 @@ struct AddLocationSheet: View {
     var target: RemoteTarget {
         func v(_ s: String) -> String? { let t = s.trimmingCharacters(in: .whitespaces); return t.isEmpty ? nil : t }
         return RemoteTarget(service: service, project: v(project), environment: v(environment), repo: v(repo),
-                            serviceName: v(serviceName), app: v(app), branch: v(branch), directory: v(directory))
+                            serviceName: v(serviceName), app: v(app), branch: v(branch), directory: v(directory),
+                            tokenItem: v(tokenItem), team: service == .vercel ? v(team) : nil)
+    }
+
+    /// What stops Add Location: with a token item the service's API needs more than a folder can give; the App Store
+    /// build has no tools to fall back on.
+    private var blocker: String? {
+        #if LATCHKEY_APP_STORE
+        return target.tokenItem == nil ? "Choose the item that holds the access token." : target.nativeProblem
+        #else
+        return target.tokenItem == nil ? target.problem : target.nativeProblem
+        #endif
+    }
+
+    /// Items an access token can come from: shared items, which belong to no project.
+    private var tokenChoices: [String] { model.items.map(\.name).filter { !$0.contains("/") }.sorted() }
+
+    @ViewBuilder
+    private var tokenField: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Text("Access token").frame(width: 110, alignment: .leading)
+                VStack(alignment: .leading, spacing: 4) {
+                    Picker("", selection: $tokenItem) {
+                        #if !LATCHKEY_APP_STORE
+                        Text("None (use \(service.tool))").tag("")
+                        #else
+                        Text("Choose an item…").tag("")
+                        #endif
+                        ForEach(tokenChoices, id: \.self) { Text($0).tag($0) }
+                    }
+                    .labelsHidden()
+                    Text(tokenCaption).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(.vertical, 10)
+        }
+    }
+
+    private var tokenCaption: String {
+        #if LATCHKEY_APP_STORE
+        return "A shared item that holds your \(service.label) access token. Latchkey sends it only to \(service.label), and the push approval names it."
+        #else
+        return "Optional: a shared item that holds your \(service.label) access token. Pushes then go straight to \(service.label) instead of through \(service.tool); the approval names the item."
+        #endif
     }
 
     var body: some View {
@@ -257,26 +304,42 @@ struct AddLocationSheet: View {
             Card {
                 switch service {
                 case .vercel:
-                    field("Project", $project, "Name or ID", "Leave blank to use the project the folder is linked to with vercel link.")
+                    field("Project", $project, "Name or ID", "Leave blank to use the project the folder is linked to with vercel link (not with an access token).")
                     choice("Environment", ["development", "preview", "production"], "The Vercel environment to set variables in.")
                     if environment == "preview" { field("Git branch", $branch, "Optional", "Only for preview deployments of this branch.") }
-                    folder(last: true)
+                    field("Team", $team, "Optional", "The team's slug or ID, when the project belongs to a team. Used with an access token.")
+                    #if !LATCHKEY_APP_STORE
+                    folder(last: false)
+                    #endif
+                    tokenField
                 case .github:
                     field("Repository", $repo, "owner/repo", "The repository whose Actions secrets are set.")
-                    field("Environment", $environment, "Optional", "A GitHub Actions environment. Leave blank for repository secrets.", last: true)
+                    field("Environment", $environment, "Optional", "A GitHub Actions environment. Leave blank for repository secrets.")
+                    tokenField
                 case .railway:
                     field("Service", $serviceName, "api, web…", "The Railway service to set variables on.")
                     field("Environment", $environment, "production, staging…", "The Railway environment.")
-                    field("Project ID", $project, "Optional", "Leave blank to use the project the folder is linked to with railway link.")
-                    folder(last: true)
+                    field("Project ID", $project, "Optional", "Leave blank to use the project the folder is linked to with railway link (not with an access token).")
+                    #if !LATCHKEY_APP_STORE
+                    folder(last: false)
+                    #endif
+                    tokenField
                 case .fly:
-                    field("App", $app, "your-app", "The Fly app whose secrets are set. Changes are staged until your next deploy.", last: true)
+                    field("App", $app, "your-app", "The Fly app whose secrets are set. Changes are staged until your next deploy.")
+                    tokenField
                 }
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                toolStatus
-                if let p = target.problem {
+                #if LATCHKEY_APP_STORE
+                if tokenChoices.isEmpty {
+                    Label("Add an item for the access token first (for example \(service.rawValue.uppercased())_TOKEN).", systemImage: "info.circle")
+                        .foregroundStyle(.secondary).font(.callout)
+                }
+                #else
+                if target.tokenItem == nil { toolStatus }
+                #endif
+                if let p = blocker {
                     Label(p, systemImage: "exclamationmark.circle.fill").foregroundStyle(.red).font(.callout)
                 }
                 if target.isProduction {
@@ -286,7 +349,8 @@ struct AddLocationSheet: View {
                 if let error { Label(error, systemImage: "exclamationmark.triangle.fill").foregroundStyle(.red).font(.callout) }
             }
 
-            SheetFooter(note: "Values go through \(service.label)'s own tool, signed in as you. Nothing is deployed.") {
+            SheetFooter(note: target.tokenItem == nil ? "Values go through \(service.label)'s own tool, signed in as you. Nothing is deployed."
+                                                       : "Values go to \(service.label)'s API with the token in \(target.tokenItem ?? ""). Nothing is deployed.") {
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
                 Button("Add Location") {
                     working = true
@@ -297,12 +361,16 @@ struct AddLocationSheet: View {
                     }
                 }
                 .keyboardShortcut(.defaultAction)
-                .disabled(target.problem != nil || working || toolVersion == "")
+                .disabled(blocker != nil || working || (target.tokenItem == nil && toolVersion == ""))
             }
         }
         .padding(24)
         .frame(width: 620)
-        .task(id: service) { await checkTool() }
+        .task(id: service) {
+            #if !LATCHKEY_APP_STORE
+            await checkTool()
+            #endif
+        }
         .onChange(of: service) { _, s in
             if s == .github || s == .railway { environment = environment == "preview" ? "" : environment }
             if s == .vercel && environment.isEmpty { environment = "preview" }

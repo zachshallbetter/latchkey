@@ -20,6 +20,11 @@ public final class Broker: @unchecked Sendable {
     /// checkouts use.
     public let records: EnvironmentStore
     let runner: RemoteRunner
+    /// Talks to the services' HTTPS APIs for links that name a token item.
+    let native: NativeRemote
+    /// Every link goes through the API, never a command-line tool: the sandboxed App Store build can't run them, so a
+    /// link without a token item can't push there.
+    public let nativeOnly: Bool
     /// Pushes run only in the app, where the approval panel can confirm production. The window-less broker refuses them.
     public let allowsPush: Bool
     public let approver: Approver
@@ -39,7 +44,8 @@ public final class Broker: @unchecked Sendable {
     /// Without a log (tests), grants are kept in memory too unless a store is passed.
     public init(store: SecretStore, approver: Approver,
                 logURL: URL? = Paths.accessLog, grants: GrantStore? = nil, versions: VersionStore? = nil,
-                remotes: RemoteStore? = nil, runner: RemoteRunner = ProcessRunner(), allowsPush: Bool = true,
+                remotes: RemoteStore? = nil, runner: RemoteRunner = ProcessRunner(), native: NativeRemote = NativeRemote(),
+                nativeOnly: Bool = false, allowsPush: Bool = true,
                 logKeys: LogKeyStore? = nil, records: EnvironmentStore? = nil, socketPath: String = Paths.socket,
                 hasPro: @escaping @Sendable () -> Bool = { false }, proFeatures: [String: String] = ProGate.features) {
         self.socketPath = socketPath
@@ -54,6 +60,8 @@ public final class Broker: @unchecked Sendable {
             self.records = MemoryEnvironmentStore()
         }
         self.runner = runner
+        self.native = native
+        self.nativeOnly = nativeOnly
         self.allowsPush = allowsPush
         if let remotes {
             self.remotes = remotes
@@ -912,10 +920,19 @@ public final class Broker: @unchecked Sendable {
         }
         guard let target = req.target else { return Response(ok: false, error: "no target given") }
         if let problem = target.problem { return Response(ok: false, error: problem) }
+        if let item = target.tokenItem {
+            // The token item is read for pushes only. It must exist, and must not be one of the values the link pushes.
+            guard ItemID(item) != nil else { return Response(ok: false, error: "\(item) is not a valid item ID for a token") }
+            guard !item.hasPrefix(scope + "/") else { return Response(ok: false, error: "the token item can't be inside \(scope), or it would be pushed with the rest") }
+            guard try store.list().contains(where: { $0.name == item }) else { return Response(ok: false, error: "no item \(item) to use as the token; create it first") }
+            if let problem = target.nativeProblem { return Response(ok: false, error: problem) }
+        } else if nativeOnly {
+            return Response(ok: false, error: "this build pushes through each service's API: name an item that holds the access token (token=ITEM)")
+        }
         if try remotes.all().contains(where: { $0.scope == scope && $0.target == target }) {
             return Response(ok: false, error: "\(scope) is already linked to \(target.label)")
         }
-        guard ask(.link, [scope], peer, req, "link \(scope) to \(target.label), asked by \(Self.who(peer))", targets: [target.label]).allowed else {
+        guard ask(.link, [scope], peer, req, "link \(scope) to \(target.label)\(target.tokenItem.map { " using the token in \($0)" } ?? ""), asked by \(Self.who(peer))", targets: [target.label + (target.tokenItem.map { " (token: \($0))" } ?? "")]).allowed else {
             log("link", [scope], "denied", peer, req)
             return Response(ok: false, error: "the link was not approved")
         }
@@ -936,6 +953,19 @@ public final class Broker: @unchecked Sendable {
 
     /// When an item's current value was set: its newest version is the value it replaced.
     func valueChangedAt(_ item: String) -> Date? { try? versions.list(item: item).first?.savedAt }
+
+    /// How a link reaches its service: nil for the service's command-line tool, or the token item whose value
+    /// authorizes requests to its API (with what stops it from working, if anything).
+    struct NativeRoute {
+        var item: String
+        var problem: String?
+    }
+
+    func nativeRoute(_ link: RemoteLink) -> NativeRoute? {
+        if let item = link.target.tokenItem { return NativeRoute(item: item, problem: link.target.nativeProblem) }
+        if nativeOnly { return NativeRoute(item: "", problem: "this build pushes through the service's API: link it again with a token item (token=ITEM)") }
+        return nil
+    }
 
     /// Compares names with each link's target. Reads names only; never sends or keeps a value.
     /// One variable an environment sends to its links: an item (wherever it lives) under the variable's name, or a plain
@@ -984,9 +1014,25 @@ public final class Broker: @unchecked Sendable {
         let expected = Set(entries.map(\.name))
         var out: [RemoteStatus] = []
         for link in try remotes.all() where link.scope == scope {
-            let r = runner.run(link.target.listCommand, timeout: 60)
             let stale = entries.filter { e in e.item.map { link.state(of: $0, valueChangedAt: valueChangedAt($0)) == .outOfDate } ?? false }
                 .map(\.name).sorted()
+            if let route = nativeRoute(link) {
+                // Names only: the token is read for the request and nothing it returns is kept except names.
+                let listed: Result<[String], NativeRemoteError>
+                if let problem = route.problem { listed = .failure(.invalidTarget(problem)) }
+                else if let token = try store.values([route.item])[route.item] {
+                    do { listed = .success(try native.names(link.target, token: token)) } catch { listed = .failure(error as? NativeRemoteError ?? .network) }
+                } else { listed = .failure(.badToken) }
+                switch listed {
+                case .failure(let e): out.append(RemoteStatus(link: link.id, label: link.target.label, error: Self.redact(e.message, [route.item]), outOfDate: stale))
+                case .success(let names):
+                    let there = Set(names)
+                    out.append(RemoteStatus(link: link.id, label: link.target.label, missing: expected.subtracting(there).sorted(),
+                                            extra: there.subtracting(expected).sorted(), outOfDate: stale))
+                }
+                continue
+            }
+            let r = runner.run(link.target.listCommand, timeout: 60)
             guard r.status == 0, let names = link.target.names(fromListOutput: r.stdout) else {
                 out.append(RemoteStatus(link: link.id, label: link.target.label, error: Self.toolError(r, link.target), outOfDate: stale))
                 continue
@@ -1015,7 +1061,14 @@ public final class Broker: @unchecked Sendable {
                             : "\(scope) has only unconfirmed variables: \(held.map(\.name).joined(separator: ", ")) (lk env confirm \(scope))")
         }
 
-        let labels = links.map(\.target.label)
+        // Links that push through an API say which item holds their token, and it has to exist before anyone is asked.
+        for link in links { if let problem = nativeRoute(link)?.problem { return Response(ok: false, error: "\(link.target.label): \(problem)") } }
+        let tokenItems = Array(Set(links.compactMap { nativeRoute($0)?.item })).sorted()
+        let known = Set(try store.list().map(\.name))
+        if let missing = tokenItems.first(where: { !known.contains($0) }) {
+            return Response(ok: false, error: "the token item \(missing) doesn't exist; create it, or link again with another item")
+        }
+        let labels = links.map { link in link.target.label + (nativeRoute(link).map { " (token: \($0.item))" } ?? "") }
         let names = entries.map(\.key)
         var request = approvalRequest(.push, names, peer, req,
                                       "push \(Self.count(names.map { ItemID($0)?.name ?? $0 })) to \(labels.joined(separator: ", ")), asked by \(Self.who(peer))")
@@ -1027,6 +1080,7 @@ public final class Broker: @unchecked Sendable {
         }
 
         let stored = try store.values(entries.compactMap(\.item))
+        let tokens = try store.values(tokenItems)
         var values: [String: String] = [:]
         for e in entries { values[e.key] = e.item.flatMap { stored[$0] } ?? e.literal }
         var results: [PushResult] = []
@@ -1038,31 +1092,47 @@ public final class Broker: @unchecked Sendable {
             }
             for e in entries {
                 guard let value = values[e.key] else { results.append(PushResult(link: link.id, item: e.key, ok: false, error: "no value")); continue }
-                if link.target.service == .fly && value.contains("\n") {
+                if link.target.service == .fly && nativeRoute(link) == nil && value.contains("\n") {
                     results.append(PushResult(link: link.id, item: e.key, ok: false, error: "Fly secrets import takes one line per value"))
                     continue
                 }
                 batch.append((e.name, value, e.secret))
                 ids.append(e.key)
             }
-            let commands = link.target.pushCommands(batch)
-            // One command per item, except Fly, where one command carries them all.
-            let groups: [[String]] = commands.count == ids.count ? ids.map { [$0] } : [ids]
-            for (command, group) in zip(commands, groups) {
-                let r = runner.run(command, timeout: 120)
-                let secrets = group.compactMap { values[$0] }
-                for id in group {
-                    if r.status == 0 {
+            if let route = nativeRoute(link) {
+                let secrets = ids.compactMap { values[$0] }
+                let outcomes: [Result<Void, NativeRemoteError>]
+                if let token = tokens[route.item] { outcomes = native.push(link.target, token: token, values: batch) }
+                else { outcomes = ids.map { _ in .failure(.badToken) } }
+                for (id, outcome) in zip(ids, outcomes) {
+                    switch outcome {
+                    case .success:
                         link.pushed[id] = Date()
                         results.append(PushResult(link: link.id, item: id, ok: true))
-                    } else {
-                        results.append(PushResult(link: link.id, item: id, ok: false, error: Self.redact(Self.toolError(r, link.target), secrets)))
+                    case .failure(let e):
+                        results.append(PushResult(link: link.id, item: id, ok: false, error: Self.redact(e.message, secrets + [tokens[route.item] ?? ""])))
+                    }
+                }
+            } else {
+                let commands = link.target.pushCommands(batch)
+                // One command per item, except Fly, where one command carries them all.
+                let groups: [[String]] = commands.count == ids.count ? ids.map { [$0] } : [ids]
+                for (command, group) in zip(commands, groups) {
+                    let r = runner.run(command, timeout: 120)
+                    let secrets = group.compactMap { values[$0] }
+                    for id in group {
+                        if r.status == 0 {
+                            link.pushed[id] = Date()
+                            results.append(PushResult(link: link.id, item: id, ok: true))
+                        } else {
+                            results.append(PushResult(link: link.id, item: id, ok: false, error: Self.redact(Self.toolError(r, link.target), secrets)))
+                        }
                     }
                 }
             }
             try remotes.save(link)
             let ok = results.filter { $0.link == link.id && $0.ok }.count, failed = results.filter { $0.link == link.id && !$0.ok }.count
-            log("push", ids, "approved (\(link.target.label): \(ok) pushed\(failed > 0 ? ", \(failed) failed" : ""))", peer, req)
+            log("push", ids, "approved (\(link.target.label)\(nativeRoute(link).map { ", token \($0.item)" } ?? ""): \(ok) pushed\(failed > 0 ? ", \(failed) failed" : ""))", peer, req)
         }
         let anyFailed = results.contains { !$0.ok }
         return Response(ok: !anyFailed, error: anyFailed ? "some values didn't reach their target" : nil, pushResults: results)

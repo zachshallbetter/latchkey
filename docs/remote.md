@@ -10,8 +10,13 @@ of pasting into each dashboard.
 | Railway | a service in an environment | `railway` |
 | Fly | an app's secrets | `flyctl` |
 
-Latchkey runs each service's own command-line tool, signed in as you. It stores no service tokens. Install and sign
-in to the tools you use (`vercel login`, `gh auth login`, `railway login`, `flyctl auth login`).
+Latchkey reaches each service one of two ways:
+
+- **Its command-line tool**, signed in as you (the default in the direct download). Latchkey stores no service tokens.
+  Install and sign in to the tools you use (`vercel login`, `gh auth login`, `railway login`, `flyctl auth login`).
+- **Its API, with an access token you keep as an ordinary Latchkey item.** The link names that item. This is the only
+  way in the Mac App Store version, whose sandbox can't run those tools, and you can choose it per link in the direct
+  download. See [Pushing through an API](#pushing-through-an-api).
 
 ## Linking
 
@@ -30,12 +35,15 @@ latchkey remote link shop/production fly app=shop-api
 | `service` | Railway | The service |
 | `app` | Fly | The app |
 | `branch` | Vercel preview | One Git branch |
-| `dir` | Vercel, Railway | A folder linked with `vercel link` or `railway link`, instead of `project` |
+| `dir` | Vercel, Railway | A folder linked with `vercel link` or `railway link`, instead of `project`. Tools only |
+| `token` | all | The item that holds the service's access token. Pushes and status then use the service's API |
+| `team` | Vercel, with `token` | The team's slug, or its ID (`team_…`), when the project belongs to a team |
 
 Linking asks for approval. A link covers the whole environment, including items added later. In the app: open an
 item's **Edit › Remote Locations…** (or its Remote card) › **Add a Location…**. The sheet asks for the service's
 details, says whether its command-line tool is installed (with a link to install it), and enables **Add Location** once
-the details are complete. It never asks for a service token: pushes use the tool, signed in as you.
+the details are complete. It never asks for a service token: it asks which item holds one (or, in the direct download,
+lets you leave that blank and use the tool, signed in as you).
 
 When a service needs different values from your laptop, give it its own environment (`shop/vercel.preview` beside
 `shop/preview`) and link that.
@@ -71,7 +79,8 @@ latchkey push shop/production --to <link> --only shop/production/DATABASE_URL
   | Railway | `railway variable set NAME --stdin --skip-deploys` |
   | Fly | `flyctl secrets import --stage --app APP` (one line per value; multi-line values aren't supported) |
 
-- **Nothing is deployed.** Railway and Fly would deploy by default, so those flags turn it off. New values take effect
+- **Nothing is deployed.** Railway and Fly would deploy by default, so those flags turn it off (the API calls below
+  do the same). New values take effect
   on the service's next deploy, which you start.
 - **What's sent:** with an [environment record](cli.md#environments), its variables. Shared items go under the
   variable's name, and plain settings such as `PORT` go as non-secret values. Unconfirmed variables are listed but
@@ -79,6 +88,42 @@ latchkey push shop/production --to <link> --only shop/production/DATABASE_URL
   name yet are sent too. Without a record, the environment's own items are sent, each named after the last part of
   its ID (`shop/production/DATABASE_URL` is pushed as `DATABASE_URL`). `remote status` compares the same list.
 - Error messages from the tools are shortened, and any value in them is replaced with `<value>`.
+
+### Pushing through an API
+
+```bash
+latchkey set VERCEL_TOKEN --kind token   # a shared item holding a Vercel access token (the value is prompted for)
+latchkey remote link shop/vercel.preview vercel project=shop environment=preview token=VERCEL_TOKEN
+latchkey remote link shop/production fly app=shop-api token=FLY_TOKEN
+```
+
+A link with `token=ITEM` is pushed with direct HTTPS requests, not a tool. In the Mac App Store version every link must
+have one.
+
+- **The token** is read inside the app for the push (and for `remote status`) and goes only to that service's API host,
+  as a bearer token. It is never returned, logged or put in a URL. The item must exist, and can't be inside the
+  environment it pushes (it would be pushed too). Use a token limited to what you push, and replace it like any item.
+- **The push approval names the token item**, beside the target (`Vercel shop · production (token: VERCEL_TOKEN)`).
+  Production confirmation works as above. Linking a token item asks for approval and names it too.
+- **Where it connects**, and nowhere else:
+
+  | Service | Host | Request |
+  |---|---|---|
+  | Vercel | `api.vercel.com` | `POST /v10/projects/{project}/env?upsert=true` per variable, with the environment as `target` (and `gitBranch`); secret kinds are `sensitive` outside development. Status: `GET /v10/projects/{project}/env` |
+  | GitHub | `api.github.com` | `GET …/secrets/public-key`, then `PUT …/secrets/{NAME}` per secret, sealed to the key with libsodium's sealed box (`crypto_box_seal`), for the repository (`/repos/{owner}/{repo}/actions`) or the GitHub environment (`/repos/{owner}/{repo}/environments/{env}`). Status: `GET …/secrets` |
+  | Railway | `backboard.railway.com` | GraphQL: look up the project's environment and service IDs, then `variableUpsert` per variable with `skipDeploys: true`. Status: `variables`. Account or workspace tokens (not project tokens) |
+  | Fly | `api.machines.dev` | `POST /v1/apps/{app}/secrets` with every value at once (staged: running Machines don't see them until your next deploy). Status: `GET /v1/apps/{app}/secrets` |
+
+- **What it needs from the link:** a Vercel project name or ID and a Railway project ID (a linked `dir` can't be read
+  through an API), a GitHub `owner/repo`, a Fly app. Railway names its environment and service by name or ID; a name that
+  matches two is refused.
+- **Checks:** requests have a 30 second timeout, answers over 1 MB are refused, redirects aren't followed, and a push
+  is reported as done only when the status and the body are what the service documents. The only retries are up to two
+  more after a rate limit (429, waiting as the service says, at most 5 seconds) or a 502, 503 or 504. Errors say what
+  went wrong in words and a status, never the service's message, a value or the token. Variable names must be letters,
+  digits and underscores (GitHub also refuses `GITHUB_…`).
+- **Link records:** `token` and `team` are optional fields added to the link; links made before them are unchanged and
+  keep using the tool.
 
 After a push, Latchkey records when each item was pushed to each link. An item changed since then shows an orange badge
 in the list and "Changed since last push" in its detail.

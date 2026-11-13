@@ -283,7 +283,8 @@ final class AppModel {
         let brokerPath = (Bundle.main.object(forInfoDictionaryKey: "LatchkeyAppGroup") as? String)
             .flatMap { FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: $0) }
             .map { BrokerEndpoint.appStorePath(container: $0) } ?? ""
-        broker = Broker(store: store, approver: PanelApprover(), socketPath: brokerPath,
+        // The sandbox can't run the services' tools: pushes go through their APIs with token items.
+        broker = Broker(store: store, approver: PanelApprover(), runner: UnavailableRunner(), nativeOnly: true, socketPath: brokerPath,
                         hasPro: { ProEntitlement.shared.current() })
         ProEntitlement.shared.start()
         #else

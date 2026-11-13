@@ -43,9 +43,17 @@ public struct RemoteTarget: Codable, Hashable, Sendable {
     public var branch: String?
     /// Where to run the tool, for tools that read a linked project from the folder (`vercel link`, `railway link`).
     public var directory: String?
+    /// The Latchkey item that holds this service's access token. With one, pushes and status go straight to the
+    /// service's API with that token; without one, to the service's command-line tool. (Added later: links saved
+    /// before it have none and decode unchanged.)
+    public var tokenItem: String?
+    /// Vercel, with a token: the team (a slug, or an ID starting `team_`) that owns the project. Leave out for a
+    /// personal project. (Added with `tokenItem`; older links have none.)
+    public var team: String?
 
     public init(service: Service, project: String? = nil, environment: String? = nil, repo: String? = nil,
-                serviceName: String? = nil, app: String? = nil, branch: String? = nil, directory: String? = nil) {
+                serviceName: String? = nil, app: String? = nil, branch: String? = nil, directory: String? = nil,
+                tokenItem: String? = nil, team: String? = nil) {
         self.service = service
         self.project = project
         self.environment = environment
@@ -54,6 +62,8 @@ public struct RemoteTarget: Codable, Hashable, Sendable {
         self.app = app
         self.branch = branch
         self.directory = directory
+        self.tokenItem = tokenItem
+        self.team = team
     }
 
     /// "Vercel shop · production", "GitHub Actions owner/repo", "Fly shop-api".
@@ -101,6 +111,19 @@ public struct RemoteTarget: Codable, Hashable, Sendable {
         case .fly:
             if !set(app) { return "Fly needs an app" }
         }
+        return nil
+    }
+
+    /// What's missing for a push through the service's API, which has no linked folder to read a project from.
+    public var nativeProblem: String? {
+        if let p = problem { return p }
+        func set(_ s: String?) -> Bool { !(s ?? "").trimmingCharacters(in: .whitespaces).isEmpty }
+        switch service {
+        case .vercel: if !set(project) { return "Vercel needs a project name or ID to push with a token (a linked folder can't be read)" }
+        case .railway: if !set(project) { return "Railway needs a project ID to push with a token (a linked folder can't be read)" }
+        case .github, .fly: break
+        }
+        if set(team) && service != .vercel { return "A team only applies to Vercel" }
         return nil
     }
 
@@ -300,6 +323,14 @@ public struct PushResult: Codable, Sendable, Hashable {
 /// Runs a remote command. The app uses `ProcessRunner`; tests use a fake.
 public protocol RemoteRunner: Sendable {
     func run(_ command: RemoteCommand, timeout: TimeInterval) -> (status: Int32, stdout: String, stderr: String)
+}
+
+/// A runner for builds that can't run the services' tools (the sandboxed App Store build): nothing starts.
+public struct UnavailableRunner: RemoteRunner {
+    public init() {}
+    public func run(_ command: RemoteCommand, timeout: TimeInterval) -> (status: Int32, stdout: String, stderr: String) {
+        (126, "", "\(command.tool) can't be run in this build; link with an access token item instead")
+    }
 }
 
 /// Runs the real tools as you, with their own sign-ins. Finds them where Homebrew, mise and the usual installers
