@@ -12,6 +12,8 @@
 ### Project
 - Source-available under the Functional Source License (FSL-1.1-ALv2); security reports can also go to
   latchkey@snackstud.io.
+- The repository is public. Releases download from GitHub, and a Homebrew tap installs them
+  (`brew tap zachshallbetter/latchkey`, `brew trust zachshallbetter/latchkey`, `brew install --cask latchkey`).
 
 ### Security
 - `latchkey run --proxy` serves a request only when its connection comes from the command or a process it started,

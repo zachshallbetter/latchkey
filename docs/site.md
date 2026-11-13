@@ -77,8 +77,6 @@ belongs in both places. Every page shares the same header, sidebar and footer; c
 ## Before it goes live
 
 - An Open Graph image (the pages use a text-only `summary` card until then).
-- Publish a signed and notarized release first (`scripts/release.sh`), then replace the **Preview status**
-  actions and source installation instructions with the public download and Homebrew command.
 - The page says Apple silicon and Intel: try the release on an Intel Mac.
 - The pages say keys and environment records sync to every Mac: try clone, export and run on a second Mac, then
   remove the **Second-Mac test pending** labels from `index.html`, `features.html` and `security.html`.

@@ -137,6 +137,7 @@ fi
 
 # The Homebrew cask, once there's a public place to download from (LATCHKEY_RELEASES_REPO, as owner/name) and a
 # homepage (LATCHKEY_HOMEPAGE).
+: ${LATCHKEY_RELEASES_REPO:=zachshallbetter/latchkey} ${LATCHKEY_HOMEPAGE:=https://latchkey.snackstud.io/}
 if [[ -n "${LATCHKEY_RELEASES_REPO:-}" && -n "${LATCHKEY_HOMEPAGE:-}" ]]; then
   step "Writing the Homebrew cask"
   sed -e "s|@VERSION@|$VERSION|" -e "s|@SHA256@|$(cut -d' ' -f1 "$DMG.sha256")|" \
