@@ -627,7 +627,7 @@ final class AppModel {
     func revealVersion(_ v: Version) async {
         let r = await send(Request(op: "version", version: v.id))
         guard let value = r.values?[v.id] else { notice = r.denied != nil ? "Not approved." : (r.error ?? "Couldn't read that version."); return }
-        guard !AppPreferences().hideOnDeactivate || NSApp.isActive else { return }
+        guard !AppPreferences().hideOnDeactivate || NSApp.isActive else { notice = Self.notInFront; return }
         revealedVersions[v.id] = value
         let token = UUID()
         versionRevealTokens[v.id] = token
@@ -794,9 +794,12 @@ final class AppModel {
         return nil
     }
 
+    /// Why an approved value wasn't shown: Latchkey went to the back while it was asked for, and values hide then.
+    static let notInFront = "Not shown: Latchkey wasn't in front, and values hide when it loses focus. Show it again."
+
     func reveal(_ name: String) async {
         guard let v = await value(of: name) else { return }
-        guard !AppPreferences().hideOnDeactivate || NSApp.isActive else { return }
+        guard !AppPreferences().hideOnDeactivate || NSApp.isActive else { notice = Self.notInFront; return }
         revealed[name] = v
         let token = UUID()
         revealTokens[name] = token
@@ -836,7 +839,8 @@ final class AppModel {
         let credentials = Array(Set(record.variables.values.compactMap(\.item))).sorted()
         var released: [String: String] = [:]
         if !credentials.isEmpty {
-            let r = await send(Request(op: "export", names: credentials, project: scope, clipboard: true))
+            let r = await send(Request(op: "export", names: credentials, project: scope, clipboard: true,
+                                       clearAfter: AppPreferences().clipboardSeconds))
             if let m = r.missing, !m.isEmpty { notice = "Not in Latchkey: \(m.joined(separator: ", "))."; return }
             guard r.ok, let values = r.values, credentials.allSatisfy({ values[$0] != nil }) else {
                 notice = r.error ?? "Could not copy \(scope)."

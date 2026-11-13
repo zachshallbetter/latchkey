@@ -223,7 +223,7 @@ func exportCommand(_ input: [String]) -> Never {
         }
         let stamp = Clipboard.copy(record.envFile(values: released, header: false))
         clearClipboardLater(stamp)
-        print("copied \(record.variables.count) variable\(record.variables.count == 1 ? "" : "s") from \(scope) to the clipboard: this Mac only, cleared in \(Int(Clipboard.clearAfter)) seconds unless you copy something else")
+        print("copied \(record.variables.count) variable\(record.variables.count == 1 ? "" : "s") from \(scope) to the clipboard: this Mac only, cleared in \(AppPreferences.defaultClipboardSeconds) seconds unless you copy something else")
         exit(0)
     }
 
@@ -308,7 +308,7 @@ func clipboardClearCommand(_ args: [String]) -> Never {
     guard let stamp = args.first.flatMap(Int.init) else { exit(64) }
     setsid()
     signal(SIGHUP, SIG_IGN)
-    sleep(UInt32(Clipboard.clearAfter))
+    sleep(UInt32(AppPreferences.defaultClipboardSeconds))
     Clipboard.clear(ifUnchangedSince: stamp)
     exit(0)
 }

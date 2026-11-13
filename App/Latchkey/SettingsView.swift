@@ -198,7 +198,7 @@ struct SettingsView: View {
     @ViewBuilder private var developer: some View {
         Section("Command Line") {
             #if LATCHKEY_APP_STORE
-            SettingsNote("The terminal CLI connects to this app through an authenticated App Group endpoint. Installing the CLI from the App Store app is still under development.")
+            SettingsNote("The command-line tool is signed separately and connects to this app through an authenticated App Group endpoint. Setup help explains how to install it.")
             Link("Command-line setup help", destination: SettingsLinks.support)
             #else
             if let tool = model.bundledTool {

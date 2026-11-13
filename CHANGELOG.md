@@ -1,13 +1,18 @@
 # Changelog
 
-## 0.3.0 (2026-11-13)
+## Unreleased
 
 ### In-app settings
 - Settings now lives in the main window, with General, Privacy & Approval, Storage & File Access, Developer Tools,
   Membership, and About & Updates sections. Sidebar, menu bar, Command-comma and upgrade actions share it.
-- Appearance, clipboard/reveal timers, hide-on-focus-loss and Dock quit behavior are saved locally. Authorization
-  remains unchanged; the Membership screen uses verified one-time App Store ownership and pricing, with restore
-  and availability controls and purchase support links.
+- Appearance, clipboard and reveal timers, hiding values when Latchkey loses focus, and Dock quit behaviour are
+  saved on this Mac. Copying an environment names the chosen clear time in its approval; `lk export --clipboard`
+  keeps 60 seconds. A value approved while Latchkey isn't in front is hidden with a notice. Authorization is
+  unchanged.
+- Membership shows verified one-time App Store ownership and the App Store price, with Buy, Restore Purchases,
+  availability checks and purchase support links.
+
+## 0.3.0 (2026-11-13)
 
 ### Latchkey Pro
 - Mac App Store version: Latchkey Pro as a one-time in-app purchase (`io.snackstud.latchkey.pro`), checked with
