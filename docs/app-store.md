@@ -118,8 +118,47 @@ needs its own test. The first IPC fixture exceeded the UNIX socket path-length l
 name fixed the fixture. Preserve that limit in the final transport design.
 
 [The recorded report](evidence/app-store/2026-11-11-component-probes.json) lists what was and was not tested.
-The built-bundle preflight passes for the Safari bundle's privacy manifest. Every full-functionality gate in
-readiness.json remains pending.
+The built-bundle preflight passes for the Safari bundle's privacy manifest.
+
+On 2026-11-13 three more fixture-only probes ran against a development-signed Debug build (new commands below).
+Only `vaultAndHistory` is recorded as passed; the other two probes passed but leave their gates pending.
+
+| Probe | Result | Evidence |
+| --- | --- | --- |
+| Vault and history | Passed: save, read, change with version, delete, restore and cleanup in the app's access group under a unique non-synchronizing fixture service; an unentitled access group is refused. | [report](evidence/app-store/2026-11-13-vault-history.json) |
+| File access and revocation | Passed, but needs a manual step: see below. | [report](evidence/app-store/2026-11-13-file-access.json) |
+| CLI adversarial cases | Passed 18 of 18 (14 transport plus 4 new); PID reuse, MCP and SSH remain. | [report](evidence/app-store/2026-11-13-cli-adversarial.json) |
+
+```bash
+python3 scripts/test-appstore-vault.py --app /path/to/Debug/Latchkey.app --report /private/tmp/latchkey-vault-report.json
+python3 scripts/test-appstore-files.py --app /path/to/Debug/Latchkey.app --report /private/tmp/latchkey-files-report.json
+```
+
+The vault probe never queries the real `latchkey` or `latchkey.history` services and never synchronizes. It does not
+cover real items, iCloud sync, migration or the approval UI. The history store keeps dates to one-second resolution,
+so two versions saved in the same second tie for "latest"; the probe waits between them. Existing behavior, not changed.
+
+The file probe runs three launches (grant, relaunch, revoked). An unsandboxed harness issues App Sandbox extension
+tokens for fixture paths, the mechanism the Open panel uses, and `SecurityScopedAccess` takes it from there. A
+headless run cannot click NSOpenPanel, and a sandboxed process cannot create a security-scoped bookmark for a
+path it was never granted. Proven: an unselected file is unreadable; the selected file is readable; atomic rewrite
+fails with only the file granted and succeeds, keeping permissions, once its parent is granted; the saved records
+restore access in a new process; after removal the file stays unreadable in the next launch, and an unselected
+sibling folder is denied throughout. After removal in the same process the file was already unreadable, but the
+Open panel's own extension may behave differently, so only the next-launch result is relied on.
+
+Manual test (Debug sandbox build, a scratch folder with a `.env` file, no real secrets):
+
+1. Settings, File permissions: choose the `.env` file. Expect it listed, and Import to read it.
+2. Move or import so Latchkey rewrites the file. Expect the Allow prompt for its folder; Cancel must leave the
+   file and vault unchanged, Allow must rewrite it with the same permissions (`ls -l`).
+3. Quit and reopen. Expect the file permissions still listed and a second rewrite to work without a prompt.
+4. Disconnect the volume (or a disk image) holding the file, reopen, reconnect. Expect it remembered and usable again.
+5. Move the file's folder in Finder and rewrite. Expect a stale bookmark to refresh or a clear request to choose again.
+6. Remove the permission in Settings, quit and reopen. Expect the file to be inaccessible and a sibling folder never prompted.
+
+Gates after this run: `vaultAndHistory` passed (development signing only; TestFlight and migration belong to their own
+gates). `signedFileAccessAndRevocation` and `authenticatedCLITransportAndCallerIdentity` remain pending.
 
 ## Terminal execution and broker transport
 
@@ -160,8 +199,17 @@ vault, and cleans up the fixture broker. It tests mutual authentication, refusal
 bytes to an impostor server, shell/Node/npm execution, masking on both streams, exit status, key-file cleanup,
 command/folder grant matching, revocation and SIGTERM forwarding. On 2026-11-11 all 14 signed transport probes passed. The recorded
 [transport report](evidence/app-store/2026-11-11-cli-transport.json) is component evidence; it does not clear the
-full CLI/identity or execution/proxy/AWS gates. Actual MCP, session/PID-reuse adversarial tests, live proxy and STS,
-SSH, real approval UI and vault, packaging and TestFlight remain pending.
+full CLI/identity or execution/proxy/AWS gates.
+
+On 2026-11-13 four fixture-only adversarial cases were added and all 18 passed
+([report](evidence/app-store/2026-11-13-cli-adversarial.json)): forged `grant`, `get` and `check` fields from an
+unsigned process are refused and create no grant; a signed CLI's claimed `--folder` and `LATCHKEY_ORIGIN` cannot create
+or widen a grant (only the approver can); a single-use grant cannot be replayed; and a caller that disconnects after
+sending leaves the broker serving. Authentication is bound to the connection, not to message bytes, so replay is
+exercised as a consumed grant and an unsigned resend, not a captured signed request. Still pending: real PID reuse of
+a signed caller (wrap-around, or a broker that delays context reads; the start-time bracket is covered only by unit
+tests), the MCP entry point, ancestor-bound session grants, SSH forwarding, live proxy and STS, real approval UI and
+vault, packaging and TestFlight.
 
 ## Full-functionality blockers and acceptance tests
 
