@@ -3,7 +3,7 @@ import Foundation
 /// The operations that need Latchkey Pro, each with the feature it is named by. Empty today: everything shipped so far
 /// stays free. Add an op here when a new Pro feature is built; `Broker.handle` is the only place that enforces it.
 /// Core ops (storing, reading, approving, granting, running, importing, exporting, deleting, history and restore)
-/// never belong here; ProGateTests checks that against `Broker.Gate.commandLineTool`.
+/// never belong here, nor does anything that shipped free; ProGateTests lists those.
 public enum ProGate {
     public static let features: [String: String] = [:]
 

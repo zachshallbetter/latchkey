@@ -34,9 +34,19 @@ final class ProGateTests: XCTestCase {
         XCTAssertTrue(b.handle(Request(op: "list"), peer: peer).ok)
     }
 
+    /// Every op that shipped before Pro existed (2026-11-13) stays free; new Pro ops are added to the command-line
+    /// gate as well as to ProGate, so the gate itself can't be the guard.
+    static let shippedFree: Set<String> = [
+            "status", "list", "check", "verify-log", "log", "get", "set", "rm", "import", "grants", "grant",
+            "revoke", "move", "update", "history", "deleted", "version", "restore", "forget", "links", "link",
+            "unlink", "remote-status", "push", "environments", "environment-add", "environment-set",
+            "environment-remove", "export", "projects", "project-link", "project-unlink", "duplicates", "combine",
+            "scan"
+    ]
+
     func testCoreOpsAreNeverInTheProSet() {
-        XCTAssertTrue(ProGate.ops.isDisjoint(with: Broker.Gate.commandLineTool.ops),
-                      "Pro-gated ops that are core today: \(ProGate.ops.intersection(Broker.Gate.commandLineTool.ops).sorted())")
+        XCTAssertTrue(ProGate.ops.isDisjoint(with: Self.shippedFree),
+                      "Pro-gated ops that shipped free: \(ProGate.ops.intersection(Self.shippedFree).sorted())")
         XCTAssertTrue(ProGate.ops.isDisjoint(with: Broker.Gate.safariExtension.ops))
     }
 }
