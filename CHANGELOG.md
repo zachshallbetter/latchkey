@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.1 (2026-11-12)
 
 ### Website
 - The home page shows Latchkey in use: self-playing scenes of a fresh clone rebuilt with `lk project` and
