@@ -4,7 +4,8 @@ import Network
 // `latchkey run --proxy`: the command never holds the real API key. It gets a placeholder and a base URL on this
 // Mac; requests to that URL that carry the placeholder go to the provider with the real key in its place. The real
 // key stays in this process (the signed tool, which other programs can't read), and can only ever reach the
-// provider's own host.
+// provider's own host. The placeholder is a bearer token that other programs of the same user can read from the
+// command's environment, so a request is only served when its TCP connection belongs to the command's process tree.
 
 public enum ProxyError: Error, CustomStringConvertible {
     case notStarted
@@ -86,16 +87,102 @@ public func holdBackProxiedKeys(_ env: inout [String: String], values: [String: 
     return routes
 }
 
+/// What a run may ask of the provider, shared by every proxy the run starts: the models it may name and how many
+/// requests it may make. Unlimited by default.
+public final class ProxyLimits: @unchecked Sendable {
+    public let models: Set<String>?
+    public let requests: Int?
+    private let lock = NSLock()
+    private var used = 0
+
+    public init(models: Set<String>? = nil, requests: Int? = nil) {
+        self.models = models; self.requests = requests
+    }
+
+    public var isLimited: Bool { models != nil || requests != nil }
+
+    /// A sentence for the person running the command, saying what is enforced.
+    public var summary: String {
+        var parts: [String] = []
+        if let models { parts.append("models " + models.sorted().joined(separator: ", ")) }
+        if let requests { parts.append("at most \(requests) request\(requests == 1 ? "" : "s")") }
+        return parts.joined(separator: "; ")
+    }
+
+    /// Nil when the request is within the limits (and counted); otherwise the status and reason to refuse with.
+    /// With a model list, a request is served only if its body is a JSON object whose single `model` names a listed
+    /// model: anything the proxy can't read that way is refused rather than guessed at.
+    func admit(_ r: HTTPRequest) -> (status: Int, message: String)? {
+        if let models {
+            guard let model = Self.model(of: r), models.contains(model) else {
+                return (403, "this run may only use the model\(models.count == 1 ? "" : "s"): " + models.sorted().joined(separator: ", "))
+            }
+        }
+        guard let requests else { return nil }
+        return lock.withLock {
+            guard used < requests else { return (429, "this run's limit of \(requests) request\(requests == 1 ? "" : "s") is used up") }
+            used += 1
+            return nil
+        }
+    }
+
+    /// The `model` string of a JSON object body. Nil for anything else: no body, a compressed body, invalid JSON,
+    /// a non-string model, or a `model` key that appears twice (parsers disagree on which one wins).
+    static func model(of r: HTTPRequest) -> String? {
+        let encoding = r.headers["content-encoding"]?.lowercased()
+        guard encoding == nil || encoding == "identity", !r.body.isEmpty,
+              let object = (try? JSONSerialization.jsonObject(with: r.body)) as? [String: Any],
+              let model = object["model"] as? String,
+              topLevelKeys(r.body)?.filter({ $0 == "model" }).count == 1 else { return nil }
+        return model
+    }
+
+    /// The keys of a JSON object's top level, escapes decoded, duplicates kept. The body must already be valid JSON.
+    static func topLevelKeys(_ data: Data) -> [String]? {
+        let b = [UInt8](data)
+        var keys: [String] = []
+        var depth = 0, i = 0
+        var expectKey = false
+        while i < b.count {
+            switch b[i] {
+            case UInt8(ascii: "{"): depth += 1; expectKey = depth == 1
+            case UInt8(ascii: "["): depth += 1
+            case UInt8(ascii: "}"), UInt8(ascii: "]"): depth -= 1
+            case UInt8(ascii: ","): if depth == 1 { expectKey = true }
+            case UInt8(ascii: "\""):
+                var j = i + 1
+                while j < b.count, b[j] != UInt8(ascii: "\"") { j += b[j] == UInt8(ascii: "\\") ? 2 : 1 }
+                guard j < b.count else { return nil }
+                if depth == 1, expectKey {
+                    guard let key = try? JSONDecoder().decode(String.self, from: Data(b[i...j])) else { return nil }
+                    keys.append(key)
+                    expectKey = false
+                }
+                i = j
+            default: break
+            }
+            i += 1
+        }
+        return depth == 0 ? keys : nil
+    }
+}
+
 /// Listens on 127.0.0.1 for one provider and forwards each request, one per connection.
 public final class KeyProxy: @unchecked Sendable {
     public let route: ProxyRoute
+    public let limits: ProxyLimits
     private let listener: NWListener
     private let queue = DispatchQueue(label: "latchkey.proxy")
+    private let state = NSCondition()
+    private var root: ProcessStamp?
+    private var stopped = false
+    private var connections: [ObjectIdentifier: NWConnection] = [:]
     static let maxHeader = 64 * 1024
     static let maxBody = 32 * 1024 * 1024
 
-    public init(route: ProxyRoute) throws {
+    public init(route: ProxyRoute, limits: ProxyLimits = ProxyLimits()) throws {
         self.route = route
+        self.limits = limits
         let params = NWParameters.tcp
         params.requiredLocalEndpoint = NWEndpoint.hostPort(host: "127.0.0.1", port: .any)
         listener = try NWListener(using: params)
@@ -120,9 +207,35 @@ public final class KeyProxy: @unchecked Sendable {
         return port
     }
 
-    public func stop() { listener.cancel() }
+    /// Serves only connections made by `process` or its descendants. Until this is called every request is refused;
+    /// a request that arrives in the instant between the command starting and this call waits briefly for it.
+    public func bind(to process: ProcessStamp) {
+        state.lock(); root = process; state.broadcast(); state.unlock()
+    }
+
+    /// Stops listening, cancels connections still open and refuses anything that arrives after.
+    public func stop() {
+        state.lock(); stopped = true; let open = Array(connections.values); connections = [:]; state.broadcast(); state.unlock()
+        listener.cancel()
+        open.forEach { $0.cancel() }
+    }
+
+    private func boundRoot() -> ProcessStamp? {
+        state.lock(); defer { state.unlock() }
+        let deadline = Date().addingTimeInterval(5)
+        while root == nil, !stopped, state.wait(until: deadline) {}
+        return stopped ? nil : root
+    }
 
     private func serve(_ c: NWConnection) {
+        state.lock()
+        let refuse = stopped
+        if !refuse { connections[ObjectIdentifier(c)] = c }
+        state.unlock()
+        if refuse { c.cancel(); return }
+        c.stateUpdateHandler = { [weak self] s in
+            if case .cancelled = s { self?.state.lock(); self?.connections[ObjectIdentifier(c)] = nil; self?.state.unlock() }
+        }
         c.start(queue: queue)
         readRequest(c, buffer: Data())
     }
@@ -153,8 +266,18 @@ public final class KeyProxy: @unchecked Sendable {
             reply(c, status: 401, message: "Latchkey's key proxy: this request doesn't carry the key it was given")
             return
         }
+        // The placeholder alone isn't enough: other programs of the same user can read it from the command's
+        // environment. The connection must also come from the command or something it started.
+        guard belongsToCommand(c) else {
+            reply(c, status: 403, message: "Latchkey's key proxy: this request didn't come from the command it was started for")
+            return
+        }
         guard r.target.hasPrefix("/"), let url = URL(string: p.upstream + r.target), url.host == URL(string: p.upstream)?.host else {
             reply(c, status: 400, message: "bad path")
+            return
+        }
+        if let refusal = limits.admit(r) {
+            reply(c, status: refusal.status, message: "Latchkey's key proxy: " + refusal.message)
             return
         }
         var req = URLRequest(url: url)
@@ -169,6 +292,11 @@ public final class KeyProxy: @unchecked Sendable {
         let session = URLSession(configuration: .ephemeral, delegate: streamer, delegateQueue: nil)
         session.dataTask(with: req).resume()
         session.finishTasksAndInvalidate()
+    }
+
+    private func belongsToCommand(_ c: NWConnection) -> Bool {
+        guard let root = boundRoot(), case .hostPort(_, let client) = c.endpoint, let server = listener.port else { return false }
+        return LoopbackPeer.connection(clientPort: client.rawValue, serverPort: server.rawValue, belongsTo: root)
     }
 
     private func reply(_ c: NWConnection, status: Int, message: String) {

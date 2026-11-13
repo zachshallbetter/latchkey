@@ -19,6 +19,8 @@ Starts COMMAND with every `latchkey://ID` in its environment replaced by the ite
 | `--file NAME=ID` | Set NAME to the path of a temporary file holding the value. `NAME=latchkey-file://ID` in an env file does the same. The file is readable only by you and deleted when COMMAND exits. |
 | `--no-masking` | Don't hide values in COMMAND's output, and start it directly. |
 | `--proxy` | Keep `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` out of COMMAND entirely (see below). |
+| `--proxy-models A,B` | With `--proxy`: refuse requests that don't name one of these models in their JSON body. |
+| `--proxy-requests N` | With `--proxy`: refuse requests after N have been forwarded. |
 | `--aws-session`, `--aws-role ARN`, `--aws-for TIME` | Give COMMAND short-lived AWS credentials instead of the long-lived key (see below). |
 
 Items that aren't agent-safe or covered by a grant ask for approval first. Values of secret kinds that are 6
@@ -53,6 +55,14 @@ It works with programs that use the OpenAI or Anthropic SDKs (or read those base
 refuses to start if a supported key is not a whole reference, its base URL is already set, or the key would also
 be delivered through another variable or key file. Unset custom base URLs before running. At least one supported
 key reference is required. Other credentials are delivered normally and are not protected by this proxy.
+
+Only COMMAND and the processes it starts can use the proxy: a request from any other program, even one that knows
+the placeholder, gets a 403, and the proxy stops when COMMAND exits. A process that detaches from COMMAND (so
+launchd adopts it) is refused too. `--proxy-models` and `--proxy-requests` narrow what COMMAND may do with the key;
+with `--proxy-models`, only requests with a JSON body naming a listed model are forwarded (so `GET /v1/models`,
+multipart uploads and compressed bodies are refused). When either is set, `latchkey run` prints
+`latchkey: proxy limits enforced: ...` on standard error. Both need `--proxy`. See [Security](security.md) for
+what this does and doesn't protect.
 
 ### Short-lived AWS credentials
 

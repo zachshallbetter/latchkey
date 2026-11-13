@@ -183,6 +183,9 @@ final class MCPServer: @unchecked Sendable {
         guard !command.isEmpty else { throw RunError.usage("command is required: an array such as [\"npm\", \"test\"]") }
         let timeout = min(max(args["timeout_seconds"] as? Double ?? Self.defaultTimeout, 1), Self.longestTimeout)
         var options: [String] = args["proxy"] as? Bool == true ? ["--proxy"] : []
+        let models = Self.strings(args["proxy_models"])
+        if !models.isEmpty { options += ["--proxy-models", models.joined(separator: ",")] }
+        if let requests = args["proxy_requests"] as? Int { options += ["--proxy-requests", String(requests)] }
         if let role = args["aws_role"] as? String, !role.isEmpty { options += ["--aws-role", role] }
         else if args["aws_session"] as? Bool == true { options.append("--aws-session") }
         let cli = ["run"] + options + (try sourceArguments(args)) + ["--"] + command
@@ -439,6 +442,10 @@ final class MCPServer: @unchecked Sendable {
                             "description": "The program and its arguments, such as [\"npm\", \"test\"]. Use [\"sh\", \"-c\", \"...\"] for pipes."],
                 "proxy": ["type": "boolean",
                           "description": "Keep OPENAI_API_KEY and ANTHROPIC_API_KEY out of the command: it gets a placeholder and a local base URL, and Latchkey adds the real key on requests to the provider. For programs using the OpenAI or Anthropic SDKs."],
+                "proxy_models": ["type": "array", "items": ["type": "string"], "minItems": 1,
+                                 "description": "With proxy: only let the command use these models. A request that doesn't name one in its JSON body is refused."],
+                "proxy_requests": ["type": "integer", "minimum": 1,
+                                   "description": "With proxy: stop forwarding after this many requests."],
                 "aws_session": ["type": "boolean",
                                 "description": "Give the command short-lived AWS credentials (15 minutes) from STS instead of the long-lived key."],
                 "aws_role": ["type": "string", "description": "Like aws_session, but assume this role ARN."],

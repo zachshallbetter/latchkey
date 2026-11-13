@@ -9,14 +9,16 @@ latchkey: read secrets from the Latchkey app without keeping them in files.
 Items are shared (ID = NAME) or belong to a project's environment (ID = project/environment/NAME).
 Files refer to them as latchkey://ID.
 
-  latchkey run [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [--no-masking] [--proxy] -- COMMAND [ARGS...]
+  latchkey run [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [--no-masking] [--proxy [--proxy-models A,B] [--proxy-requests N]] -- COMMAND [ARGS...]
       Start COMMAND with every latchkey://ID in its environment replaced by the real value.
       --env loads an environment's items without any file (each as its NAME), plus the shared items that
       environment's files use. --file NAME=ID (or NAME=latchkey-file://ID in an env file) gives COMMAND the
       path of a temporary file holding the value, readable only by you and deleted when COMMAND exits.
       Secret values printed by COMMAND are concealed unless --no-masking is given.
       --proxy keeps OPENAI_API_KEY and ANTHROPIC_API_KEY out of COMMAND: it gets a placeholder and a local
-      OPENAI_BASE_URL / ANTHROPIC_BASE_URL, and latchkey puts the real key on requests to the provider only.
+      OPENAI_BASE_URL / ANTHROPIC_BASE_URL, and latchkey puts the real key on requests to the provider only, and
+      only for requests made by COMMAND or what it starts. --proxy-models A,B refuses any request that doesn't name
+      one of those models; --proxy-requests N stops after N requests.
       --aws-session (or --aws-role ARN) gives COMMAND short-lived AWS credentials from STS instead of the long-lived
       key; --aws-for sets how long they last (default 15m, at most 12h).
   latchkey check [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [ID,...] [--json] [-- COMMAND...]
@@ -278,6 +280,8 @@ func runCommand(_ input: [String]) -> Never {
     var fileArgs: [(name: String, id: String)] = []
     var masking = true
     var proxy = false
+    var proxyModels: Set<String>?
+    var proxyRequests: Int?
     var aws: (role: String?, duration: TimeInterval)?
     var rest = input
     var cmd: [String] = []
@@ -299,6 +303,14 @@ func runCommand(_ input: [String]) -> Never {
             fileArgs.append((String(a[..<i]), String(a[a.index(after: i)...])))
         case "--no-masking": masking = false
         case "--proxy": proxy = true
+        case "--proxy-models":
+            let names = rest.isEmpty ? [] : rest.removeFirst().split(separator: ",", omittingEmptySubsequences: false)
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+            guard !names.isEmpty, !names.contains("") else { fail("--proxy-models takes model names separated by commas, such as gpt-4o,gpt-4o-mini", code: 64) }
+            proxyModels = Set(names)
+        case "--proxy-requests":
+            guard !rest.isEmpty, let n = Int(rest.removeFirst()), n > 0 else { fail("--proxy-requests takes a number of requests, such as 50", code: 64) }
+            proxyRequests = n
         case "--aws-session": aws = (aws?.role, aws?.duration ?? AWSSTS.shortest)
         case "--aws-role":
             guard !rest.isEmpty, rest[0].hasPrefix("arn:") else { fail("--aws-role takes a role ARN, such as arn:aws:iam::123456789012:role/dev", code: 64) }
@@ -314,6 +326,7 @@ func runCommand(_ input: [String]) -> Never {
     }
     guard !cmd.isEmpty else { fail("usage: latchkey run [--env-file FILE] [--env PROJECT/ENV] [--file NAME=ID] -- COMMAND [ARGS...]", code: 64) }
 
+    if !proxy && (proxyModels != nil || proxyRequests != nil) { fail("--proxy-models and --proxy-requests need --proxy", code: 64) }
     do { _ = try clientEndpoint() } catch { fail(error.localizedDescription, code: 69) }
     let spec = RunSpec(envFiles: envFiles, scopes: scopes, fileArgs: fileArgs, cwd: currentDirectory(), aws: aws)
     let prepared: PreparedRun
@@ -324,17 +337,20 @@ func runCommand(_ input: [String]) -> Never {
     var env = prepared.environment
     let secretValues = prepared.secretValues, tempDir = prepared.tempDir
     var proxies: [KeyProxy] = []
+    let limits = ProxyLimits(models: proxyModels, requests: proxyRequests)
     for route in prepared.proxies {
         do {
-            let p = try KeyProxy(route: route)
+            let p = try KeyProxy(route: route, limits: limits)
             let port = try p.start()
             env[route.provider.baseVariable] = "http://127.0.0.1:\(port)\(route.provider.basePath)"
             proxies.append(p)
         } catch {
             prepared.cleanUp()
+            proxies.forEach { $0.stop() }
             fail("couldn't start the key proxy for \(route.provider.name): \(error)")
         }
     }
+    if limits.isLimited { FileHandle.standardError.write(Data("latchkey: proxy limits enforced: \(limits.summary)\n".utf8)) }
 
     // Exec in place when there's nothing to mask and nothing to clean up afterwards.
     if secretValues.isEmpty && tempDir == nil && proxies.isEmpty {
@@ -366,12 +382,13 @@ func runCommand(_ input: [String]) -> Never {
 
     do { try process.run() } catch { prepared.cleanUp(); fail("cannot start \(cmd[0]): \(error.localizedDescription)", code: 127) }
     childPID = process.processIdentifier
+    if let began = PeerInfo.started(childPID) { proxies.forEach { $0.bind(to: ProcessStamp(pid: childPID, started: began)) } }
     pump(outPipe, to: FileHandle.standardOutput)
     pump(errPipe, to: FileHandle.standardError)
     process.waitUntilExit()
+    proxies.forEach { $0.stop() }
     group.wait()
     prepared.cleanUp()
-    proxies.forEach { $0.stop() }
     if process.terminationReason == .uncaughtSignal { exit(128 + process.terminationStatus) }
     exit(process.terminationStatus)
 }
