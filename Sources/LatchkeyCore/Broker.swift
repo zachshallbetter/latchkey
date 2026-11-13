@@ -644,28 +644,42 @@ public final class Broker: @unchecked Sendable {
         return Response(ok: true)
     }
 
-    /// Values for `lk export --values`, which writes them to a file in plain text. Always asks, naming the file: no
-    /// grant, agent-safe setting or earlier approval stands in, because the values leave Latchkey for good. The file
-    /// is the caller's claim, shown as such; an agent through `latchkey mcp` can't ask at all.
+    /// Values for `lk export --values`, which writes them to a file in plain text, or with `clipboard` puts them on the
+    /// clipboard. Always asks, naming the file or the environment: no grant, agent-safe setting or earlier approval
+    /// stands in, because the values leave Latchkey for good (a file can at least be found again; a copy can't). The
+    /// file is the caller's claim, shown as such; an agent through `latchkey mcp` can't ask at all.
     func export(_ req: Request, peer: PeerInfo) throws -> Response {
         guard req.origin != "mcp" else {
             return Response(ok: false, error: "an agent can't export values in plain text; it can export references (lk export without --values)")
         }
         guard !peer.isSafariExtension else { return Response(ok: false, error: "export isn't available to Safari") }
+        let clipboard = req.clipboard == true
         let names = Array(Set(req.names ?? [])).sorted()
         guard !names.isEmpty else { return Response(ok: false, error: "no names given") }
-        guard let dest = req.destination, dest.hasPrefix("/") else { return Response(ok: false, error: "export needs the full path of the file it writes") }
+        if clipboard {
+            guard req.project != nil else { return Response(ok: false, error: "copying to the clipboard needs the environment") }
+            guard !peer.isSSHForward else { return Response(ok: false, error: "the clipboard is on the other computer; copy there, or write a file with lk export --values --out") }
+        } else {
+            guard let dest = req.destination, dest.hasPrefix("/") else { return Response(ok: false, error: "export needs the full path of the file it writes") }
+        }
         let existing = Set(try store.list().map(\.name))
         let missing = names.filter { !existing.contains($0) }
         guard missing.isEmpty else { return Response(ok: false, missing: missing) }
         let scope = req.project.map { " from \($0)" } ?? ""
-        let place = peer.isSSHForward ? "\(dest) on another computer" : Self.tilde(dest)
-        guard ask(.read, names, peer, req, "write \(Self.count(names))\(scope) in plain text to \(place), asked by \(Self.describe(peer, req))").allowed else {
-            log("export", names, "denied (plain text to \(dest))", peer, req)
+        let dest = req.destination ?? ""
+        let reason: String
+        if clipboard {
+            reason = "copy \(Self.count(names))\(scope) to the clipboard in plain text, for this Mac only and cleared after \(Int(Clipboard.clearAfter)) seconds, asked by \(Self.describe(peer, req))"
+        } else {
+            let place = peer.isSSHForward ? "\(dest) on another computer" : Self.tilde(dest)
+            reason = "write \(Self.count(names))\(scope) in plain text to \(place), asked by \(Self.describe(peer, req))"
+        }
+        guard ask(.read, names, peer, req, reason).allowed else {
+            log("export", names, clipboard ? "denied (copy to the clipboard)" : "denied (plain text to \(dest))", peer, req)
             return Response(ok: false, error: "the export was not approved")
         }
         let values = try store.values(names)
-        log("export", names, "approved (plain text to \(dest))", peer, req)
+        log("export", names, clipboard ? "approved (copied to the clipboard)" : "approved (plain text to \(dest))", peer, req)
         return Response(ok: true, values: values)
     }
 

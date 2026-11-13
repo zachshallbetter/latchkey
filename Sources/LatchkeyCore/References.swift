@@ -90,6 +90,8 @@ public enum EnvFile {
         case notAFile(String)
         case exists(String)
         case noFolder(String)
+        case changed(String)
+        case notText(String)
         case write(String, Int32)
 
         public var errorDescription: String? {
@@ -98,6 +100,8 @@ public enum EnvFile {
             case .notAFile(let p): return "\(p) isn't a regular file"
             case .exists(let p): return "\(p) already exists"
             case .noFolder(let p): return "no folder \(p)"
+            case .changed(let p): return "\(p) changed while waiting; nothing was written"
+            case .notText(let p): return "\(p) isn't a UTF-8 text file"
             case .write(let p, let e): return "couldn't write \(p): \(String(cString: strerror(e)))"
             }
         }
@@ -209,6 +213,45 @@ public enum EnvFile {
             } else { result += physical[i].raw; i += 1 }
         }
         return result
+    }
+
+    /// What `merge` did: the new text, and the names it added at the end and the names whose value it changed.
+    public struct Merge: Equatable, Sendable {
+        public var text: String
+        public var added: [String]
+        public var updated: [String]
+    }
+
+    /// Sets each of `variables` in `text`: an assignment already there gets its value replaced (every physical line of
+    /// a multiline one), a missing name is appended at the end, and everything else (comments, blank lines, order,
+    /// unmanaged assignments, line endings, a final line without one) stays byte for byte. An assignment that already
+    /// holds the value is left as written. An updated line keeps its indentation and `export`, and loses an inline
+    /// comment. Names in `pending` are in `variables` for a preview before their values are known: they count as
+    /// updated where present, and the text isn't final.
+    public static func merge(_ text: String, with variables: [String: String], pending: Set<String> = []) throws -> Merge {
+        let physical = lines(text)
+        let assignments = try entries(physical)
+        let byStart = Dictionary(uniqueKeysWithValues: assignments.map { ($0.first, $0) })
+        var result = "", updated = Set<String>(), i = 0
+        while i < physical.count {
+            if let entry = byStart[i], let value = variables[entry.key] {
+                if !pending.contains(entry.key), entry.value == value {
+                    for j in i...entry.last { result += physical[j].raw }
+                } else {
+                    result += entry.prefix + quoted(value) + physical[entry.last].ending
+                    updated.insert(entry.key)
+                }
+                i = entry.last + 1
+            } else { result += physical[i].raw; i += 1 }
+        }
+        let present = Set(assignments.map(\.key))
+        let added = variables.keys.filter { !present.contains($0) }.sorted()
+        if !added.isEmpty {
+            let ending = physical.first { !$0.ending.isEmpty }?.ending ?? "\n"
+            if let last = physical.last, last.ending.isEmpty { result += ending }
+            for name in added { result += name + "=" + quoted(variables[name]!) + ending }
+        }
+        return Merge(text: result, added: added, updated: updated.sorted())
     }
 
     public static func rewriteFile(at url: URL, original text: String, toReferences references: [String: String]) throws {

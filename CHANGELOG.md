@@ -35,6 +35,17 @@
   never a value, and exits 1 when it finds any. `--staged` scans only what a commit would add, and
   `lk scan --install-hook` writes a pre-commit hook that refuses such commits.
 
+### Export
+- `lk export PROJECT/ENV --out FILE --merge` updates the variables Latchkey manages in an existing env file, appends
+  the missing ones and keeps every other byte (comments, order, other variables, line endings). It lists the names it
+  adds and updates first and asks to go ahead, unless `--yes`.
+- **Export Environment…** in the app writes an env file of references or values, with the same checks as the command
+  and the same merge.
+- `lk export PROJECT/ENV --values --clipboard` and **Copy Environment as .env…** copy an environment as an env block
+  for dashboards that take a pasted one. Each copy asks, naming the environment and the clipboard; it stays on this
+  Mac, is hidden from clipboard managers and clears after 60 seconds. Agents and Safari can't copy. The log says
+  "copied to the clipboard".
+
 ## 0.2.1 (2026-11-12)
 
 ### Website

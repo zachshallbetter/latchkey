@@ -84,7 +84,12 @@ command gets which value. This page says what it protects against, how, and wher
   approval. The file is written beside its destination, readable only by you, and renamed into place, so an existing
   file isn't touched until the new one is complete; a symbolic link at the destination is refused. The access log
   records the items and the file, never the values. Agents through `latchkey mcp` can't export values. Inside a Git
-  checkout the file must be ignored and untracked, checked before anything is asked.
+  checkout the file must be ignored and untracked, checked before anything is asked. `--merge` changes only the
+  variables Latchkey manages in an existing file and refuses one that changes while an approval waits.
+- **Copying an environment** (`latchkey export --values --clipboard`, and **Copy as .env** in the app) asks every
+  time, naming the environment and the clipboard. The values stay on this Mac, are marked so clipboard managers skip
+  them, and are cleared after 60 seconds. The log records "copied to the clipboard", never the values. Agents,
+  Safari and requests forwarded over SSH can't copy. Unlike a file, a copy can't be traced afterwards.
 - **Copied values** go to this Mac's clipboard only, not to your other devices, are marked so clipboard managers skip
   them, and are cleared after 60 seconds.
 - **Project links** match a checkout to a project by its Git remotes. A match only names the project; it never

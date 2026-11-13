@@ -77,6 +77,8 @@ struct ItemDetail: View {
                 Button("Move…") { model.moveRequest = MoveRequest(ids: [item.name]) }
                 if !item.ref.isShared {
                     Button("Remote Locations…") { model.remoteRequest = RemoteRequest(scope: "\(item.ref.project)/\(item.ref.environment)") }
+                    Button("Export Environment…") { model.exportRequest = ExportRequest(scope: "\(item.ref.project)/\(item.ref.environment)") }
+                    Button("Copy Environment as .env…") { Task { await model.copyAsEnv("\(item.ref.project)/\(item.ref.environment)") } }
                 }
                 Divider()
                 Button("Copy Reference") { model.copyReference(item.name) }

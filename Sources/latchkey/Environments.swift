@@ -165,54 +165,16 @@ func migrateCommand(dryRun: Bool) -> Never {
 
 // MARK: - export
 
-/// Runs git quietly; its exit status, or 127 if it couldn't start.
-func gitStatus(_ args: [String]) -> Int32 {
-    let p = Process()
-    p.executableURL = URL(fileURLWithPath: "/usr/bin/git")
-    p.arguments = args
-    p.standardOutput = FileHandle.nullDevice
-    p.standardError = FileHandle.nullDevice
-    do { try p.run() } catch { return 127 }
-    p.waitUntilExit()
-    return p.terminationStatus
-}
-
-/// Why plain text at `path` could end up in Git: the file is tracked, or not ignored, in the checkout it's in. Nil outside
-/// a checkout, or when Git ignores it and doesn't track it.
-func gitProblem(_ path: String) -> String? {
-    let folder = URL(fileURLWithPath: path).deletingLastPathComponent().path
-    guard Repo.commonDir(for: folder) != nil else { return nil }
-    let shown = Broker.tilde(path)
-    if gitStatus(["-C", folder, "ls-files", "--error-unmatch", "--", path]) == 0 {
-        return "\(shown) is tracked by Git, so the values would be committed. Write them somewhere Git ignores."
-    }
-    switch gitStatus(["-C", folder, "check-ignore", "-q", "--", path]) {
-    case 0: return nil
-    case 1: return "\(shown) isn't ignored by Git, so `git add` would commit the values. Add it to .gitignore first, or write somewhere else."
-    default: return "couldn't ask Git whether \(shown) is ignored, so nothing was written."
-    }
-}
-
-/// The cloud service a folder syncs to, if it's in iCloud Drive (including Desktop and Documents) or a File Provider
-/// folder such as Dropbox, Google Drive or OneDrive.
-func cloudSync(_ path: String) -> String? {
-    let folder = URL(fileURLWithPath: path).deletingLastPathComponent()
-    if folder.path.contains("/Library/Mobile Documents/") || (try? folder.resourceValues(forKeys: [.isUbiquitousItemKey]))?.isUbiquitousItem == true {
-        return "iCloud Drive"
-    }
-    if let r = folder.path.range(of: "/Library/CloudStorage/") {
-        let service = folder.path[r.upperBound...].split(separator: "/").first.map(String.init) ?? "a cloud service"
-        return service.split(separator: "-").first.map(String.init) ?? service
-    }
-    if folder.path.hasPrefix(NSHomeDirectory() + "/Dropbox") { return "Dropbox" }
-    return nil
-}
+let exportUsage = "usage: latchkey export PROJECT/ENV [--out FILE [--merge | --replace] [--yes]] [--values [--clipboard]]"
 
 func exportCommand(_ input: [String]) -> Never {
     var scope: String?
     var out: String?
     var values = false
     var replace = false
+    var merge = false
+    var clipboard = false
+    var yes = false
     var rest = input
     while !rest.isEmpty {
         let a = rest.removeFirst()
@@ -222,24 +184,48 @@ func exportCommand(_ input: [String]) -> Never {
             out = absolutePath(rest.removeFirst())
         case "--values": values = true
         case "--replace": replace = true
+        case "--merge": merge = true
+        case "--clipboard": clipboard = true
+        case "--yes", "-y": yes = true
         default:
-            if a.hasPrefix("-") || scope != nil || !RemoteLink.isValidScope(a) {
-                fail("usage: latchkey export PROJECT/ENV [--out FILE] [--values] [--replace]", code: 64)
-            }
+            if a.hasPrefix("-") || scope != nil || !RemoteLink.isValidScope(a) { fail(exportUsage, code: 64) }
             scope = a
         }
     }
-    guard let scope else { fail("usage: latchkey export PROJECT/ENV [--out FILE] [--values] [--replace]", code: 64) }
+    guard let scope else { fail(exportUsage, code: 64) }
     guard let record = environmentRecord(scope) else {
         fail("\(scope) has no environment record. `lk env migrate` makes one from your items (lk run --env \(scope) still works).", code: 66)
     }
-    if values && out == nil { fail("--values needs --out FILE: values are only written to a file you name", code: 64) }
+    if clipboard {
+        if !values { fail("--clipboard needs --values: references aren't worth a clipboard that clears", code: 64) }
+        if out != nil || replace || merge { fail("--clipboard copies instead of writing a file; leave out --out, --merge and --replace", code: 64) }
+    } else if values && out == nil { fail("--values needs --out FILE (or --clipboard): values are only written where you say", code: 64) }
+    if replace && merge { fail("--merge and --replace do the opposite: pick one", code: 64) }
+    if (merge || replace || yes) && out == nil && !clipboard { fail("--merge, --replace and --yes are for writing a file: add --out FILE", code: 64) }
+    if yes && !merge { fail("--yes confirms a --merge; nothing else asks", code: 64) }
 
     let ids = Set((send(Request(op: "list")).secrets ?? []).map(\.name))
     let credentials = Array(Set(record.variables.values.compactMap(\.item))).sorted()
     let missing = credentials.filter { !ids.contains($0) }
     func note(_ s: String) { FileHandle.standardError.write(Data(("latchkey: " + s + "\n").utf8)) }
     if !record.inferred.isEmpty { note("unconfirmed in \(scope): \(record.inferred.joined(separator: ", ")) (lk env show \(scope))") }
+
+    if clipboard {
+        if !missing.isEmpty { failMissing(missing) }
+        var released: [String: String] = [:]
+        if !credentials.isEmpty {
+            let r: Response
+            do { r = try call(Request(op: "export", names: credentials, project: scope, clipboard: true)) } catch { failRun(error) }
+            if let m = r.missing, !m.isEmpty { failMissing(m) }
+            guard r.ok else { fail(r.error ?? "the export was not approved", code: 77) }
+            released = r.values ?? [:]
+            guard credentials.allSatisfy({ released[$0] != nil }) else { fail("the app did not return every value") }
+        }
+        let stamp = Clipboard.copy(record.envFile(values: released, header: false))
+        clearClipboardLater(stamp)
+        print("copied \(record.variables.count) variable\(record.variables.count == 1 ? "" : "s") from \(scope) to the clipboard: this Mac only, cleared in \(Int(Clipboard.clearAfter)) seconds unless you copy something else")
+        exit(0)
+    }
 
     guard let path = out else {
         if !missing.isEmpty { note("not in Latchkey: \(missing.joined(separator: ", "))") }
@@ -249,10 +235,12 @@ func exportCommand(_ input: [String]) -> Never {
     if values && !missing.isEmpty { failMissing(missing) }
     if !missing.isEmpty { note("not in Latchkey, written as references anyway: \(missing.joined(separator: ", "))") }
 
-    // Checked before anything is asked or written: a link or a folder is refused, an existing file needs --replace.
-    let current: stat?
-    do { current = try EnvFile.existingFile(path) } catch { fail(error.localizedDescription, code: 73) }
-    if current != nil && !replace {
+    // Checked before anything is asked or written: a link or a folder is refused, an existing file needs --merge or
+    // --replace, a merge needs a file of KEY=VALUE lines.
+    let mode: EnvExport.Mode = merge ? .merge : replace ? .replace : .create
+    let plan: EnvExport.Plan
+    do { plan = try EnvExport.plan(path: path, record: record, values: values, mode: mode) }
+    catch EnvFile.ExportError.exists {
         let theirs = Dictionary(((try? EnvFile.load(path)) ?? []).map { ($0.key, $0.value) }) { _, b in b }
         let ours = record.variables.mapValues(\.envValue)
         let added = ours.keys.filter { theirs[$0] == nil }.sorted()
@@ -262,14 +250,26 @@ func exportCommand(_ input: [String]) -> Never {
         if !added.isEmpty { diff.append("adds \(added.joined(separator: ", "))") }
         if !gone.isEmpty { diff.append("drops \(gone.joined(separator: ", "))") }
         if !changed.isEmpty { diff.append("changes \(changed.joined(separator: ", "))") }
-        fail("\(Broker.tilde(path)) already exists\(diff.isEmpty ? " (same variables)" : "; exporting \(diff.joined(separator: "; "))"). Nothing written; --replace replaces it.", code: 73)
+        fail("\(Broker.tilde(path)) already exists\(diff.isEmpty ? " (same variables)" : "; exporting \(diff.joined(separator: "; "))"). Nothing written; --merge updates just the variables Latchkey manages and keeps the rest, --replace replaces the file.", code: 73)
+    } catch { fail(error.localizedDescription, code: 73) }
+
+    // A merge names what it changes, then asks, before the values are asked for.
+    if plan.existing != nil {
+        if !plan.changes { print("\(Broker.tilde(path)) already has every variable as it would be written. Nothing to do."); exit(0) }
+        for name in plan.added { print("add     \(name)") }
+        for name in plan.updated { print("update  \(name)\(values ? "  (value written; may be unchanged)" : "")") }
+        if !yes {
+            guard isatty(STDIN_FILENO) == 1 else { fail("merging into \(Broker.tilde(path)) needs a terminal to confirm, or --yes", code: 64) }
+            print("Merge into \(Broker.tilde(path)): \(plan.added.count) added, \(plan.updated.count) updated, everything else kept? [y/N] ", terminator: "")
+            guard let answer = readLine(), ["y", "yes"].contains(answer.trimmingCharacters(in: .whitespaces).lowercased()) else { fail("not merged", code: 77) }
+        }
     }
 
     var released: [String: String] = [:]
     if values && !credentials.isEmpty {
         // Plain text must not reach Git; checked before anything is asked.
-        if let problem = gitProblem(path) { fail(problem, code: 73) }
-        if let service = cloudSync(path) { note("\(Broker.tilde(path)) is in a folder that syncs to \(service): the values will leave this Mac") }
+        if let problem = EnvExport.gitProblem(path) { fail(problem, code: 73) }
+        if let service = EnvExport.cloudSync(path) { note("\(Broker.tilde(path)) is in a folder that syncs to \(service): the values will leave this Mac") }
         let r: Response
         do { r = try call(Request(op: "export", names: credentials, project: scope, destination: path)) } catch { failRun(error) }
         if let m = r.missing, !m.isEmpty { failMissing(m) }
@@ -277,16 +277,39 @@ func exportCommand(_ input: [String]) -> Never {
         released = r.values ?? [:]
         guard credentials.allSatisfy({ released[$0] != nil }) else { fail("the app did not return every value") }
     }
-    let mode: mode_t = values ? 0o600 : current.map { $0.st_mode & 0o777 } ?? 0o644
-    do { try EnvFile.writeAtomically(record.envFile(values: released), to: path, mode: mode, replace: replace) }
+    let result: EnvFile.Merge
+    do { result = try EnvExport.write(plan, record: record, released: released) }
     catch { fail(error.localizedDescription, code: 73) }
     let literals = record.variables.count - record.variables.values.compactMap(\.item).count
-    if values {
+    if plan.existing != nil {
+        print("merged into \(Broker.tilde(path)): \(result.added.count) added, \(result.updated.count) updated, the rest left as it was\(values ? " (plain text, readable only by you)" : "")")
+    } else if values {
         print("wrote \(Broker.tilde(path)): \(credentials.count) value\(credentials.count == 1 ? "" : "s") in plain text (readable only by you)\(literals > 0 ? ", \(literals) plain setting\(literals == 1 ? "" : "s")" : "")")
     } else {
         print("wrote \(Broker.tilde(path)): \(record.variables.count - literals) reference\(record.variables.count - literals == 1 ? "" : "s")\(literals > 0 ? ", \(literals) plain setting\(literals == 1 ? "" : "s")" : "")")
-        print("next: lk run --env-file \(Broker.tilde(path)) -- <your command>")
     }
+    if !values { print("next: lk run --env-file \(Broker.tilde(path)) -- <your command>") }
+    exit(0)
+}
+
+/// Starts a detached copy of this tool that empties the clipboard in a minute if nothing else was copied (`lk
+/// clipboard-clear`, not for typing): this process exits first, and the clipboard has to clear anyway.
+func clearClipboardLater(_ stamp: Int) {
+    let p = Process()
+    p.executableURL = Bundle.main.executableURL ?? URL(fileURLWithPath: CommandLine.arguments[0])
+    p.arguments = ["clipboard-clear", String(stamp)]
+    p.standardInput = FileHandle.nullDevice
+    p.standardOutput = FileHandle.nullDevice
+    p.standardError = FileHandle.nullDevice
+    do { try p.run() } catch { FileHandle.standardError.write(Data("latchkey: couldn't schedule clearing the clipboard; clear it yourself\n".utf8)) }
+}
+
+func clipboardClearCommand(_ args: [String]) -> Never {
+    guard let stamp = args.first.flatMap(Int.init) else { exit(64) }
+    setsid()
+    signal(SIGHUP, SIG_IGN)
+    sleep(UInt32(Clipboard.clearAfter))
+    Clipboard.clear(ifUnchangedSince: stamp)
     exit(0)
 }
 

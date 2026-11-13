@@ -191,19 +191,35 @@ item and point the variable at it. `env confirm` with no names confirms everythi
 Forgets an environment's record, with one approval. Its items stay, and `run --env` goes back to finding them by ID
 until a record is made again.
 
-### `latchkey export PROJECT/ENV [--out FILE] [--replace] [--values]`
+### `latchkey export PROJECT/ENV [--out FILE [--merge [--yes] | --replace]] [--values [--clipboard]]`
 
 Writes the environment's env file from its record: `latchkey://` references and plain settings, sorted by name, to
 standard output or FILE.
 
-- An existing FILE is left alone, and the variables that would change are named, unless `--replace`. A symbolic link
-  or anything but a regular file is refused. The file is written beside its destination and renamed into place, so
-  it's never half-written.
-- `--values` writes the values themselves, in plain text. It needs `--out`, asks every time with the file named (no
-  grant, agent-safe setting or earlier approval stands in), writes the file readable only by you, and the access
-  log records which items went to which file, never the values. Agents can't use it. Inside a Git checkout the file
-  must be ignored and not tracked, or nothing is asked or written; a file in a folder that syncs to iCloud Drive,
-  Dropbox, Google Drive or OneDrive gets a warning, since the values would leave the Mac.
+- An existing FILE is left alone, and the variables that would change are named, unless `--merge` or `--replace`. A
+  symbolic link or anything but a regular file is refused. The file is written beside its destination and renamed into
+  place, so it's never half-written.
+- `--merge` updates the variables the record has, appends the ones missing, and leaves every other byte of the file as
+  it is: comments, blank lines, order, variables Latchkey doesn't manage, line endings, a last line without one. A
+  variable already holding the value is left as written; an updated line keeps its indentation and `export` and loses
+  an inline comment. It lists the names it will `add` and `update`, then asks to go ahead (`--yes` skips that; without
+  a terminal `--yes` is required). The file must be UTF-8 `KEY=VALUE` lines, and it's refused if it changes while
+  waiting. Nothing to change writes nothing. A file that doesn't exist yet is created, as without `--merge`.
+  With `--values`, a variable already in the file is listed as an update before its value is known, and a merged file
+  becomes readable only by you.
+- `--replace` rewrites the whole file, losing its comments and other variables.
+- `--values` writes the values themselves, in plain text. It needs `--out` (or `--clipboard`), asks every time with
+  the file named (no grant, agent-safe setting or earlier approval stands in), writes the file readable only by you,
+  and the access log records which items went to which file, never the values. Agents can't use it. Inside a Git
+  checkout the file must be ignored and not tracked, or nothing is asked or written; a file in a folder that syncs to
+  iCloud Drive, Dropbox, Google Drive or OneDrive gets a warning, since the values would leave the Mac.
+- `--values --clipboard` copies the environment as an env block (no header comment) for a dashboard that takes a
+  pasted one, instead of writing a file. It asks every time, naming the environment and that the values go to the
+  clipboard. The copy is for this Mac only (not Universal Clipboard), marked concealed and transient so clipboard
+  managers skip it, and cleared after 60 seconds if nothing else was copied meanwhile (a detached `latchkey
+  clipboard-clear` does it, so the command can exit). Agents and Safari can't copy, nor can a request forwarded over
+  SSH (the clipboard would be on the other computer). The log records "copied to the clipboard", never the values;
+  unlike a file, a copy can't be traced afterwards.
 - Unconfirmed variables and references to missing items are noted on standard error.
 
 ### `latchkey project [DIR]`, `project link [NAME] [DIR] [--remote R]`, `project unlink NAME [DIR]`, `project list`
