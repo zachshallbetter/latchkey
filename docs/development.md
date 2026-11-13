@@ -125,8 +125,14 @@ build/DerivedData/Build/Products/Debug/Latchkey.app/Contents/MacOS/Latchkey \
   [--part sidebar|menubar|approval|list|bulk|move|grant|detail|deleted|remote|pushapproval] -ApplePersistenceIgnoreState YES
 ```
 
-`--sample` uses example data and never loads your items, so nothing real is shown. `--part` draws one view off screen (more reliable than the
-whole window when started from a shell).
+Snapshot startup uses an in-memory broker and skips the live Keychain, migration, background service and updater.
+`--sample` fills the view with examples; without it, the fixture starts empty. `--part` draws one view off screen
+(more reliable than the whole window when started from a shell).
+
+Use `--settings general|privacy|storage|developer|membership|about --part settings` for a Settings detail, or
+`--settings privacy --part settings-window [--width 860]` to check Settings navigation at a chosen window width.
+Native sidebar materials may be absent from an off-screen full-window capture; `--part sidebar` renders that
+component independently. These previews do not exercise real App Store purchases or login-item registration.
 
 ## The logo and icon
 

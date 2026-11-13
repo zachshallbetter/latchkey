@@ -17,6 +17,13 @@
 
 ## 0.3.0 (2026-11-13)
 
+### In-app settings
+- Settings now lives in the main window, with General, Privacy & Approval, Storage & File Access, Developer Tools,
+  Membership, and About & Updates sections. Sidebar, menu bar, Command-comma and upgrade actions share it.
+- Appearance, clipboard/reveal timers, hide-on-focus-loss and Dock quit behavior are saved locally. Authorization
+  remains unchanged; the Membership screen uses verified one-time App Store ownership and pricing, with restore
+  and availability controls and purchase support links.
+
 ### Latchkey Pro
 - Mac App Store version: Latchkey Pro as a one-time in-app purchase (`io.snackstud.latchkey.pro`), checked with
   StoreKit 2 (Apple-signed, verified on the Mac, works offline, drops on refund). Settings › Latchkey Pro shows the
