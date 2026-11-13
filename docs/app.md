@@ -107,7 +107,8 @@ service.
 **Copy Environment as .env…** puts the environment on the clipboard as an env block for a dashboard that takes a pasted
 one (Vercel, Railway, Netlify, Render). It asks every time, naming the environment and that the values go to the
 clipboard, and when it clears. The copy stays on this Mac, is marked so clipboard managers skip it, and clears after
-the chosen delay (60 seconds unless changed) if nothing else is copied. The access log says "copied to the clipboard", never the values. Agents can't do this.
+the chosen delay (60 seconds unless changed) if nothing else is copied. The access log says "copied to the
+clipboard", never the values. Agents can't do this.
 
 ### Adding and importing
 
