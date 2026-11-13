@@ -128,11 +128,11 @@ if [[ -z "$SIGN_UPDATE" ]]; then
   print "    (no appcast: sign_update not found. Set SPARKLE_BIN to Sparkle's bin folder, or build the app once so Xcode resolves the package)"
 elif [[ -z "$BUILD" || -z "$MIN_OS" ]]; then
   print "    (no appcast: couldn't read CURRENT_PROJECT_VERSION and the deployment target from App/project.yml)"
-elif SIGNATURE=$("$SIGN_UPDATE" "$DMG" 2>"$OUT/sign_update.log") && [[ "$SIGNATURE" == *edSignature=* ]]; then
+elif SIGNATURE=$("$SIGN_UPDATE" --account latchkey "$DMG" 2>"$OUT/sign_update.log") && [[ "$SIGNATURE" == *edSignature=* ]]; then
   python3 scripts/update-appcast.py --appcast site/appcast.xml --version "$VERSION" --build "$BUILD" \
     --min-os "$MIN_OS" --signature "$SIGNATURE" && print "    site/appcast.xml now lists $VERSION: publish it with the site"
 else
-  print "    (no appcast: sign_update failed, usually because there's no Sparkle key in your keychain; run generate_keys once. See $OUT/sign_update.log)"
+  print "    (no appcast: sign_update failed, usually because there's no Sparkle key for the latchkey account in your keychain; run generate_keys --account latchkey once. See $OUT/sign_update.log)"
 fi
 
 # The Homebrew cask, once there's a public place to download from (LATCHKEY_RELEASES_REPO, as owner/name) and a
