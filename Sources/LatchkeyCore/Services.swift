@@ -57,10 +57,12 @@ public enum Services {
     ]
 
     /// Sites Latchkey for Safari may fill any item on: where keys are set as a deployment's environment variables or
-    /// secrets. An item may also be filled on its own service's site (see `keyPages`). Matched by host, https only.
+    /// secrets. An item may also be filled on its own service's site (see `keyPages`). Matched by host and its
+    /// subdomains, https only, so every entry is a domain whose subdomains only the platform serves: never one where
+    /// customers get their own subdomains (railway.app, vercel.app, netlify.app, onrender.com, fly.dev, herokuapp.com).
     public static let fillPlatforms = [
-        "vercel.com", "github.com", "railway.com", "railway.app", "fly.io", "netlify.com", "render.com",
-        "dash.cloudflare.com", "supabase.com", "heroku.com", "console.aws.amazon.com", "console.cloud.google.com",
+        "vercel.com", "github.com", "railway.com", "fly.io", "app.netlify.com", "dashboard.render.com",
+        "dash.cloudflare.com", "supabase.com", "dashboard.heroku.com", "console.aws.amazon.com", "console.cloud.google.com",
     ]
 
     /// The host of an https page origin, or nil for anything else (http, a file, a port, a malformed origin).
@@ -78,15 +80,14 @@ public enum Services {
         return sites.contains { host == $0 || host.hasSuffix("." + $0) }
     }
 
-    /// The default: a deployment platform, or the service's own site (the registrable part of its key page's host,
-    /// such as stripe.com).
+    /// The default: a deployment platform, or the service's own key page host and its subdomains (such as
+    /// dashboard.stripe.com), not the whole registrable domain, which can include sites the service hosts for others.
     public static func mayFill(origin: String, service: String?) -> Bool {
         guard let host = fillHost(origin) else { return false }
         func under(_ domain: String) -> Bool { host == domain || host.hasSuffix("." + domain) }
         if fillPlatforms.contains(where: under) { return true }
         guard let service, let page = keyPages[service], let pageHost = URL(string: page)?.host?.lowercased() else { return false }
-        let own = pageHost.split(separator: ".").suffix(2).joined(separator: ".")
-        return under(own)
+        return under(pageHost)
     }
 
     public struct FillSiteError: Error, CustomStringConvertible {

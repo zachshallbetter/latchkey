@@ -172,6 +172,9 @@ struct ApprovalView: View {
             }
             Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 8) {
                 row("Items", request.names.joined(separator: ", "), mono: true)
+                if [.add, .change, .importItems, .restore].contains(request.action), !request.summary.isEmpty {
+                    row("Request", request.summary)
+                }
                 if request.action == .compare {
                     row("Purpose", "Compare their values inside Latchkey to find items holding the same key. Only which items match is shown; no value leaves Latchkey.")
                 }

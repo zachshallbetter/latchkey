@@ -143,7 +143,8 @@ One prompt at a time:
 - **Changes** (add, change, delete, import, move, restore, link) ask with the macOS Touch ID sheet alone, which says
   what, who and where: "Latchkey is trying to add shop/development/DB, asked by Claude in ~/Projects/shop." Its
   **Details…** button opens the panel with everything (the items, the agent and the programs it runs through, the
-  folder and the command), where **Allow** asks for Touch ID again and **Deny** refuses.
+  folder and the command), where **Allow** asks for Touch ID again and **Deny** refuses. A change that lets agents
+  read an item without approval, or makes it a plain value, says so in both.
 - **Releasing values to a command** shows the panel first, titled like "Claude wants to use 2 items". Choose
   **Allow Once**, or tick **Allow from this folder** (for a time, until the agent quits, or only for this command);
   Touch ID or your password confirms. So do earlier values, grants asked for ahead of time and pushes, where
@@ -211,9 +212,10 @@ makes a plain (unmasked) item.
   Sign-in passwords, one-time codes and email fields aren't counted. The toolbar panel lists them.
 - **Fill from Latchkey:** click into one of those fields and a Latchkey badge appears in it. The badge lists the items
   that may be filled on this site, most like the field first; choose one and approve with Touch ID, and the value goes
-  into that field. An item may be filled only on its service's own site (a Stripe key on stripe.com) and on the sites
-  where deployments keep environment variables and secrets: Vercel, GitHub, Railway, Fly, Netlify, Render, Cloudflare,
-  Supabase, Heroku, and the AWS and Google Cloud consoles. To choose instead, set **Fill in Safari on** in the item's
+  into that field. An item may be filled only on its service's own key page host (a Stripe key on dashboard.stripe.com)
+  and on the dashboards where deployments keep environment variables and secrets: Vercel, GitHub, Railway, Fly,
+  Netlify, Render, Cloudflare, Supabase, Heroku, and the AWS and Google Cloud consoles. Never on a site a platform
+  hosts for its customers (railway.app, vercel.app, netlify.app, onrender.com, fly.dev, herokuapp.com). To choose instead, set **Fill in Safari on** in the item's
   details (host names separated by commas, each covering its subdomains): the item is then filled only on those
   sites. Leave it empty for the default. The app decides this, over https only, and asks every time; no grant or
   agent-safe setting stands in. Fill never reaches a frame inside the page.

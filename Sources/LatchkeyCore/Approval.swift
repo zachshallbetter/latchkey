@@ -66,8 +66,11 @@ public struct ApprovalRequest: Sendable {
 
     /// The line for the Touch ID sheet, which macOS shows as "Latchkey is trying to …": what's asked, by whom and from
     /// which folder. The full process chain and command are in the panel, for anyone who wants them.
+    /// What the request does, as the broker worded it: the reason without its "asked by" part.
+    public var summary: String { reason.range(of: ", asked by ").map { String(reason[..<$0.lowerBound]) } ?? reason }
+
     public var touchIDReason: String {
-        let what = reason.range(of: ", asked by ").map { String(reason[..<$0.lowerBound]) } ?? reason
+        let what = summary
         guard let who = asker else { return what }
         let place = folder.isEmpty || folder == "/" ? "" : " in \(Broker.tilde(folder))"
         if action == .read, what.hasPrefix("release ") { return "give \(what.dropFirst(8)) to \(who)\(place)" }
