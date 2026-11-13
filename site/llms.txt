@@ -7,6 +7,8 @@
 
 - Platform: macOS 15 or later (app); the command-line tool `latchkey` (`lk` for short) ships inside the app.
 - Storage: iCloud Keychain, in Latchkey's own access group, synced to the owner's Macs. No Latchkey server or account.
+- Install: the free download from GitHub releases, or `brew install --cask latchkey` after tapping
+  zachshallbetter/latchkey. Latchkey Pro will be a one-time purchase in the Mac App Store version.
 - Made by Snack Studio.
 
 ## For agents
@@ -18,6 +20,9 @@
 - `latchkey check` (or the MCP tool latchkey_check) shows what a run would get without asking.
 - In a fresh clone or worktree: `latchkey project`, then `latchkey export <project>/<environment> --out .env.local`
   writes references from the environment's record (never values).
+- Before committing, `latchkey scan --staged` lists env files that still hold plain values (names only); fix them
+  with `latchkey import FILE --rewrite`.
+- With `--proxy`, `--proxy-models A,B` and `--proxy-requests N` limit which models and how many requests a run may use.
 - MCP: `latchkey mcp` serves latchkey_status, latchkey_list, latchkey_check, latchkey_run,
   latchkey_request_grant, latchkey_project and latchkey_export_references. It has no direct secret-read tool; child output masks exact values, but transformed secrets can leak.
 
@@ -26,7 +31,7 @@
 - [Features](features.html)
 - [Security](security.html)
 - [Roadmap](roadmap.html)
-- [Pricing](pricing.html): free during the development preview; Latchkey Pro (the premium individual Mac tool, a planned one-time in-app purchase in the Mac App Store) and Latchkey Teams (shared team environments) are planned, not on sale
+- [Pricing](pricing.html): Latchkey is free to download and use, and the core stays free; Latchkey Pro (the premium individual Mac tool, a planned one-time in-app purchase in the Mac App Store) and Latchkey Teams (shared team environments) are planned, not on sale
 - [Support](support.html), [Privacy](privacy.html) and [Terms](terms.html); contact latchkey@snackstud.io
 - [For teams](teams.html): Developer Credential Migration, a fixed-scope engagement from Snack Studio
 - [Developers overview](developers/index.html)

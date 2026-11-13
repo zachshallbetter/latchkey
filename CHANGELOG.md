@@ -23,6 +23,22 @@
 - Link records gain optional `tokenItem` and `team` fields; links saved before them decode unchanged.
 
 ### Website
+- Layout pass: no single words on their own line, card links and plan buttons line up across each row, availability
+  labels sit beside each card's symbol, and the lightest cards gained a real example or detail.
+- The app window on the home page and Features follows the app's current layout: sidebar with Review and the
+  iCloud Keychain badge, a flat list with search, filters and the app's type icons, and the detail as cards with
+  recent activity. One icon set, after the app's SF Symbols, gives every card, button and fact a symbol.
+- Every code block explains its parts on hover or focus, not only `lk` lines: Features examples, CLI synopses and
+  their placeholders, env files, JSON, `brew`, `ssh`, `claude` and `export`, the agent note and the architecture
+  diagram.
+- More colour: each section takes a hue (eyebrow, steps, scene wash), the hero line and closing band
+  carry a gradient, and Pro is orange as in the app's upgrade sheet.
+- Caught up with the product: Features, the Roadmap, the CLI and agent docs and `llms.txt` cover `lk scan` and its
+  pre-commit hook, duplicates and combine, import classes, export merge and clipboard, the proxy's limits and
+  updates. Pro's four groups use the app's own wording, and duplicates, scanning, rotation and pushing are listed as
+  free.
+- Free leads: every primary button is **Download free**, the home page and Features show what Pro adds
+  (marked planned), and Pricing lists Pro's features in place of four labels.
 - Privacy policy, terms and support pages, linked from every footer; canonical URLs and a sitemap for
   latchkey.snackstud.io, published from Vercel on request only.
 - Pricing: Latchkey Pro is a one-time in-app purchase ($79) in the Mac App Store version, with updates included and

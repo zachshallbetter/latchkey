@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Pricing · Latchkey</title>
-  <meta name="description" content="Latchkey is free during the development preview. Planned: Latchkey Pro, a one-time purchase in the Mac App Store, and Latchkey Teams. Storage, references and security protections never depend on paying.">
+  <meta name="description" content="Latchkey is free to download and use, and the core stays free. Planned: Latchkey Pro, a one-time purchase in the Mac App Store, and Latchkey Teams. Storage, references and security protections never depend on paying.">
   <link rel="canonical" href="https://latchkey.snackstud.io/pricing.html">
   <meta property="og:url" content="https://latchkey.snackstud.io/pricing.html">
   <meta property="og:type" content="website">
@@ -29,7 +29,9 @@
     .promise span { color: var(--muted); }
     .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 48px; }
     .plan { display: flex; flex-direction: column; padding: var(--card-pad); border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); min-width: 0;  box-shadow: var(--card-shadow);}
-    .plan.feature-plan { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+    .plan.feature-plan { --hue: var(--h-orange); border-color: var(--hue); box-shadow: 0 0 0 1px var(--hue) inset; background: linear-gradient(180deg, color-mix(in srgb, var(--hue) 9%, var(--surface)), var(--surface) 45%); }
+    .plan.feature-plan .tier { color: var(--hue); }
+    .plan .cico { margin-bottom: 14px; }
     .plan .tier { font: 650 12.5px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
     .plan h2 { margin: 10px 0 2px; font-size: 22px; }
     .plan .price { margin: 10px 0 0; font: 700 34px/1.1 var(--display); letter-spacing: -0.02em; }
@@ -64,6 +66,9 @@
     @media (max-width: 760px) {
       .plans, .policy, .faq { grid-template-columns: minmax(0, 1fr); }
         .grid-table th, .grid-table td { padding: 10px 8px; }
+        .grid-table th { font-size: 11px; letter-spacing: .02em; }
+        .grid-table th:not(:first-child), .grid-table td:not(:first-child) { padding-left: 4px; padding-right: 4px; }
+        .grid-table td:first-child { font-size: 14px; }
     }
   </style>
 </head>
@@ -78,7 +83,7 @@
         <li><a href="pricing.html" aria-current="page">Pricing</a></li>
         <li><a href="security.html">Security</a></li>
         <li><a href="developers/index.html">Docs</a></li>
-        <li><a class="button primary" href="index.html#install">Install the preview</a></li>
+        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
       </ul>
     </nav>
   </header>
@@ -88,17 +93,18 @@
       <div>
       <p class="eyebrow">Pricing</p>
       <h1 id="title">Free to use. Pro for the work it saves.</h1>
-      <p class="lede">Latchkey is free during the development preview: everything it does today costs nothing, and the core stays free. When it's ready, Latchkey Pro will be a one-time purchase in the Mac App Store: the premium Mac tool for working across projects, Macs and coding agents. Latchkey Teams is a separate subscription for organizations. Neither is on sale yet.</p>
+      <p class="lede">Latchkey is free to download and use: everything it does today costs nothing, and the core stays free. When it's ready, Latchkey Pro will be a one-time purchase in the Mac App Store: the premium Mac tool for working across projects, Macs and coding agents. Latchkey Teams is a separate subscription for organizations. Neither is on sale yet.</p>
       </div>
       <div class="promise"><span aria-hidden="true">✓</span><div><b>Your credentials never depend on paying.</b><span>Keychain storage, references, import, running commands, approvals, the security protections and exporting your own values are in every plan, and stay that way. Pro charges for convenience and sophistication around the core, never for access to what's yours.</span></div></div>
     </section>
 
     <div class="plans section" style="--section:56px" aria-label="Plans">
       <article class="plan">
+        <span class="cico" aria-hidden="true"><i class="ic ic-download"></i></span>
         <span class="tier">Free</span>
-        <h2>Latchkey Core</h2>
+        <h2>Latchkey</h2>
         <p class="price">$0</p>
-        <p class="terms">For every developer, for good.</p>
+        <p class="terms">Available now. Free for every developer, for good.</p>
         <ul>
           <li>iCloud Keychain storage and <code>latchkey://</code> references</li>
           <li>Env file import and <code>lk run</code></li>
@@ -106,39 +112,42 @@
           <li>The CLI and the MCP server</li>
           <li>Exporting references and your own values</li>
         </ul>
-        <div class="cta"><a class="button secondary" href="index.html#install">Install the preview</a><p class="fine">Development preview: a free, notarized download.</p></div>
+        <div class="cta"><p class="fine">A free download, notarized by Apple.</p><a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></div>
       </article>
       <article class="plan feature-plan" id="pro">
+        <span class="cico" aria-hidden="true"><i class="ic ic-star"></i></span>
         <span class="tier">One-time purchase</span>
         <h2>Latchkey Pro</h2>
         <p class="price">$79 <small>one time</small></p>
         <p class="terms">In the Mac App Store. No subscription; updates included.</p>
-        <p class="what">The premium Mac tool for developers working across projects, Macs and agents:</p>
+        <p class="what">Everything in Latchkey, plus:</p>
         <ul>
-          <li>Agent controls</li>
-          <li>Recovery and migration</li>
-          <li>Rotation and lifecycle</li>
-          <li>Provider integrations</li>
+          <li><b>Agent controls:</b> finer limits on what an agent may read and run</li>
+          <li><b>Recovery and migration:</b> bring secrets in from other tools, and recover from mistakes</li>
+          <li><b>Rotation and lifecycle:</b> rotate keys and track when they expire</li>
+          <li><b>Provider integrations:</b> work with your providers directly</li>
         </ul>
-        <div class="cta"><a class="button primary" href="mailto:latchkey@snackstud.io?subject=Latchkey%20Pro%20early%20access">Request early access</a><p class="fine">Not on sale yet. We'll write when Pro is in the Mac App Store.</p></div>
+        <div class="cta"><p class="fine">Not on sale yet. We'll write when Pro is in the Mac App Store.</p><a class="button primary" href="mailto:latchkey@snackstud.io?subject=Latchkey%20Pro%20early%20access"><i class="ic ic-star" aria-hidden="true"></i>Request early access</a></div>
       </article>
       <article class="plan">
+        <span class="cico" aria-hidden="true"><i class="ic ic-people"></i></span>
         <span class="tier">Team subscription</span>
         <h2>Latchkey Teams</h2>
         <p class="price">$15 <small>per user a month</small></p>
         <p class="terms">Billed yearly, when it's ready.</p>
+        <p class="what">Everything in Latchkey Pro, plus:</p>
         <ul>
           <li>Shared organizational environments</li>
           <li>Membership and roles</li>
           <li>Approval workflows and central evidence</li>
           <li>Managed team credentials</li>
         </ul>
-        <div class="cta"><a class="button secondary" href="teams.html#teams">Become a design partner</a><p class="fine">In design. Teams needs substantial new engineering.</p></div>
+        <div class="cta"><p class="fine">In design. Teams needs substantial new engineering.</p><a class="button secondary" href="teams.html#teams"><i class="ic ic-people" aria-hidden="true"></i>Become a design partner</a></div>
       </article>
     </div>
     <p class="fine" style="margin-top:14px">Prices are planned, not current offers. Pro will be sold only through the Mac App Store, and no plan's features are promised by a date.</p>
 
-    <section class="section" id="compare" aria-labelledby="compare-title">
+    <section class="section" id="compare" aria-labelledby="compare-title" data-hue="blue">
       <div class="shead"><h2 id="compare-title">What each plan includes</h2><p>The free column is what Latchkey does today. Pro and Teams rows are planned and marked as such.</p></div>
       <div class="grid-table"><table>
         <thead><tr><th>Capability</th><th>Free</th><th>Pro</th><th>Teams</th></tr></thead>
@@ -146,11 +155,12 @@
           <tr><td>Keychain storage and references</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
           <tr><td>Env file import and command execution</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
           <tr><td>Approvals, grants and security protections</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Duplicates, scanning, rotation and pushing to services</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
           <tr><td>Exporting references and values</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>Agent controls<small>Planned: credential provisioning for agents, scoped agent policies</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>Recovery and migration<small>Planned: duplicates and combine, relinking moved projects, recovery on a new Mac</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>Rotation and lifecycle<small>Planned: rotation that follows exports, expiry and validity, activity tools</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>Provider integrations<small>Planned: pushing and pulling with Vercel, GitHub, Railway and more</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Agent controls<small>Planned: finer limits on what an agent may read and run</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Recovery and migration<small>Planned: bringing secrets in from other tools, recovering from mistakes</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Rotation and lifecycle<small>Planned: rotating keys and tracking when they expire</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Provider integrations<small>Planned: working with your providers directly</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
           <tr><td>Organization-wide credential sharing<small>Planned</small></td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
           <tr><td>Central policy administration and evidence<small>Planned</small></td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
           <tr><td>Team provisioning and managed access<small>Planned</small></td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
@@ -158,16 +168,16 @@
       </table></div>
     </section>
 
-    <section class="section" id="updates" aria-labelledby="updates-title">
+    <section class="section" id="updates" aria-labelledby="updates-title" data-hue="orange">
       <div class="shead"><h2 id="updates-title">Buy it once. Keep it.</h2><p>Latchkey runs on your Mac and keeps nothing on a server, so Pro works like a tool you own.</p></div>
       <div class="card-grid g3">
-        <div class="card"><b>One purchase</b><span>Pro is a one-time purchase in the Mac App Store, with no subscription or renewal.</span></div>
-        <div class="card"><b>Updates included</b><span>Updates come through the Mac App Store. Restore the purchase on your other Macs with the same Apple Account.</span></div>
-        <div class="card"><b>Free stays free</b><span>Storage, references, import, running commands, approvals and export never move behind Pro.</span></div>
+        <div class="card"><span class="cico" aria-hidden="true"><i class="ic ic-receipt"></i></span><b>One purchase</b><span>Pro is a one-time purchase in the Mac App Store, with no subscription or renewal.</span></div>
+        <div class="card"><span class="cico" aria-hidden="true"><i class="ic ic-download"></i></span><b>Updates included</b><span>Updates come through the Mac App Store. Restore the purchase on your other Macs with the same Apple Account.</span></div>
+        <div class="card"><span class="cico" aria-hidden="true"><i class="ic ic-check"></i></span><b>Free stays free</b><span>Storage, references, import, running commands, approvals and export never move behind Pro.</span></div>
       </div>
     </section>
 
-    <section id="teams-path" class="section band" aria-labelledby="teams-path-title">
+    <section id="teams-path" class="section band" aria-labelledby="teams-path-title" data-hue="green">
       <div class="band-copy">
         <p class="eyebrow">For teams · Snack Studio</p>
         <h2 id="teams-path-title">Start with a migration</h2>
@@ -188,14 +198,14 @@
       </figure>
     </section>
 
-    <section class="section" id="faq" aria-labelledby="faq-title">
+    <section class="section" id="faq" aria-labelledby="faq-title" data-hue="violet">
       <div class="shead"><p class="eyebrow">Questions</p><h2 id="faq-title">Good questions, short answers</h2></div>
       <div class="faq">
         <div>
-          <details><summary>Is Latchkey free?</summary><p>Yes. During the development preview everything it does is free. Storage, references, import, running commands, approvals, the security protections and export stay free when Pro arrives.</p></details>
+          <details><summary>Is Latchkey free?</summary><p>Yes. Everything Latchkey does today is free to download and use, with no account or trial. Storage, references, import, running commands, approvals, the security protections and export stay free when Pro arrives.</p></details>
           <details><summary>What will Pro add?</summary><p>Pro is the premium Mac tool for one developer working across projects, Macs and agents: agent controls, recovery and migration, rotation and lifecycle, and provider integrations. They're planned, and none is sold before it exists. Shared team environments are Latchkey Teams, a separate product.</p></details>
           <details><summary>Can I buy Pro now?</summary><p>No. Pro isn't on sale. It will be a one-time in-app purchase in the Mac App Store version, with its features stated before anyone pays. <a href="mailto:latchkey@snackstud.io?subject=Latchkey%20Pro%20early%20access">Ask to hear when it is</a>.</p></details>
-          <details><summary>Will the free download stay?</summary><p>Yes. The direct download stays free, with everything in Latchkey Core. Pro is only in the Mac App Store version.</p></details>
+          <details><summary>Will the free download stay?</summary><p>Yes. The direct download stays free, with everything that is free in Latchkey. Pro is only in the Mac App Store version.</p></details>
           <details><summary>Will my credentials ever depend on a license?</summary><p>No. Your values stay in your iCloud Keychain, and you can always read or export them through Latchkey's approvals, whatever plan you're on.</p></details>
         </div>
         <div>
@@ -209,11 +219,11 @@
     </section>
     <section class="section cta-band" aria-labelledby="cta-title">
       <div>
-        <p class="eyebrow">Free during the development preview</p>
+        <p class="eyebrow">Free download</p>
         <h2 id="cta-title">Stop being the credential courier.</h2>
-        <p>Keep your projects, credentials and coding agents working together, with access you can inspect and control. Download Latchkey free today; Pro comes later, in the Mac App Store.</p>
+        <p>Keep your projects, credentials and coding agents working together, with access you can inspect and control. Latchkey is free to download and use, and the core stays free. Pro will add more for a one-time price in the Mac App Store.</p>
       </div>
-      <div class="cta-actions"><a class="button primary" href="#pro">Get early access</a><a class="button secondary" href="index.html#install">Install the preview</a></div>
+      <div class="cta-actions"><a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a><a class="button secondary" href="#pro"><i class="ic ic-star" aria-hidden="true"></i>See what Pro adds</a></div>
     </section>
   </main>
 

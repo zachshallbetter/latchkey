@@ -39,6 +39,8 @@
     .handling { margin: 12px 0 0; padding-left: 20px; color: var(--muted); }
     .handling li { margin: 0 0 10px; }
     .topic li { margin: 0 0 10px; max-width: 68ch; }
+    /* The service's name is three long words; at the page-title size each would sit on a line of its own beside the scene. */
+    .tm .page-hero h1 { font-size: clamp(34px, 3.8vw, 46px); }
     @media (max-width: 1000px) { .tm .page-hero { grid-template-columns: minmax(0, 1fr); } }
     @media (max-width: 860px) { .topic { grid-template-columns: minmax(0, 1fr); } }
   </style>
@@ -54,7 +56,7 @@
         <li><a href="pricing.html">Pricing</a></li>
         <li><a href="security.html">Security</a></li>
         <li><a href="developers/index.html">Docs</a></li>
-        <li><a class="button primary" href="index.html#install">Install the preview</a></li>
+        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
       </ul>
     </nav>
   </header>
@@ -66,7 +68,7 @@
         <h1 id="title">Developer Credential Migration</h1>
         <p class="lede">We help a small development team find every env file it depends on, see which credentials are duplicated, stale or in conflict, and move its supported local workflows into Latchkey, with safer access for its coding agents.</p>
         <p class="offer"><b>From $2,500</b><span>per small-team engagement · fixed scope</span></p>
-        <div class="cta-row"><a class="button primary" href="mailto:latchkey@snackstud.io?subject=Credential%20migration%20assessment">Request an assessment</a><a class="more" href="#scope">What's included</a></div>
+        <div class="cta-row"><a class="button primary" href="mailto:latchkey@snackstud.io?subject=Credential%20migration%20assessment"><i class="ic ic-mail" aria-hidden="true"></i>Request an assessment</a><a class="more" href="#scope">What's included</a></div>
         <p class="fine" style="margin-top:10px">Requests go to latchkey@snackstud.io. Scope, confidentiality and credential handling are agreed in writing before any work starts.</p>
       </div>
       <div>
@@ -82,29 +84,29 @@
       </div>
     </section>
 
-    <section class="section" id="scope" aria-labelledby="scope-title">
+    <section class="section" id="scope" aria-labelledby="scope-title" data-hue="green">
       <div class="shead"><p class="eyebrow">Deliverables</p><h2 id="scope-title">What the engagement leaves you with</h2><p>A result, not a license: your team's credentials organized, its Macs set up, and the procedures written down.</p></div>
       <ul class="card-grid g3">
-        <li class="card"><b>Credential and environment inventory</b><span>Every env file under your projects, where each value would go, and what's shared, skipped or in conflict.</span></li>
-        <li class="card"><b>Dependency and migration report</b><span>Which projects and environments use which credentials, the duplicates and stale ones, and the order to move them in.</span></li>
-        <li class="card"><b>Latchkey set up on supported Macs</b><span>Projects linked to their repositories, env files of references, and environment records your developers can export on any Mac.</span></li>
-        <li class="card"><b>Access and recovery procedures</b><span>How each developer gets a credential, what agents may read without asking, how grants are made, and how to rotate and restore.</span></li>
-        <li class="card"><b>Onboarding and handoff</b><span>A walkthrough for your developers, and the documentation to bring the next one on without us.</span></li>
-        <li class="card"><b>Safer agent access</b><span>Grants scoped to folders, sessions and commands, and the agent instructions that keep values out of transcripts.</span></li>
+        <li class="card"><span class="cico" aria-hidden="true"><i class="ic ic-scan"></i></span><b>Credential and environment inventory</b><span>Every env file under your projects, where each value would go, and what's shared, skipped or in conflict.</span></li>
+        <li class="card"><span class="cico" aria-hidden="true"><i class="ic ic-file"></i></span><b>Dependency and migration report</b><span>Which projects and environments use which credentials, the duplicates and stale ones, and the order to move them in.</span></li>
+        <li class="card"><span class="cico" aria-hidden="true"><i class="ic ic-laptop"></i></span><b>Latchkey set up on supported Macs</b><span>Projects linked to their repositories, env files of references, and environment records your developers can export on any Mac.</span></li>
+        <li class="card"><span class="cico" aria-hidden="true"><i class="ic ic-history"></i></span><b>Access and recovery procedures</b><span>How each developer gets a credential, what agents may read without asking, how grants are made, and how to rotate and restore.</span></li>
+        <li class="card"><span class="cico" aria-hidden="true"><i class="ic ic-people"></i></span><b>Onboarding and handoff</b><span>A walkthrough for your developers, and the documentation to bring the next one on without us.</span></li>
+        <li class="card"><span class="cico" aria-hidden="true"><i class="ic ic-agent"></i></span><b>Safer agent access</b><span>Grants scoped to folders, sessions and commands, and the agent instructions that keep values out of transcripts.</span></li>
       </ul>
     </section>
 
-    <section class="section" id="how" aria-labelledby="how-title">
+    <section class="section" id="how" aria-labelledby="how-title" data-hue="teal">
       <div class="shead"><h2 id="how-title">How it runs</h2></div>
       <ol class="card-grid g4">
         <li class="card"><span class="step">1</span><b>Agree scope</b><span>Which projects, Macs and deployment platforms, and how credentials are handled, in writing.</span></li>
-        <li class="card"><span class="step">2</span><b>Inventory</b><span>Dry runs on your team's Macs: names, counts and conflicts, never values.</span></li>
+        <li class="card"><span class="step">2</span><b>Inventory</b><span>Dry runs on your team's Macs: names, counts, duplicates and conflicts, never values.</span></li>
         <li class="card"><span class="step">3</span><b>Migrate</b><span>Imports with one approval per developer, references in place of values, projects and records set up.</span></li>
         <li class="card"><span class="step">4</span><b>Hand off</b><span>Procedures, onboarding, and a check that every project runs through Latchkey.</span></li>
       </ol>
     </section>
 
-    <section class="section feature flip" id="handling" aria-labelledby="handling-title">
+    <section class="section feature flip" id="handling" aria-labelledby="handling-title" data-hue="blue">
       <div class="copy">
         <h2 id="handling-title">How your credentials are handled</h2>
         <ul class="handling">
@@ -143,7 +145,7 @@
       </ul>
     </section>
 
-    <section class="section" id="teams" aria-labelledby="teams-title">
+    <section class="section" id="teams" aria-labelledby="teams-title" data-hue="violet">
       <div class="band">
         <div>
           <p class="eyebrow">Latchkey Teams · in design</p>
@@ -158,18 +160,18 @@
         <div>
           <p class="partner-price">$15 <small>per user a month, billed yearly, planned</small></p>
           <p>We'll build it with two or three teams who would pay for it, before building a hosted service. If your team wants shared environments, organizational controls and audit evidence, we'd like to hear what it would need to do.</p>
-          <div class="cta-row"><a class="button secondary" href="mailto:latchkey@snackstud.io?subject=Latchkey%20Teams%20design%20partner">Become a design partner</a></div>
+          <div class="cta-row"><a class="button secondary" href="mailto:latchkey@snackstud.io?subject=Latchkey%20Teams%20design%20partner"><i class="ic ic-people" aria-hidden="true"></i>Become a design partner</a></div>
           <p class="fine" style="margin-top:10px">In design. Write to latchkey@snackstud.io to be one of the first two or three teams.</p>
         </div>
       </div>
     </section>
 
-    <section class="section" id="evaluate" aria-labelledby="evaluate-title">
+    <section class="section" id="evaluate" aria-labelledby="evaluate-title" data-hue="blue">
       <div class="shead"><h2 id="evaluate-title">Evaluating Latchkey first?</h2><p>Everything an engineer needs to judge it is public on this site.</p></div>
       <ul class="card-grid g3">
-        <li style="display:contents"><a class="card" href="security.html"><b>The security model</b><span>What each mechanism protects, where it stops, and the trust boundaries.</span></a></li>
-        <li style="display:contents"><a class="card" href="developers/cli.html"><b>The command reference</b><span>Every command, option and exit code, and what each one asks.</span></a></li>
-        <li style="display:contents"><a class="card" href="pricing.html"><b>Plans and pricing</b><span>What stays free, what Pro will add, and how updates work.</span></a></li>
+        <li style="display:contents"><a class="card" href="security.html"><span class="cico" aria-hidden="true"><i class="ic ic-shieldcheck"></i></span><b>The security model</b><span>What each mechanism protects, where it stops, and the trust boundaries.</span></a></li>
+        <li style="display:contents"><a class="card" href="developers/cli.html"><span class="cico" aria-hidden="true"><i class="ic ic-terminal"></i></span><b>The command reference</b><span>Every command, option and exit code, and what each one asks.</span></a></li>
+        <li style="display:contents"><a class="card" href="pricing.html"><span class="cico" aria-hidden="true"><i class="ic ic-receipt"></i></span><b>Plans and pricing</b><span>What stays free, what Pro will add, and how updates work.</span></a></li>
       </ul>
     </section>
     <section class="section cta-band" aria-labelledby="cta-title">
@@ -178,7 +180,7 @@
         <h2 id="cta-title">Start with an inventory of every env file your team depends on.</h2>
         <p>A fixed-scope migration that leaves your credentials organized, your Macs set up and the procedures written down.</p>
       </div>
-      <div class="cta-actions"><a class="button primary" href="mailto:latchkey@snackstud.io?subject=Credential%20migration%20assessment">Request an assessment</a><a class="button secondary" href="index.html#install">Install the preview</a></div>
+      <div class="cta-actions"><a class="button primary" href="mailto:latchkey@snackstud.io?subject=Credential%20migration%20assessment"><i class="ic ic-mail" aria-hidden="true"></i>Request an assessment</a><a class="button secondary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></div>
     </section>
   </main>
 

@@ -59,7 +59,7 @@
         <li><a href="../pricing.html">Pricing</a></li>
         <li><a href="../security.html">Security</a></li>
         <li><a href="index.html">Docs</a></li>
-        <li><a class="button primary" href="../index.html#install">Install the preview</a></li>
+        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
       </ul>
     </nav>
   </header>
@@ -80,6 +80,7 @@
 <p>Look first. A dry run prints names and where each would go, never values:</p>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">cd ~/Projects/shop
 latchkey import .env.local --dry-run</code></pre></figure>
+<p>The dry run also classes each line: <strong>secret</strong>, <strong>setting</strong> (such as <code>PORT</code>, left in the file), <strong>public value</strong> (such as <code>NEXT_PUBLIC_*</code>, saved as a plain value) or <strong>existing reference</strong>. It counts each class and lists each setting it would leave. Change a line with <code>--class KEY=secret|setting|public</code>.</p>
 <p>Then import, and replace each value in the file with its reference. The project is named after the repository; the environment comes from the file name (<code>.env.local</code> is <code>development</code>).</p>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey import .env.local --rewrite</code></pre></figure>
 <figure class="code"><figcaption><span>.env.local</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">DATABASE_URL=latchkey://shop/development/DATABASE_URL

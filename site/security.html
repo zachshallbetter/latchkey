@@ -69,7 +69,7 @@
         <li><a href="pricing.html">Pricing</a></li>
         <li><a href="security.html" aria-current="page">Security</a></li>
         <li><a href="developers/index.html">Docs</a></li>
-        <li><a class="button primary" href="index.html#install">Install the preview</a></li>
+        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
       </ul>
     </nav>
   </header>
@@ -107,15 +107,15 @@
       </div>
     </section>
 
-    <section class="section" id="distinctions" aria-labelledby="distinctions-title">
+    <section class="section" id="distinctions" aria-labelledby="distinctions-title" data-hue="violet">
     <div class="shead"><p class="eyebrow">Before anything else</p><h2 id="distinctions-title">Six distinctions worth knowing</h2></div>
     <ul class="card-grid g3">
-      <li class="card"><b>The keychain protects stored values, not released ones.</b><span>Once a command has a value, it's in that command's memory and environment, and Latchkey can't control what it does with it.</span></li>
-      <li class="card"><b>A reference names a secret; it doesn't grant access to it.</b><span><code>latchkey://shop/development/STRIPE_KEY</code> in a committed file reveals a name. Reading the item still needs it to be agent-safe, a grant covering the caller, or your approval.</span></li>
-      <li class="card"><b>A proxy hides a key without narrowing what it can do.</b><span>With <code>--proxy</code> the command never holds the OpenAI or Anthropic key, but it can still make any call that key allows through the proxy.</span></li>
-      <li class="card"><b>iCloud Keychain sync is separate from agent authorization.</b><span>Items and environment records sync to your Macs. Grants don't: each is kept on the Mac where you made it.</span></li>
-      <li class="card"><b>The access log records releases, not provider-side use.</b><span>It shows what Latchkey gave to which program, from where. What that program then did at the service is the service's record.</span></li>
-      <li class="card"><b>A shared credential means fewer copies of the same authority.</b><span>One shared item used by five projects is one value to rotate, and still one key that all five can use.</span></li>
+      <li class="card"><span class="cico" aria-hidden="true"><i class="ic ic-safe"></i></span><b>The keychain protects stored values, not released ones.</b><span>Once a command has a value, it's in that command's memory and environment, and Latchkey can't control what it does with it: print it, write it to a file or send it on. Masking catches exact copies in output, not changed ones.</span></li>
+      <li class="card"><span class="cico" aria-hidden="true"><i class="ic ic-link"></i></span><b>A reference names a secret; it doesn't grant access to it.</b><span><code>latchkey://shop/development/STRIPE_KEY</code> in a committed file reveals a name. Reading the item still needs it to be agent-safe, a grant covering the caller, or your approval.</span></li>
+      <li class="card"><span class="cico" aria-hidden="true"><i class="ic ic-shield"></i></span><b>A proxy hides a key without narrowing what it can do.</b><span>With <code>--proxy</code> the command never holds the OpenAI or Anthropic key, but it can still make any call that key allows through the proxy. <code>--proxy-models</code> and <code>--proxy-requests</code> narrow that.</span></li>
+      <li class="card"><span class="cico" aria-hidden="true"><i class="ic ic-cloud"></i></span><b>iCloud Keychain sync is separate from agent authorization.</b><span>Items and environment records sync to your Macs. Grants don't: each is kept on the Mac where you made it.</span></li>
+      <li class="card"><span class="cico" aria-hidden="true"><i class="ic ic-pulse"></i></span><b>The access log records releases, not provider-side use.</b><span>It shows what Latchkey gave to which program, from where. What that program then did at the service is the service's record.</span></li>
+      <li class="card"><span class="cico" aria-hidden="true"><i class="ic ic-key"></i></span><b>A shared credential means fewer copies of the same authority.</b><span>One shared item used by five projects is one value to rotate, and still one key that all five can use.</span></li>
     </ul>
     </section>
 
@@ -162,7 +162,7 @@
       </div>
     </section>
 
-    <section class="section" id="paths" aria-labelledby="paths-title">
+    <section class="section" id="paths" aria-labelledby="paths-title" data-hue="teal">
     <div class="shead"><h2 id="paths-title">How a command gets a value</h2><p>The guarantee depends on which path a value takes into the command.</p></div>
     <div class="tablebox"><table>
       <thead><tr><th>Path</th><th>What the command holds</th><th>What it protects</th></tr></thead>
@@ -183,7 +183,7 @@
       </div>
     </section>
 
-    <section class="section feature" id="log" aria-labelledby="log-title">
+    <section class="section feature" id="log" aria-labelledby="log-title" data-hue="amber">
       <div class="copy"><h2 id="log-title">The access log</h2>
         <p>Every read, change, grant, move, import and push is logged with the program chain and folder. Stored values aren't logged; likely secrets in command arguments are replaced with <code>&lt;redacted&gt;</code>, which is heuristic, so keep values out of command arguments. Each entry carries a keyed hash (HMAC-SHA256) of itself and the one before it, with the key kept in the keychain, so <code>lk log --verify</code> finds an entry that was changed, removed or added, or a log cut short. It can't stop a program running as you from deleting the file, only show that it happened.</p>
       </div>
@@ -197,7 +197,7 @@
       </div>
     </section>
 
-    <section class="section" id="table" aria-labelledby="table-title">
+    <section class="section" id="table" aria-labelledby="table-title" data-hue="blue">
     <div class="shead"><h2 id="table-title">Guarantees and limits</h2><p>Each mechanism, what it protects against, and what it doesn't promise.</p></div>
     <div class="tablebox"><table>
       <thead><tr><th>Mechanism</th><th>Protects against</th><th>Doesn't guarantee</th></tr></thead>
@@ -240,11 +240,11 @@
 
     <section class="section cta-band" aria-labelledby="cta-title">
       <div>
-        <p class="eyebrow">Free during the development preview</p>
+        <p class="eyebrow">Free download</p>
         <h2 id="cta-title">Stop being the credential courier.</h2>
-        <p>Keep your projects, credentials and coding agents working together, with access you can inspect and control. Download Latchkey free today; Pro comes later, in the Mac App Store.</p>
+        <p>Keep your projects, credentials and coding agents working together, with access you can inspect and control. Latchkey is free to download and use, and the core stays free. Pro will add more for a one-time price in the Mac App Store.</p>
       </div>
-      <div class="cta-actions"><a class="button primary" href="pricing.html#pro">Get early access</a><a class="button secondary" href="index.html#install">Install the preview</a></div>
+      <div class="cta-actions"><a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a><a class="button secondary" href="pricing.html#pro"><i class="ic ic-star" aria-hidden="true"></i>See what Pro adds</a></div>
     </section>
   </main>
 
