@@ -98,7 +98,14 @@ command gets which value. This page says what it protects against, how, and wher
 - **Temporary key files** live in a new folder only you can open, are only readable by you, and are deleted when the
   command exits. Different item IDs use different temporary files, even when their final names match.
 - **Remote pushes** pass values to each service's tool on standard input, never as arguments, so they don't appear
-  in process listings. No service tokens are stored.
+  in process listings. No service tokens are stored. A link can instead name an item that holds the service's access
+  token (always, in the App Store build): the push then sends values over HTTPS straight to that service's API
+  (`api.vercel.com`, `api.github.com`, `backboard.railway.com`, `api.machines.dev`, fixed in the code, no redirects),
+  with the token as a bearer token, and only after the approval that names the token item. The token is read inside the
+  app for the request and for `remote status` (which returns names only), is never returned to a caller, logged or put
+  in a URL, and the item can't be one of the values that link pushes. Responses are size-capped, checked, and never
+  quoted in errors. Latchkey itself holds a token only as an ordinary item, so it has the item's protections and the
+  token's reach: use one limited to the project you push.
 - **Logs and errors** avoid recording values from the store. Tool errors are shortened and have any value replaced. Command lines in
   the log, the approval panel and the system sheet have likely secrets replaced with `<redacted>` (values after
   `--token` and similar, `NAME=VALUE` where the name says it's secret, Authorization headers, known token prefixes,

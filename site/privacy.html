@@ -53,7 +53,7 @@
       <p>Only when you, or a command you allowed, sends them:</p>
       <ul>
         <li><b>Commands you run</b> with <code>lk run</code> receive the values you approved, and do with them what they do.</li>
-        <li><b>Deployment platforms you push to</b> (Vercel, GitHub, Railway, Fly) receive the values you push, through their own command-line tools and your own sign-in to them. Their privacy policies apply.</li>
+        <li><b>Deployment platforms you push to</b> (Vercel, GitHub, Railway, Fly) receive the values you push, either through their own command-line tools and your own sign-in to them, or, in the Mac App Store version and for any link where you choose a token item, in direct requests from the app to the service&rsquo;s own API (<code>api.vercel.com</code>, <code>api.github.com</code>, <code>backboard.railway.com</code>, <code>api.machines.dev</code>) using the access token in the item you chose, which is sent only to that service. Their privacy policies apply.</li>
         <li><b>The key proxy</b> forwards your requests to OpenAI or Anthropic with your key, when you run a command with <code>--proxy</code>.</li>
         <li><b>Short-lived AWS credentials</b> are requested from AWS (<code>sts.amazonaws.com</code>) with your key, when you ask for them.</li>
         <li><b>The Safari extension</b> fills or saves values on the pages you choose, after your approval.</li>

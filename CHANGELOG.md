@@ -11,6 +11,17 @@
   sheet. No Pro operations exist yet: everything shipped so far, including duplicates and combine, stays free, and
   storing, reading, approving, running, importing, exporting, deleting and restoring can never require Pro.
 
+### Remote pushes
+- Remote locations can push through each service's HTTPS API with an access token kept as an ordinary item:
+  `latchkey remote link ... token=ITEM` (and, for a Vercel team project, `team=`). Vercel environment variables,
+  GitHub Actions repository and environment secrets (sealed-box encrypted), Railway variables and Fly secrets are all
+  supported, and `remote status` works the same way. The direct download still uses `vercel`, `gh`, `railway` and
+  `flyctl` for links without a token item; the Mac App Store build, which can't run them, uses the API only.
+- The push approval names the token item. The token goes only to the service's own API host and is never returned,
+  logged or quoted in an error; requests time out, responses are size-capped and checked, redirects aren't followed,
+  and the only retries are for a rate limit or 502/503/504.
+- Link records gain optional `tokenItem` and `team` fields; links saved before them decode unchanged.
+
 ### Website
 - Privacy policy, terms and support pages, linked from every footer; canonical URLs and a sitemap for
   latchkey.snackstud.io, published from Vercel on request only.
