@@ -75,7 +75,11 @@ struct LatchkeyApp: App {
                 #if !LATCHKEY_APP_STORE
                 CheckForUpdatesButton(updater: updater)
                 #endif
+                #if LATCHKEY_APP_STORE
+                Link("Get the Command-Line Tool…", destination: AppModel.commandLineToolPage)
+                #else
                 Button("Install Command Line Tool…") { model.installCommandLineTool() }
+                #endif
             }
             CommandGroup(replacing: .newItem) {
                 Button("New Item…") { model.showingAdd = true }.keyboardShortcut("n")
@@ -103,6 +107,13 @@ struct LatchkeyApp: App {
 /// Quit from the Dock closes the window, which leaves Latchkey in the menu bar, still answering the command-line tool and
 /// agents; Quit in the menu bar, the app menu, logging out and scripts quit it.
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        #if LATCHKEY_APP_STORE
+        // Quitting means quitting unless the person chooses otherwise in Settings (guideline 2.4.5(iii)).
+        UserDefaults.standard.register(defaults: [AppPreferences.Key.keepRunningFromDock: false])
+        #endif
+    }
+
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard AppPreferences().keepRunningFromDock, Self.quitFromDock else { return .terminateNow }
         for window in NSApp.windows where window.isVisible && window.canBecomeMain { window.close() }
@@ -309,7 +320,7 @@ final class AppModel {
         let pro = ProEntitlement.shared
         broker = Broker(store: store, approver: PanelApprover(), runner: UnavailableRunner(), nativeOnly: true, socketPath: brokerPath,
                         hasPro: { pro.current() })
-        pro.start()
+        if ProEntitlement.onSale { pro.start() }
         #else
         broker = Broker(store: store, approver: PanelApprover())
         #endif
@@ -573,6 +584,10 @@ final class AppModel {
         return FileManager.default.isExecutableFile(atPath: url.path) ? url : nil
     }
 
+    /// Where users of the App Store version get the command-line tool: a separately signed download, since an App
+    /// Store app may not install code outside its own container (guidelines 2.4.5, 2.5.2).
+    static let commandLineToolPage = URL(string: "https://latchkey.snackstud.io/cli.html")!
+
     /// `latchkey`, and `lk` for short, in ~/.local/bin.
     static var toolLinks: [URL] {
         ["latchkey", "lk"].map { URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".local/bin/\($0)") }
@@ -582,7 +597,7 @@ final class AppModel {
     /// only links; a file of either name is left alone and reported.
     func installCommandLineTool() {
         #if LATCHKEY_APP_STORE
-        notice = "Command-line installation is not yet validated for the App Store sandbox experiment. Use the direct build for production CLI work."
+        NSWorkspace.shared.open(Self.commandLineToolPage)
         #else
         guard let tool = bundledTool else {
             notice = "This copy of Latchkey doesn't include the command-line tool; scripts/install.sh installs it."

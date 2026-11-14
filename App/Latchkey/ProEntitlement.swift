@@ -11,6 +11,10 @@ import os
 final class ProEntitlement: ObservableObject {
     static let productID = "io.snackstud.latchkey.pro"
     static let shared = ProEntitlement()
+    /// Whether the store build offers Pro. Off until Pro has features of its own: App Review requires an in-app
+    /// purchase to unlock something that works (guidelines 2.1, 3.1.1), and everything shipped so far is free. While
+    /// off, nothing calls StoreKit and Settings shows no Membership section.
+    static let onSale = false
 
     /// Read from any thread by the broker.
     private let flag = OSAllocatedUnfairLock(initialState: false)

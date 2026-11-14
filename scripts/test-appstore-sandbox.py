@@ -8,6 +8,12 @@ import json
 import pathlib
 import subprocess
 
+def debug_build(app):
+    """True for a development-signed Debug build: only those compile the self-test entry points the probes use."""
+    out = subprocess.run(["codesign", "-d", "--entitlements", "-", "--xml", str(app)], capture_output=True).stdout
+    return b"com.apple.security.get-task-allow" in out
+
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -19,7 +25,7 @@ def main():
     app = args.app.resolve()
     import plistlib
     info = plistlib.loads((app / "Contents/Info.plist").read_bytes())
-    if info.get("LatchkeyDistributionChannel") != "app-store-sandbox-experiment":
+    if info.get("LatchkeyDistributionChannel") != "app-store" or not debug_build(app):
         parser.error("only the sandbox experiment may run these probes")
     if subprocess.run(["codesign", "--verify", "--deep", "--strict", str(app)], capture_output=True).returncode:
         parser.error("a valid development signature is required")

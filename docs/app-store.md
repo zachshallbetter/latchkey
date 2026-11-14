@@ -1,8 +1,54 @@
 # Mac App Store preparation
 
-The target is **full Latchkey functionality** in a properly sandboxed app. There is no approved reduced-feature
-store edition, and the sandbox experiment is not a release candidate. The direct build remains the production
-implementation while the boundaries below are redesigned and proved.
+The App Store version is the sandboxed build of the same app (`App/project.appstore.yml`, compiled with
+`LATCHKEY_APP_STORE`), with the Safari extension, sold as **free with no in-app purchase in its first version**. The
+command-line tool is a separate, Developer ID-signed download for App Store users. "Submitting" below is the path to
+App Store Connect; the gates further down record what has been proved.
+
+## Submitting
+
+Decided for the first version (2026-11-13):
+
+- **Free, no in-app purchase.** Pro gates nothing yet, and App Review requires a purchase to unlock something that
+  works (guidelines 2.1, 3.1.1). `ProEntitlement.onSale` is false: no StoreKit calls, no Membership section. Turn it
+  on in the update that adds the first Pro feature, and submit the purchase with that version.
+- **The command-line tool is a separate download.** An App Store app may not install code outside its container
+  (2.4.5, 2.5.2). `scripts/release.sh` signs the tool with the app's Team-ID-prefixed App Group and notarizes a
+  standalone `latchkey-cli-VERSION.zip` and Homebrew formula (`packaging/homebrew/latchkey-cli.rb.template`);
+  the store app's menu and Settings link to https://latchkey.snackstud.io/cli.html.
+- **Export compliance declared:** `ITSAppUsesNonExemptEncryption` is YES because GitHub pushes use `SealedBox`
+  (standard X25519/XSalsa20-Poly1305) beyond the system's encryption. The answers are in `listing.md`.
+- **Quitting means quitting:** the store build registers `keepRunningFromDock = false`, so quitting from the Dock
+  quits unless the person turns it on in Settings (2.4.5(iii)). Launch at login is off until turned on.
+- **Entitlements are the minimum:** sandbox, the App Group, user-selected files, app-scoped bookmarks, outbound
+  network and Latchkey's keychain group. The app listens only on Unix sockets in its App Group container, so it
+  doesn't claim `network.server`; the 2026-11-13 probes passed without it.
+
+Steps, in order:
+
+1. Merge the pending work, set `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`, and release the direct build with
+   `scripts/release.sh` so the standalone tool and its formula exist (the store app links to them).
+2. In App Store Connect (Account Holder or Admin): accept the agreements, set the EU trader status, create the app
+   record (bundle ID io.snackstud.latchkey, SKU latchkey-mac), and fill in everything in `listing.md`: app
+   information, description, keywords, URLs, screenshots, App Review notes and contact, App Privacy ("Data Not
+   Collected"), age rating answers and price (free).
+3. Build the submission: `python3 scripts/release-appstore.py --output build/appstore/VERSION`. It archives a Release
+   build of the store variant, exports a signed installer package for App Store Connect (automatic signing may
+   create the App Store profiles, and an Apple Distribution or Mac Installer Distribution certificate if one is
+   missing), and runs the preflight on the archived app.
+4. Upload the package with Transporter or Xcode's Organizer, signed in as yourself, and answer the export questions.
+5. TestFlight it on a Mac that has never had Latchkey (the `cleanMacTestFlightReviewFlow` gate), then submit for
+   review.
+
+Screenshots come from the app's own views with example data: render the parts from a development-signed store Debug
+build into its container (it can't write elsewhere), then compose them:
+
+```bash
+APP=build/.../Debug/Latchkey.app/Contents/MacOS/Latchkey; C=~/Library/Containers/io.snackstud.latchkey/Data/tmp
+$APP --snapshot $C/window.png --sample --select shop/development/DATABASE_URL --part window -ApplePersistenceIgnoreState YES
+$APP --snapshot $C/sidebar.png --sample --part sidebar --height 900 -ApplePersistenceIgnoreState YES
+swift scripts/compose-screenshot.swift packaging/app-store/screenshots/1-items.jpg $C/window.png $C/sidebar.png
+```
 
 ## Reference and Apple SDK choices
 
@@ -27,8 +73,8 @@ export-compliance answer, or claims that its tests passed as evidence about Latc
 
 - `App/project.appstore.yml` overlays the current project with a sandboxed experimental configuration. It preserves
   the app's existing vault identity and Safari dependency. No shipping target or Safari source is changed.
-- `App/AppStore/Latchkey.entitlements` names the experiment's exact permissions: selected-file read/write,
-  app-scoped bookmarks, local listener and outbound network access, the existing App Group and Keychain groups.
+- `App/AppStore/Latchkey.entitlements` names the exact permissions: selected-file read/write, app-scoped bookmarks,
+  outbound network access, the App Group and Latchkey's keychain group.
   No temporary exception, unrestricted home-folder entitlement, Apple Events or sandbox escape is added.
 - `SecurityScopedAccess` retains the **original** scoped URL, refreshes stale bookmarks, keeps unavailable volumes
   remembered, deduplicates repeated selections, and stops the corresponding scope when access is removed.
@@ -39,13 +85,13 @@ export-compliance answer, or claims that its tests passed as evidence about Latc
 - The app privacy manifest describes the current no-tracking/no-developer-collection implementation and the
   app's defaults and file-metadata APIs. It is an API inventory, not the App Store privacy questionnaire.
 
-The standard CLI installer is not run by the sandbox experiment: writing links under `~/.local/bin` from the
-store app is not an approved distribution design. This is a visible experiment limitation, not a decision to
-remove CLI functionality from the eventual store product.
+The store app runs no CLI installer: writing links under `~/.local/bin` would be a write outside its container. It
+links to the separate download instead (see Submitting).
 
 ## Latchkey Pro purchase
 
-Latchkey Pro is one non-consumable in-app purchase, `io.snackstud.latchkey.pro`, in this build only. The direct
+Not on sale in the first version (`ProEntitlement.onSale` is false; see Submitting). When it is: Latchkey Pro is one
+non-consumable in-app purchase, `io.snackstud.latchkey.pro`, in this build only. The direct
 build compiles no purchase code (`LATCHKEY_APP_STORE`) and its Settings shows a link to the App Store version.
 
 - `ProEntitlement` (`App/Latchkey/ProEntitlement.swift`) is the one resolver: `Transaction.currentEntitlements`,
@@ -229,8 +275,9 @@ vault, packaging and TestFlight.
 The draft state lives in `packaging/app-store/readiness.json`. The support, privacy and marketing URLs are recorded
 (the app's Help menu links the first two and the terms); review contact confirmation, export classification and
 screenshots remain to be completed. Listing text drafts (name, subtitle, promotional text, description, keywords,
-what's new and reviewer notes) are in `packaging/app-store/listing.md`. There is no upload command in this
-preparation tooling.
+reviewer notes, App Privacy, age rating and export answers) are in `packaging/app-store/listing.md`, and the
+preflight checks its lengths against Apple's limits. `scripts/release-appstore.py` builds the package; uploading is
+done by the owner.
 
 The privacy inventory is specific to Latchkey:
 
@@ -242,9 +289,8 @@ The privacy inventory is specific to Latchkey:
 - No telemetry, ads or developer-operated data backend is present. Explain iCloud Keychain and user-requested
   provider traffic in the public privacy policy. Confirm the final data-flow inventory before publishing privacy
   labels. The Safari bundle's inventory is empty: it only relays messages to the app over the App Group socket.
-- Review encryption export compliance for **this** app, including Security/CryptoKit, STS signing and networking.
-  Peel's owner-approved answer does not establish Latchkey's classification. The experiment does not set
-  `ITSAppUsesNonExemptEncryption` prematurely.
+- Export compliance: the store build sets `ITSAppUsesNonExemptEncryption` to YES for `SealedBox` (see Submitting);
+  the preflight requires it while `SealedBox` ships in the store build.
 
 ## Official references
 

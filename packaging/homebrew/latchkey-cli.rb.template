@@ -1,0 +1,29 @@
+# Homebrew formula for the standalone Latchkey command-line tool, for people who use the Mac App Store version.
+# scripts/release.sh fills in the version, checksum, download repository and homepage and writes
+# build/release/<version>/latchkey-cli.rb, for the tap repository's Formula/ folder.
+class LatchkeyCli < Formula
+  desc "Command-line tool for the Latchkey app: run commands with secrets from your keychain"
+  homepage "@HOMEPAGE@"
+  url "https://github.com/@RELEASES_REPO@/releases/download/v@VERSION@/latchkey-cli-@VERSION@.zip"
+  version "@VERSION@"
+  sha256 "@SHA256@"
+
+  depends_on :macos
+
+  conflicts_with cask: "latchkey", because: "the Latchkey cask already installs this tool"
+
+  def install
+    bin.install "latchkey"
+    bin.install_symlink "latchkey" => "lk"
+  end
+
+  def caveats
+    <<~EOS
+      latchkey asks the Latchkey app for every value. Install the app from the Mac App Store and open it once.
+    EOS
+  end
+
+  test do
+    assert_match "Latchkey", shell_output("#{bin}/latchkey help")
+  end
+end

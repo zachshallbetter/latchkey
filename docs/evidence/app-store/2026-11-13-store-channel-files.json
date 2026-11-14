@@ -1,0 +1,101 @@
+{
+  "boundary": "Open panel selection is replaced by harness-issued sandbox extensions for fixture paths.",
+  "build": "0.3.0 (4), development-signed sandbox Debug build",
+  "notCovered": [
+    "NSOpenPanel selection and the parent-folder prompt",
+    "volume disconnect and reconnect",
+    "moved references",
+    "stale bookmark refresh",
+    "iCloud Drive or other file-provider folders",
+    "Apple Distribution/TestFlight signing"
+  ],
+  "passed": true,
+  "phases": [
+    {
+      "checks": [
+        {
+          "name": "file unreadable before it is selected",
+          "passed": true
+        },
+        {
+          "name": "selected file is readable and remembered",
+          "passed": true
+        },
+        {
+          "name": "atomic rewrite waits for the parent folder",
+          "passed": true
+        },
+        {
+          "name": "parent grant allows atomic rewrite that keeps permissions",
+          "passed": true
+        },
+        {
+          "name": "unselected sibling folder stays inaccessible",
+          "passed": true
+        }
+      ],
+      "observations": {},
+      "passed": true,
+      "phase": "grant",
+      "submissionReady": false
+    },
+    {
+      "checks": [
+        {
+          "name": "nothing is readable before records are restored",
+          "passed": true
+        },
+        {
+          "name": "saved records restore access after relaunch",
+          "passed": true
+        },
+        {
+          "name": "rewrite works again after relaunch",
+          "passed": true
+        },
+        {
+          "name": "removing both permissions forgets them",
+          "passed": true
+        },
+        {
+          "name": "unselected sibling folder stays inaccessible",
+          "passed": true
+        }
+      ],
+      "observations": {
+        "fileReadableInSameProcessAfterForget": false
+      },
+      "passed": true,
+      "phase": "relaunch",
+      "submissionReady": false
+    },
+    {
+      "checks": [
+        {
+          "name": "no records remain after removal",
+          "passed": true
+        },
+        {
+          "name": "removed file is inaccessible after relaunch",
+          "passed": true
+        },
+        {
+          "name": "removed parent no longer allows replacement",
+          "passed": true
+        },
+        {
+          "name": "unselected sibling folder stays inaccessible",
+          "passed": true
+        }
+      ],
+      "observations": {},
+      "passed": true,
+      "phase": "revoked",
+      "submissionReady": false
+    }
+  ],
+  "sourceClean": false,
+  "sourceCommit": "aba39b750103ddea89fdf98d08fcaead7408853a",
+  "submissionReady": false,
+  "verifiedOn": "2026-11-13"
+}

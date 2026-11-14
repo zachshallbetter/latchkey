@@ -17,7 +17,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 ALLOWED = {
     "com.apple.security.app-sandbox", "com.apple.security.files.user-selected.read-write",
     "com.apple.security.files.bookmarks.app-scope", "com.apple.security.network.client",
-    "com.apple.security.network.server", "com.apple.security.application-groups", "keychain-access-groups",
+    "com.apple.security.application-groups", "keychain-access-groups",
 }
 GATES = {
     "vaultAndHistory", "signedFileAccessAndRevocation", "authenticatedCLITransportAndCallerIdentity",
@@ -92,6 +92,7 @@ def submission_errors(readiness, root):
 
 def source_errors(root):
     errors = entitlement_errors(load_plist(root / "App/AppStore/Latchkey.entitlements"))
+    errors += listing_errors((root / "packaging/app-store/listing.md").read_text())
     errors += privacy_errors(load_plist(root / "App/Privacy/App/PrivacyInfo.xcprivacy"))
     # The extension reaches only the broker socket and reads no timestamps or preferences: no required-reason API.
     errors += [f"Safari: {e}" for e in privacy_errors(load_plist(root / "App/Privacy/Safari/PrivacyInfo.xcprivacy"), expected={})]
@@ -100,8 +101,16 @@ def source_errors(root):
         errors.append("store version and build must come from Xcode settings")
     if not info.get("NSHumanReadableCopyright"):
         errors.append("copyright is missing")
-    if "ITSAppUsesNonExemptEncryption" in info:
-        errors.append("the experiment must not pre-answer the owner's encryption export declaration")
+    # The GitHub push seals secrets with SealedBox (standard X25519/XSalsa20-Poly1305) beyond the OS's own crypto, so
+    # the store build declares non-exempt encryption; App Store Connect then asks the standard-algorithm questions.
+    if info.get("ITSAppUsesNonExemptEncryption") is not True:
+        errors.append("ITSAppUsesNonExemptEncryption must be YES while SealedBox ships in the store build")
+    if info.get("LatchkeyDistributionChannel") != "app-store":
+        errors.append("LatchkeyDistributionChannel must be app-store")
+    manifest = json.loads((root / "App/Safari/Resources/manifest.json").read_text())
+    marketing = re.search(r'MARKETING_VERSION:\s*"?([0-9.]+)', (root / "App/project.yml").read_text())
+    if marketing and manifest.get("version") != marketing.group(1):
+        errors.append(f"Safari manifest version {manifest.get('version')} differs from MARKETING_VERSION {marketing.group(1)}")
     with tempfile.TemporaryDirectory() as temp:
         resolved = pathlib.Path(temp) / "spec.json"
         subprocess.run(["xcodegen", "dump", "--spec", str(root / "App/project.appstore.yml"), "--type", "json",
@@ -163,6 +172,28 @@ def bundle_errors(app, dev, submission, inspector=None):
         errors.append("compiled icon assets missing")
     if submission and main.get("LatchkeyDistributionChannel") != "app-store":
         errors.append("a sandbox experiment cannot be submitted as a release")
+    return errors
+
+
+def listing_errors(text):
+    """Apple's length limits for the fields in packaging/app-store/listing.md."""
+    def field(label):
+        m = re.search(r"^- \*\*" + re.escape(label) + r":\*\* (.+)$", text, re.M)
+        return m.group(1).strip() if m else None
+    def section(title):
+        m = re.search(r"^## " + re.escape(title) + r"\n\n(.*?)(?=^## |\Z)", text, re.M | re.S)
+        return m.group(1).strip() if m else None
+    notes = re.search(r"^- \*\*Notes:\*\*\n\n(.*?)(?=^## )", text, re.M | re.S)
+    checks = [("name", field("Name"), 30, len), ("subtitle", field("Subtitle"), 30, len),
+              ("promotional text", section("Promotional text"), 170, len), ("description", section("Description"), 4000, len),
+              ("keywords", section("Keywords"), 100, lambda v: len(v.encode())),
+              ("review notes", notes.group(1).strip() if notes else None, 4000, lambda v: len(v.encode()))]
+    errors = []
+    for name, value, limit, measure in checks:
+        if not value:
+            errors.append(f"listing: {name} is missing")
+        elif measure(value) > limit:
+            errors.append(f"listing: {name} is {measure(value)} over Apple's limit of {limit}")
     return errors
 
 

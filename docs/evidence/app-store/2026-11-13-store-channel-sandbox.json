@@ -1,0 +1,37 @@
+{
+  "checks": [
+    {
+      "name": "container env rewrite",
+      "passed": true
+    },
+    {
+      "name": "unselected home file denied",
+      "passed": true
+    },
+    {
+      "name": "app-group local IPC and kernel identity",
+      "passed": true
+    },
+    {
+      "name": "system child execution",
+      "passed": true
+    }
+  ],
+  "notCovered": [
+    "real selected-folder grants",
+    "terminal CLI/MCP",
+    "caller-context forgery",
+    "Node/npm and user commands",
+    "remote pushes",
+    "real keychain and migration",
+    "cross-Mac sync",
+    "Safari",
+    "TestFlight"
+  ],
+  "observations": {
+    "parentArgumentsVisible": true,
+    "parentWorkingDirectoryVisible": true
+  },
+  "passed": true,
+  "submissionReady": false
+}

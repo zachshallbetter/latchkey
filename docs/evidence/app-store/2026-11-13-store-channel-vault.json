@@ -1,0 +1,45 @@
+{
+  "build": "0.3.0 (4), development-signed sandbox Debug build",
+  "checks": [
+    {
+      "name": "save and read in the app access group",
+      "passed": true
+    },
+    {
+      "name": "fixture item is not synchronizable",
+      "passed": true
+    },
+    {
+      "name": "change records a readable version",
+      "passed": true
+    },
+    {
+      "name": "delete keeps history and removes the item",
+      "passed": true
+    },
+    {
+      "name": "restore recreates the deleted item from history",
+      "passed": true
+    },
+    {
+      "name": "an access group outside the entitlements is refused",
+      "passed": true
+    },
+    {
+      "name": "cleanup leaves no fixture items",
+      "passed": true
+    }
+  ],
+  "notCovered": [
+    "real vault items and history",
+    "iCloud Keychain synchronization",
+    "direct-to-store migration",
+    "approval UI",
+    "Apple Distribution/TestFlight signing"
+  ],
+  "passed": true,
+  "sourceClean": false,
+  "sourceCommit": "aba39b750103ddea89fdf98d08fcaead7408853a",
+  "submissionReady": false,
+  "verifiedOn": "2026-11-13"
+}
