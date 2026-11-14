@@ -6,7 +6,8 @@ review notes 4000 bytes; `scripts/appstore-preflight.py` checks them.
 
 ## App information
 
-- **Name:** Latchkey
+- **Name:** Latchkey: Dev Secrets
+  ("Latchkey" alone was taken on the store; the app itself is still called Latchkey.)
 - **Subtitle:** Secrets for Macs and AI agents
 - **Bundle ID:** io.snackstud.latchkey (extension io.snackstud.latchkey.safari). **SKU:** latchkey-mac
 - **Primary category:** Developer Tools. **Secondary:** Productivity
@@ -16,7 +17,7 @@ review notes 4000 bytes; `scripts/appstore-preflight.py` checks them.
 - **Support URL:** https://latchkey.snackstud.io/support.html
 - **Marketing URL:** https://latchkey.snackstud.io/
 - **Privacy policy URL:** https://latchkey.snackstud.io/privacy.html
-- **Price:** Free. No in-app purchases in this version.
+- **Price:** Free in all 175 countries and regions. No in-app purchases in this version. Released manually after approval.
 
 ## Promotional text
 
