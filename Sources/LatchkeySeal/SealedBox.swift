@@ -10,10 +10,10 @@ import CryptoKit
 ///
 /// Layout of the result: `ephemeral public key (32) ‖ Poly1305 tag (16) ‖ ciphertext`, where the key is
 /// `HSalsa20(X25519(esk, pk), 0)` and the nonce is `BLAKE2b-24(epk ‖ pk)`.
-enum SealedBox {
+public enum SealedBox {
     enum Failure: Error { case badPublicKey }
 
-    static func seal(_ message: [UInt8], recipient: [UInt8]) throws -> [UInt8] {
+    public static func seal(_ message: [UInt8], recipient: [UInt8]) throws -> [UInt8] {
         try seal(message, recipient: recipient, ephemeral: Curve25519.KeyAgreement.PrivateKey())
     }
 

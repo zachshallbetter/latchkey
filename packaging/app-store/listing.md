@@ -36,7 +36,7 @@ ORGANIZED BY PROJECT
 Items belong to a project's environment (shop/development, shop/production) or are shared. Search, filter by service, move items between environments, and review findings such as the same key stored twice.
 
 PUSHES TO YOUR PLATFORMS
-Send an environment's variables to Vercel, GitHub Actions, Railway or Fly with an access token you keep in Latchkey. Every push asks first, and production needs an extra confirmation.
+Send an environment's variables to Vercel, Railway or Fly with an access token you keep in Latchkey. Every push asks first, and production needs an extra confirmation.
 
 REMEMBERS
 Every read and change is logged without values. Earlier values are kept, and a deleted item can be restored for 30 days.
@@ -91,7 +91,7 @@ Command-line tool: optional and separate (free download, latchkey.snackstud.io/c
 
 Background behavior: launching at login is off unless the person turns it on in Settings. Closing the window leaves Latchkey in the menu bar; Quit (menu bar or app menu) quits it, and quitting from the Dock quits unless the person chose otherwise in Settings.
 
-Network: only requests the person asks for, to the provider APIs they link (Vercel, GitHub, Railway, Fly). No analytics, advertising or tracking.
+Network: only requests the person asks for, to the provider APIs they link (Vercel, Railway, Fly). No analytics, advertising or tracking.
 
 ## App Privacy
 
@@ -107,11 +107,10 @@ browsing, no social features, no chance-based activities). Expected rating: 4+.
 
 ## Export compliance
 
-`ITSAppUsesNonExemptEncryption` is YES in the store build. GitHub pushes encrypt each secret with a sealed box
-(X25519 and XSalsa20-Poly1305, published standards) as GitHub's API requires; everything else uses Apple's
-encryption (Keychain, HTTPS). Expected answers: proprietary or non-standard algorithms, **No**; standard algorithms
-beyond the operating system, **Yes**; this is mass-market software for the person's own data. The owner confirms
-the exemption and files the annual U.S. self-classification report; this is not legal advice.
+`ITSAppUsesNonExemptEncryption` is NO in the store build: it uses only Apple's encryption (Keychain, HTTPS). The
+sealed box GitHub's API requires (X25519 and XSalsa20-Poly1305) is in the `LatchkeySeal` library, which the store
+build doesn't link, so this version has no GitHub pushes. App Store Connect asks no export questions and needs no
+documents. This is not legal advice.
 
 ## EU Digital Services Act
 

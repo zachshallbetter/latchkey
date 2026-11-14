@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Mac App Store
+- The App Store version leaves out GitHub Actions pushes, so it uses only Apple's encryption and needs no export
+  documents. GitHub's sealed box moved to its own library, `LatchkeySeal`, which the direct download and its tests
+  link; the store build offers Vercel, Railway and Fly, and refuses a synced GitHub link's push before sending
+  anything.
+
 ## 0.3.1 (2026-11-13)
 
 ### Mac App Store

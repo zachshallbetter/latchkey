@@ -41,7 +41,7 @@ targets:
         LatchkeyAccessGroup: $(AppIdentifierPrefix)io.snackstud.latchkey
         LatchkeyAppGroup: $(TeamIdentifierPrefix)io.snackstud.latchkey
         LatchkeyDistributionChannel: app-store
-        ITSAppUsesNonExemptEncryption: true
+        ITSAppUsesNonExemptEncryption: false
     settings:
       base:
         ENABLE_APP_SANDBOX: YES

@@ -1,6 +1,6 @@
 import XCTest
 import CryptoKit
-@testable import LatchkeyCore
+@testable import LatchkeySeal
 
 /// Every expected value here was produced by libsodium (`crypto_generichash`, `crypto_core_hsalsa20`,
 /// `crypto_onetimeauth`, and `crypto_box_easy` with the sealed-box nonce); each sealed vector was also opened with

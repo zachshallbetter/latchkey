@@ -1,6 +1,7 @@
 import XCTest
 import CryptoKit
 @testable import LatchkeyCore
+import LatchkeySeal
 
 /// Answers requests from a closure instead of the network, and keeps what was asked.
 final class StubProtocol: URLProtocol, @unchecked Sendable {
@@ -60,10 +61,10 @@ class NativeRemoteTestCase: XCTestCase {
     let token = "tok_live_9f8e7d6c5b4a"
     var pauses = Pauses()
 
-    func remote() -> NativeRemote {
+    func remote(seal: NativeRemote.Seal? = SealedBox.seal) -> NativeRemote {
         pauses = Pauses()
         let p = pauses
-        return NativeRemote(transport: StubProtocol.transport(), pause: { p.add($0) })
+        return NativeRemote(seal: seal, transport: StubProtocol.transport(), pause: { p.add($0) })
     }
 
     func json(_ data: Data) -> [String: Any] { (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:] }
@@ -183,6 +184,17 @@ final class NativeGitHubTests: NativeRemoteTestCase {
         guard case .badResponse = error(remote().push(t, token: token, values: [("A", "v", true)])) else { return XCTFail("short key") }
         StubProtocol.reset { s in s.method == "GET" ? self.ok(self.publicKeyJSON()) : self.ok("", status: 200) }
         guard case .badResponse = error(remote().push(t, token: token, values: [("A", "v", true)])) else { return XCTFail("200 isn't a documented answer to PUT") }
+    }
+
+    func testWithoutTheSealedBoxGitHubPushesAreRefusedBeforeAnyRequest() {
+        StubProtocol.reset { _ in self.ok(self.publicKeyJSON()) }
+        let r = remote(seal: nil)
+        let t = RemoteTarget(service: .github, repo: "me/acp", tokenItem: "T")
+        XCTAssertEqual(error(r.push(t, token: token, values: [("A", "v", true)])), .invalidTarget(NativeRemote.githubUnavailable))
+        XCTAssertTrue(StubProtocol.requests.isEmpty, "nothing is sent, not even the key request")
+        StubProtocol.reset { _ in self.ok("{}") }
+        _ = r.push(RemoteTarget(service: .vercel, project: "p", environment: "preview", tokenItem: "T"), token: token, values: [("A", "v", true)])
+        XCTAssertEqual(StubProtocol.requests.first?.url.host, "api.vercel.com", "the other services still push")
     }
 
     func testListPagesUntilTheTotalAndKeepsNamesOnly() throws {

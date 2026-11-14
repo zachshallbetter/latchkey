@@ -101,10 +101,10 @@ def source_errors(root):
         errors.append("store version and build must come from Xcode settings")
     if not info.get("NSHumanReadableCopyright"):
         errors.append("copyright is missing")
-    # The GitHub push seals secrets with SealedBox (standard X25519/XSalsa20-Poly1305) beyond the OS's own crypto, so
-    # the store build declares non-exempt encryption; App Store Connect then asks the standard-algorithm questions.
-    if info.get("ITSAppUsesNonExemptEncryption") is not True:
-        errors.append("ITSAppUsesNonExemptEncryption must be YES while SealedBox ships in the store build")
+    # GitHub's sealed box (LatchkeySeal) is the only encryption beyond the operating system's, and the store build
+    # leaves it out, so it declares none; bundle_errors checks the binary.
+    if info.get("ITSAppUsesNonExemptEncryption") is not False:
+        errors.append("ITSAppUsesNonExemptEncryption must be NO: the store build leaves out LatchkeySeal")
     if info.get("LatchkeyDistributionChannel") != "app-store":
         errors.append("LatchkeyDistributionChannel must be app-store")
     manifest = json.loads((root / "App/Safari/Resources/manifest.json").read_text())
@@ -122,6 +122,8 @@ def source_errors(root):
     if "Sparkle" in spec.get("packages", {}) or any("Sparkle" in str(d) for d in target.get("dependencies", [])) \
             or any(key.startswith("SU") for key in info):
         errors.append("the store build must not include Sparkle; it updates through the App Store")
+    if any("LatchkeySeal" in str(d) for d in target.get("dependencies", [])):
+        errors.append("the store build must not link LatchkeySeal; it declares no non-exempt encryption")
     settings = target["settings"]["base"]
     if settings.get("ENABLE_APP_SANDBOX") is not True or "LATCHKEY_APP_STORE" not in settings.get("SWIFT_ACTIVE_COMPILATION_CONDITIONS", ""):
         errors.append("sandbox or experimental compilation condition is missing")
@@ -137,6 +139,10 @@ def bundle_errors(app, dev, submission, inspector=None):
             errors.append(f"unresolved or invalid built {key}")
     if (app / "Contents/Frameworks/Sparkle.framework").exists() or any(key.startswith("SU") for key in main):
         errors.append("Sparkle is present in the store bundle")
+    for bundle in bundles:
+        # Every binary, since Debug builds keep the code in Latchkey.debug.dylib beside the executable.
+        if any(b"LatchkeySeal" in f.read_bytes() for f in (bundle / "Contents/MacOS").glob("*") if f.is_file()):
+            errors.append(f"LatchkeySeal is linked into the store bundle: {bundle.name}")
     main_team = None
     for bundle in bundles:
         info = load_plist(bundle / "Contents/Info.plist")

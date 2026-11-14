@@ -31,7 +31,7 @@
 	<key>LatchkeyDistributionChannel</key>
 	<string>app-store</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
-	<true/>
+	<false/>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2026 Snack Studio</string>
 </dict>
