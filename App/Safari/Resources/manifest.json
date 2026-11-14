@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Latchkey",
   "description": "Spots a new API key or private key on the page and saves it to Latchkey when you say so.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "icons": {
     "48": "icon-48.png",
     "96": "icon-96.png",
