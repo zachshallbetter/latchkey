@@ -44,7 +44,7 @@ public final class Broker: @unchecked Sendable {
     /// Without a log (tests), grants are kept in memory too unless a store is passed.
     public init(store: SecretStore, approver: Approver,
                 logURL: URL? = Paths.accessLog, grants: GrantStore? = nil, versions: VersionStore? = nil,
-                remotes: RemoteStore? = nil, runner: RemoteRunner = ProcessRunner(), native: NativeRemote = NativeRemote(),
+                remotes: RemoteStore? = nil, runner: RemoteRunner = ProcessRunner(), native: NativeRemote = NativeRemote(seal: nil),
                 nativeOnly: Bool = false, allowsPush: Bool = true,
                 logKeys: LogKeyStore? = nil, records: EnvironmentStore? = nil, socketPath: String = Paths.socket,
                 hasPro: @escaping @Sendable () -> Bool = { false }, proFeatures: [String: String] = ProGate.features) {

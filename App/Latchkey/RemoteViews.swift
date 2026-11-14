@@ -197,6 +197,15 @@ struct AddLocationSheet: View {
     let itemCount: Int
     @Environment(\.dismiss) private var dismiss
     @State private var service: RemoteTarget.Service = .vercel
+
+    /// The App Store build leaves out GitHub's sealed box, so it can't push to GitHub Actions.
+    static var services: [RemoteTarget.Service] {
+        #if LATCHKEY_APP_STORE
+        return RemoteTarget.Service.allCases.filter { $0 != .github }
+        #else
+        return RemoteTarget.Service.allCases
+        #endif
+    }
     @State private var project = ""
     @State private var environment = "preview"
     @State private var repo = ""
@@ -295,7 +304,7 @@ struct AddLocationSheet: View {
             HStack(spacing: 12) {
                 Text("Service").frame(width: 110, alignment: .leading)
                 Picker("", selection: $service) {
-                    ForEach(RemoteTarget.Service.allCases, id: \.self) { s in Label(s.label, systemImage: s.symbol).tag(s) }
+                    ForEach(Self.services, id: \.self) { s in Label(s.label, systemImage: s.symbol).tag(s) }
                 }
                 .pickerStyle(.segmented).labelsHidden()
             }

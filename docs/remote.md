@@ -98,7 +98,8 @@ latchkey remote link shop/production fly app=shop-api token=FLY_TOKEN
 ```
 
 A link with `token=ITEM` is pushed with direct HTTPS requests, not a tool. In the Mac App Store version every link must
-have one.
+have one, and GitHub links can't be pushed there: GitHub needs secrets in a sealed box, which that version leaves out
+so it uses only the system's encryption.
 
 - **The token** is read inside the app for the push (and for `remote status`) and goes only to that service's API host,
   as a bearer token. It is never returned, logged or put in a URL. The item must exist, and can't be inside the

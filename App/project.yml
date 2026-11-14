@@ -29,6 +29,9 @@ targets:
     dependencies:
       - package: LatchkeyCore
         product: LatchkeyCore
+      # GitHub's sealed box; project.appstore.yml leaves it out.
+      - package: LatchkeyCore
+        product: LatchkeySeal
       - package: Sparkle
       - target: LatchkeySafari
     entitlements:

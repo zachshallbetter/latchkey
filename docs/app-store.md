@@ -16,8 +16,11 @@ Decided for the first version (2026-11-13):
   (2.4.5, 2.5.2). `scripts/release.sh` signs the tool with the app's Team-ID-prefixed App Group and notarizes a
   standalone `latchkey-cli-VERSION.zip` and Homebrew formula (`packaging/homebrew/latchkey-cli.rb.template`);
   the store app's menu and Settings link to https://latchkey.snackstud.io/cli.html.
-- **Export compliance declared:** `ITSAppUsesNonExemptEncryption` is YES because GitHub pushes use `SealedBox`
-  (standard X25519/XSalsa20-Poly1305) beyond the system's encryption. The answers are in `listing.md`.
+- **No GitHub pushes, no non-exempt encryption:** GitHub's API needs secrets in a sealed box (standard
+  X25519/XSalsa20-Poly1305), the only encryption Latchkey does beyond the system's. It lives in the `LatchkeySeal`
+  library, which the store build doesn't link, so `ITSAppUsesNonExemptEncryption` is NO and no export documents or
+  annual report are needed. The store app pushes to Vercel, Railway and Fly; the direct download keeps GitHub.
+  Bringing GitHub to the store means linking `LatchkeySeal`, setting the key to YES and filing the export documents.
 - **Quitting means quitting:** the store build registers `keepRunningFromDock = false`, so quitting from the Dock
   quits unless the person turns it on in Settings (2.4.5(iii)). Launch at login is off until turned on.
 - **Entitlements are the minimum:** sandbox, the App Group, user-selected files, app-scoped bookmarks, outbound
@@ -36,7 +39,7 @@ Steps, in order:
    build of the store variant, exports a signed installer package for App Store Connect (automatic signing may
    create the App Store profiles, and an Apple Distribution or Mac Installer Distribution certificate if one is
    missing), and runs the preflight on the archived app.
-4. Upload the package with Transporter or Xcode's Organizer, signed in as yourself, and answer the export questions.
+4. Upload the package with Transporter or Xcode's Organizer, signed in as yourself.
 5. TestFlight it on a Mac that has never had Latchkey (the `cleanMacTestFlightReviewFlow` gate), then submit for
    review.
 
@@ -264,7 +267,7 @@ vault, packaging and TestFlight.
 | Broker location and CLI discovery | Dedicated App Group endpoint and explicit channel selection implemented. Verify registered-app discovery, long home paths, stale endpoints, direct/store transitions and final CLI distribution on a clean Mac. |
 | Caller identity and grants | Measure what a signed sandbox process can inspect. If context is supplied by the signed CLI, bind it to its kernel-authenticated connection and process identity. Never trust caller-supplied folder/command fields from arbitrary clients. Unknown context must not qualify for a grant. Test forgery, replay, PID reuse and SSH forwarding. |
 | Command execution and MCP | Prove the real terminal/agent entry point can run Node/npm, shells and representative developer tools with only the intended keys and file permissions. Preserve signals, exit codes, masking, temporary files, proxy isolation and short-lived AWS credentials. An inherited helper is not evidence of unrestricted execution. |
-| Remote pushes | **Native, implemented; not yet verified against the real services.** The store build never runs a tool (`Broker(nativeOnly: true)` with an `UnavailableRunner`): each link names a shared item that holds the service's access token, and the broker pushes with `URLSession` to `api.vercel.com`, `api.github.com`, `backboard.railway.com` and `api.machines.dev` only. Vercel (env upsert), GitHub Actions (repository and environment secrets, sealed-box encrypted in Swift and checked against libsodium vectors), Railway (`variableUpsert`) and Fly (Machines API secrets) are all native; nothing is unsupported. Not native: Vercel and Railway links that rely on a linked folder (`dir`) have no project to name, so they need `project` set; Railway project tokens aren't accepted. Production confirmation, per-push approval and the approval naming the token item are unchanged and unit-tested. To pass this gate: with a real throwaway project at each service, link with a token item, push to a non-production target, confirm the values arrive and nothing deploys, repeat the push (upsert), revoke the token and see the typed error, and push to a production-named target from the signed sandbox build; record the evidence. Details: [remote.md](remote.md#pushing-through-an-api). |
+| Remote pushes | **Native, implemented; not yet verified against the real services.** The store build never runs a tool (`Broker(nativeOnly: true)` with an `UnavailableRunner`): each link names a shared item that holds the service's access token, and the broker pushes with `URLSession` to `api.vercel.com`, `backboard.railway.com` and `api.machines.dev` only. Vercel (env upsert), Railway (`variableUpsert`) and Fly (Machines API secrets) are native. GitHub Actions is native in the direct download only (secrets sealed in Swift by `LatchkeySeal`, checked against libsodium vectors); the store build doesn't link it, offers no GitHub links and refuses a synced GitHub link's push before any request. Not native: Vercel and Railway links that rely on a linked folder (`dir`) have no project to name, so they need `project` set; Railway project tokens aren't accepted. Production confirmation, per-push approval and the approval naming the token item are unchanged and unit-tested. To pass this gate: with a real throwaway project at each service, link with a token item, push to a non-production target, confirm the values arrive and nothing deploys, repeat the push (upsert), revoke the token and see the typed error, and push to a production-named target from the signed sandbox build; record the evidence. Details: [remote.md](remote.md#pushing-through-an-api). |
 | File access | In a signed sandbox build, read an explicitly selected env file, grant its parent, rewrite it, restart, restore permissions, move references, disconnect/reconnect a volume, and remove permission. Verify an unselected folder remains inaccessible. |
 | Migration and sync | Preserve item identity and access groups; handle the old Application Support log and preferences, old login-keychain items and history without silently falling back to a second empty vault. Test both directions on a separate Mac. |
 | Safari | Source side done: the extension has its own privacy manifest (`App/Privacy/Safari/PrivacyInfo.xcprivacy`: no tracking, no collected data, no required-reason API) in its resources, and its overlay entitlements are the sandbox plus the App Group only. Still to prove on a signed build: App Group transport to the sandboxed app, enabling it in Safari, and an end-to-end save and fill. Do not copy the direct app's entitlements into the extension. |
@@ -289,8 +292,8 @@ The privacy inventory is specific to Latchkey:
 - No telemetry, ads or developer-operated data backend is present. Explain iCloud Keychain and user-requested
   provider traffic in the public privacy policy. Confirm the final data-flow inventory before publishing privacy
   labels. The Safari bundle's inventory is empty: it only relays messages to the app over the App Group socket.
-- Export compliance: the store build sets `ITSAppUsesNonExemptEncryption` to YES for `SealedBox` (see Submitting);
-  the preflight requires it while `SealedBox` ships in the store build.
+- Export compliance: the store build sets `ITSAppUsesNonExemptEncryption` to NO and doesn't link `LatchkeySeal`;
+  the preflight checks both the setting and the built binaries.
 
 ## Official references
 

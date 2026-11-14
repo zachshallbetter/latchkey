@@ -134,8 +134,13 @@ public final class URLSessionTransport: NativeTransport, @unchecked Sendable {
 public typealias NativeValue = (name: String, value: String, secret: Bool)
 
 public struct NativeRemote: Sendable {
+    /// Encrypts a value to GitHub's public key (`LatchkeySeal`'s `SealedBox.seal`). Without it, GitHub pushes are
+    /// refused: the App Store build leaves the sealed box out so it uses only the operating system's encryption.
+    public typealias Seal = @Sendable (_ message: [UInt8], _ recipient: [UInt8]) throws -> [UInt8]
+
     let transport: NativeTransport
     let pause: @Sendable (TimeInterval) -> Void
+    let seal: Seal?
 
     /// Answers larger than this are refused.
     public static let maxResponseBytes = 1_000_000
@@ -144,10 +149,14 @@ public struct NativeRemote: Sendable {
     public static let maxAttempts = 3
     static let maxPause: TimeInterval = 5
 
-    public init(transport: NativeTransport = URLSessionTransport(), pause: @escaping @Sendable (TimeInterval) -> Void = { Thread.sleep(forTimeInterval: $0) }) {
+    public init(seal: Seal?, transport: NativeTransport = URLSessionTransport(), pause: @escaping @Sendable (TimeInterval) -> Void = { Thread.sleep(forTimeInterval: $0) }) {
+        self.seal = seal
         self.transport = transport
         self.pause = pause
     }
+
+    /// Why GitHub pushes are refused in a build without the sealed box.
+    public static let githubUnavailable = "GitHub pushes aren't available in this version of Latchkey"
 
     // MARK: public operations
 
@@ -353,6 +362,7 @@ public struct NativeRemote: Sendable {
     static func isGitHubSecretName(_ s: String) -> Bool { isVariableName(s) && !s.uppercased().hasPrefix("GITHUB_") }
 
     private func pushGitHub(_ t: RemoteTarget, _ token: String, _ values: [NativeValue]) -> [Result<Void, NativeRemoteError>] {
+        guard let seal else { return values.map { _ in .failure(.invalidTarget(Self.githubUnavailable)) } }
         let base: [String], keyID: String, publicKey: [UInt8]
         do {
             base = try githubBase(t)
@@ -366,7 +376,7 @@ public struct NativeRemote: Sendable {
         } catch { return values.map { _ in .failure(error as? NativeRemoteError ?? .network) } }
         return each(values) { v in
             let sealed: [UInt8]
-            do { sealed = try SealedBox.seal(Array(v.value.utf8), recipient: publicKey) } catch { throw NativeRemoteError.badResponse("unusable public key") }
+            do { sealed = try seal(Array(v.value.utf8), publicKey) } catch { throw NativeRemoteError.badResponse("unusable public key") }
             let body = try Self.jsonBody(["encrypted_value": Data(sealed).base64EncodedString(), "key_id": keyID])
             let r = try call(.github, try url(.github, base + ["secrets", v.name]), method: "PUT", token: token, headers: Self.githubHeaders, body: body, sending: [v.value])
             guard r.status == 201 || r.status == 204 else { throw NativeRemoteError.badResponse("HTTP \(r.status)") }

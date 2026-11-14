@@ -1,5 +1,8 @@
 import AppKit
 import LatchkeyCore
+#if !LATCHKEY_APP_STORE
+import LatchkeySeal
+#endif
 import ServiceManagement
 import SwiftUI
 
@@ -322,7 +325,7 @@ final class AppModel {
                         hasPro: { pro.current() })
         if ProEntitlement.onSale { pro.start() }
         #else
-        broker = Broker(store: store, approver: PanelApprover())
+        broker = Broker(store: store, approver: PanelApprover(), native: NativeRemote(seal: SealedBox.seal))
         #endif
         #if LATCHKEY_APP_STORE
         do {
