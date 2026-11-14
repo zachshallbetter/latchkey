@@ -177,7 +177,8 @@ struct Sidebar: View {
                     if !model.items.isEmpty {
                         SidebarSection(model: model, title: "Projects") {
                             ForEach(model.projects, id: \.self) { p in
-                                NavRow(title: p, symbol: "folder", count: model.count(.project(p)), selected: model.filter == .project(p)) { model.filter = .project(p) }
+                                NavRow(title: p, symbol: "folder", image: model.projectIcon(p), count: model.count(.project(p)),
+                                       selected: model.filter == .project(p)) { model.filter = .project(p) }
                                     .contextMenu { ProjectMenu(model: model, project: p) }
                             }
                             if model.items.contains(where: { $0.ref.isShared }) {
@@ -242,7 +243,7 @@ struct SidebarSection<Content: View>: View {
     }
 }
 
-/// A service in the sidebar: its initial in a small tile, its name, and how many items it issued.
+/// A service in the sidebar: its site's icon (or its initial in a small tile), its name, and how many items it issued.
 struct ServiceRow: View {
     let name: String
     let count: Int
@@ -252,11 +253,15 @@ struct ServiceRow: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 10) {
-                RoundedRectangle(cornerRadius: 5, style: .continuous)
-                    .strokeBorder(selected ? Color.white.opacity(0.8) : Color.secondary.opacity(0.6), lineWidth: 1.2)
-                    .frame(width: 20, height: 20)
-                    .overlay(Text(String(name.prefix(1)).uppercased()).font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(selected ? Color.white : Color.secondary))
+                if let icon = SiteIcon.service(name) {
+                    SiteIcon(image: icon)
+                } else {
+                    RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        .strokeBorder(selected ? Color.white.opacity(0.8) : Color.secondary.opacity(0.6), lineWidth: 1.2)
+                        .frame(width: 20, height: 20)
+                        .overlay(Text(String(name.prefix(1)).uppercased()).font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(selected ? Color.white : Color.secondary))
+                }
                 Text(name).lineLimit(1).foregroundStyle(selected ? Color.white : Color.primary)
                 Spacer(minLength: 4)
                 Text("\(count)").monospacedDigit().foregroundStyle(selected ? Color.white.opacity(0.85) : Color.secondary)

@@ -377,7 +377,7 @@ final class AppModel {
         #endif
         do {
             let listed = try store.list()
-            if listed != items { items = listed }   // unchanged: leave the list (and what's being edited) alone
+            if listed != items { items = listed; projectIcons = [:] }   // unchanged: leave the list (and what's being edited) alone
             problem = problem?.hasPrefix("keychain") == true ? nil : problem
         } catch { problem = "\(error)" }
         log = Broker.readLog(limit: 300).reversed()
@@ -513,6 +513,52 @@ final class AppModel {
     }
 
     /// Files that refer to these items, as far as Latchkey knows.
+    /// Project icons found in each project's own folder, by project. Nil entries are remembered too.
+    @ObservationIgnored private var projectIcons: [String: NSImage?] = [:]
+
+    /// The project's own site icon, if its checkout has one: a favicon or app icon in the usual places, found from the
+    /// folders its env files are in (and their Git checkout's top). Read from disk only; nothing is fetched.
+    func projectIcon(_ project: String) -> NSImage? {
+        if let cached = projectIcons[project] { return cached }
+        let icon = Self.findProjectIcon(folders: items.filter { $0.ref.project == project }.flatMap { $0.usedIn ?? [] }
+            .map { URL(fileURLWithPath: $0).deletingLastPathComponent() })
+        projectIcons[project] = icon
+        return icon
+    }
+
+    static let projectIconPaths = [
+        "public/apple-touch-icon.png", "public/icon.png", "public/favicon.png", "public/favicon.ico",
+        "app/apple-icon.png", "app/icon.png", "app/favicon.ico", "src/app/apple-icon.png", "src/app/icon.png",
+        "src/app/favicon.ico", "static/apple-touch-icon.png", "static/favicon.png", "static/favicon.ico",
+        "apps/web/public/apple-touch-icon.png", "apps/web/public/favicon.ico", "apps/web/app/icon.png",
+        "apple-touch-icon.png", "favicon.png", "favicon.ico",
+    ]
+
+    static func findProjectIcon(folders: [URL]) -> NSImage? {
+        let fm = FileManager.default
+        var roots: [URL] = []
+        for folder in folders {
+            var dir = folder.standardizedFileURL
+            roots.append(dir)
+            for _ in 0..<4 where !fm.fileExists(atPath: dir.appendingPathComponent(".git").path) {
+                let up = dir.deletingLastPathComponent()
+                if up.path == dir.path { break }
+                dir = up
+            }
+            if fm.fileExists(atPath: dir.appendingPathComponent(".git").path) { roots.append(dir) }
+        }
+        var seen = Set<String>()
+        for root in roots where seen.insert(root.path).inserted {
+            for path in projectIconPaths {
+                let url = root.appendingPathComponent(path)
+                guard let size = (try? fm.attributesOfItem(atPath: url.path))?[.size] as? Int, size > 0, size < 1_000_000,
+                      let image = NSImage(contentsOf: url), image.isValid else { continue }
+                return image
+            }
+        }
+        return nil
+    }
+
     func files(for ids: [String]) -> [String] {
         var seen = Set<String>()
         return items.filter { ids.contains($0.name) }.flatMap { $0.usedIn ?? [] }.filter { seen.insert($0).inserted }
