@@ -5,6 +5,15 @@
     <link>https://latchkey.snackstud.io/</link>
     <description>Latchkey releases</description>
     <item>
+      <title>Latchkey 0.3.1</title>
+      <pubDate>Sat, 14 Nov 2026 01:28:30 GMT</pubDate>
+      <sparkle:version>5</sparkle:version>
+      <sparkle:shortVersionString>0.3.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <sparkle:releaseNotesLink>https://github.com/zachshallbetter/latchkey/blob/main/CHANGELOG.md</sparkle:releaseNotesLink>
+      <enclosure url="https://github.com/zachshallbetter/latchkey/releases/download/v0.3.1/Latchkey-0.3.1.dmg" length="10934515" type="application/octet-stream" sparkle:edSignature="t+dAVZZMdbSiqcysQSGVcAXr8pIr5i7fdCwsYGxo8DY/d++EMPMeNYZ16XG1J+u4AIz7hMIdE3fhBsZUq3y3CA==" />
+    </item>
+    <item>
       <title>Latchkey 0.3.0</title>
       <pubDate>Fri, 13 Nov 2026 21:47:42 GMT</pubDate>
       <sparkle:version>4</sparkle:version>
