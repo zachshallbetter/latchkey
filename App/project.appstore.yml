@@ -15,7 +15,11 @@ targets:
       - package: LatchkeyCore
         product: LatchkeyCore
       - target: LatchkeySafari
-    sources:
+    # The direct build's Info.plist is its target's plist; here it would be copied as a resource, with unresolved
+    # $(PRODUCT_NAME)-style values that App Store Connect rejects.
+    sources:REPLACE:
+      - path: Latchkey
+        excludes: [Info.plist]
       - path: Privacy/App/PrivacyInfo.xcprivacy
         buildPhase: resources
     entitlements:
