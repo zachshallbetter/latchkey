@@ -29,9 +29,9 @@
 	<key>LatchkeyAppGroup</key>
 	<string>$(TeamIdentifierPrefix)io.snackstud.latchkey</string>
 	<key>LatchkeyDistributionChannel</key>
-	<string>app-store-sandbox-experiment</string>
-	<key>LatchkeyPreviousAccessGroup</key>
-	<string>$(AppIdentifierPrefix)io.latchkey.shared</string>
+	<string>app-store</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2026 Snack Studio</string>
 </dict>

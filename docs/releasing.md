@@ -38,8 +38,9 @@ signed, notarized and stapled disk image.
 
 ## Making a release
 
-1. Set `MARKETING_VERSION` (and raise `CURRENT_PROJECT_VERSION`) in `App/project.yml`, and move the
-   `CHANGELOG.md` entry from "unreleased" to the date.
+1. Set `MARKETING_VERSION` (and raise `CURRENT_PROJECT_VERSION`) in `App/project.yml`, set the same version in
+   `App/Safari/Resources/manifest.json` (the script refuses a mismatch), and move the `CHANGELOG.md` entry from
+   "unreleased" to the date.
 2. Check: `swift test`, and the app built and tried with `scripts/install.sh`.
 3. Build:
 
@@ -76,6 +77,14 @@ After the GitHub release is published, copy it to the tap,
 [zachshallbetter/homebrew-latchkey](https://github.com/zachshallbetter/homebrew-latchkey), as `Casks/latchkey.rb`,
 commit and push. People install with `brew tap zachshallbetter/latchkey`, `brew trust zachshallbetter/latchkey` and
 `brew install --cask latchkey`.
+
+
+The script also packages the command-line tool on its own for people who use the Mac App Store version, which can't
+install it: `latchkey-cli-VERSION.zip` (the same signed binary, notarized, with its `.sha256`) and
+`build/release/VERSION/latchkey-cli.rb` from `packaging/homebrew/latchkey-cli.rb.template`. Attach the zip and its
+checksum to the GitHub release, and copy the formula to the tap as `Formula/latchkey-cli.rb`. The tool is signed with
+the app's Team-ID-prefixed App Group (`TEAM.io.snackstud.latchkey`) so it can reach the store app's socket in that
+group's container; that group needs no provisioning profile.
 
 ## What the script checks
 

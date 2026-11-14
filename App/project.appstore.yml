@@ -25,12 +25,10 @@ targets:
         com.apple.security.files.user-selected.read-write: true
         com.apple.security.files.bookmarks.app-scope: true
         com.apple.security.network.client: true
-        com.apple.security.network.server: true
         com.apple.security.application-groups:
           - $(TeamIdentifierPrefix)io.snackstud.latchkey
         keychain-access-groups:
           - $(AppIdentifierPrefix)io.snackstud.latchkey
-          - $(AppIdentifierPrefix)io.latchkey.shared
     info:
       path: AppStore/Info.plist
       properties:REPLACE:
@@ -41,9 +39,9 @@ targets:
         LSMultipleInstancesProhibited: true
         NSHumanReadableCopyright: Copyright © 2026 Snack Studio
         LatchkeyAccessGroup: $(AppIdentifierPrefix)io.snackstud.latchkey
-        LatchkeyPreviousAccessGroup: $(AppIdentifierPrefix)io.latchkey.shared
         LatchkeyAppGroup: $(TeamIdentifierPrefix)io.snackstud.latchkey
-        LatchkeyDistributionChannel: app-store-sandbox-experiment
+        LatchkeyDistributionChannel: app-store
+        ITSAppUsesNonExemptEncryption: true
     settings:
       base:
         ENABLE_APP_SANDBOX: YES

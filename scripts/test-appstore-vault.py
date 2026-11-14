@@ -11,12 +11,18 @@ import pathlib
 import plistlib
 import subprocess
 
+def debug_build(app):
+    """True for a development-signed Debug build: only those compile the self-test entry points the probes use."""
+    out = subprocess.run(["codesign", "-d", "--entitlements", "-", "--xml", str(app)], capture_output=True).stdout
+    return b"com.apple.security.get-task-allow" in out
+
+
 
 def provenance(info):
     """Where the evidence came from: the signed build and the source commit the probes were built from."""
     commit = subprocess.run(["git", "-C", str(pathlib.Path(__file__).resolve().parent), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
     dirty = bool(subprocess.run(["git", "-C", str(pathlib.Path(__file__).resolve().parent), "status", "--porcelain", "--", ".", ":!docs/evidence"], capture_output=True, text=True).stdout.strip())
-    return {"build": f"{info['CFBundleShortVersionString']} ({info['CFBundleVersion']}), development-signed sandbox Debug experiment",
+    return {"build": f"{info['CFBundleShortVersionString']} ({info['CFBundleVersion']}), development-signed sandbox Debug build",
             "sourceCommit": commit, "sourceClean": not dirty, "verifiedOn": datetime.date.today().isoformat()}
 
 
@@ -29,7 +35,7 @@ def main():
         parser.error("report already exists; use a new filename")
     app = args.app.resolve()
     info = plistlib.loads((app / "Contents/Info.plist").read_bytes())
-    if info.get("LatchkeyDistributionChannel") != "app-store-sandbox-experiment":
+    if info.get("LatchkeyDistributionChannel") != "app-store" or not debug_build(app):
         parser.error("only the sandbox experiment may run these probes")
     if subprocess.run(["codesign", "--verify", "--deep", "--strict", str(app)], capture_output=True).returncode:
         parser.error("a valid development signature is required")

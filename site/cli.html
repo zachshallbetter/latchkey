@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Command-line tool · Latchkey</title>
+  <meta name="description" content="Get the latchkey command-line tool: with Homebrew or a signed download for the Mac App Store version, or from inside the app for the direct download.">
+  <link rel="canonical" href="https://latchkey.snackstud.io/cli.html">
+  <meta property="og:url" content="https://latchkey.snackstud.io/cli.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:title" content="Command-line tool · Latchkey">
+  <meta property="og:description" content="Get the latchkey command-line tool: with Homebrew or a signed download for the Mac App Store version, or from inside the app for the direct download.">
+  <meta name="twitter:card" content="summary">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site">
+    <nav class="top wrap" aria-label="Main">
+      <a class="brand" href="index.html"><img class="logo" src="logo.svg" alt="">Latchkey</a>
+      <ul>
+        <li><a href="features.html">Features</a></li>
+        <li><a href="index.html#how">How it works</a></li>
+        <li><a href="pricing.html">Pricing</a></li>
+        <li><a href="security.html">Security</a></li>
+        <li><a href="developers/index.html">Docs</a></li>
+        <li><a class="button primary" href="index.html#install">Install the preview</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main" class="wrap">
+    <article class="doc">
+      <p class="eyebrow">Command line</p>
+      <h1>The command-line tool</h1>
+      <p class="lede"><code>latchkey</code>, and <code>lk</code> for short, runs your commands with values filled in from Latchkey, and works with coding agents. Every value it asks for is approved in the Latchkey app.</p>
+
+      <h2>With the Mac App Store version</h2>
+      <p>An App Store app can't install tools outside its own folder, so the command-line tool is a separate, free download, signed by Snack Studio and notarized by Apple. Install it with Homebrew:</p>
+      <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">brew tap zachshallbetter/latchkey
+brew trust zachshallbetter/latchkey
+brew install latchkey-cli</code></pre></figure>
+      <p>Or download <code>latchkey-cli-VERSION.zip</code> from the <a href="https://github.com/zachshallbetter/latchkey/releases/latest">latest release</a>, unzip it, move <code>latchkey</code> to a folder on your <code>PATH</code> (such as <code>~/.local/bin</code>), and add <code>lk</code> as a link to it if you like.</p>
+      <p>Open Latchkey once, then check the tool reaches it:</p>
+      <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey status</code></pre></figure>
+
+      <h2>With the direct download</h2>
+      <p>The tool comes inside the app. Choose <b>Latchkey › Install Command Line Tool…</b>, which links <code>~/.local/bin/latchkey</code> and <code>lk</code> to it, or install the app with Homebrew (<code>brew install --cask latchkey</code>), which adds both.</p>
+
+      <h2>Next</h2>
+      <p><a href="developers/quickstart.html">Quickstart</a> · <a href="developers/cli.html">CLI reference</a> · <a href="developers/agents.html">Agents and MCP</a> · <a href="support.html">Support</a></p>
+    </article>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
+      <ul>
+        <li><a href="features.html">Features</a></li>
+        <li><a href="pricing.html">Pricing</a></li>
+        <li><a href="teams.html">Teams</a></li>
+        <li><a href="security.html">Security</a></li>
+        <li><a href="roadmap.html">Roadmap</a></li>
+        <li><a href="developers/index.html">Docs</a></li>
+        <li><a href="developers/cli.html">CLI reference</a></li>
+        <li><a href="developers/agents.html">Agents and MCP</a></li>
+        <li><a href="developers/api.html">References and API</a></li>
+        <li><a href="support.html">Support</a></li>
+        <li><a href="privacy.html">Privacy</a></li>
+        <li><a href="terms.html">Terms</a></li>
+      </ul>
+    </div>
+  </footer>
+  <script src="site.js"></script>
+  <script src="scenes.js"></script>
+</body>
+</html>

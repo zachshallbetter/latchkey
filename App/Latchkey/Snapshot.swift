@@ -55,18 +55,25 @@ enum Snapshot {
         if arg("--filter") == "activity" { model.filter = .activity }
         if arg("--filter") == "grants" { model.filter = .grants }
         if let f = arg("--filter"), f.hasPrefix("project:") { model.filter = .project(String(f.dropFirst(8))) }
+        if arg("--filter") == "review" { model.filter = .overview }
+        if arg("--part") == "window" {
+            // The whole window off screen, for App Store screenshots: 1440 × 900 points is 2880 × 1800 on Retina.
+            let width = Double(arg("--width") ?? "1440") ?? 1440, height = Double(arg("--height") ?? "900") ?? 900
+            drawOffscreen(MainWindow(model: model).frame(width: width, height: height), to: path)
+            return
+        }
         if arg("--part") == "approval" {
-            var sample = ApprovalRequest(action: .read, names: ["DATABASE_URL", "STRIPE_KEY"], chain: ["zsh", "claude", "Terminal"],
+            var sample = ApprovalRequest(action: .read, names: ["DATABASE_URL", "STRIPE_KEY"], chain: ["zsh", "agent", "Terminal"],
                                          folder: NSHomeDirectory() + "/Projects/site", command: "npm test -- --watch=false",
                                          reason: "release DATABASE_URL and STRIPE_KEY")
-            sample.sessionName = "claude"
+            sample.sessionName = "agent"
             sample.offersGrant = true
             drawOffscreen(ApprovalView(request: sample) { _ in }, to: path)
             return
         }
         if let f = arg("--import") { model.beginImport(URL(fileURLWithPath: f)) }
         if arg("--part") == "sidebar" {
-            drawOffscreen(Sidebar(model: model).frame(width: 260, height: 640), to: path)
+            drawOffscreen(Sidebar(model: model).frame(width: 250, height: Double(arg("--height") ?? "640") ?? 640), to: path)
             return
         }
         if let q = arg("--search") { model.search = q }
@@ -167,10 +174,10 @@ enum Snapshot {
             return (try? JSONSerialization.data(withJSONObject: json)).flatMap { try? Wire.decoder().decode(Broker.LogEntry.self, from: $0) }
         }
         return [
-            entry(3, "get", ["shop/production/DATABASE_URL"], "approved", ["zsh", "claude"]),
+            entry(3, "get", ["shop/production/DATABASE_URL"], "approved", ["zsh", "agent"]),
             entry(9, "update", ["shop/development/API_TOKEN"], "denied", ["the Latchkey app"]),
-            entry(42, "rm", ["shop/preview/OLD_KEY"], "approved", ["zsh", "zsh", "claude"]),
-            entry(65, "revoke", ["shop/development/API_TOKEN"], "revoked 1 grant", ["zsh", "claude"]),
+            entry(42, "rm", ["shop/preview/OLD_KEY"], "approved", ["zsh", "zsh", "agent"]),
+            entry(65, "revoke", ["shop/development/API_TOKEN"], "revoked 1 grant", ["zsh", "agent"]),
             entry(130, "import", ["shop/development/API_TOKEN", "shop/development/DATABASE_URL", "shop/development/PGHOST"], "approved", ["the Latchkey app"]),
         ].compactMap { $0 }
     }
@@ -207,7 +214,7 @@ enum Snapshot {
         }
         return [
             v("shop/production/DATABASE_URL", 3 * 3600, .changed, "the Latchkey app"),
-            v("shop/production/DATABASE_URL", 9 * 86400, .changed, "zsh › claude"),
+            v("shop/production/DATABASE_URL", 9 * 86400, .changed, "zsh › agent"),
             v("shop/production/DATABASE_URL", 40 * 86400, .restored, "the Latchkey app"),
             v("old-site/production/SENTRY_DSN", 2 * 86400, .deleted, "the Latchkey app"),
         ]

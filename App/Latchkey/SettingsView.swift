@@ -4,6 +4,16 @@ import ServiceManagement
 import SwiftUI
 
 enum SettingsSection: String, CaseIterable, Identifiable {
+    /// The sections shown: Membership only where there's a plan to show (the direct build links to the App Store
+    /// version; the store build once Pro is on sale).
+    static var visible: [SettingsSection] {
+        #if LATCHKEY_APP_STORE
+        return allCases.filter { $0 != .membership || ProEntitlement.onSale }
+        #else
+        return allCases
+        #endif
+    }
+
     case general, privacy, storage, developer, membership, about
     var id: Self { self }
     var title: String {
@@ -56,7 +66,7 @@ struct SettingsCommands: Commands {
 struct SettingsSectionList: View {
     @Bindable var model: AppModel
     var body: some View {
-        List(SettingsSection.allCases, selection: Binding<SettingsSection?>(get: { model.settingsSection }, set: { if let section = $0 { model.settingsSection = section } })) { section in
+        List(SettingsSection.visible, selection: Binding<SettingsSection?>(get: { model.settingsSection }, set: { if let section = $0 { model.settingsSection = section } })) { section in
             HStack(spacing: 12) {
                 IconTile(symbol: section.symbol, tint: section == .membership ? .orange : .blue, size: 30)
                 VStack(alignment: .leading, spacing: 3) {
@@ -198,8 +208,8 @@ struct SettingsView: View {
     @ViewBuilder private var developer: some View {
         Section("Command Line") {
             #if LATCHKEY_APP_STORE
-            SettingsNote("The command-line tool is signed separately and connects to this app through an authenticated App Group endpoint. Setup help explains how to install it.")
-            Link("Command-line setup help", destination: SettingsLinks.support)
+            SettingsNote("The command-line tool, latchkey (lk for short), is a separate, signed download. It connects to this app through an authenticated App Group endpoint, and every value it asks for is approved here.")
+            Link("Get the Command-Line Tool", destination: AppModel.commandLineToolPage)
             #else
             if let tool = model.bundledTool {
                 LabeledContent("Bundled CLI", value: tool.lastPathComponent)

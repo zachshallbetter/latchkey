@@ -20,6 +20,12 @@ import threading
 import time
 import uuid
 
+def debug_build(app):
+    """True for a development-signed Debug build: only those compile the self-test entry points the probes use."""
+    out = subprocess.run(["codesign", "-d", "--entitlements", "-", "--xml", str(app)], capture_output=True).stdout
+    return b"com.apple.security.get-task-allow" in out
+
+
 SECRET = "fixture-secret-transport-12345"
 FILE_SECRET = "fixture-private-key-67890"
 
@@ -28,7 +34,7 @@ def provenance(info):
     """Where the evidence came from: the signed build and the source commit the probes were built from."""
     commit = subprocess.run(["git", "-C", str(pathlib.Path(__file__).resolve().parent), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
     dirty = bool(subprocess.run(["git", "-C", str(pathlib.Path(__file__).resolve().parent), "status", "--porcelain", "--", ".", ":!docs/evidence"], capture_output=True, text=True).stdout.strip())
-    return {"build": f"{info['CFBundleShortVersionString']} ({info['CFBundleVersion']}), development-signed sandbox Debug experiment",
+    return {"build": f"{info['CFBundleShortVersionString']} ({info['CFBundleVersion']}), development-signed sandbox Debug build",
             "sourceCommit": commit, "sourceClean": not dirty, "verifiedOn": datetime.date.today().isoformat()}
 
 
@@ -42,7 +48,7 @@ def main():
         parser.error("report already exists; choose a new filename")
     app, cli = args.app.resolve(), args.cli.resolve()
     info = plistlib.loads((app / "Contents/Info.plist").read_bytes())
-    if info.get("LatchkeyDistributionChannel") != "app-store-sandbox-experiment":
+    if info.get("LatchkeyDistributionChannel") != "app-store" or not debug_build(app):
         parser.error("only the sandbox Debug experiment can run these probes")
     for artifact in (app, cli):
         if subprocess.run(["codesign", "--verify", "--strict", str(artifact)], capture_output=True).returncode:

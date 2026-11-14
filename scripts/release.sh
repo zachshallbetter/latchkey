@@ -31,6 +31,8 @@ die() { print -u2 "release: $1"; exit 1 }
 # ---------------------------------------------------------------- preflight
 [[ -n "$TEAM" ]] || die "set DEVELOPMENT_TEAM in App/project.yml"
 [[ -n "$VERSION" ]] || die "set MARKETING_VERSION in App/project.yml"
+SAFARI_VERSION=$(sed -n 's/.*"version": *"\([0-9.]*\)".*/\1/p' App/Safari/Resources/manifest.json | head -1)
+[[ "$SAFARI_VERSION" == "$VERSION" ]] || die "App/Safari/Resources/manifest.json says $SAFARI_VERSION; set it to $VERSION"
 IDENTITY=$(security find-identity -v -p codesigning | awk -v t="($TEAM)\"" '/"Developer ID Application:/ && index($0, t) {print $2; exit}')
 [[ -n "$IDENTITY" ]] || die "no Developer ID Application certificate for team $TEAM in your keychain (see the top of this script)"
 if (( NOTARIZE )); then
@@ -73,9 +75,19 @@ APP="$OUT/export/Latchkey.app"
 # Settings › Install Command Line Tool links ~/.local/bin/latchkey to it. Adding a file changes the bundle, so the
 # app is signed again afterwards with the entitlements and provisioning profile the export gave it.
 step "Embedding and signing the command-line tool"
+# The tool claims the app's team-prefixed App Group, so it can reach the Mac App Store version's socket in that
+# group's container (macOS 15 container protection). A Team-ID-prefixed group needs no provisioning profile.
+cat > "$OUT/cli.entitlements" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>com.apple.security.application-groups</key><array><string>$TEAM.io.snackstud.latchkey</string></array>
+</dict></plist>
+EOF
 mkdir -p "$APP/Contents/Helpers"
 cp "$CLI" "$APP/Contents/Helpers/latchkey"
-codesign --force --options runtime --timestamp --identifier io.snackstud.latchkey.cli --sign "$IDENTITY" "$APP/Contents/Helpers/latchkey"
+codesign --force --options runtime --timestamp --identifier io.snackstud.latchkey.cli --entitlements "$OUT/cli.entitlements" \
+  --sign "$IDENTITY" "$APP/Contents/Helpers/latchkey"
 codesign -d --entitlements - --xml "$APP" > "$OUT/entitlements.plist" 2>/dev/null
 codesign --force --options runtime --timestamp --entitlements "$OUT/entitlements.plist" --sign "$IDENTITY" "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP" 2>&1 | tail -1
@@ -95,6 +107,17 @@ if (( NOTARIZE )); then
   xcrun stapler staple -q "$APP"
   spctl --assess --type execute --verbose=2 "$APP" 2>&1 | tail -1
 fi
+
+# ---------------------------------------------------------------- the standalone command-line tool
+# For people who use the Mac App Store version, which may not install code outside its container: the same signed
+# binary, notarized on its own, for the Homebrew formula and the download page.
+step "Packaging the standalone command-line tool"
+CLI_ZIP="$OUT/latchkey-cli-$VERSION.zip"
+mkdir -p "$OUT/cli"
+ditto "$APP/Contents/Helpers/latchkey" "$OUT/cli/latchkey"
+ditto -c -k "$OUT/cli" "$CLI_ZIP"
+(( NOTARIZE )) && notarize "$CLI_ZIP"
+(cd "${CLI_ZIP:h}" && shasum -a 256 "${CLI_ZIP:t}") | tee "$CLI_ZIP.sha256"
 
 # ---------------------------------------------------------------- disk image
 step "Building the disk image"
@@ -139,11 +162,15 @@ fi
 # homepage (LATCHKEY_HOMEPAGE).
 : ${LATCHKEY_RELEASES_REPO:=zachshallbetter/latchkey} ${LATCHKEY_HOMEPAGE:=https://latchkey.snackstud.io/}
 if [[ -n "${LATCHKEY_RELEASES_REPO:-}" && -n "${LATCHKEY_HOMEPAGE:-}" ]]; then
-  step "Writing the Homebrew cask"
+  step "Writing the Homebrew cask and formula"
   sed -e "s|@VERSION@|$VERSION|" -e "s|@SHA256@|$(cut -d' ' -f1 "$DMG.sha256")|" \
       -e "s|@RELEASES_REPO@|$LATCHKEY_RELEASES_REPO|" -e "s|@HOMEPAGE@|$LATCHKEY_HOMEPAGE|" \
       packaging/homebrew/latchkey.rb.template | grep -v '^#' > "$OUT/latchkey.rb"
   print "    $OUT/latchkey.rb"
+  sed -e "s|@VERSION@|$VERSION|g" -e "s|@SHA256@|$(cut -d' ' -f1 "$CLI_ZIP.sha256")|" \
+      -e "s|@RELEASES_REPO@|$LATCHKEY_RELEASES_REPO|" -e "s|@HOMEPAGE@|$LATCHKEY_HOMEPAGE|" \
+      packaging/homebrew/latchkey-cli.rb.template | grep -v '^#' > "$OUT/latchkey-cli.rb"
+  print "    $OUT/latchkey-cli.rb"
 else
   print "    (no Homebrew cask: set LATCHKEY_RELEASES_REPO and LATCHKEY_HOMEPAGE to write one)"
 fi

@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Mac App Store
+- The App Store version is free in its first release: Pro isn't on sale until it has features of its own, so the store
+  build makes no StoreKit calls and shows no Membership section.
+- The App Store version links to the command-line tool instead of installing it, and the release now ships the tool
+  on its own: `latchkey-cli-VERSION.zip`, notarized, and a Homebrew formula (`brew install latchkey-cli` from the
+  tap). The tool claims the app's App Group so it can reach the store app.
+- Quitting the App Store version from the Dock quits it unless you choose otherwise in Settings.
+- The store build declares its encryption for export compliance, drops the unneeded network-server entitlement and
+  the old development keychain group, and reports itself as the `app-store` channel. The Safari extension's version
+  now matches the app's, and releases check it.
+- `scripts/release-appstore.py` builds the App Store package; the listing, reviewer notes, privacy, age rating and
+  export answers, and six screenshots are in `packaging/app-store/`.
+
 ### In-app settings
 - Settings now lives in the main window, with General, Privacy & Approval, Storage & File Access, Developer Tools,
   Membership, and About & Updates sections. Sidebar, menu bar, Command-comma and upgrade actions share it.
