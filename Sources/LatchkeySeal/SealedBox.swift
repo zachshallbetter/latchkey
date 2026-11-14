@@ -203,8 +203,17 @@ public enum SealedBox {
         func compress(_ block: ArraySlice<UInt8>, counter: UInt64, last: Bool) {
             var padded = [UInt8](repeating: 0, count: 128)
             padded.replaceSubrange(0..<block.count, with: block)
-            let m: [UInt64] = (0..<16).map { i in
-                (0..<8).reduce(UInt64(0)) { $0 | UInt64(padded[i * 8 + $1]) << UInt64($1 * 8) }
+            // Read sixteen little-endian words explicitly. This is equivalent to
+            // the former nested map/reduce, but avoids Swift's expression
+            // type-checker timeout on the compact bitwise closure.
+            var m = [UInt64](repeating: 0, count: 16)
+            for i in 0..<16 {
+                var word: UInt64 = 0
+                for byteOffset in 0..<8 {
+                    let shift = UInt64(byteOffset * 8)
+                    word |= UInt64(padded[i * 8 + byteOffset]) << shift
+                }
+                m[i] = word
             }
             var v = h + iv
             v[12] ^= counter
