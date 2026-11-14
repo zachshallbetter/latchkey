@@ -394,6 +394,7 @@ struct ListHeader: View {
                         HStack(spacing: 6) {
                             ForEach(model.environments(in: p), id: \.self) { EnvBadge(environment: $0, compact: true).fixedSize() }
                             Text("· \(count) item\(count == 1 ? "" : "s")").font(.callout).foregroundStyle(.secondary)
+                                .lineLimit(1).fixedSize()
                         }
                     } else {
                     ViewThatFits(in: .horizontal) {
