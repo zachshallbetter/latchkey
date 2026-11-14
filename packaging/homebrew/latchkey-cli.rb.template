@@ -2,10 +2,9 @@
 # scripts/release.sh fills in the version, checksum, download repository and homepage and writes
 # build/release/<version>/latchkey-cli.rb, for the tap repository's Formula/ folder.
 class LatchkeyCli < Formula
-  desc "Command-line tool for the Latchkey app: run commands with secrets from your keychain"
+  desc "Run commands with secrets from the Latchkey app and your keychain"
   homepage "@HOMEPAGE@"
   url "https://github.com/@RELEASES_REPO@/releases/download/v@VERSION@/latchkey-cli-@VERSION@.zip"
-  version "@VERSION@"
   sha256 "@SHA256@"
 
   depends_on :macos
