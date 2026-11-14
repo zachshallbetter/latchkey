@@ -139,6 +139,9 @@ def bundle_errors(app, dev, submission, inspector=None):
             errors.append(f"unresolved or invalid built {key}")
     if (app / "Contents/Frameworks/Sparkle.framework").exists() or any(key.startswith("SU") for key in main):
         errors.append("Sparkle is present in the store bundle")
+    for plist in sorted(app.rglob("*.plist")):
+        if b"$(" in plistlib.dumps(load_plist(plist)):
+            errors.append(f"unresolved build setting in {plist.relative_to(app)}")
     for bundle in bundles:
         # Every binary, since Debug builds keep the code in Latchkey.debug.dylib beside the executable.
         if any(b"LatchkeySeal" in f.read_bytes() for f in (bundle / "Contents/MacOS").glob("*") if f.is_file()):
