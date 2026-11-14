@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.1 (2026-11-13)
 
 ### Mac App Store
 - The App Store version is free in its first release: Pro isn't on sale until it has features of its own, so the store
