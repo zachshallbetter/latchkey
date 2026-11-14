@@ -12,6 +12,10 @@
 - Membership shows verified one-time App Store ownership and the App Store price, with Buy, Restore Purchases,
   availability checks and purchase support links.
 
+### App
+- The sidebar shows each service's site icon, bundled with the app, and a project's own favicon or app icon when
+  its checkout has one; otherwise the initial or a folder, as before. Nothing is fetched.
+
 ### Security
 - An approval now names every change to who may read an item without asking, or to whether it's treated as a secret:
   `set` (including one with no value) and `import --replace` say "let agents read ... without approval" or "make it

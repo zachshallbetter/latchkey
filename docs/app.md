@@ -11,8 +11,10 @@ Arranged the way 1Password arranges vaults and tags:
 
 - **All Items**, **Review** (with how many findings) and **Activity**.
 - **Projects** (and **Shared**), like vaults: choose one to see only its items. Right-click for actions on all of
-  them.
-- **Services**, like tags: the services items name.
+  them. A project shows its own site icon when its checkout has one (a favicon or app icon under `public/`, `app/`,
+  `src/app/` or `static/`), found from the folders its env files are in; otherwise a folder.
+- **Services**, like tags: the services items name, each with its site's icon. The icons ship with the app, so
+  nothing is fetched.
 - **Grants** and **Recently Deleted**.
 - Projects and Services fold away.
 - At the bottom, where values are kept: **iCloud Keychain** or **This Mac only**. Hover for what that means.

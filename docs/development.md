@@ -134,6 +134,13 @@ Use `--settings general|privacy|storage|developer|membership|about --part settin
 Native sidebar materials may be absent from an off-screen full-window capture; `--part sidebar` renders that
 component independently. These previews do not exercise real App Store purchases or login-item registration.
 
+## Service icons
+
+The sidebar's service icons are in `App/Latchkey/Assets.xcassets/ServiceIcons`, one image set per service, named as
+`Services.swift` spells it. `scripts/fetch-service-icons.py` fetches any that are missing from each service's own site
+(its `apple-touch-icon` or `icon` link, else `/favicon.ico`) and converts them to 64×64 PNG; add a new service to its
+`SITES` list, run it, and look at the images before committing. The app never fetches icons.
+
 ## The logo and icon
 
 `App/Branding/logo.svg` is the source, a key on a ring. The app icon is `App/Latchkey/AppIcon.icon`, an Icon Composer

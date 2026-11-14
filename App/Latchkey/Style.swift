@@ -18,6 +18,23 @@ struct IconTile: View {
     }
 }
 
+/// A site's own icon on a small light tile, as browsers show favicons, so dark and light marks both read.
+struct SiteIcon: View {
+    let image: NSImage
+    var size: CGFloat = 20
+
+    var body: some View {
+        Image(nsImage: image).resizable().interpolation(.high).aspectRatio(contentMode: .fit)
+            .padding(size * 0.1)
+            .frame(width: size, height: size)
+            .background(RoundedRectangle(cornerRadius: size * 0.24, style: .continuous).fill(Color.white))
+            .clipShape(RoundedRectangle(cornerRadius: size * 0.24, style: .continuous))
+    }
+
+    /// The bundled icon for a service Latchkey knows (fetched by scripts/fetch-service-icons.py), or nil.
+    static func service(_ name: String) -> NSImage? { NSImage(named: "ServiceIcons/\(name)") }
+}
+
 /// What an item is, for its icon and the line under its name: from its kind, name and service.
 struct ItemType {
     let label: String
@@ -163,6 +180,8 @@ struct LinkCard: View {
 struct NavRow: View {
     let title: String
     let symbol: String
+    /// Shown instead of the symbol when there is one: a project's or service's own icon.
+    var image: NSImage? = nil
     var count: Int? = nil
     /// Show the count as a pill, for something that wants attention.
     var badge = false
@@ -172,8 +191,12 @@ struct NavRow: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 10) {
-                Image(systemName: symbol).font(.system(size: 14, weight: .medium)).frame(width: 20)
-                    .foregroundStyle(selected ? Color.white : Color.secondary)
+                if let image {
+                    SiteIcon(image: image)
+                } else {
+                    Image(systemName: symbol).font(.system(size: 14, weight: .medium)).frame(width: 20)
+                        .foregroundStyle(selected ? Color.white : Color.secondary)
+                }
                 Text(title).lineLimit(1).foregroundStyle(selected ? Color.white : Color.primary)
                 Spacer(minLength: 4)
                 if let count, badge {
