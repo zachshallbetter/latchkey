@@ -1,0 +1,46 @@
+name: Swift package verification
+
+on:
+  pull_request:
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Package.swift'
+      - '.github/workflows/swift-package.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Package.swift'
+      - '.github/workflows/swift-package.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swiftpm-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: |
+          sw_vers
+          swift --version
+      - name: Build and test the Swift package, including libsodium cryptographic vectors
+        run: swift test
+      - name: Scope note
+        if: always()
+        run: |
+          {
+            echo 'SwiftPM tests compile and exercise local source/test fixtures.'
+            echo 'These results do not attest signed app installation, Touch ID approval, iCloud sync, or an independent security review.'
+          } >> "$GITHUB_STEP_SUMMARY"
