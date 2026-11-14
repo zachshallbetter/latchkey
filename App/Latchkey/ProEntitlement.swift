@@ -16,6 +16,7 @@ final class ProEntitlement: ObservableObject {
     private let flag = OSAllocatedUnfairLock(initialState: false)
     nonisolated func current() -> Bool { flag.withLock { $0 } }
 
+    @Published private(set) var hasResolved = false
     @Published private(set) var isPro = false
     @Published private(set) var purchaseDate: Date?
     @Published private(set) var product: Product?
@@ -36,27 +37,27 @@ final class ProEntitlement: ObservableObject {
                 await self.refresh()
             }
         }
-        Task {
-            await refresh()
-            await loadProduct()
-        }
+        Task { await reload() }
     }
 
     func refresh() async {
         var date: Date?
         for await result in Transaction.currentEntitlements {
             guard case .verified(let transaction) = result,
-                  transaction.productID == Self.productID, transaction.revocationDate == nil else { continue }
+                  transaction.productID == Self.productID, transaction.productType == .nonConsumable,
+                  transaction.revocationDate == nil else { continue }
             date = transaction.purchaseDate
         }
-        flag.withLock { $0 = date != nil }
-        isPro = date != nil
+        let entitled = date != nil
+        flag.withLock { $0 = entitled }
+        isPro = entitled
         purchaseDate = date
+        hasResolved = true
     }
 
     func loadProduct() async {
         do {
-            product = try await Product.products(for: [Self.productID]).first
+            product = try await Product.products(for: [Self.productID]).first { $0.type == .nonConsumable }
             message = product == nil ? "Latchkey Pro isn't available from the App Store right now." : nil
         } catch {
             product = nil
@@ -64,8 +65,16 @@ final class ProEntitlement: ObservableObject {
         }
     }
 
+    func reload() async {
+        guard !busy else { return }
+        busy = true
+        defer { busy = false }
+        await refresh()
+        await loadProduct()
+    }
+
     func buy() async {
-        guard let product else { return }
+        guard !busy, hasResolved, !isPro, let product else { return }
         busy = true
         defer { busy = false }
         do {
@@ -88,6 +97,7 @@ final class ProEntitlement: ObservableObject {
     }
 
     func restore() async {
+        guard !busy else { return }
         busy = true
         defer { busy = false }
         do {
@@ -97,6 +107,7 @@ final class ProEntitlement: ObservableObject {
             message = "Purchases couldn't be restored: \(error.localizedDescription)"
         }
         await refresh()
+        if message == nil { message = isPro ? "Purchases restored." : "No Pro purchase was found for this Apple Account." }
     }
 }
 #endif

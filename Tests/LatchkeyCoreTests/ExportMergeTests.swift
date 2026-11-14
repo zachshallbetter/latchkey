@@ -139,9 +139,20 @@ final class ExportMergeTests: XCTestCase {
         XCTAssertEqual(approver.reasons.count, 2, "agent-safe or not, every copy asks")
         XCTAssertTrue(approver.reasons[0].contains("from shop/development to the clipboard"), approver.reasons[0])
         XCTAssertTrue(approver.reasons[0].contains("this Mac"), approver.reasons[0])
+        XCTAssertTrue(approver.reasons[0].contains("cleared after 60 seconds"), "without a choice, the default is named")
         let text = try String(contentsOf: log, encoding: .utf8)
         XCTAssertTrue(text.contains("copied to the clipboard"), text)
         XCTAssertFalse(text.contains("postgres://secret"))
+    }
+
+    func testCopyApprovalNamesTheChosenClearTimeOrTheDefault() throws {
+        let approver = CountingApprover(true)
+        let (b, _) = try makeBroker(approver)
+        for (asked, named) in [(15, 15), (120, 120), (7, 60), (3600, 60)] {
+            let req = Request(op: "export", names: ["shop/development/DB"], project: "shop/development", clipboard: true, clearAfter: asked)
+            XCTAssertTrue(b.handle(req, peer: peer).ok)
+            XCTAssertTrue(approver.reasons.last?.contains("cleared after \(named) seconds") == true, approver.reasons.last ?? "")
+        }
     }
 
     func testCopyIsRefusedToAgentsSafariAndAnotherComputerAndWhenDenied() throws {
@@ -171,7 +182,7 @@ final class ExportMergeTests: XCTestCase {
         XCTAssertTrue(pb.types?.contains(Clipboard.transient) == true)
         XCTAssertEqual(Clipboard.concealed.rawValue, "org.nspasteboard.ConcealedType")
         XCTAssertEqual(Clipboard.transient.rawValue, "org.nspasteboard.TransientType")
-        XCTAssertEqual(Clipboard.clearAfter, 60)
+        XCTAssertEqual(AppPreferences.defaultClipboardSeconds, 60)
 
         pb.clearContents()
         pb.setString("something else", forType: .string)

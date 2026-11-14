@@ -77,9 +77,10 @@ Deleting always asks first. Kind has no shortcut; it's in both menus.
 
 ### An item's detail
 
-- **Value**: hidden. The eye shows it for 30 seconds; the copy button copies it to this Mac's clipboard only (not
-  to your other devices through Universal Clipboard), marks it so clipboard managers skip it, and clears it after 60
-  seconds. Both ask unless the item is agent-safe.
+- **Value**: hidden. The eye shows it for 30 seconds (Settings › Privacy & Approval changes this); the copy button
+  copies it to this Mac's clipboard only (not to your other devices through Universal Clipboard), marks it so clipboard
+  managers skip it, and clears it after the chosen delay, 60 seconds unless changed. Both ask unless the item is
+  agent-safe.
 - **Reference**: the `latchkey://` text to paste into a file.
 - The header shows the item's project, environment and service. **Edit** offers **Change Value…**, **Edit
   Details…** (kind, access, service, note and Safari fill sites, saved together with one Touch ID), **Move…**,
@@ -105,8 +106,9 @@ service.
 
 **Copy Environment as .env…** puts the environment on the clipboard as an env block for a dashboard that takes a pasted
 one (Vercel, Railway, Netlify, Render). It asks every time, naming the environment and that the values go to the
-clipboard. The copy stays on this Mac, is marked so clipboard managers skip it, and clears after 60 seconds if nothing
-else is copied. The access log says "copied to the clipboard", never the values. Agents can't do this.
+clipboard, and when it clears. The copy stays on this Mac, is marked so clipboard managers skip it, and clears after
+the chosen delay (60 seconds unless changed) if nothing else is copied. The access log says "copied to the
+clipboard", never the values. Agents can't do this.
 
 ### Adding and importing
 
@@ -176,17 +178,30 @@ latchkey.snackstud.io in your browser.
 
 ## Settings
 
-- **Storage**: where values are kept, and **Move to iCloud Keychain** for items saved before the app was signed.
-- **Approval**: how you approve (Touch ID, Apple Watch, password), and the difference between one-request approvals and explicit grants.
-- **General**: **Open Latchkey at login**, **Install Command Line Tool** (release builds; links `latchkey` and `lk`), and the activity log in
-  Finder. **Latchkey › Install Command Line Tool…** in the menu bar does the same.
-  **Check for updates automatically** (direct download only) lets Latchkey look for a new version in the background;
-  Sparkle asks once on its second launch, and this switch changes the answer. It sends no system profile.
+Settings is part of the main window: choose **Settings** in the sidebar, press **⌘,**, or use the app or menu bar
+Settings command. The same destination opens each time, including when the window was closed. Sections are:
 
-- **Latchkey Pro**: in the Mac App Store version, whether Pro is on, **Buy** with the App Store price, **Restore
-  Purchases** and the purchase date. Everything Latchkey does today is free; Pro covers new features as they are added,
-  and when you use one without Pro an Upgrade sheet lists what Pro includes. The direct download shows a link to the
-  App Store version instead.
+- **General**: follow macOS appearance or choose Light/Dark, open at login, and choose whether quitting from the
+  Dock keeps Latchkey running in the menu bar. Quit from the Latchkey menu always exits.
+- **Privacy & Approval**: clear copied values after 15, 30, 60 or 120 seconds; hide revealed values after 10, 30 or
+  60 seconds; hide revealed values when the app loses focus; or hide them immediately. Timer changes apply on
+  the next copy or reveal. Closing the window also hides values. Clipboard clearing preserves anything copied
+  afterward; values stay on this Mac and retain the clipboard-manager concealment markers. This section also
+  explains approval and links to active grants. No preference bypasses authorization.
+- **Storage & File Access**: Keychain location, legacy-item migration, and remembered file/folder permissions in
+  the App Store build. File permission and secret-release approval remain separate. macOS may retain access to
+  an opened file for the rest of the process even after its bookmark is removed.
+- **Developer Tools**: install the bundled CLI in the direct build, setup help, activity, and the access log.
+- **Membership**: the current plan, one-time Pro ownership and purchase date, localized App Store pricing,
+  availability checks, purchase and restore actions, and purchase support/policy links. The direct build identifies
+  itself and links to the plans page; it does not claim to verify App Store purchases. Pro is a non-consumable
+  purchase, with no recurring subscription or renewal. All current features remain free; planned additions are
+  described as planned. No purchase state is stored as an editable preference.
+- **About & Updates**: app version, distribution, direct-build automatic updates and manual update checks, help,
+  privacy policy, terms and security reporting. The App Store build gets updates through the App Store.
+
+Preferences are saved on this Mac. Clipboard clearing defaults to 60 seconds, revealed values to 30 seconds,
+hiding on loss of focus to on, and keeping the app running after a Dock quit to on.
 
 ## Latchkey for Safari
 

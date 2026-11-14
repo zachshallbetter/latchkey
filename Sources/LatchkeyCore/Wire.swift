@@ -182,6 +182,7 @@ public struct Request: Codable, Sendable {
     public var confirm: [String]?    // environment-set: inferred variables to confirm
     public var destination: String?  // export: the file the values will be written to, as the caller says
     public var clipboard: Bool?      // export: the values go to the clipboard, not a file (`destination` is then unused)
+    public var clearAfter: Int?      // export to the clipboard: seconds until it clears, one of AppPreferences.clipboardChoices
     public var origins: [String]?    // project-link, project-unlink: normalized remote URLs
     public var into: String?         // combine: the shared item the duplicates become
 
@@ -193,7 +194,7 @@ public struct Request: Codable, Sendable {
                 only: [String]? = nil, origin: String? = nil, session: Bool? = nil, commands: [[String]]? = nil,
                 uses: Int? = nil, intended: [String]? = nil, remote: RemoteClaim? = nil, page: String? = nil,
                 fillSites: [String]? = nil, environments: [EnvironmentRecord]? = nil, unset: [String]? = nil,
-                confirm: [String]? = nil, destination: String? = nil, clipboard: Bool? = nil, origins: [String]? = nil, logLimit: Int? = nil, into: String? = nil) {
+                confirm: [String]? = nil, destination: String? = nil, clipboard: Bool? = nil, clearAfter: Int? = nil, origins: [String]? = nil, logLimit: Int? = nil, into: String? = nil) {
         self.into = into
         self.logLimit = logLimit
         self.op = op
@@ -227,6 +228,7 @@ public struct Request: Codable, Sendable {
         self.confirm = confirm
         self.destination = destination
         self.clipboard = clipboard
+        self.clearAfter = clearAfter
         self.origins = origins
     }
 }

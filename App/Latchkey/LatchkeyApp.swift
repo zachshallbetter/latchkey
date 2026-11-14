@@ -81,6 +81,7 @@ struct LatchkeyApp: App {
                 Button("New Item…") { model.showingAdd = true }.keyboardShortcut("n")
                 Button("Import .env File…") { model.chooseImportFile() }.keyboardShortcut("i", modifiers: [.command, .shift])
             }
+            SettingsCommands(model: model)
             ItemCommands(model: model)
             CommandGroup(replacing: .help) {
                 Link("Latchkey Help", destination: URL(string: "https://latchkey.snackstud.io/support.html")!)
@@ -96,9 +97,6 @@ struct LatchkeyApp: App {
         }
         .menuBarExtraStyle(.window)
 
-        Settings {
-            SettingsView(model: model)
-        }
     }
 }
 
@@ -106,7 +104,7 @@ struct LatchkeyApp: App {
 /// agents; Quit in the menu bar, the app menu, logging out and scripts quit it.
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        guard Self.quitFromDock else { return .terminateNow }
+        guard AppPreferences().keepRunningFromDock, Self.quitFromDock else { return .terminateNow }
         for window in NSApp.windows where window.isVisible && window.canBecomeMain { window.close() }
         NSApp.setActivationPolicy(.accessory)
         return .terminateCancel
@@ -125,16 +123,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 // MARK: - Model
 
 enum SidebarFilter: Hashable {
-    case overview, all, agentSafe, needsApproval, activity, grants, shared, deleted
+    case overview, all, agentSafe, needsApproval, activity, grants, shared, deleted, settings
     case kind(ItemKind)
     case project(String)
     case service(String)
 
     /// Views that list items, where a selection shows its detail.
-    var listsItems: Bool { ![.overview, .activity, .grants, .deleted].contains(self) }
+    var listsItems: Bool { ![.overview, .activity, .grants, .deleted, .settings].contains(self) }
 
     var title: String {
         switch self {
+        case .settings: return "Settings"
         case .overview: return "Review"
         case .all: return "All Items"
         case .agentSafe: return "No Approval"
@@ -245,6 +244,21 @@ final class AppModel {
     var notice: String?
 
     var filter: SidebarFilter = .all
+    var settingsSection: SettingsSection = .general
+    @ObservationIgnored private var revealTokens: [String: UUID] = [:]
+    @ObservationIgnored private var versionRevealTokens: [String: UUID] = [:]
+
+    func openSettings(_ section: SettingsSection? = nil) {
+        if let section { settingsSection = section }
+        filter = .settings
+    }
+
+    func concealRevealedValues() {
+        revealed.removeAll()
+        revealedVersions.removeAll()
+        revealTokens.removeAll()
+        versionRevealTokens.removeAll()
+    }
     var selection: Set<String> = []
     var search = ""
     var sort: SortOrder = .name
@@ -268,6 +282,14 @@ final class AppModel {
     private let me = PeerInfo(pid: getpid(), path: Bundle.main.bundlePath, cwd: "", chain: [Broker.appCaller])
 
     init() {
+        #if DEBUG
+        if Snapshot.requested {
+            store = KeychainStore(mode: .thisMac)
+            broker = Broker(store: MemoryStore(), approver: FixedApprover(false), logURL: nil)
+            Snapshot.startParts(self)
+            return
+        }
+        #endif
         let group = Bundle.main.object(forInfoDictionaryKey: "LatchkeyAccessGroup") as? String
         store = KeychainStore.automatic(accessGroup: group)
         // 0.1.0 development builds were io.latchkey.Latchkey with items in another access group: bring both over.
@@ -284,9 +306,10 @@ final class AppModel {
             .flatMap { FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: $0) }
             .map { BrokerEndpoint.appStorePath(container: $0) } ?? ""
         // The sandbox can't run the services' tools: pushes go through their APIs with token items.
+        let pro = ProEntitlement.shared
         broker = Broker(store: store, approver: PanelApprover(), runner: UnavailableRunner(), nativeOnly: true, socketPath: brokerPath,
-                        hasPro: { ProEntitlement.shared.current() })
-        ProEntitlement.shared.start()
+                        hasPro: { pro.current() })
+        pro.start()
         #else
         broker = Broker(store: store, approver: PanelApprover())
         #endif
@@ -347,6 +370,9 @@ final class AppModel {
 
     func refresh() {
         #if DEBUG
+        if Snapshot.requested { return }
+        #endif
+        #if DEBUG
         if Snapshot.usesSample { return }   // keep the example data; never load real items into a sample drawing
         #endif
         do {
@@ -368,7 +394,7 @@ final class AppModel {
 
     func matches(_ f: SidebarFilter, _ i: SecretInfo) -> Bool {
         switch f {
-        case .overview, .all, .activity, .grants, .deleted: return true
+        case .overview, .all, .activity, .grants, .deleted, .settings: return true
         case .agentSafe: return i.agentSafe
         case .needsApproval: return !i.agentSafe
         case .shared: return i.ref.isShared
@@ -601,10 +627,17 @@ final class AppModel {
     func revealVersion(_ v: Version) async {
         let r = await send(Request(op: "version", version: v.id))
         guard let value = r.values?[v.id] else { notice = r.denied != nil ? "Not approved." : (r.error ?? "Couldn't read that version."); return }
+        guard !AppPreferences().hideOnDeactivate || NSApp.isActive else { notice = Self.notInFront; return }
         revealedVersions[v.id] = value
+        let token = UUID()
+        versionRevealTokens[v.id] = token
+        let seconds = AppPreferences().revealSeconds
         Task {
-            try? await Task.sleep(for: .seconds(30))
-            if revealedVersions[v.id] == value { revealedVersions[v.id] = nil }
+            try? await Task.sleep(for: .seconds(seconds))
+            if versionRevealTokens[v.id] == token {
+                revealedVersions[v.id] = nil
+                versionRevealTokens[v.id] = nil
+            }
         }
     }
 
@@ -761,12 +794,22 @@ final class AppModel {
         return nil
     }
 
+    /// Why an approved value wasn't shown: Latchkey went to the back while it was asked for, and values hide then.
+    static let notInFront = "Not shown: Latchkey wasn't in front, and values hide when it loses focus. Show it again."
+
     func reveal(_ name: String) async {
         guard let v = await value(of: name) else { return }
+        guard !AppPreferences().hideOnDeactivate || NSApp.isActive else { notice = Self.notInFront; return }
         revealed[name] = v
+        let token = UUID()
+        revealTokens[name] = token
+        let seconds = AppPreferences().revealSeconds
         Task {
-            try? await Task.sleep(for: .seconds(30))
-            if revealed[name] == v { revealed[name] = nil }
+            try? await Task.sleep(for: .seconds(seconds))
+            if revealTokens[name] == token {
+                revealed[name] = nil
+                revealTokens[name] = nil
+            }
         }
     }
 
@@ -775,12 +818,13 @@ final class AppModel {
         copyToClipboard(v, notice: "Copied \(name).")
     }
 
-    /// This Mac only, concealed from clipboard managers, and cleared after a minute if nothing else was copied.
+    /// This Mac only, concealed from compatible clipboard managers, and cleared on the chosen timer if unchanged.
     private func copyToClipboard(_ text: String, notice message: String) {
         let stamp = Clipboard.copy(text)
-        notice = "\(message) The clipboard clears in \(Int(Clipboard.clearAfter)) seconds."
+        let seconds = AppPreferences().clipboardSeconds
+        notice = "\(message) The clipboard clears in \(seconds) seconds."
         Task {
-            try? await Task.sleep(for: .seconds(Clipboard.clearAfter))
+            try? await Task.sleep(for: .seconds(seconds))
             Clipboard.clear(ifUnchangedSince: stamp)
         }
     }
@@ -795,7 +839,8 @@ final class AppModel {
         let credentials = Array(Set(record.variables.values.compactMap(\.item))).sorted()
         var released: [String: String] = [:]
         if !credentials.isEmpty {
-            let r = await send(Request(op: "export", names: credentials, project: scope, clipboard: true))
+            let r = await send(Request(op: "export", names: credentials, project: scope, clipboard: true,
+                                       clearAfter: AppPreferences().clipboardSeconds))
             if let m = r.missing, !m.isEmpty { notice = "Not in Latchkey: \(m.joined(separator: ", "))."; return }
             guard r.ok, let values = r.values, credentials.allSatisfy({ values[$0] != nil }) else {
                 notice = r.error ?? "Could not copy \(scope)."
@@ -929,6 +974,9 @@ final class AppModel {
     var legacyItems: [String] = []
 
     func checkLegacy() {
+        #if DEBUG
+        if Snapshot.requested { return }
+        #endif
         legacyItems = synced ? ((try? KeychainStore(mode: .thisMac).list().map(\.name)) ?? []) : []
     }
 

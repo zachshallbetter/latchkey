@@ -395,10 +395,8 @@ enum ProLinks {
 
 /// Shown when the broker refuses an op that needs Latchkey Pro. Buying happens in Settings (App Store build only).
 struct UpgradeSheet: View {
+    let model: AppModel
     @Environment(\.dismiss) private var dismiss
-    #if LATCHKEY_APP_STORE
-    @Environment(\.openSettings) private var openSettings
-    #endif
 
     private static let groups: [(title: String, detail: String)] = [
         ("Agent controls", "Finer limits on what an agent may read and run."),
@@ -423,11 +421,7 @@ struct UpgradeSheet: View {
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             SheetFooter {
                 Button("Not Now") { dismiss() }
-                #if LATCHKEY_APP_STORE
-                Button("Open Settings") { dismiss(); openSettings() }.keyboardShortcut(.defaultAction)
-                #else
-                Link("Latchkey Pro in the Mac App Store", destination: ProLinks.pricing)
-                #endif
+                Button("Membership") { dismiss(); model.openSettings(.membership) }.keyboardShortcut(.defaultAction)
             }
         }
         .padding(24)

@@ -14,6 +14,9 @@ final class AppUpdater: ObservableObject {
     private var observation: AnyCancellable?
 
     private init() {
+        #if DEBUG
+        if Snapshot.requested { controller = nil; return }
+        #endif
         let key = Bundle.main.object(forInfoDictionaryKey: "SUPublicEDKey") as? String
         guard let key, !key.trimmingCharacters(in: .whitespaces).isEmpty else {
             #if DEBUG

@@ -1,3 +1,4 @@
+import AppKit
 import LatchkeyCore
 import SwiftUI
 
@@ -43,6 +44,7 @@ struct LogoMark: View {
 
 struct MainWindow: View {
     @Bindable var model: AppModel
+    @AppStorage(AppPreferences.Key.appearance) private var appearance = "system"
 
     var body: some View {
         NavigationSplitView {
@@ -50,7 +52,9 @@ struct MainWindow: View {
                 .navigationSplitViewColumnWidth(min: 230, ideal: 250, max: 320)
         } content: {
             Group {
-                if model.filter == .overview {
+                if model.filter == .settings {
+                    SettingsSectionList(model: model)
+                } else if model.filter == .overview {
                     ReviewList(model: model)
                 } else if model.filter == .activity {
                     ActivityList(model: model)
@@ -62,9 +66,11 @@ struct MainWindow: View {
                     ItemList(model: model)
                 }
             }
-            .navigationSplitViewColumnWidth(min: 300, ideal: 360)
+            .navigationSplitViewColumnWidth(min: model.filter == .settings ? 220 : 300, ideal: model.filter == .settings ? 250 : 360)
         } detail: {
-            if model.filter == .overview {
+            if model.filter == .settings {
+                SettingsView(model: model).frame(minWidth: 360)
+            } else if model.filter == .overview {
                 if let f = model.findings.first(where: { $0.id == model.selectedFinding }) { FindingDetail(model: model, finding: f).id(f.id) }
                 else { EmptyDetail(model: model) }
             } else if model.filter == .activity {
@@ -84,11 +90,16 @@ struct MainWindow: View {
                 EmptyDetail(model: model)
             }
         }
+        .onChange(of: appearance) { _, value in applyAppearance(value) }
+        .onDisappear { model.concealRevealedValues() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
+            if AppPreferences().hideOnDeactivate { model.concealRevealedValues() }
+        }
         .safeAreaInset(edge: .bottom, spacing: 0) { NoticeBar(model: model) }
         .sheet(isPresented: $model.showingAdd) { AddItemSheet(model: model) }
         .sheet(item: $model.importDraft) { ImportSheet(model: model, draft: $0) }
         .sheet(item: $model.nextSteps) { NextStepsSheet(steps: $0) }
-        .sheet(isPresented: $model.showingUpgrade) { UpgradeSheet() }
+        .sheet(isPresented: $model.showingUpgrade) { UpgradeSheet(model: model) }
         .sheet(item: $model.grantRequest) { NewGrantSheet(model: model, request: $0) }
         .sheet(item: $model.remoteRequest) { RemoteSheet(model: model, scope: $0.scope) }
         .sheet(item: $model.exportRequest) { ExportSheet(model: model, scope: $0.scope) }
@@ -103,11 +114,12 @@ struct MainWindow: View {
         }
         .sheet(item: $model.moveRequest) { MoveSheet(model: model, preselected: $0.ids) }
         .dropDestination(for: URL.self) { urls, _ in
-            guard let url = urls.first else { return false }
+            guard model.filter != .settings, let url = urls.first else { return false }
             model.beginImport(url)
             return true
         }
         .onAppear {
+            applyAppearance(appearance)
             model.refresh()
             #if DEBUG
             Snapshot.runIfRequested(model)
@@ -117,6 +129,10 @@ struct MainWindow: View {
 }
 
 extension MainWindow {
+    private func applyAppearance(_ value: String) {
+        NSApp.appearance = value == "dark" ? NSAppearance(named: .darkAqua) : value == "light" ? NSAppearance(named: .aqua) : nil
+    }
+
     var deleteTitle: String {
         guard let ids = model.deleteRequest?.ids else { return "Delete?" }
         return ids.count == 1 ? "Delete \(ids[0])?" : "Delete \(ids.count) items?"
@@ -183,6 +199,8 @@ struct Sidebar: View {
                 }
                 .padding(10)
             }
+            Divider().padding(.horizontal, 18)
+            nav(.settings, "gearshape").padding(.horizontal, 10).padding(.top, 8)
             StorageBadge(model: model).padding(10)
         }
     }
