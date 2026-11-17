@@ -9,6 +9,9 @@
   **Keep running in the menu bar when I quit**). Quit in the menu bar panel, logging out and scripts still quit it.
 - Settings › Developer Tools shows whether Latchkey for Safari is on and opens Safari's Extensions settings with it
   selected, so it can be turned on from the app.
+- `scripts/install.sh` now forgets every other copy of the app macOS has registered (other worktrees' builds,
+  Xcode archives), not just its own build folder. With stale copies registered, Safari could resolve Latchkey's
+  extension to one of them and **Turn On in Safari…** failed with SFErrorDomain error 1.
 
 ### Mac App Store
 - The App Store version leaves out GitHub Actions pushes, so it uses only Apple's encryption and needs no export
