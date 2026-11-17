@@ -61,14 +61,22 @@ if [[ -n "$TEAM" ]]; then
   fi
 fi
 
-# Only the installed copy should offer Latchkey's Safari extension: forget the build folder's copies, which macOS
-# registers when it sees them, so Safari doesn't list one extension per copy.
+# Only the installed copy should offer Latchkey's Safari extension. macOS registers every copy it sees (this build
+# folder, other worktrees' builds, Xcode archives), and with several registered Safari may resolve the extension to
+# one of them, so the app's "Turn On in Safari…" fails with SFErrorDomain error 1. Forget every other copy; the
+# files stay where they are.
 LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
-for built in "$DERIVED/Build/Products/Release/Latchkey.app" "$DERIVED/Build/Products/Debug/Latchkey.app"; do
-  [[ -d "$built" ]] || continue
-  pluginkit -r "$built/Contents/PlugIns/LatchkeySafari.appex" 2>/dev/null || true
-  "$LSREGISTER" -u "$built" 2>/dev/null || true
-done
+{ "$LSREGISTER" -dump 2>/dev/null || true; } | sed -nE 's/^path: +(.*\/Latchkey\.app) \(0x[0-9a-f]+\)$/\1/p' | sort -u |
+  while IFS= read -r built; do
+    [[ "$built" == /Applications/Latchkey.app ]] && continue
+    if [[ -d "$built" ]]; then
+      id=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$built/Contents/Info.plist" 2>/dev/null || true)
+      [[ "$id" == io.snackstud.latchkey ]] || continue
+      pluginkit -r "$built/Contents/PlugIns/LatchkeySafari.appex" 2>/dev/null || true
+    fi
+    "$LSREGISTER" -u "$built" 2>/dev/null || true
+  done
+"$LSREGISTER" -f /Applications/Latchkey.app
 
 open /Applications/Latchkey.app
 for _ in {1..20}; do
