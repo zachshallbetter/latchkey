@@ -7,3 +7,52 @@ DerivedData/
 
 # The usage guide is documentation, not an agent instruction file.
 !docs/agents.md
+
+# formal-project-bootstrap: secrets stay out; AGENTS.md and the .agents/ tree stay in
+.env
+.env.*
+!.env.example
+.env.local
+.agents/llms*.txt
+**/llms*.txt
+**/llm-full-docs*.txt
+**/llm-full-docs-all.zip
+**/llm-full-docs*/
+.agents/records/local/
+.agents/.upgrades/
+dist/
+target/
+out/
+node_modules/
+coverage/
+htmlcov/
+.next/
+.turbo/
+.vercel/
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage*
+.reports/
+tmp/
+temp/
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+*.tmp
+*.temp
+*.bak
+*~
+*.tsbuildinfo
+*.log
+*.swp
+*.swo
+*.orig
+*.rej
+!.agents/
+!**/.agents/
+!AGENTS.md
+# The website publishes its own llms.txt.
+!site/llms.txt
