@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 350,
-    "includedBytes": 2753073,
+    "includedBytes": 2753081,
     "excludedCounts": {
       "extension": 85,
       "generated-or-transient-file": 1
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "bd99de15e3d76c2a16be1ec70eb1cb9719cefcb5",
+        "commit": "e97a044adb894658e6d2c8333aaf1ac5e2555553",
         "branch": "adopt-bootstrap",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "d9b09431df242207e053e0c547428060d4206cde1ca238d07b4b14dc4b49efc3",
+  "aggregateSourceDigest": "144fd6160f28a32c9f164c0ee40b62766a4ccf7b1e0a834ccab51a0d2f87fbba",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -484,8 +484,8 @@
     },
     {
       "path": ".agents/project/profile.json",
-      "bytes": 4160,
-      "sha256": "0b7ba57a86b358b28b78c6cc6430484165ffde7afd0793cbdf91d1694a9eba3a"
+      "bytes": 4168,
+      "sha256": "32154663466e16fb245574f5097bf44228d53005365fa47eb5ee7ea2b1b47b2c"
     },
     {
       "path": ".agents/project/rules/ci.md",

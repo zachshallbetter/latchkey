@@ -19,15 +19,15 @@
   },
   "authorizationProvider": {
     "name": "acp-gateway",
-    "status": "declared",
+    "status": "bound",
     "integrationRef": ".agents/acp/README.md",
     "decisionSchema": ".agents/acp/schemas/acp-decision.schema.json",
     "actionMap": ".agents/project/contracts/acp-protected-effects.yaml",
     "gatewayEndpointSet": "production",
     "boardEnvFile": ".agents/board.env",
     "board": {
-      "owner": null,
-      "number": null
+      "owner": "zachshallbetter",
+      "number": 47
     },
     "authorizedEffectClassesMinimum": "E2",
     "failClosed": true,
