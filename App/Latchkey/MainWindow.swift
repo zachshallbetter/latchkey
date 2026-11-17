@@ -52,9 +52,7 @@ struct MainWindow: View {
                 .navigationSplitViewColumnWidth(min: 230, ideal: 250, max: 320)
         } content: {
             Group {
-                if model.filter == .settings {
-                    SettingsSectionList(model: model)
-                } else if model.filter == .overview {
+                if model.filter == .overview {
                     ReviewList(model: model)
                 } else if model.filter == .activity {
                     ActivityList(model: model)
@@ -66,11 +64,9 @@ struct MainWindow: View {
                     ItemList(model: model)
                 }
             }
-            .navigationSplitViewColumnWidth(min: model.filter == .settings ? 220 : 300, ideal: model.filter == .settings ? 250 : 360)
+            .navigationSplitViewColumnWidth(min: 300, ideal: 360)
         } detail: {
-            if model.filter == .settings {
-                SettingsView(model: model).frame(minWidth: 360)
-            } else if model.filter == .overview {
+            if model.filter == .overview {
                 if let f = model.findings.first(where: { $0.id == model.selectedFinding }) { FindingDetail(model: model, finding: f).id(f.id) }
                 else { EmptyDetail(model: model) }
             } else if model.filter == .activity {
@@ -114,7 +110,7 @@ struct MainWindow: View {
         }
         .sheet(item: $model.moveRequest) { MoveSheet(model: model, preselected: $0.ids) }
         .dropDestination(for: URL.self) { urls, _ in
-            guard model.filter != .settings, let url = urls.first else { return false }
+            guard let url = urls.first else { return false }
             model.beginImport(url)
             return true
         }
@@ -201,7 +197,8 @@ struct Sidebar: View {
                 .padding(10)
             }
             Divider().padding(.horizontal, 18)
-            nav(.settings, "gearshape").padding(.horizontal, 10).padding(.top, 8)
+            NavRow(title: "Settings…", symbol: "gearshape", count: nil, selected: false) { model.openSettings() }
+                .padding(.horizontal, 10).padding(.top, 8)
             StorageBadge(model: model).padding(10)
         }
     }

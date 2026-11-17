@@ -129,8 +129,8 @@ Snapshot startup uses an in-memory broker and skips the live Keychain, migration
 `--sample` fills the view with examples; without it, the fixture starts empty. `--part` draws one view off screen
 (more reliable than the whole window when started from a shell).
 
-Use `--settings general|privacy|storage|developer|membership|about --part settings` for a Settings detail, or
-`--settings privacy --part settings-window [--width 860]` to check Settings navigation at a chosen window width.
+Use `--settings general|privacy|storage|developer|membership|about --part settings` for one Settings tab, or
+`--settings privacy --part settings-window` for the tabbed window (off screen, the tabs draw as a segmented control).
 Native sidebar materials may be absent from an off-screen full-window capture; `--part sidebar` renders that
 component independently. These previews do not exercise real App Store purchases or login-item registration.
 

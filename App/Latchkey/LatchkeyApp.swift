@@ -90,7 +90,6 @@ struct LatchkeyApp: App {
                 Button("New Item…") { model.showingAdd = true }.keyboardShortcut("n")
                 Button("Import .env File…") { model.chooseImportFile() }.keyboardShortcut("i", modifiers: [.command, .shift])
             }
-            SettingsCommands(model: model)
             ItemCommands(model: model)
             CommandGroup(replacing: .help) {
                 Link("Latchkey Help", destination: URL(string: "https://latchkey.snackstud.io/support.html")!)
@@ -101,14 +100,21 @@ struct LatchkeyApp: App {
             }
         }
 
+
+        // Its own window, so it doesn't look like the item list (⌘, and the menus open it).
+        Settings {
+            SettingsWindow(model: model)
+        }
     }
 }
 
 private struct InstallsMenuBarItem: ViewModifier {
     let model: AppModel
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.openSettings) private var openSettings
     func body(content: Content) -> some View {
         content.onAppear {
+            model.openSettingsWindow = { openSettings(); NSApp.activate() }
             #if DEBUG
             if Snapshot.requested { return }
             #endif
@@ -152,17 +158,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 // MARK: - Model
 
 enum SidebarFilter: Hashable {
-    case overview, all, agentSafe, needsApproval, activity, grants, shared, deleted, settings
+    case overview, all, agentSafe, needsApproval, activity, grants, shared, deleted
     case kind(ItemKind)
     case project(String)
     case service(String)
 
     /// Views that list items, where a selection shows its detail.
-    var listsItems: Bool { ![.overview, .activity, .grants, .deleted, .settings].contains(self) }
+    var listsItems: Bool { ![.overview, .activity, .grants, .deleted].contains(self) }
 
     var title: String {
         switch self {
-        case .settings: return "Settings"
         case .overview: return "Review"
         case .all: return "All Items"
         case .agentSafe: return "No Approval"
@@ -279,9 +284,12 @@ final class AppModel {
     @ObservationIgnored private var revealTokens: [String: UUID] = [:]
     @ObservationIgnored private var versionRevealTokens: [String: UUID] = [:]
 
+    /// Opens the Settings window; set once the main window's scene is up (InstallsMenuBarItem).
+    @ObservationIgnored var openSettingsWindow: () -> Void = {}
+
     func openSettings(_ section: SettingsSection? = nil) {
         if let section { settingsSection = section }
-        filter = .settings
+        openSettingsWindow()
     }
 
     func concealRevealedValues() {
@@ -425,7 +433,7 @@ final class AppModel {
 
     func matches(_ f: SidebarFilter, _ i: SecretInfo) -> Bool {
         switch f {
-        case .overview, .all, .activity, .grants, .deleted, .settings: return true
+        case .overview, .all, .activity, .grants, .deleted: return true
         case .agentSafe: return i.agentSafe
         case .needsApproval: return !i.agentSafe
         case .shared: return i.ref.isShared
@@ -609,6 +617,15 @@ final class AppModel {
     static let commandLineToolPage = URL(string: "https://latchkey.snackstud.io/cli.html")!
 
     /// `latchkey`, and `lk` for short, in ~/.local/bin.
+    /// A copy of the command-line tool installed outside the app (scripts/install.sh, Homebrew or the download), for
+    /// copies of Latchkey without one inside.
+    var installedTool: URL? {
+        let home = URL(fileURLWithPath: NSHomeDirectory())
+        let places = [home.appendingPathComponent(".local/bin/latchkey"), URL(fileURLWithPath: "/opt/homebrew/bin/latchkey"),
+                      URL(fileURLWithPath: "/usr/local/bin/latchkey")]
+        return places.first { FileManager.default.isExecutableFile(atPath: $0.path) }
+    }
+
     static var toolLinks: [URL] {
         ["latchkey", "lk"].map { URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".local/bin/\($0)") }
     }

@@ -106,7 +106,7 @@ struct MenuBarPanel: View {
             HStack {
                 Button("Open Latchkey") { open() }
                 Spacer()
-                Button("Settings…") { model.openSettings(); open() }
+                Button("Settings…") { close(); model.openSettings() }
                 Button("Quit") { close(); AppDelegate.quitting = true; NSApp.terminate(nil) }
             }
             .buttonStyle(.borderless)

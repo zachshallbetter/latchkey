@@ -51,14 +51,13 @@ enum Snapshot {
         if let names = arg("--select") {
             model.selection = Set(names.split(separator: ",").map(String.init))
         }
-        if let section = arg("--settings").flatMap(SettingsSection.init(rawValue:)) { model.openSettings(section) }
+        if let section = arg("--settings").flatMap(SettingsSection.init(rawValue:)) { model.settingsSection = section }
         if arg("--part") == "settings-window" {
-            let width = Double(arg("--width") ?? "1080") ?? 1080
-            drawOffscreen(MainWindow(model: model).frame(width: width, height: 720), to: path)
+            drawOffscreen(SettingsWindow(model: model), to: path)
             return
         }
         if arg("--part") == "settings" {
-            drawOffscreen(SettingsView(model: model).frame(width: 660, height: 720), to: path)
+            drawOffscreen(SettingsView(model: model, section: model.settingsSection).frame(width: 620, height: 720), to: path)
             return
         }
         if arg("--filter") == "activity" { model.filter = .activity }
