@@ -1,0 +1,85 @@
+project:
+  id: "latchkey"
+  name: "Latchkey"
+
+concept_bindings:
+  - local: "protected effect"
+    source: "acp-gateway"
+    imported: "protected action"
+    relation: "constrained"
+    authority: ".agents/bootstrap/docs/AUTHORITY_MODEL.md"
+    compatibility_effect: "none"
+    notes: "Projected through .agents/project/contracts/acp-protected-effects.yaml. ACP action names are the wire vocabulary; effect classes remain the project's."
+  - local: "authorization decision"
+    source: "acp-gateway"
+    imported: "decision (A0-A7)"
+    relation: "exact"
+    authority: ".agents/acp/schemas/acp-decision.schema.json"
+    compatibility_effect: "authority-change"
+    notes: "ACP is the authorizing instrument for governed effects. Evidence, reports and claims observe; they do not authorize."
+  - local: "work graph"
+    source: "github-projects-v2"
+    imported: "ProjectsV2 board"
+    relation: "equivalent"
+    authority: ".agents/bootstrap/docs/WORK_GRAPH.md"
+    compatibility_effect: "none"
+    notes: "Read through acp-gateway /internal/project-context; written through the worker's own scoped credentials."
+  - local: "regression checks"
+    source: "formal-project-bootstrap"
+    imported: "project test command"
+    relation: "exact"
+    authority: "docs/development.md"
+    compatibility_effect: "none"
+    notes: "The commands are listed in .agents/project/rules/codestyle.md; docs/development.md stays canonical."
+  - local: "release gates"
+    source: "formal-project-bootstrap"
+    imported: "qualification"
+    relation: "constrained"
+    authority: "docs/releasing.md and docs/app-store.md"
+    compatibility_effect: "none"
+    notes: "Signing, notarization, App Store submission and the website deploy are the owner's."
+
+authority_bindings:
+  - effect: "git.protected_ref.update"
+    holder: "acp-gateway:decision"
+    scope: "repository declared in .agents/board.env and the ACP policy"
+    expires: null
+  - effect: "production.deploy"
+    holder: "acp-gateway:decision"
+    scope: "environments declared in .agents/project/profile.json serviceOperations"
+    expires: null
+  - effect: "git.history.rewrite|git.default_branch.change|repository.transfer"
+    holder: "acp-gateway:recovery-authorization"
+    scope: "one exact ref/SHA transition per grant"
+    expires: "per grant"
+  - effect: "policy.modify|credential.modify"
+    holder: "acp-gateway:administrative-credential"
+    scope: "ACP itself; never held by a worker"
+    expires: null
+  - effect: "deviation"
+    holder: "project-owner"
+    scope: ".agents/records/deviations.jsonl; registered with ACP where it overrides a decision"
+    expires: null
+  - effect: "release.sign|release.notarize|appstore.submit|site.deploy"
+    holder: "project-owner"
+    scope: "docs/releasing.md, docs/app-store.md and docs/site.md"
+    expires: null
+
+provider_bindings:
+  work_graph: "github-projects-v2"
+  repository: "github"
+  dispatch: "claude-code"
+  verification: "local checks of record (rules/codestyle.md)"
+  protection: "acp-gateway"
+  authorization: "acp-gateway"
+  telemetry: "acp-gateway"
+
+acp:
+  gateway_url_env: "ACP_GATEWAY_URL"
+  gateway_token_env: "ACP_GATEWAY_TOKEN"
+  board_env_file: ".agents/board.env"
+  integration: ".agents/acp/README.md"
+  action_map: ".agents/project/contracts/acp-protected-effects.yaml"
+  fail_closed: true
+
+deviations: []

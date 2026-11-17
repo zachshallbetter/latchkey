@@ -1,0 +1,150 @@
+{
+  "projectId": "latchkey",
+  "projectName": "Latchkey",
+  "profileFormat": 3,
+  "profileStatus": "provisional",
+  "intentRef": ".agents/project/intent.md",
+  "authorityRef": ".agents/bootstrap/docs/AUTHORITY_MODEL.md",
+  "bindingsRef": ".agents/project/bindings.yaml",
+  "contextSourcesRef": ".agents/project/context-sources.json",
+  "operatingMode": "existing",
+  "executionProvider": {
+    "name": "GitHub and Claude Code",
+    "workGraph": "github-projects-v2",
+    "repository": "github",
+    "dispatch": "Claude Code desktop sessions, one worktree per change under ~/Projects/_worktrees/latchkey",
+    "verification": "swift test; node --test App/Safari/*.test.js; App Store preflight and its tests; app build through reg (see rules/codestyle.md)",
+    "protection": "acp-gateway",
+    "observability": "acp-gateway:/internal/report"
+  },
+  "authorizationProvider": {
+    "name": "acp-gateway",
+    "status": "bound",
+    "integrationRef": ".agents/acp/README.md",
+    "decisionSchema": ".agents/acp/schemas/acp-decision.schema.json",
+    "actionMap": ".agents/project/contracts/acp-protected-effects.yaml",
+    "gatewayEndpointSet": "production",
+    "boardEnvFile": ".agents/board.env",
+    "board": {
+      "owner": "zachshallbetter",
+      "number": 47
+    },
+    "authorizedEffectClassesMinimum": "E2",
+    "failClosed": true,
+    "reportOnSessionStart": true,
+    "reportBeforeProtectedEffect": true,
+    "clientScript": ".agents/acp/acp",
+    "autoDeploy": []
+  },
+  "serviceOperations": [
+    {
+      "service": "acp-gateway",
+      "interface": "official-api",
+      "allowedEnvironments": [
+        "local",
+        "staging",
+        "production"
+      ],
+      "allowedEffects": [
+        "read",
+        "authorize",
+        "report",
+        "verify-capability",
+        "integrity-snapshot",
+        "recovery-complete",
+        "board-discovery",
+        "board-context"
+      ],
+      "protectedEffects": [
+        "policy.modify",
+        "credential.modify"
+      ]
+    },
+    {
+      "service": "github",
+      "interface": "official-cli",
+      "allowedEnvironments": [
+        "local"
+      ],
+      "allowedEffects": [
+        "read",
+        "reversible-write"
+      ],
+      "protectedEffects": [
+        "git.protected_ref.update",
+        "git.history.rewrite",
+        "git.default_branch.change",
+        "repository.transfer"
+      ]
+    },
+    {
+      "service": "vercel",
+      "interface": "official-cli",
+      "allowedEnvironments": [
+        "local"
+      ],
+      "allowedEffects": [
+        "read"
+      ],
+      "protectedEffects": [
+        "production-deploy",
+        "credential-create",
+        "billing-change"
+      ]
+    },
+    {
+      "service": "app-store-connect",
+      "interface": "official-cli",
+      "allowedEnvironments": [
+        "local"
+      ],
+      "allowedEffects": [
+        "read"
+      ],
+      "protectedEffects": [
+        "build-upload",
+        "submission",
+        "pricing-change",
+        "credential-create"
+      ]
+    },
+    {
+      "service": "apple-notary",
+      "interface": "official-cli",
+      "allowedEnvironments": [
+        "local"
+      ],
+      "allowedEffects": [
+        "read"
+      ],
+      "protectedEffects": [
+        "notarization-submit",
+        "credential-create"
+      ]
+    }
+  ],
+  "authorityBindings": {
+    "projectMutation": "project-owner-directed-work-item",
+    "qualification": "project-owner",
+    "promotion": "acp-gateway:decision",
+    "productionOperation": "acp-gateway:decision",
+    "deviation": "project-owner-recorded-deviation-and-required-ACP-registration",
+    "recovery": "acp-gateway:recovery-authorization"
+  },
+  "autonomy": {
+    "frontierReselection": true,
+    "continueOnLocalizedBlocker": true,
+    "maxConcurrentMutationClaims": 2,
+    "humanEscalation": "decision-boundaries-only",
+    "protectedEffectsRequireAcpDecision": true
+  },
+  "contextPolicy": {
+    "compiledContextRequired": true,
+    "generatedContextNormative": false,
+    "requireContextLock": true,
+    "refreshOnMaterialSourceChange": true
+  },
+  "protocolAdapters": [],
+  "profiles": [],
+  "formalResourceManifest": ".agents/project/formal-resources.json"
+}

@@ -1,0 +1,27 @@
+---
+name: authorize-protected-effect
+description: Use before a governed effect when the project profile binds an authorization provider. Resolve and follow that provider's action map and decision contract; this repository's concrete adapter is acp-gateway.
+---
+
+# Authorize Protected Effect
+
+## Requirements
+
+Use in a project with a bound authorization provider, an action map, and a documented decision contract. The ACP commands below require that project's `.agents/acp/lib/acp.py` and integration docs; they are not included in this skill bundle.
+
+1. Read the active project's `authorizationProvider` binding and effect map. For this repository's ACP adapter, resolve the operation through `.agents/project/contracts/acp-protected-effects.yaml`. If the effect is not governed, proceed only under the work item's permissions.
+2. Identify: repository (from `origin`), ref, current (`old_sha`) and intended (`new_sha`) revision, requested action, work item, claim.
+3. Send the provider only fields required by its documented authorization contract. Never include prompts, source contents, unrelated user data, or credentials in a request, report, or evidence record.
+4. Use only the credentials and authorization interface named by the active provider. In this repository, `.agents/acp/lib/acp.py` reads credentials from the environment or `.env.local`. Never print, log, or compile credentials.
+5. Follow the provider's report-before-effect requirement. For this repository's ACP adapter, when `reportBeforeProtectedEffect` is true, run `.agents/acp/acp report --event PROTECTED_EFFECT_PENDING --checkpoint PRE_PUSH --action <action>` (use the matching `PRE_*` checkpoint), then `.agents/acp/acp snapshot --checkpoint PRE_PUSH`. Reporting grants nothing.
+6. Request a decision for the exact action, target and revision using the bound provider. For ACP, run `.agents/acp/acp authorize --action <action> [--ref R --old-sha X --new-sha Y] --work-item <id> --record > decision.json`; proceed only when its typed decision is `ALLOW`. For another provider, use its documented explicit allow result and scope.
+7. Dispose according to the provider's documented decision contract. For ACP, use `decision` and `reason`:
+   - `ALLOW` → perform exactly `authorized_action` (same action/ref/SHA), once, within the capability TTL. Where the boundary checks, `.agents/acp/acp verify-capability --decision decision.json`. Then re-read live state.
+   - `AUTH_REQUIRED` → complete the flow named in `auth`; retry once.
+   - `RECOVERY_AUTHORIZED` → perform only the described transition, once; then `.agents/acp/acp recovery-complete --decision decision.json --result succeeded|failed --observed-sha <sha>`.
+   - `DENY` / `REVERIFY_REQUIRED` / `VERIFY_RECOVERY` → do not proceed; record `AUTHORITY_MISSING` with the reason; release or park the claim; reselect.
+   - `QUARANTINE` / `LOCKED` → do not proceed and do not repair; preserve candidate and evidence; global stop for this resource; prepare the decision packet.
+   - `synthetic: true` → the ACP client refused locally. `GATEWAY_UNAVAILABLE`: classify once, do not poll. `ACP_NOT_GOVERNING`: no policy names this repository; use the setup path in `.agents/acp/README.md` § Onboarding, not as permission to proceed. `AUTHORIZED_ACTION_MISMATCH`: do not perform either action.
+8. Record the provider decision and required provenance in the project's evidence store and work disposition. For ACP, `--record` writes `decision`, `reason`, `request_id`, `policy_id`, `policy_version`, and `repository_trust` to `.agents/records/evidence.jsonl`. Never record `capability_token`.
+
+If no authorization provider is bound, its contract is unavailable, or the provider cannot return a valid decision, do not perform a governed effect. Record the blocker and follow the project's recovery/escalation path; never substitute a different provider, local judgment, or delegation to another agent, tool, clone, or client.

@@ -16,6 +16,7 @@ scripts/install.sh         build and install the app and CLI (development)
 scripts/release.sh         Developer ID build, notarized, in a disk image (see docs/releasing.md)
 docs/                      user and developer documentation
 site/                      the product website and developer docs, static HTML (see docs/site.md)
+AGENTS.md, .agents/         agent operating contract, project intent and records (Formal Project Bootstrap)
 ```
 
 ## Building and testing
