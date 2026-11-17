@@ -1,14 +1,14 @@
 {
   "format": "2",
-  "generatorVersion": "0.8.4",
+  "generatorVersion": "0.8.5",
   "root": ".",
   "validityBasis": "aggregate-source-digest",
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 350,
-    "includedBytes": 2752996,
+    "includedBytes": 2753073,
     "excludedCounts": {
-      "extension": 68,
+      "extension": 85,
       "generated-or-transient-file": 1
     }
   },
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "99c3c2ce2340a66f3f731d8686dce1dba6d41e6c",
+        "commit": "bd99de15e3d76c2a16be1ec70eb1cb9719cefcb5",
         "branch": "adopt-bootstrap",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "15239a28048e4797d4cc242c8fe9b81e07c24c239f185c6a01808e7ae264e271",
+  "aggregateSourceDigest": "d9b09431df242207e053e0c547428060d4206cde1ca238d07b4b14dc4b49efc3",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -80,7 +80,7 @@
     {
       "path": ".agents/bootstrap/RELEASE.json",
       "bytes": 15751,
-      "sha256": "6325da1e475134e7095ad9d80dacbb4d4d12b03d0cd84c26e6ffdea9e191341f"
+      "sha256": "d04f2d01a978e4083d54603afd46d700324952d6d7837c217797bd016106b268"
     },
     {
       "path": ".agents/bootstrap/docs/AGENT_CAPABILITIES.md",
@@ -474,8 +474,8 @@
     },
     {
       "path": ".agents/project/installation.json",
-      "bytes": 355,
-      "sha256": "911923d2971b4b26a85b362f49f856b2d04330e8fba291a1d740f8815f62cacb"
+      "bytes": 432,
+      "sha256": "4618ad547ee94e41eb58382124852f93eeca015b690dad40e1adac5c89430ce7"
     },
     {
       "path": ".agents/project/intent.md",
