@@ -68,6 +68,8 @@ struct LatchkeyApp: App {
                 .frame(minWidth: 860, minHeight: 520)
                 // In the Dock while the window is open; closing it (or quitting from the Dock) leaves the menu bar icon.
                 .onAppear { NSApp.setActivationPolicy(.regular) }
+                // The window opens on every launch, so this puts the menu bar icon up once (MenuBarItem).
+                .modifier(InstallsMenuBarItem(model: model))
                 .onDisappear { NSApp.setActivationPolicy(.accessory) }
         }
         .defaultSize(width: 1080, height: 680)
@@ -99,11 +101,19 @@ struct LatchkeyApp: App {
             }
         }
 
-        MenuBarExtra("Latchkey", image: "MenuBarIcon") {
-            MenuBarPanel(model: model)
-        }
-        .menuBarExtraStyle(.window)
+    }
+}
 
+private struct InstallsMenuBarItem: ViewModifier {
+    let model: AppModel
+    @Environment(\.openWindow) private var openWindow
+    func body(content: Content) -> some View {
+        content.onAppear {
+            #if DEBUG
+            if Snapshot.requested { return }
+            #endif
+            MenuBarItem.install(model, openWindow: openWindow)
+        }
     }
 }
 
@@ -235,6 +245,8 @@ struct ImportDraft: Identifiable {
 
 @Observable @MainActor
 final class AppModel {
+    /// Opens (or brings forward) the main window; set once its scene is up (MenuBarItem.install).
+    @ObservationIgnored var openMainWindow: () -> Void = { NSApp.activate() }
     let store: KeychainStore
     let broker: Broker
     /// Looks again while a window is open, for changes made on your other Macs.
