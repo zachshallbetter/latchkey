@@ -20,11 +20,11 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .general: return "General"
-        case .privacy: return "Privacy & Approval"
-        case .storage: return "Storage & File Access"
-        case .developer: return "Developer Tools"
+        case .privacy: return "Privacy"
+        case .storage: return "Storage"
+        case .developer: return "Developer"
         case .membership: return "Membership"
-        case .about: return "About & Updates"
+        case .about: return "About"
         }
     }
     var symbol: String {
@@ -37,55 +37,26 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .about: return "info.circle"
         }
     }
-    var summary: String {
-        switch self {
-        case .general: return "Appearance, startup and how Latchkey behaves."
-        case .privacy: return "Choose how long values stay visible or on the clipboard."
-        case .storage: return "Your Keychain storage and the files Latchkey can access."
-        case .developer: return "Command-line setup, the Safari extension and activity records."
-        case .membership: return "Your plan, purchases and purchase support."
-        case .about: return "Version, updates and help."
-        }
-    }
 }
 
-/// Settings stays in the main navigation. Every entry point, including Command-comma, uses the same destination.
-struct SettingsCommands: Commands {
-    let model: AppModel
-    @Environment(\.openWindow) private var openWindow
-    var body: some Commands {
-        CommandGroup(replacing: .appSettings) {
-            Button("Settings…") {
-                model.openSettings()
-                openWindow(id: "main")
-                NSApp.activate()
-            }.keyboardShortcut(",", modifiers: .command)
-        }
-    }
-}
-
-struct SettingsSectionList: View {
+/// The Settings window: one tab per section, each a short form.
+struct SettingsWindow: View {
     @Bindable var model: AppModel
     var body: some View {
-        List(SettingsSection.visible, selection: Binding<SettingsSection?>(get: { model.settingsSection }, set: { if let section = $0 { model.settingsSection = section } })) { section in
-            HStack(spacing: 12) {
-                IconTile(symbol: section.symbol, tint: section == .membership ? .orange : .blue, size: 30)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(section.title).font(.headline)
-                    Text(section.summary).font(.caption).foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+        TabView(selection: $model.settingsSection) {
+            ForEach(SettingsSection.visible) { section in
+                SettingsView(model: model, section: section)
+                    .tabItem { Label(section.title, systemImage: section.symbol) }
+                    .tag(section)
             }
-            .padding(.vertical, 7)
-            .tag(section)
         }
-        .navigationTitle("Settings")
-        .listStyle(.inset)
+        .frame(width: 620, height: 560)
     }
 }
 
 struct SettingsView: View {
     @Bindable var model: AppModel
+    var section: SettingsSection
     @AppStorage(AppPreferences.Key.appearance) private var appearance = "system"
     @AppStorage(AppPreferences.Key.clipboardSeconds) private var clipboardSeconds = AppPreferences.defaultClipboardSeconds
     @AppStorage(AppPreferences.Key.revealSeconds) private var revealSeconds = AppPreferences.defaultRevealSeconds
@@ -98,31 +69,17 @@ struct SettingsView: View {
     #endif
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 12) {
-                IconTile(symbol: model.settingsSection.symbol, tint: model.settingsSection == .membership ? .orange : .blue, size: 40)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(model.settingsSection.title).font(.title2.weight(.semibold))
-                    Text(model.settingsSection.summary).foregroundStyle(.secondary).font(.callout)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 0)
+        Form {
+            switch section {
+            case .general: general
+            case .privacy: privacy
+            case .storage: storage
+            case .developer: developer
+            case .membership: MembershipSettings()
+            case .about: about
             }
-            .padding(24)
-            Divider()
-            Form {
-                switch model.settingsSection {
-                case .general: general
-                case .privacy: privacy
-                case .storage: storage
-                case .developer: developer
-                case .membership: MembershipSettings()
-                case .about: about
-                }
-            }
-            .formStyle(.grouped)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .formStyle(.grouped)
         .onAppear {
             atLogin = model.opensAtLogin
             #if !LATCHKEY_APP_STORE
@@ -216,8 +173,11 @@ struct SettingsView: View {
                 LabeledContent("Bundled CLI", value: tool.lastPathComponent)
                 Button("Install Command Line Tool…") { model.installCommandLineTool() }
                 SettingsNote("Links ~/.local/bin/latchkey and ~/.local/bin/lk to the copy inside Latchkey, so they update with the app. Existing files are left alone.")
+            } else if let tool = model.installedTool {
+                LabeledContent("Installed", value: (tool.path as NSString).abbreviatingWithTildeInPath)
+                SettingsNote("Installed separately from this copy of Latchkey (by scripts/install.sh, Homebrew or the download), so update it the same way.")
             } else {
-                Text("This development copy has no bundled CLI.").foregroundStyle(.secondary)
+                Text("This copy of Latchkey has no command-line tool inside, and none is installed.").foregroundStyle(.secondary)
                 Link("Command-line setup help", destination: SettingsLinks.support)
             }
             #endif
@@ -247,6 +207,13 @@ struct SettingsView: View {
                 CheckForUpdatesButton(updater: AppUpdater.shared)
             } else { SettingsNote("Automatic updates are unavailable in this build.") }
             #endif
+        }
+        Section("Snack Studio") {
+            if let copyright = Bundle.main.object(forInfoDictionaryKey: "NSHumanReadableCopyright") as? String, !copyright.isEmpty {
+                LabeledContent("Copyright", value: copyright.replacingOccurrences(of: "Copyright ", with: ""))
+            }
+            LabeledContent("License", value: "Functional Source License 1.1")
+            Link("latchkey.snackstud.io", destination: SettingsLinks.website)
         }
         Section("Help & Policies") {
             Link("Latchkey Help", destination: SettingsLinks.support)
@@ -298,6 +265,7 @@ private struct SettingsNote: View {
 }
 
 private enum SettingsLinks {
+    static let website = URL(string: "https://latchkey.snackstud.io/")!
     static let support = URL(string: "https://latchkey.snackstud.io/support.html")!
     static let privacy = URL(string: "https://latchkey.snackstud.io/privacy.html")!
     static let terms = URL(string: "https://latchkey.snackstud.io/terms.html")!

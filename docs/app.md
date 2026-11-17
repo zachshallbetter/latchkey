@@ -79,7 +79,7 @@ Deleting always asks first. Kind has no shortcut; it's in both menus.
 
 ### An item's detail
 
-- **Value**: hidden. The eye shows it for 30 seconds (Settings › Privacy & Approval changes this); the copy button
+- **Value**: hidden. The eye shows it for 30 seconds (Settings › Privacy changes this); the copy button
   copies it to this Mac's clipboard only (not to your other devices through Universal Clipboard), marks it so clipboard
   managers skip it, and clears it after the chosen delay, 60 seconds unless changed. Both ask unless the item is
   agent-safe.
@@ -182,20 +182,21 @@ latchkey.snackstud.io in your browser.
 
 ## Settings
 
-Settings is part of the main window: choose **Settings** in the sidebar, press **⌘,**, or use the app or menu bar
-Settings command. The same destination opens each time, including when the window was closed. Sections are:
+Settings has its own window, with a tab for each section: press **⌘,**, choose **Settings…** at the bottom of the
+sidebar, or use **Latchkey › Settings…** or the menu bar panel's **Settings…**. The tabs are:
 
 - **General**: follow macOS appearance or choose Light/Dark, open at login, and choose whether quitting from the
   Dock or with ⌘Q keeps Latchkey running in the menu bar. Quit in the menu bar panel always exits.
-- **Privacy & Approval**: clear copied values after 15, 30, 60 or 120 seconds; hide revealed values after 10, 30 or
+- **Privacy**: clear copied values after 15, 30, 60 or 120 seconds; hide revealed values after 10, 30 or
   60 seconds; hide revealed values when the app loses focus; or hide them immediately. Timer changes apply on
   the next copy or reveal. Closing the window also hides values. Clipboard clearing preserves anything copied
   afterward; values stay on this Mac and retain the clipboard-manager concealment markers. This section also
   explains approval and links to active grants. No preference bypasses authorization.
-- **Storage & File Access**: Keychain location, legacy-item migration, and remembered file/folder permissions in
+- **Storage**: Keychain location, legacy-item migration, and remembered file/folder permissions in
   the App Store build. File permission and secret-release approval remain separate. macOS may retain access to
   an opened file for the rest of the process even after its bookmark is removed.
-- **Developer Tools**: install the bundled CLI in the direct build, setup help, the Safari extension (whether it's
+- **Developer**: install the CLI bundled in a released direct download, or show where it's installed when this copy
+  has none inside (`scripts/install.sh` and Homebrew install it separately), setup help, the Safari extension (whether it's
   on, and **Turn On in Safari…**, which opens Safari's Extensions settings with Latchkey selected), activity, and the
   access log.
 - **Membership**: the current plan, one-time Pro ownership and purchase date, localized App Store pricing,
@@ -203,8 +204,9 @@ Settings command. The same destination opens each time, including when the windo
   itself and links to the plans page; it does not claim to verify App Store purchases. Pro is a non-consumable
   purchase, with no recurring subscription or renewal. All current features remain free; planned additions are
   described as planned. No purchase state is stored as an editable preference.
-- **About & Updates**: app version, distribution, direct-build automatic updates and manual update checks, help,
-  privacy policy, terms and security reporting. The App Store build gets updates through the App Store.
+- **About**: app version and build, distribution, direct-build automatic updates and manual update checks, the
+  copyright and licence (Functional Source License 1.1), the website, help, privacy policy, terms and security
+  reporting. The App Store build gets updates through the App Store.
 
 Preferences are saved on this Mac. Clipboard clearing defaults to 60 seconds, revealed values to 30 seconds,
 hiding on loss of focus to on, and keeping the app running after a Dock quit to on.
@@ -218,7 +220,7 @@ secret or token. It skips what isn't secret or isn't a real key: masked values, 
 hashes. Certificates are public, so they're never marked on the page; the toolbar panel lists them, and saving one
 makes a plain (unmasked) item.
 
-To turn it on, choose **Settings › Developer Tools › Turn On in Safari…**: Safari opens its Extensions settings with
+To turn it on, choose **Settings › Developer › Turn On in Safari…**: Safari opens its Extensions settings with
 Latchkey selected. Tick it, then allow it on the sites you use.
 
 - When a page shows a new key and says it won't show it again, the save panel opens from its button on its own, once;

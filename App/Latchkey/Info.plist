@@ -31,7 +31,7 @@
 	<key>LatchkeyPreviousAccessGroup</key>
 	<string>$(AppIdentifierPrefix)io.latchkey.shared</string>
 	<key>NSHumanReadableCopyright</key>
-	<string></string>
+	<string>Copyright © 2026 Snack Studio</string>
 	<key>SUEnableSystemProfiling</key>
 	<false/>
 	<key>SUFeedURL</key>

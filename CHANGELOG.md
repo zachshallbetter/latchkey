@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### App
+- Settings has its own window with a tab for each section (General, Privacy, Storage, Developer, Membership,
+  About), instead of a column in the main window that looked like the item list. **Settings…** at the bottom of the
+  sidebar, ⌘, and the menu bar panel open it.
+- Settings › Developer shows the command-line tool when it's installed outside the app (`scripts/install.sh`,
+  Homebrew), instead of saying there isn't one.
+- About shows the copyright, licence and website, and the direct download's About panel has its copyright line.
 - Clicking the menu bar key opens the window; right-clicking (or Control-clicking) it shows the quick panel. The
   panel's item list is sized to its items instead of collapsing to a sliver, and the key has room around it.
 - Quitting with ⌘Q now leaves Latchkey in the menu bar too, under the same setting as quitting from the Dock (now

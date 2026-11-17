@@ -56,7 +56,7 @@ targets:
         LSApplicationCategoryType: public.app-category.developer-tools
         # One Latchkey at a time: two would compete for the broker socket and the approval panel.
         LSMultipleInstancesProhibited: true
-        NSHumanReadableCopyright: ""
+        NSHumanReadableCopyright: Copyright © 2026 Snack Studio
         LatchkeyAccessGroup: $(AppIdentifierPrefix)io.snackstud.latchkey
         LatchkeyPreviousAccessGroup: $(AppIdentifierPrefix)io.latchkey.shared
         LatchkeyAppGroup: $(TeamIdentifierPrefix)io.snackstud.latchkey
@@ -97,7 +97,7 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleDisplayName: Latchkey
-        NSHumanReadableCopyright: ""
+        NSHumanReadableCopyright: Copyright © 2026 Snack Studio
         LatchkeyAppGroup: $(TeamIdentifierPrefix)io.snackstud.latchkey
         NSExtension:
           NSExtensionPointIdentifier: com.apple.Safari.web-extension
