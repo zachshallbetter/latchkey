@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### App
+- Clicking the menu bar key opens the window; right-clicking (or Control-clicking) it shows the quick panel. The
+  panel's item list is sized to its items instead of collapsing to a sliver, and the key has room around it.
+- Quitting with ⌘Q now leaves Latchkey in the menu bar too, under the same setting as quitting from the Dock (now
+  **Keep running in the menu bar when I quit**). Quit in the menu bar panel, logging out and scripts still quit it.
+- Settings › Developer Tools shows whether Latchkey for Safari is on and opens Safari's Extensions settings with it
+  selected, so it can be turned on from the app.
+
 ### Mac App Store
 - The App Store version leaves out GitHub Actions pushes, so it uses only Apple's encryption and needs no export
   documents. GitHub's sealed box moved to its own library, `LatchkeySeal`, which the direct download and its tests

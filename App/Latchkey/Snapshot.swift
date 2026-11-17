@@ -237,6 +237,8 @@ enum Snapshot {
         window.contentView = host
         host.layoutSubtreeIfNeeded()
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            // Views that size themselves after measuring (the menu bar panel's list) have settled by now.
+            window.setContentSize(host.fittingSize)
             host.layoutSubtreeIfNeeded()
             guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { exit(1) }
             host.cacheDisplay(in: host.bounds, to: rep)

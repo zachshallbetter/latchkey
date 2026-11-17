@@ -22,7 +22,7 @@ Decided for the first version (2026-11-13):
   annual report are needed. The store app pushes to Vercel, Railway and Fly; the direct download keeps GitHub.
   Bringing GitHub to the store means linking `LatchkeySeal`, setting the key to YES and filing the export documents.
 - **Quitting means quitting:** the store build registers `keepRunningFromDock = false`, so quitting from the Dock
-  quits unless the person turns it on in Settings (2.4.5(iii)). Launch at login is off until turned on.
+  or with ⌘Q quits unless the person turns it on in Settings (2.4.5(iii)). Launch at login is off until turned on.
 - **Entitlements are the minimum:** sandbox, the App Group, user-selected files, app-scoped bookmarks, outbound
   network and Latchkey's keychain group. The app listens only on Unix sockets in its App Group container, so it
   doesn't claim `network.server`; the 2026-11-13 probes passed without it.

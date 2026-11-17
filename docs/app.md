@@ -164,13 +164,15 @@ After an import or a new item, Latchkey shows what to do next: the reference to 
 
 ## The menu bar
 
-Click the key: search your items, copy a value, open an item in the window, open Settings, or quit.
+Click the key to open the window. Right-click it (or Control-click) for a quick panel: search your items, copy a
+value, open an item in the window, open Settings, or quit.
 
 **Latchkey › Check for Updates…** (direct download only; the App Store updates it) looks for a newer version now.
 
-Closing the window, or Quit from the Dock, leaves Latchkey in the menu bar without a Dock icon, so the command-line
-tool and agents keep working; **Open Latchkey** brings the window and the Dock icon back. To quit for real, use **Quit** in the menu bar
-or **Latchkey › Quit Latchkey**.
+Closing the window leaves Latchkey in the menu bar without a Dock icon, so the command-line tool and agents keep
+working; so does quitting from the Dock or with **⌘Q** while **Keep running in the menu bar when I quit** is on (the
+default in the direct download). Clicking the key brings the window and the Dock icon back. To quit for real, use
+**Quit** in the menu bar panel.
 
 ## The Help menu
 
@@ -184,7 +186,7 @@ Settings is part of the main window: choose **Settings** in the sidebar, press *
 Settings command. The same destination opens each time, including when the window was closed. Sections are:
 
 - **General**: follow macOS appearance or choose Light/Dark, open at login, and choose whether quitting from the
-  Dock keeps Latchkey running in the menu bar. Quit from the Latchkey menu always exits.
+  Dock or with ⌘Q keeps Latchkey running in the menu bar. Quit in the menu bar panel always exits.
 - **Privacy & Approval**: clear copied values after 15, 30, 60 or 120 seconds; hide revealed values after 10, 30 or
   60 seconds; hide revealed values when the app loses focus; or hide them immediately. Timer changes apply on
   the next copy or reveal. Closing the window also hides values. Clipboard clearing preserves anything copied
@@ -193,7 +195,9 @@ Settings command. The same destination opens each time, including when the windo
 - **Storage & File Access**: Keychain location, legacy-item migration, and remembered file/folder permissions in
   the App Store build. File permission and secret-release approval remain separate. macOS may retain access to
   an opened file for the rest of the process even after its bookmark is removed.
-- **Developer Tools**: install the bundled CLI in the direct build, setup help, activity, and the access log.
+- **Developer Tools**: install the bundled CLI in the direct build, setup help, the Safari extension (whether it's
+  on, and **Turn On in Safari…**, which opens Safari's Extensions settings with Latchkey selected), activity, and the
+  access log.
 - **Membership**: the current plan, one-time Pro ownership and purchase date, localized App Store pricing,
   availability checks, purchase and restore actions, and purchase support/policy links. The direct build identifies
   itself and links to the plans page; it does not claim to verify App Store purchases. Pro is a non-consumable
@@ -213,6 +217,9 @@ npm, Hugging Face and others), private keys, database URLs with a password, and 
 secret or token. It skips what isn't secret or isn't a real key: masked values, examples, publishable keys, commit
 hashes. Certificates are public, so they're never marked on the page; the toolbar panel lists them, and saving one
 makes a plain (unmasked) item.
+
+To turn it on, choose **Settings › Developer Tools › Turn On in Safari…**: Safari opens its Extensions settings with
+Latchkey selected. Tick it, then allow it on the sites you use.
 
 - When a page shows a new key and says it won't show it again, the save panel opens from its button on its own, once;
   press **Save to Latchkey** (or Return) to save it, or **Not now**.

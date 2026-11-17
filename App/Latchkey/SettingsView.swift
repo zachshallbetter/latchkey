@@ -1,5 +1,6 @@
 import AppKit
 import LatchkeyCore
+import SafariServices
 import ServiceManagement
 import SwiftUI
 
@@ -41,7 +42,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .general: return "Appearance, startup and how Latchkey behaves."
         case .privacy: return "Choose how long values stay visible or on the clipboard."
         case .storage: return "Your Keychain storage and the files Latchkey can access."
-        case .developer: return "Command-line setup and activity records."
+        case .developer: return "Command-line setup, the Safari extension and activity records."
         case .membership: return "Your plan, purchases and purchase support."
         case .about: return "Version, updates and help."
         }
@@ -146,8 +147,8 @@ struct SettingsView: View {
                 atLogin = model.opensAtLogin
             }))
             if let loginError { Text(loginError).font(.callout).foregroundStyle(.red) }
-            Toggle("Keep running when I quit from the Dock", isOn: $keepRunningFromDock)
-            SettingsNote("When enabled, quitting from the Dock closes the window and leaves the menu bar app running for your commands and agents. Quit from the Latchkey menu always exits the app.")
+            Toggle("Keep running in the menu bar when I quit", isOn: $keepRunningFromDock)
+            SettingsNote("When enabled, quitting from the Dock or with ⌘Q closes the window and leaves Latchkey in the menu bar for your commands and agents. Quit in the menu bar panel always exits the app.")
         }
     }
 
@@ -222,6 +223,7 @@ struct SettingsView: View {
             #endif
             SettingsNote("Commands run in your terminal. The command-line tool starts Latchkey when needed.")
         }
+        SafariExtensionSettings()
         Section("Activity") {
             Button("View Activity") { model.filter = .activity }
             Button("Show Access Log in Finder") { NSWorkspace.shared.activateFileViewerSelecting([Paths.accessLog]) }
@@ -251,6 +253,40 @@ struct SettingsView: View {
             Link("Privacy Policy", destination: SettingsLinks.privacy)
             Link("Terms of Use", destination: SettingsLinks.terms)
             Link("Report a Security Issue", destination: URL(string: "mailto:latchkey@snackstud.io?subject=Security")!)
+        }
+    }
+}
+
+/// Latchkey for Safari ships inside the app; Safari lists it once the app has run, and the user turns it on in Safari's
+/// own settings. Apple offers no way for an app to turn its extension on, only to open that page with it selected.
+private struct SafariExtensionSettings: View {
+    /// nil while checking, or when Safari couldn't say (it hasn't seen this copy's extension yet).
+    @State private var enabled: Bool?
+    @State private var error: String?
+    private static let identifier = (Bundle.main.bundleIdentifier ?? "io.snackstud.latchkey") + ".safari"
+
+    var body: some View {
+        Section("Safari Extension") {
+            LabeledContent("Latchkey for Safari", value: enabled.map { $0 ? "On" : "Off" } ?? "Not found in Safari")
+            Button(enabled == true ? "Open Safari Extension Settings…" : "Turn On in Safari…") { open() }
+            if let error { Text(error).font(.callout).foregroundStyle(.red) }
+            SettingsNote("Saves a new key from the page where you made it, and fills saved keys into the sites they belong to. Safari opens its Extensions settings with Latchkey selected: tick it, then allow it on the sites you use. Every save and fill still asks here.")
+        }
+        .onAppear(perform: refresh)
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in refresh() }
+    }
+
+    private func refresh() {
+        SFSafariExtensionManager.getStateOfSafariExtension(withIdentifier: Self.identifier) { state, _ in
+            DispatchQueue.main.async { enabled = state?.isEnabled }
+        }
+    }
+
+    private func open() {
+        error = nil
+        SFSafariApplication.showPreferencesForExtension(withIdentifier: Self.identifier) { failure in
+            guard let failure else { return }
+            DispatchQueue.main.async { error = "Couldn't open Safari's settings: \(failure.localizedDescription)" }
         }
     }
 }
