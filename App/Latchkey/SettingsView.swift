@@ -147,8 +147,8 @@ struct SettingsView: View {
                 atLogin = model.opensAtLogin
             }))
             if let loginError { Text(loginError).font(.callout).foregroundStyle(.red) }
-            Toggle("Keep running when I quit from the Dock", isOn: $keepRunningFromDock)
-            SettingsNote("When enabled, quitting from the Dock closes the window and leaves the menu bar app running for your commands and agents. Quit from the Latchkey menu always exits the app.")
+            Toggle("Keep running in the menu bar when I quit", isOn: $keepRunningFromDock)
+            SettingsNote("When enabled, quitting from the Dock or with ⌘Q closes the window and leaves Latchkey in the menu bar for your commands and agents. Quit in the menu bar panel always exits the app.")
         }
     }
 

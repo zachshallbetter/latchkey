@@ -12,6 +12,7 @@ final class AppUpdater: ObservableObject {
     let controller: SPUStandardUpdaterController?
     @Published private(set) var canCheck = false
     private var observation: AnyCancellable?
+    private let relaunch = RelaunchDelegate()
 
     private init() {
         #if DEBUG
@@ -25,7 +26,7 @@ final class AppUpdater: ObservableObject {
             controller = nil
             return
         }
-        let controller = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+        let controller = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: relaunch, userDriverDelegate: nil)
         self.controller = controller
         observation = controller.updater.publisher(for: \.canCheckForUpdates).sink { [weak self] in self?.canCheck = $0 }
     }
@@ -40,5 +41,10 @@ struct CheckForUpdatesButton: View {
     var body: some View {
         Button("Check for Updates…") { updater.checkForUpdates() }.disabled(!updater.canCheck)
     }
+}
+
+/// Installing an update quits the app to relaunch it; that quit must not be kept in the menu bar like ⌘Q.
+private final class RelaunchDelegate: NSObject, SPUUpdaterDelegate {
+    func updaterWillRelaunchApplication(_ updater: SPUUpdater) { AppDelegate.quitting = true }
 }
 #endif

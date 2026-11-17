@@ -169,9 +169,10 @@ value, open an item in the window, open Settings, or quit.
 
 **Latchkey › Check for Updates…** (direct download only; the App Store updates it) looks for a newer version now.
 
-Closing the window, or Quit from the Dock, leaves Latchkey in the menu bar without a Dock icon, so the command-line
-tool and agents keep working; **Open Latchkey** brings the window and the Dock icon back. To quit for real, use **Quit** in the menu bar
-or **Latchkey › Quit Latchkey**.
+Closing the window leaves Latchkey in the menu bar without a Dock icon, so the command-line tool and agents keep
+working; so does quitting from the Dock or with **⌘Q** while **Keep running in the menu bar when I quit** is on (the
+default in the direct download). Clicking the key brings the window and the Dock icon back. To quit for real, use
+**Quit** in the menu bar panel.
 
 ## The Help menu
 
@@ -185,7 +186,7 @@ Settings is part of the main window: choose **Settings** in the sidebar, press *
 Settings command. The same destination opens each time, including when the window was closed. Sections are:
 
 - **General**: follow macOS appearance or choose Light/Dark, open at login, and choose whether quitting from the
-  Dock keeps Latchkey running in the menu bar. Quit from the Latchkey menu always exits.
+  Dock or with ⌘Q keeps Latchkey running in the menu bar. Quit in the menu bar panel always exits.
 - **Privacy & Approval**: clear copied values after 15, 30, 60 or 120 seconds; hide revealed values after 10, 30 or
   60 seconds; hide revealed values when the app loses focus; or hide them immediately. Timer changes apply on
   the next copy or reveal. Closing the window also hides values. Clipboard clearing preserves anything copied

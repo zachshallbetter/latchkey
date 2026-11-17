@@ -117,9 +117,13 @@ private struct InstallsMenuBarItem: ViewModifier {
     }
 }
 
-/// Quit from the Dock closes the window, which leaves Latchkey in the menu bar, still answering the command-line tool and
-/// agents; Quit in the menu bar, the app menu, logging out and scripts quit it.
+/// Quitting from the Dock or the app menu (⌘Q) closes the window, which leaves Latchkey in the menu bar, still answering
+/// the command-line tool and agents, when Settings says to keep running. Quit in the menu bar panel, logging out,
+/// shutting down and scripts always quit it.
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// Set by the menu bar panel's Quit, which always quits.
+    static var quitting = false
+
     func applicationWillFinishLaunching(_ notification: Notification) {
         #if LATCHKEY_APP_STORE
         // Quitting means quitting unless the person chooses otherwise in Settings (guideline 2.4.5(iii)).
@@ -128,16 +132,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        guard AppPreferences().keepRunningFromDock, Self.quitFromDock else { return .terminateNow }
+        guard !Self.quitting, AppPreferences().keepRunningFromDock, Self.quitFromDockOrMenu else { return .terminateNow }
         for window in NSApp.windows where window.isVisible && window.canBecomeMain { window.close() }
         NSApp.setActivationPolicy(.accessory)
         return .terminateCancel
     }
 
-    /// Whether the quit being handled is the Dock's: a quit Apple event sent by the Dock process.
-    private static var quitFromDock: Bool {
-        guard let event = NSAppleEventManager.shared().currentAppleEvent,
-              event.eventClass == AEEventClass(kCoreEventClass), event.eventID == AEEventID(kAEQuitApplication),
+    /// Whether the quit being handled is the app menu's (no Apple event) or the Dock's (a quit Apple event sent by the
+    /// Dock process). Logging out, shutting down and scripts send quit events from other processes.
+    private static var quitFromDockOrMenu: Bool {
+        guard let event = NSAppleEventManager.shared().currentAppleEvent else { return true }
+        guard event.eventClass == AEEventClass(kCoreEventClass), event.eventID == AEEventID(kAEQuitApplication),
               let pid = event.attributeDescriptor(forKeyword: AEKeyword(keySenderPIDAttr))?.int32Value
         else { return false }
         return NSRunningApplication(processIdentifier: pid)?.bundleIdentifier == "com.apple.dock"
