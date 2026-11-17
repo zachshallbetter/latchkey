@@ -773,7 +773,7 @@ struct PlaceLabel: View {
         } else if local {
             Label("Local", systemImage: "laptopcomputer")
                 .font(.caption).foregroundStyle(.secondary)
-            .help("Used from files on this Mac; not linked to Vercel, GitHub Actions, Railway or Fly")
+            .help("Used from files on this Mac; not linked to \(AddLocationSheet.serviceList)")
         } else {
             Text("Not linked").font(.caption).foregroundStyle(.tertiary)
         }

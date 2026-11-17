@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Build the Mac App Store submission: a Release archive of the sandboxed store variant, exported for App Store
-Connect as a signed installer package, then checked with appstore-preflight.py. It never uploads: upload the package
-with Transporter or Xcode's Organizer, signed in as yourself (docs/app-store.md, "Submitting").
+Connect as a signed installer package, then checked with appstore-preflight.py: the package's installer signature and
+the distribution-signed app inside it. It never uploads: upload the package with Transporter or Xcode's Organizer,
+signed in as yourself (docs/app-store.md, "Submitting").
 
   python3 scripts/release-appstore.py --output build/appstore/0.3.0
 
@@ -82,11 +83,32 @@ def main():
     if "com.apple.quarantine" in quarantined:
         print("The archived app carries com.apple.quarantine; remove it (xattr -r -d com.apple.quarantine) and rebuild")
         return 1
-    print("Checking the signed app")
-    check = subprocess.run(["python3", str(ROOT / "scripts/appstore-preflight.py"), "--app", str(app)])
-    print(f"\nPackage: {packages[0]}")
+    # Check what App Store Connect receives: the package's installer signature and the distribution-signed app inside
+    # it, not the development-signed app in the archive.
+    package = packages[0]
+    signature = subprocess.run(["pkgutil", "--check-signature", str(package)], capture_output=True, text=True)
+    if signature.returncode or not re.search(r"^\s*1\. (3rd Party Mac Developer Installer|Mac Installer Distribution):",
+                                              signature.stdout, re.M):
+        print(f"The package isn't signed with a Mac Installer Distribution certificate:\n{signature.stdout}")
+        return 1
+    expanded = out / "package"
+    subprocess.run(["pkgutil", "--expand-full", str(package), str(expanded)], check=True)
+    shipped = sorted(expanded.glob("*/Payload/Latchkey.app"))
+    if len(shipped) != 1:
+        print(f"Expected one Latchkey.app in the package's payload, found {len(shipped)}")
+        return 1
+    print("Checking the app in the package")
+    preflight = ["python3", str(ROOT / "scripts/appstore-preflight.py"), "--app", str(shipped[0])]
+    check = subprocess.run(preflight + ["--distribution"])
+    print(f"\nPackage: {package}")
+    if check.returncode:
+        print("Don't upload it: the package failed the checks above.")
+        return check.returncode
+    print("Submission gates (owner review and runtime evidence in packaging/app-store/readiness.json):")
+    gates = subprocess.run(preflight + ["--submission"], capture_output=True, text=True)
+    print(gates.stdout.strip() if gates.returncode else "all passed")
     print("Upload it with Transporter or Xcode's Organizer. Nothing was uploaded.")
-    return check.returncode
+    return 0
 
 
 if __name__ == "__main__":

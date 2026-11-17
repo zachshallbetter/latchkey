@@ -7,6 +7,15 @@
   documents. GitHub's sealed box moved to its own library, `LatchkeySeal`, which the direct download and its tests
   link; the store build offers Vercel, Railway and Fly, and refuses a synced GitHub link's push before sending
   anything.
+- Its window no longer names GitHub Actions where it lists the services it pushes to, and its screenshots' sample
+  data links Railway instead.
+- `scripts/release-appstore.py` checks what App Store Connect receives: the package's installer signature and the
+  distribution-signed app inside it (`appstore-preflight.py --distribution`), then lists the submission gates still
+  open. Build 6.
+
+### Site
+- The privacy policy says the App Store version doesn't push to GitHub, and the pricing page lists pushes to
+  deployment platforms as free, as they are today.
 
 ## 0.3.1 (2026-11-13)
 

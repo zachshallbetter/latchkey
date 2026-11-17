@@ -16,6 +16,14 @@ enum Snapshot {
 
     static var requested: Bool { arg("--snapshot") != nil }
 
+    static var secondTarget: RemoteTarget {
+        #if LATCHKEY_APP_STORE
+        RemoteTarget(service: .railway, project: "shop", environment: "production")
+        #else
+        RemoteTarget(service: .github, environment: "production", repo: "me/shop")
+        #endif
+    }
+
     private static var started = false
 
     /// Off-screen parts don't need the window, so they start from launch rather than wait for it to appear.
@@ -36,7 +44,8 @@ enum Snapshot {
             model.links = [
                 RemoteLink(id: "a1b2c3", scope: "shop/production", target: RemoteTarget(service: .vercel, project: "shop", environment: "production"),
                            pushed: ["shop/production/DATABASE_URL": Date().addingTimeInterval(-86400)]),
-                RemoteLink(id: "d4e5f6", scope: "shop/production", target: RemoteTarget(service: .github, environment: "production", repo: "me/shop")),
+                // The App Store build doesn't push to GitHub Actions, so its screenshots show a Railway link instead.
+                RemoteLink(id: "d4e5f6", scope: "shop/production", target: Self.secondTarget),
             ]
         }
         if let names = arg("--select") {
@@ -128,7 +137,7 @@ enum Snapshot {
         if arg("--part") == "pushapproval" {
             var r = ApprovalRequest(action: .push, names: ["shop/production/DATABASE_URL", "shop/production/STRIPE_SECRET_KEY"],
                                     chain: ["the Latchkey app"], folder: "", reason: "push 2 items")
-            r.targets = ["Vercel shop · production", "GitHub Actions me/shop · environment production"]
+            r.targets = ["Vercel shop · production", Self.secondTarget.label]
             r.production = true
             drawOffscreen(ApprovalView(request: r) { _ in }, to: path)
             return

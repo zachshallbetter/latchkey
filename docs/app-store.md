@@ -38,7 +38,9 @@ Steps, in order:
 3. Build the submission: `python3 scripts/release-appstore.py --output build/appstore/VERSION`. It archives a Release
    build of the store variant, exports a signed installer package for App Store Connect (automatic signing may
    create the App Store profiles, and an Apple Distribution or Mac Installer Distribution certificate if one is
-   missing), and runs the preflight on the archived app.
+   missing), then checks what App Store Connect receives: the package's installer signature and, with
+   `--distribution`, the distribution-signed app inside it. It lists the submission gates still open in
+   `readiness.json` without failing on them, so a package for TestFlight can be built first.
 4. Upload the package with Transporter or Xcode's Organizer, signed in as yourself.
 5. TestFlight it on a Mac that has never had Latchkey (the `cleanMacTestFlightReviewFlow` gate), then submit for
    review.
@@ -131,6 +133,7 @@ resources. A signed run and a later Apple Distribution/TestFlight run are separa
 
 ```bash
 python3 scripts/appstore-preflight.py --app /path/to/Latchkey.app --dev
+python3 scripts/appstore-preflight.py --distribution --app /path/to/distribution/Latchkey.app
 python3 scripts/appstore-preflight.py --submission --app /path/to/distribution/Latchkey.app
 ```
 

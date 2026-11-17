@@ -2,7 +2,8 @@
 """Check sandbox configuration, a built bundle, or full submission gates without changing Apple accounts.
 
 Default: source configuration only. --app inspects a built bundle; --dev permits an unsigned compilation artifact.
---submission requires signed artifacts and recorded runtime evidence. No command uploads or approves a release.
+--distribution requires --app to be signed for App Store distribution (the app inside an exported package).
+--submission requires that too, plus recorded runtime evidence. No command uploads or approves a release.
 """
 import argparse
 import json
@@ -211,10 +212,11 @@ def main():
     parser.add_argument("--root", type=pathlib.Path, default=ROOT)
     parser.add_argument("--app", type=pathlib.Path)
     parser.add_argument("--dev", action="store_true")
+    parser.add_argument("--distribution", action="store_true")
     parser.add_argument("--submission", action="store_true")
     args = parser.parse_args()
-    if args.submission and (not args.app or args.dev):
-        parser.error("submission checks require a signed --app and do not permit --dev")
+    if (args.submission or args.distribution) and (not args.app or args.dev):
+        parser.error("distribution and submission checks require a signed --app and do not permit --dev")
     try:
         errors = source_errors(args.root)
         if args.app:
@@ -223,7 +225,7 @@ def main():
                 if not args.dev:
                     subprocess.run(["xcrun", "swiftc", str(args.root / "scripts/inspect-code-signature.swift"),
                                     "-o", str(inspector)], check=True)
-                errors += bundle_errors(args.app, args.dev, args.submission, inspector)
+                errors += bundle_errors(args.app, args.dev, args.submission or args.distribution, inspector)
         if args.submission:
             readiness = json.loads((args.root / "packaging/app-store/readiness.json").read_text())
             errors += submission_errors(readiness, args.root)

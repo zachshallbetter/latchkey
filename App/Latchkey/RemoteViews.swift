@@ -37,12 +37,12 @@ struct RemoteSheet: View {
                         .frame(width: 88, height: 88)
                         .overlay(Image(systemName: "cloud").font(.system(size: 36, weight: .regular)).foregroundStyle(.blue))
                     Text("Not Linked").font(.title3.weight(.semibold))
-                    Text("Link this environment to Vercel, GitHub Actions, Railway or Fly to push its values there and see what's out of step.")
+                    Text("Link this environment to \(AddLocationSheet.serviceList) to push its values there and see what's out of step.")
                         .multilineTextAlignment(.center).foregroundStyle(.secondary).frame(maxWidth: 380)
                     Button { adding = true } label: { Label("Add a Location…", systemImage: "plus") }
                         .buttonStyle(.borderedProminent).controlSize(.large)
                     HStack(spacing: 6) {
-                        ForEach(["Vercel", "GitHub Actions", "Railway", "Fly"], id: \.self) { Chip(text: $0) }
+                        ForEach(AddLocationSheet.services.map(\.label), id: \.self) { Chip(text: $0) }
                     }
                     .font(.caption)
                 }
@@ -205,6 +205,12 @@ struct AddLocationSheet: View {
         #else
         return RemoteTarget.Service.allCases
         #endif
+    }
+
+    /// The services this build pushes to, for text: "Vercel, Railway or Fly".
+    static var serviceList: String {
+        let labels = services.map(\.label)
+        return labels.dropLast().joined(separator: ", ") + " or " + labels.last!
     }
     @State private var project = ""
     @State private var environment = "preview"
