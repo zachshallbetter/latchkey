@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 357,
-    "includedBytes": 2762592,
+    "includedBytes": 2762586,
     "excludedCounts": {
       "extension": 86,
       "generated-or-transient-file": 1
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "bf9e06b961375265e9b4ddda66e85e5760a06617",
+        "commit": "b70a079b22b30d329256020da3c077fb6052df66",
         "branch": "docs/public-governance",
-        "dirty": false,
+        "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "cb874ed3eab551034de53612934799611b7d47b13af4f3fc2df25b394d592d2e",
+  "aggregateSourceDigest": "5a8f09b59d3a9e75363c2f0313b9050fa7669cd48fb3021e5d3dc04a7efb97a7",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -1104,8 +1104,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 5816,
-      "sha256": "22e8351db49b376a5fa489ae998e1e2a8161adc68a5f43239a5f84b16eefc80d"
+      "bytes": 5810,
+      "sha256": "e0f90866b18ab9099f8cd4ba42769c1b39a41a96add0f2350163b1cd766ab53e"
     },
     {
       "path": "SECURITY.md",

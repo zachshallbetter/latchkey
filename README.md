@@ -84,7 +84,7 @@ AGENTS.md        the operating contract for coding agents; project intent and re
 
 [Development](docs/development.md) describes the layout in full.
 
-## Verifying a change
+## Verification
 
 ```bash
 swift test                          # unit tests; use in-memory stores, never the real keychain
