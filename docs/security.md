@@ -107,10 +107,12 @@ command gets which value. This page says what it protects against, how, and wher
   quoted in errors. Latchkey itself holds a token only as an ordinary item, so it has the item's protections and the
   token's reach: use one limited to the project you push.
 - **Logs and errors** avoid recording values from the store. Tool errors are shortened and have any value replaced. Command lines in
-  the log, the approval panel and the system sheet have likely secrets replaced with `<redacted>` (values after
+  the log and the system sheet have likely secrets replaced with `<redacted>` (values after
   `--token` and similar, `NAME=VALUE` where the name says it's secret, Authorization headers, known token prefixes,
   long random-looking strings, and credentials in URLs). This is heuristic redaction of arbitrary command lines,
-  not a guarantee: keep secret values out of command arguments.
+  not a guarantee: keep secret values out of command arguments. The approval panel shows what a signed
+  `latchkey run` starts in full, unredacted, so the program being given values is never hidden from the person
+  approving it, and it lists every item asked for with a count.
 - **The log is tamper-evident.** Each entry carries a keyed hash (HMAC-SHA256) of itself and the one before it. The
   key, and the hash and count of the latest entry, are keychain items only Latchkey can read, so `latchkey log
   --verify` finds an entry that was changed, removed or added, or a log cut short. It can't stop a program running as

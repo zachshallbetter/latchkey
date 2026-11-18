@@ -534,6 +534,21 @@ public final class Broker: @unchecked Sendable {
 
     // MARK: environment records
 
+    /// "API_URL to https://api.example.com, DB to item shop/production/DB": what each variable will resolve to, so an
+    /// approval shows where a later run's values and settings come from, not just the variable names. Plain settings
+    /// are never secret (checked by `invalid`); long ones are shortened, and past eight the rest are counted.
+    static func describeTargets(_ entries: [(String, EnvironmentEntry)]) -> String {
+        func shown(_ e: EnvironmentEntry) -> String {
+            switch e {
+            case .credential(let id): return "item \(id)"
+            case .literal(let v): return v.count > 80 ? String(v.prefix(77)) + "…" : v
+            }
+        }
+        let listed = entries.prefix(8).map { "\($0.0) to \(shown($0.1))" }
+        let more = entries.count - listed.count
+        return listed.joined(separator: ", ") + (more > 0 ? " and \(more) more" : "")
+    }
+
     static func describeScopes(_ records: [EnvironmentRecord]) -> String {
         let scopes = Array(Set(records.map(\.scope))).sorted()
         return scopes.count == 1 ? scopes[0] : "\(scopes.count) environments"
@@ -618,8 +633,9 @@ public final class Broker: @unchecked Sendable {
         guard !changed.isEmpty else { return Response(ok: true, environments: []) }
         let count = changed.reduce(0) { $0 + $1.added.count }
         let scopes = changed.map(\.record.scope)
+        let added = changed.flatMap { c in c.added.sorted().compactMap { n in c.record.variables[n].map { (n, $0) } } }
         let what = count == 0 ? "mark \(Self.describeScopes(changed.map(\.record))) as checked"
-            : "record \(count) variable\(count == 1 ? "" : "s") in \(Self.describeScopes(changed.map(\.record)))"
+            : "record \(count) variable\(count == 1 ? "" : "s") in \(Self.describeScopes(changed.map(\.record))) (\(Self.describeTargets(added)))"
         guard ask(.change, scopes, peer, req, "\(what), from your items and the files they came from, asked by \(Self.describe(peer, req))").allowed else {
             log("environment-add", scopes, "denied", peer, req)
             return Response(ok: false, error: "recording the environments was not approved")
@@ -649,7 +665,7 @@ public final class Broker: @unchecked Sendable {
         let unknown = (unset + confirm).filter { record.variables[$0] == nil && set[$0] == nil }
         guard unknown.isEmpty else { return Response(ok: false, error: "\(scope) has no variable \(unknown.joined(separator: ", "))") }
         var parts: [String] = []
-        if !set.isEmpty { parts.append("set \(set.keys.sorted().joined(separator: ", "))") }
+        if !set.isEmpty { parts.append("set \(Self.describeTargets(set.keys.sorted().map { ($0, set[$0]!) }))") }
         if !unset.isEmpty { parts.append("remove \(unset.joined(separator: ", "))") }
         if !confirm.isEmpty { parts.append("confirm \(confirm.joined(separator: ", "))") }
         let reason = "\(parts.joined(separator: " and ")) in \(scope), asked by \(Self.describe(peer, req))"
@@ -823,18 +839,22 @@ public final class Broker: @unchecked Sendable {
         let infos = Dictionary(uniqueKeysWithValues: try store.list().map { ($0.name, $0) })
         let missing = ids.filter { infos[$0] == nil }
         guard missing.isEmpty else { return Response(ok: false, missing: missing) }
-        let values = try store.values(ids + (infos[into] != nil ? [into] : []))
-        guard Set(ids.compactMap { values[$0] }).count == 1, let value = values[ids[0]] else {
-            return Response(ok: false, error: "these items don't all hold the same value; nothing was combined")
-        }
-        if infos[into] != nil, values[into] != value {
-            return Response(ok: false, error: "\(into) already exists with a different value; choose another name")
-        }
         let sources = ids.filter { $0 != into }
         let what = "combine \(Self.count(ids)) into \(target.isShared ? "the shared item " : "")\(into)\(infos[into] != nil ? "" : " (new)")"
+        // Ask before reading any value: comparing them is reading them, and whether two secrets match is itself worth
+        // knowing (as for duplicates and scan), so no answer about their values comes back unapproved.
         guard ask(.move, ids, peer, req, "\(what); the others are deleted and references follow, asked by \(Self.who(peer))").allowed else {
             log("combine", ids, "denied", peer, req)
             return Response(ok: false, error: "combining was not approved")
+        }
+        let values = try store.values(ids + (infos[into] != nil ? [into] : []))
+        guard Set(ids.compactMap { values[$0] }).count == 1, let value = values[ids[0]] else {
+            log("combine", ids, "approved, not combined (values differ)", peer, req)
+            return Response(ok: false, error: "these items don't all hold the same value; nothing was combined")
+        }
+        if infos[into] != nil, values[into] != value {
+            log("combine", ids, "approved, not combined (\(into) differs)", peer, req)
+            return Response(ok: false, error: "\(into) already exists with a different value; choose another name")
         }
         if infos[into] == nil {
             let parts = ids.compactMap { infos[$0] }
@@ -958,7 +978,7 @@ public final class Broker: @unchecked Sendable {
         if try remotes.all().contains(where: { $0.scope == scope && $0.target == target }) {
             return Response(ok: false, error: "\(scope) is already linked to \(target.label)")
         }
-        guard ask(.link, [scope], peer, req, "link \(scope) to \(target.label)\(target.tokenItem.map { " using the token in \($0)" } ?? ""), asked by \(Self.who(peer))", targets: [target.label + (target.tokenItem.map { " (token: \($0))" } ?? "")]).allowed else {
+        guard ask(.link, [scope], peer, req, "link \(scope) to \(target.approvalLabel)\(target.tokenItem.map { " using the token in \($0)" } ?? ""), asked by \(Self.who(peer))", targets: [target.approvalLabel + (target.tokenItem.map { " (token: \($0))" } ?? "")]).allowed else {
             log("link", [scope], "denied", peer, req)
             return Response(ok: false, error: "the link was not approved")
         }
@@ -1060,7 +1080,10 @@ public final class Broker: @unchecked Sendable {
             }
             let r = runner.run(link.target.listCommand, timeout: 60)
             guard r.status == 0, let names = link.target.names(fromListOutput: r.stdout) else {
-                out.append(RemoteStatus(link: link.id, label: link.target.label, error: Self.toolError(r, link.target), outOfDate: stale))
+                // A list command's output can hold values (Railway's does), so its error never quotes standard output.
+                let error = r.status == 0 ? "\(link.target.service.tool): its list output wasn't in the expected form"
+                    : Self.toolError(r, link.target, quotingOutput: false)
+                out.append(RemoteStatus(link: link.id, label: link.target.label, error: error, outOfDate: stale))
                 continue
             }
             let there = Set(names)
@@ -1086,6 +1109,11 @@ public final class Broker: @unchecked Sendable {
             return Response(ok: false, error: held.isEmpty ? "nothing to push in \(scope)"
                             : "\(scope) has only unconfirmed variables: \(held.map(\.name).joined(separator: ", ")) (lk env confirm \(scope))")
         }
+        // Names reach each service's tool as arguments or `NAME=value` lines; a record synced from elsewhere is only
+        // checked when written there, so every route checks the names it sends (the API route also does in NativeRemote).
+        if let bad = entries.first(where: { !EnvironmentRecord.isValidVariable($0.name) }) {
+            return Response(ok: false, error: "\(scope) has a variable named \(bad.name.debugDescription), which isn't a valid variable name; nothing was pushed")
+        }
 
         // Links that push through an API say which item holds their token, and it has to exist before anyone is asked.
         for link in links { if let problem = nativeRoute(link)?.problem { return Response(ok: false, error: "\(link.target.label): \(problem)") } }
@@ -1094,7 +1122,7 @@ public final class Broker: @unchecked Sendable {
         if let missing = tokenItems.first(where: { !known.contains($0) }) {
             return Response(ok: false, error: "the token item \(missing) doesn't exist; create it, or link again with another item")
         }
-        let labels = links.map { link in link.target.label + (nativeRoute(link).map { " (token: \($0.item))" } ?? "") }
+        let labels = links.map { link in link.target.approvalLabel + (nativeRoute(link).map { " (token: \($0.item))" } ?? "") }
         let names = entries.map(\.key)
         var request = approvalRequest(.push, names, peer, req,
                                       "push \(Self.count(names.map { ItemID($0)?.name ?? $0 })) to \(labels.joined(separator: ", ")), asked by \(Self.who(peer))")
@@ -1165,9 +1193,10 @@ public final class Broker: @unchecked Sendable {
     }
 
     /// A tool's complaint, shortened, or why it couldn't run.
-    static func toolError(_ r: (status: Int32, stdout: String, stderr: String), _ target: RemoteTarget) -> String {
+    static func toolError(_ r: (status: Int32, stdout: String, stderr: String), _ target: RemoteTarget,
+                          quotingOutput: Bool = true) -> String {
         if r.status == 127 { return r.stderr }
-        let text = (r.stderr.isEmpty ? r.stdout : r.stderr).trimmingCharacters(in: .whitespacesAndNewlines)
+        let text = (r.stderr.isEmpty && quotingOutput ? r.stdout : r.stderr).trimmingCharacters(in: .whitespacesAndNewlines)
         let line = text.split(separator: "\n").last.map(String.init) ?? "exit status \(r.status)"
         return "\(target.service.tool): \(line.prefix(300))"
     }
@@ -1184,6 +1213,10 @@ public final class Broker: @unchecked Sendable {
         let n = grants.revoke(id)
         guard n > 0 else { return Response(ok: true, missing: [id]) }
         log("revoke", Array(Set(gone.flatMap(\.names))).sorted(), "revoked \(n) grant\(n == 1 ? "" : "s")", peer, req)
+        // Ended for now, but not stored: say so rather than report a revoke that a restart would undo.
+        if grants.saveFailed {
+            return Response(ok: false, error: "revoked \(n) grant\(n == 1 ? "" : "s") until Latchkey restarts, but couldn't save that to the keychain; revoke again after unlocking it")
+        }
         return Response(ok: true, info: ["revoked": String(n)])
     }
 
@@ -1208,7 +1241,15 @@ public final class Broker: @unchecked Sendable {
         request.fromApp = peer.pid == getpid()
         request.sessionName = peer.sessionProcess?.name
         request.runCommand = peer.runCommand
-        request.program = request.fromApp || peer.isLatchkeyTool || peer.path.isEmpty ? nil : peer.path
+        // Strip exactly the "asked by" clause this broker appended, so caller text inside the reason can't cut it short.
+        for suffix in [", asked by \(Self.describe(peer, req))", ", asked by \(Self.who(peer))"] where reason.hasSuffix(suffix) {
+            request.what = String(reason.dropLast(suffix.count))
+            break
+        }
+        // A caller the kernel can't identify (it exited, or its details couldn't be read) is not Latchkey's own tool:
+        // name it as unidentified so the warning shows and changes don't fall back to the Touch ID sheet alone.
+        request.program = request.fromApp || peer.isLatchkeyTool ? nil
+            : peer.path.isEmpty ? Self.unidentifiedProgram : peer.path
         if peer.isSafariExtension {
             request.fromSafari = true
             request.page = req.page
@@ -1241,6 +1282,8 @@ public final class Broker: @unchecked Sendable {
     }
 
     /// "zsh › claude" or "the Latchkey app".
+    static let unidentifiedProgram = "an unidentified program (it exited or couldn't be read before Latchkey checked it)"
+
     static func who(_ peer: PeerInfo) -> String {
         let w = peer.chain.prefix(3).joined(separator: " › ")
         return w.isEmpty ? "a process" : w

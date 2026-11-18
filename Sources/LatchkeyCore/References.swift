@@ -285,8 +285,13 @@ public enum EnvFile {
         if let error = operationError { throw error }
     }
 
-    private static func write(_ text: String, to url: URL, expected: Data) throws {
-        let perms = try FileManager.default.attributesOfItem(atPath: url.path)[.posixPermissions]
+    private static func write(_ text: String, to given: URL, expected: Data) throws {
+        // Rewrite the file a symlink points to, not the link: replacing the link would leave the real file holding its
+        // values and give the new copy the link's own permissions, which are usually wider.
+        let url = given.resolvingSymlinksInPath()
+        var info = stat()
+        guard lstat(url.path, &info) == 0, info.st_mode & S_IFMT == S_IFREG else { throw CocoaError(.fileWriteUnknown) }
+        let perms = NSNumber(value: info.st_mode & 0o7777)
         let temp = url.deletingLastPathComponent().appendingPathComponent(".latchkey-" + UUID().uuidString)
         let fd = open(temp.path, O_WRONLY | O_CREAT | O_EXCL, 0o600)
         guard fd >= 0 else { throw CocoaError(.fileWriteUnknown) }
@@ -297,7 +302,7 @@ public enum EnvFile {
             try handle.synchronize()
             try handle.close()
         } catch { try? handle.close(); throw error }
-        if let perms { try FileManager.default.setAttributes([.posixPermissions: perms], ofItemAtPath: temp.path) }
+        try FileManager.default.setAttributes([.posixPermissions: perms], ofItemAtPath: temp.path)
         // Check again immediately before replacement, after the temporary file is fully prepared.
         guard try Data(contentsOf: url) == expected else { throw ParseError.changed }
         guard rename(temp.path, url.path) == 0 else { throw CocoaError(.fileWriteUnknown) }

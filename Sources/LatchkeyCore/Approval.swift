@@ -43,6 +43,9 @@ public struct ApprovalRequest: Sendable {
     public var page: String?
     /// Releasing values to a command, where the approval can also become a grant for its folder. Only `get` sets it.
     public var offersGrant = false
+    /// What the request does, without its "asked by" part, set by the broker from the exact suffix it appended. Text a
+    /// caller supplied (a service name, a link label) can't end it early by containing ", asked by ".
+    public var what: String?
 
     public init(action: Action, names: [String], chain: [String], folder: String, command: String? = nil,
                 duration: TimeInterval? = nil, reason: String) {
@@ -67,7 +70,7 @@ public struct ApprovalRequest: Sendable {
     /// The line for the Touch ID sheet, which macOS shows as "Latchkey is trying to …": what's asked, by whom and from
     /// which folder. The full process chain and command are in the panel, for anyone who wants them.
     /// What the request does, as the broker worded it: the reason without its "asked by" part.
-    public var summary: String { reason.range(of: ", asked by ").map { String(reason[..<$0.lowerBound]) } ?? reason }
+    public var summary: String { what ?? reason.range(of: ", asked by ").map { String(reason[..<$0.lowerBound]) } ?? reason }
 
     public var touchIDReason: String {
         let what = summary

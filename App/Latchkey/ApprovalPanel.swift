@@ -171,7 +171,7 @@ struct ApprovalView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 8) {
-                row("Items", request.names.joined(separator: ", "), mono: true)
+                row(request.names.count > 1 ? "Items (\(request.names.count))" : "Items", request.names.joined(separator: ", "), mono: true, full: true)
                 if [.add, .change, .importItems, .restore].contains(request.action), !request.summary.isEmpty {
                     row("Request", request.summary)
                 }
@@ -189,7 +189,10 @@ struct ApprovalView: View {
                     row("Asked by", (request.asker.map { "\($0), via \(via)" } ?? via) + (request.byAgent ? "\nthrough Latchkey's MCP server" : ""))
                 }
                 if !request.folder.isEmpty { row("Folder", Broker.tilde(request.folder), mono: true) }
-                if let c = request.command, !c.isEmpty { row("Command", c, mono: true) }
+                // The command that will receive the values, in full: a signed `latchkey run` shows what it starts, unredacted
+                // (the log keeps the redacted form), so a filter or truncation can't hide the program being given values.
+                if let run = request.runCommand { row("Command", "latchkey run -- " + run.joined(separator: " "), mono: true, full: true) }
+                else if let c = request.command, !c.isEmpty { row("Command", c, mono: true, full: true) }
                 if let d = request.duration { row("For", GrantStore.describe(d)) }
                 if !request.targets.isEmpty { row(request.action == .push ? "To" : "Target", request.targets.joined(separator: "\n")) }
             }
@@ -252,12 +255,23 @@ struct ApprovalView: View {
         }
     }
 
+    /// `full` rows hold what the decision covers (every item, the whole command): never truncated, scrolling when long.
     @ViewBuilder
-    private func row(_ label: String, _ value: String, mono: Bool = false) -> some View {
+    private func row(_ label: String, _ value: String, mono: Bool = false, full: Bool = false) -> some View {
         GridRow {
             Text(label).foregroundStyle(.secondary).gridColumnAlignment(.trailing)
-            Text(value).font(mono ? .callout.monospaced() : .callout).textSelection(.enabled)
-                .lineLimit(3).truncationMode(.middle)
+            if full {
+                ScrollView(.vertical) {
+                    Text(value).font(mono ? .callout.monospaced() : .callout).textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxHeight: 140)
+                .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text(value).font(mono ? .callout.monospaced() : .callout).textSelection(.enabled)
+                    .lineLimit(3).truncationMode(.middle)
+            }
         }
     }
 }

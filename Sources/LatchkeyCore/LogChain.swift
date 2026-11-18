@@ -73,7 +73,8 @@ public final class KeychainLogKeyStore: LogKeyStore, @unchecked Sendable {
     private let lock = NSLock()
     private var cached: SymmetricKey?
 
-    public init(mode: KeychainStore.Mode) { items = KeychainStore(mode: mode) }
+    /// Matches only this Mac's non-synced items, so a synced item with the same name never stands in for the key or head.
+    public init(mode: KeychainStore.Mode) { items = KeychainStore(mode: mode, synchronizable: false) }
 
     public func key() -> SymmetricKey? {
         lock.withLock {

@@ -1099,6 +1099,12 @@ func scanCommand(_ input: [String]) -> Never {
     if install {
         guard let hooks = git(["rev-parse", "--path-format=absolute", "--git-path", "hooks"], in: root.path).map({ String(decoding: $0, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines) }),
               !hooks.isEmpty else { fail("\(Broker.tilde(root.path)) isn't in a Git repository", code: 66) }
+        // Git takes the hooks folder from the repository's own settings (core.hooksPath), which can name any folder.
+        // Write only inside the repository's .git folder; anywhere else is the owner's call, made by hand.
+        let real = URL(fileURLWithPath: hooks).resolvingSymlinksInPath().path
+        guard let common = Repo.commonDir(for: root.path), real.hasPrefix(common + "/") else {
+            fail("this repository's hooks folder is \(Broker.tilde(hooks)), outside its .git folder (core.hooksPath); install the hook there yourself: lk scan --staged in a pre-commit hook", code: 1)
+        }
         let path = hooks + "/pre-commit"
         if let existing = try? String(contentsOfFile: path, encoding: .utf8), !existing.contains(Scan.hookMarker), !force {
             fail("\(Broker.tilde(path)) already exists and isn't Latchkey's; --force replaces it", code: 1)

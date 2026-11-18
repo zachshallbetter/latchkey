@@ -79,6 +79,17 @@ public struct RemoteTarget: Codable, Hashable, Sendable {
         return service.label + " " + parts.filter { !$0.isEmpty }.joined(separator: " · ")
     }
 
+    /// The label plus every field that decides where values go and the label leaves out: a Railway project ID when a
+    /// service name is shown, a Vercel team, and the folder the service's tool runs in (whose own link file can pick
+    /// the project). Link and push approvals show this, so two different destinations never read the same.
+    public var approvalLabel: String {
+        var extra: [String] = []
+        if service == .railway, serviceName != nil, let p = project, !p.isEmpty { extra.append("project \(p)") }
+        if let d = directory, !d.isEmpty { extra.append("folder \(Broker.tilde(d))") }
+        if let t = team, !t.isEmpty { extra.append("team \(t)") }
+        return extra.isEmpty ? label : label + " (" + extra.joined(separator: ", ") + ")"
+    }
+
     /// Production gets an extra confirmation on every push. Fly secrets apply to the running app, so a Fly app
     /// counts as production unless its name says otherwise.
     public var isProduction: Bool {

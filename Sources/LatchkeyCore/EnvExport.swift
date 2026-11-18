@@ -81,7 +81,8 @@ public enum EnvExport {
     /// Why plain text at `path` could end up in Git: the file is tracked, or not ignored, in the checkout it's in. Nil
     /// outside a checkout, or when Git ignores it and doesn't track it.
     public static func gitProblem(_ path: String) -> String? {
-        let folder = URL(fileURLWithPath: path).deletingLastPathComponent().path
+        // The folder as git will see it: through any symlink, so a link into a checkout doesn't skip the check.
+        let folder = URL(fileURLWithPath: path).deletingLastPathComponent().resolvingSymlinksInPath().path
         guard Repo.commonDir(for: folder) != nil else { return nil }
         let shown = Broker.tilde(path)
         if gitStatus(["-C", folder, "ls-files", "--error-unmatch", "--", path]) == 0 {

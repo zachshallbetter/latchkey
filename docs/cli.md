@@ -147,9 +147,10 @@ values that look secret are still reported, and it exits 1. `--json` gives `plac
 
 `--staged` scans only the lines a commit would add, from the Git index, in env files that are staged.
 
-`--install-hook` writes a Git pre-commit hook (honoring `core.hooksPath`, and worktrees) that runs
+`--install-hook` writes a Git pre-commit hook (in the repository's `.git` hooks folder, shared by its worktrees) that runs
 `latchkey scan --staged` and refuses the commit on findings. A hook that isn't Latchkey's is left alone unless
-`--force`. If neither `lk` nor `latchkey` is on the PATH, the hook says so and lets the commit through. Skip it for one
+`--force`. A repository whose `core.hooksPath` points outside its `.git` folder gets no hook written; the message
+names that folder so you can add `lk scan --staged` to a hook there yourself. If neither `lk` nor `latchkey` is on the PATH, the hook says so and lets the commit through. Skip it for one
 commit with `git commit --no-verify`.
 
 ### `latchkey combine IDS --into NAME|ID [--file FILE]...`
