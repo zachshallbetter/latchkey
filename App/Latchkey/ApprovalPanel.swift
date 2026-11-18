@@ -400,27 +400,21 @@ struct ApprovalView: View {
 
     private var footer: some View {
         VStack(spacing: 12) {
-            if touchID != nil, !ready {
-                // The same space the live glyph takes, so ticking the box doesn't move anything.
-                VStack(spacing: 6) {
-                    Image(systemName: "touchid").font(.system(size: 34, weight: .light)).foregroundStyle(.tertiary)
-                        .frame(width: 44, height: 44)
-                    Text("Tick the box above, then Touch ID to \(allowLabel.lowercased())").font(.callout).foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-            }
-            if let touchID, ready {
+            if let touchID {
+                // One small glyph in one place: grey until production is ticked, red while Touch ID listens.
                 VStack(spacing: 6) {
                     ZStack {
-                        // Snapshots can't draw the system's glyph, which needs a live window; this stands in for it.
-                        if Self.drawsStandInGlyph {
-                            Image(systemName: "touchid").font(.system(size: 34, weight: .light)).foregroundStyle(.pink)
+                        if ready {
+                            InlineTouchID(context: touchID, start: { evaluate(touchID) }, needsKeyWindow: false, showsSystemGlyph: false)
+                                .id(ObjectIdentifier(touchID))
                         }
-                        InlineTouchID(context: touchID, start: { evaluate(touchID) }, needsKeyWindow: false)
-                            .id(ObjectIdentifier(touchID))
+                        Image(systemName: "touchid").font(.system(size: 34, weight: .light))
+                            .foregroundStyle(ready ? AnyShapeStyle(Color.red) : AnyShapeStyle(.tertiary))
+                            .allowsHitTesting(false)
                     }
                     .frame(width: 44, height: 44)
-                    Text("Touch ID to \(allowLabel.lowercased())").font(.callout).foregroundStyle(.secondary)
+                    Text(ready ? "Touch ID to \(allowLabel.lowercased())" : "Tick the box above, then Touch ID to \(allowLabel.lowercased())")
+                        .font(.callout).foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -437,9 +431,6 @@ struct ApprovalView: View {
             }
         }
     }
-
-    /// Set by the snapshot tool.
-    nonisolated(unsafe) static var drawsStandInGlyph = false
 
     /// Who and where, in a line: "Claude in ~/Projects/site".
     private var subtitle: String {

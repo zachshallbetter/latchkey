@@ -71,7 +71,6 @@ enum Snapshot {
             drawOffscreen(MainWindow(model: model).frame(width: width, height: height), to: path)
             return
         }
-        ApprovalView.drawsStandInGlyph = true
         if arg("--part") == "approval" {
             var sample = ApprovalRequest(action: .read, names: ["DATABASE_URL", "STRIPE_KEY"], chain: ["zsh", "agent", "Terminal"],
                                          folder: NSHomeDirectory() + "/Projects/site", command: "npm test -- --watch=false",

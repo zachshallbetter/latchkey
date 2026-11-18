@@ -120,6 +120,9 @@ struct InlineTouchID: NSViewRepresentable {
     /// False to start as soon as the glyph is in a window on screen, key or not: an approval panel, which you answer
     /// from whatever app you're in. The lock screen waits for its window to be key.
     var needsKeyWindow = true
+    /// False to keep the system's glyph in place but nearly invisible, under a glyph of the caller's own: the request
+    /// has to belong to a view in the window to stay out of a sheet, but the system's glyph draws larger than its space.
+    var showsSystemGlyph = true
 
     /// The glyph draws at its control size whatever frame it gets, so it sits in a clipping box of that size.
     func makeNSView(context: Context) -> NSView {
@@ -127,6 +130,7 @@ struct InlineTouchID: NSViewRepresentable {
         box.clipsToBounds = true
         let glyph = LAAuthenticationView(context: self.context, controlSize: .regular)
         glyph.translatesAutoresizingMaskIntoConstraints = false
+        if !showsSystemGlyph { glyph.alphaValue = 0.02 }
         box.addSubview(glyph)
         NSLayoutConstraint.activate([
             glyph.centerXAnchor.constraint(equalTo: box.centerXAnchor),
@@ -138,6 +142,11 @@ struct InlineTouchID: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {}
+
+    /// Exactly the frame it's given, so the system glyph's own size never pushes the layout around.
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: NSView, context: Context) -> CGSize? {
+        CGSize(width: proposal.width ?? 44, height: proposal.height ?? 44)
+    }
 
     /// Runs `start` once, the first time its window is key, then `stop` once if the window stops being key.
     final class StartsInKeyWindow: NSView {
