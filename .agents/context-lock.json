@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 358,
-    "includedBytes": 2814487,
+    "includedBytes": 2815062,
     "excludedCounts": {
       "extension": 86,
       "generated-or-transient-file": 1
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "f48ef06d8f88437286d4149be726fb96078756e7",
+        "commit": "9b3f72db7c67a7c7a7db73dbddf4d50543db6f45",
         "branch": null,
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "e2e790cbba6163045d90134ac67345047572695a63c78cfa0a68c0c8c869c7f2",
+  "aggregateSourceDigest": "4551b8df74cf2dee0dbc53bd321233ee59e181b2a89ba51b30eadf0037218fd4",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -964,8 +964,8 @@
     },
     {
       "path": "App/Latchkey/MainWindow.swift",
-      "bytes": 45302,
-      "sha256": "52734bd19eadab710141f4328dc4f9450f8515d4ef0530f30f8c8c549d1cc947"
+      "bytes": 45877,
+      "sha256": "bcf121ccc99725e86b46e8d51f5ebbd7784761baf5aa9371f21cb1d4041acb0b"
     },
     {
       "path": "App/Latchkey/MenuBarPanel.swift",

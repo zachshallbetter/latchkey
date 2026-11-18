@@ -55,8 +55,8 @@ struct LockScreen: View {
             Text("Touch ID or enter your password to continue.").foregroundStyle(.secondary)
             if let touchID {
                 InlineTouchID(context: touchID) { model.unlockWithTouchID(touchID) { if self.touchID === touchID { self.touchID = nil } } }
-                    .frame(width: 60, height: 60)
-                    .padding(.top, 4)
+                    .frame(width: 44, height: 44)
+                    .padding(.vertical, 8)
                 Button("Use Password…") { usePassword() }.buttonStyle(.link)
             } else {
                 Button(model.unlocking ? "Waiting for Approval…" : "Unlock…") { askAgain() }
@@ -102,13 +102,24 @@ private struct InlineTouchID: NSViewRepresentable {
     /// Called once the view is in the window, so the request lands in it rather than in a sheet.
     let start: () -> Void
 
-    func makeNSView(context: Context) -> LAAuthenticationView {
-        let view = LAAuthenticationView(context: self.context, controlSize: .large)
+    /// The glyph draws at its control size whatever frame it gets, so it sits in a clipping box of that size.
+    func makeNSView(context: Context) -> NSView {
+        let box = NSView()
+        box.clipsToBounds = true
+        let glyph = LAAuthenticationView(context: self.context, controlSize: .regular)
+        glyph.translatesAutoresizingMaskIntoConstraints = false
+        box.addSubview(glyph)
+        NSLayoutConstraint.activate([
+            glyph.centerXAnchor.constraint(equalTo: box.centerXAnchor),
+            glyph.centerYAnchor.constraint(equalTo: box.centerYAnchor),
+            glyph.widthAnchor.constraint(equalTo: box.widthAnchor),
+            glyph.heightAnchor.constraint(equalTo: box.heightAnchor),
+        ])
         DispatchQueue.main.async(execute: start)
-        return view
+        return box
     }
 
-    func updateNSView(_ nsView: LAAuthenticationView, context: Context) {}
+    func updateNSView(_ nsView: NSView, context: Context) {}
 }
 
 /// The Latchkey key, tinted like an SF Symbol so it follows the context it sits in.
