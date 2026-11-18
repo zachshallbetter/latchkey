@@ -120,7 +120,11 @@ final class ApprovalWindow {
         let host = NSHostingController(rootView: view)
         host.sizingOptions = [.preferredContentSize]
         let panel = NSPanel(contentViewController: host)
-        panel.styleMask = [.titled, .fullSizeContentView]
+        // A panel that takes the keyboard without activating Latchkey: Touch ID inside it only listens while it's the
+        // key window, and macOS won't let a background app activate itself over the app you're in. Not activating also
+        // leaves Latchkey's main window where it was.
+        panel.styleMask = [.titled, .fullSizeContentView, .nonactivatingPanel]
+        panel.becomesKeyOnlyIfNeeded = false
         panel.titlebarAppearsTransparent = true
         panel.titleVisibility = .hidden
         panel.isMovableByWindowBackground = true
@@ -129,7 +133,6 @@ final class ApprovalWindow {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.center()
         self.panel = panel
-        NSApp.activate()
         panel.makeKeyAndOrderFront(nil)
     }
 
@@ -301,6 +304,8 @@ struct ApprovalView: View {
             } label: {
                 Text("Details").font(.callout)
             }
+            // Not the panel's first focus: the ring drew around Details as if it were the thing to press.
+            .focusEffectDisabled()
             if request.production {
                 VStack(alignment: .leading, spacing: 6) {
                     Label("This sends values to production.", systemImage: "exclamationmark.triangle.fill")
