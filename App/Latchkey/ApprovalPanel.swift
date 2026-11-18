@@ -401,18 +401,18 @@ struct ApprovalView: View {
     private var footer: some View {
         VStack(spacing: 12) {
             if let touchID {
-                // One small glyph in one place: grey until production is ticked, red while Touch ID listens.
+                // The system's glyph, which shows the print being read, in the same space as the grey stand-in shown
+                // until production is ticked.
                 VStack(spacing: 6) {
-                    ZStack {
+                    Group {
                         if ready {
-                            InlineTouchID(context: touchID, start: { evaluate(touchID) }, needsKeyWindow: false, showsSystemGlyph: false)
+                            InlineTouchID(context: touchID, start: { evaluate(touchID) }, needsKeyWindow: false)
                                 .id(ObjectIdentifier(touchID))
+                        } else {
+                            Image(systemName: "touchid").font(.system(size: 26, weight: .light)).foregroundStyle(.tertiary)
                         }
-                        Image(systemName: "touchid").font(.system(size: 34, weight: .light))
-                            .foregroundStyle(ready ? AnyShapeStyle(Color.red) : AnyShapeStyle(.tertiary))
-                            .allowsHitTesting(false)
                     }
-                    .frame(width: 44, height: 44)
+                    .frame(width: InlineTouchID.side, height: InlineTouchID.side)
                     Text(ready ? "Touch ID to \(allowLabel.lowercased())" : "Tick the box above, then Touch ID to \(allowLabel.lowercased())")
                         .font(.callout).foregroundStyle(.secondary)
                 }
