@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 360,
-    "includedBytes": 2867443,
+    "includedBytes": 2867767,
     "excludedCounts": {
       "extension": 86,
       "generated-or-transient-file": 1
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "8848a80a590afcaa9bd1c531a0c7b371dbf927b6",
-        "branch": "approval-focus",
+        "commit": "a697f677d23af6208e7abe8aae1ac03d92686ab4",
+        "branch": "upgrade-sheet-wording",
         "dirty": false,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "f38a4bcb4f7946855667f1a777f470d14e71fa1580fad1e5663b30f7a4a9b3fc",
+  "aggregateSourceDigest": "060876fe0db4c6ddfd2d8102bfbc40ce7ddadab9702ae05ba150b8ded17f0e66",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -1004,8 +1004,8 @@
     },
     {
       "path": "App/Latchkey/Sheets.swift",
-      "bytes": 20872,
-      "sha256": "94492c770438cc711b74a2f839745c564d0918e0463392deba1ca238cc1d759e"
+      "bytes": 20947,
+      "sha256": "ffe3961c48acb1152befd04fde3f61eb3f53c6aa128899b131dda218593431bd"
     },
     {
       "path": "App/Latchkey/Snapshot.swift",
@@ -1079,8 +1079,8 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 31832,
-      "sha256": "af5e76f6b2b3ada67577ba9e1442c67a9d6dfd5583e058416c7e1cecf2859bb2"
+      "bytes": 32081,
+      "sha256": "89e50ec6a5fccb9cec720014059d7d747b8d3ccaf729c1d3462d323d1c280a9e"
     },
     {
       "path": "CODE_OF_CONDUCT.md",

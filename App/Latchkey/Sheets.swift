@@ -399,10 +399,10 @@ struct UpgradeSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     private static let groups: [(title: String, detail: String)] = [
-        ("Agent controls", "Finer limits on what an agent may read and run."),
-        ("Recovery and migration", "Bring secrets in from other tools and recover from mistakes."),
-        ("Rotation and lifecycle", "Rotate keys and track when they expire."),
-        ("Provider integrations", "Work with your providers directly."),
+        ("Agent controls", "Secret requests, and a hook that stops commands like cat .env."),
+        ("Recovery and migration", "Importers for 1Password, Bitwarden and Passwords, and an encrypted backup."),
+        ("Rotation and lifecycle", "Last-used and expiry dates, reminders and leak alerts."),
+        ("Provider integrations", "Each key's origin: its service, console and last rotation."),
     ]
 
     var body: some View {
@@ -417,7 +417,7 @@ struct UpgradeSheet: View {
                     }
                 }
             }
-            Text("Everything Latchkey does today stays free, and so do storing, reading, approving, running, importing, exporting and restoring your secrets.")
+            Text("Everything Latchkey does today is free. Storing, reading, approving, running, importing, exporting and restoring your secrets never depend on Pro.")
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             SheetFooter {
                 Button("Not Now") { dismiss() }

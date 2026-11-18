@@ -3,6 +3,8 @@
 ## Unreleased
 
 ### App
+- The Upgrade sheet describes each Pro group with its planned features, as the site does, and says the core
+  never depends on Pro instead of promising it stays free.
 - A new remote location, **SSH**, pushes to a credential script on a Linux host over your ssh connection, one item
   per credential (`ADAPTER.ACCOUNT`) with the value on standard input: `latchkey remote link distribution/production
   ssh host=titan script=/path/to/add-credential.sh`. It always counts as production, its status comes from
@@ -65,6 +67,7 @@
 - `scripts/install.sh` now forgets every other copy of the app macOS has registered (other worktrees' builds,
   Xcode archives), not just its own build folder. With stale copies registered, Safari could resolve Latchkey's
   extension to one of them and **Turn On in Safari…** failed with SFErrorDomain error 1.
+||||||| parent of 80b446f (Upgrade sheet describes Pro with its planned features)
 
 ### Mac App Store
 - The App Store version leaves out GitHub Actions pushes, so it uses only Apple's encryption and needs no export
