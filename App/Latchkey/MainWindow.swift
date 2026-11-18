@@ -107,28 +107,9 @@ struct LockScreen: View {
 /// values or reasons are logged.
 let touchIDLog = Logger(subsystem: "io.snackstud.latchkey", category: "touchid")
 
-/// The system's own Touch ID prompt, drawn inside the window at `side` points. Evaluating a biometric policy on a
-/// context that an `LAAuthenticationView` shows puts the prompt here instead of in a sheet.
-struct InlineTouchID: View {
-    let context: LAContext
-    let start: () -> Void
-    var stop: (() -> Void)?
-    var needsKeyWindow = true
-
-    /// The system glyph comes in fixed sizes (16 mini, 32 small, 64 regular, 128 large, measured with `fittingSize`),
-    /// so the regular one is drawn scaled down to this, which keeps it sharp.
-    static let side: CGFloat = 35
-
-    var body: some View {
-        SystemGlyph(context: context, start: start, stop: stop, needsKeyWindow: needsKeyWindow)
-            .frame(width: SystemGlyph.drawn, height: SystemGlyph.drawn)
-            .scaleEffect(Self.side / SystemGlyph.drawn)
-            .frame(width: Self.side, height: Self.side)
-    }
-}
-
-/// `LAAuthenticationView` at its regular size, started and stopped with its window.
-private struct SystemGlyph: NSViewRepresentable {
+/// The system's own Touch ID prompt, drawn inside the window. Evaluating a biometric policy on a context that an
+/// `LAAuthenticationView` shows puts the prompt here instead of in a sheet.
+struct InlineTouchID: NSViewRepresentable {
     let context: LAContext
     /// Called once the view is in a key window. Started any earlier, the prompt waits for a click on the glyph.
     let start: () -> Void
@@ -138,12 +119,14 @@ private struct SystemGlyph: NSViewRepresentable {
     /// False to start as soon as the glyph is in a window on screen, key or not: an approval panel, which you answer
     /// from whatever app you're in. The lock screen waits for its window to be key.
     var needsKeyWindow = true
-    /// Points on a side at the regular control size.
-    static let drawn: CGFloat = 64
+    /// The system glyph draws at a fixed size for its control size (`side`), whatever frame it's given.
+    static let controlSize = NSControl.ControlSize.small
+    /// Points on a side at `controlSize`: 16 mini, 32 small, 64 regular, 128 large (measured with `fittingSize`).
+    static let side: CGFloat = 32
 
     func makeNSView(context: Context) -> NSView {
         let box = StartsInKeyWindow(start: start, stop: stop, needsKeyWindow: needsKeyWindow)
-        let glyph = LAAuthenticationView(context: self.context, controlSize: .regular)
+        let glyph = LAAuthenticationView(context: self.context, controlSize: Self.controlSize)
         glyph.translatesAutoresizingMaskIntoConstraints = false
         box.addSubview(glyph)
         NSLayoutConstraint.activate([
@@ -159,7 +142,7 @@ private struct SystemGlyph: NSViewRepresentable {
 
     /// The glyph's own size, so it's never squeezed or cut off and never pushes the layout around.
     func sizeThatFits(_ proposal: ProposedViewSize, nsView: NSView, context: Context) -> CGSize? {
-        CGSize(width: Self.drawn, height: Self.drawn)
+        CGSize(width: Self.side, height: Self.side)
     }
 
     /// Runs `start` once, the first time its window is key, then `stop` once if the window stops being key.
