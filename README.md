@@ -69,6 +69,37 @@ Codex CLI, Gemini CLI, Cursor and other tools that read Agent Skills can use the
 | [Website](docs/site.md) | The product site and developer docs in `site/` |
 | [Changelog](CHANGELOG.md) | What changed in each release |
 
+## Repository map
+
+```
+Sources/         LatchkeyCore (the library), latchkey (the command-line tool), latchkey-broker (a broker without a window)
+Tests/           unit tests for LatchkeyCore
+App/             the SwiftUI app, its XcodeGen project and Latchkey for Safari
+plugins/         the agent skill and Claude Code plugin
+docs/            user and developer documentation
+site/            the product website, static HTML
+scripts/         install and release scripts
+AGENTS.md        the operating contract for coding agents; project intent and records are in .agents/
+```
+
+[Development](docs/development.md) describes the layout in full.
+
+## Verifying a change
+
+```bash
+swift test                          # unit tests; use in-memory stores, never the real keychain
+node --test App/Safari/*.test.js    # the Safari extension's detector and DOM fixtures
+```
+
+CI runs `swift test` on pull requests that touch `Sources/`, `Tests/` or `Package.swift`. App compilation and these tests do not replace signed-app,
+real-Safari or cross-device sync verification; [Development](docs/development.md#regression-checks) lists what each
+check covers and what stays opt-in.
+
+## Status and limitations
+
+Latchkey is pre-1.0; releases are listed in the [changelog](CHANGELOG.md). The command-line tool needs macOS 14
+or later and the app needs macOS 15 or later. The Mac App Store build is sandboxed and leaves out GitHub Actions
+pushes. [Security](docs/security.md#where-protection-ends) lists what Latchkey does not protect against.
 
 ## License
 
