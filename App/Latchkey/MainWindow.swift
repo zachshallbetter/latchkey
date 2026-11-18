@@ -117,10 +117,13 @@ struct InlineTouchID: NSViewRepresentable {
     /// Called if its window stops being key after `start`, so a request left waiting there can't take a touch meant
     /// for whatever took the keyboard (an approval panel).
     var stop: (() -> Void)?
+    /// False to start as soon as the glyph is in a window on screen, key or not: an approval panel, which you answer
+    /// from whatever app you're in. The lock screen waits for its window to be key.
+    var needsKeyWindow = true
 
     /// The glyph draws at its control size whatever frame it gets, so it sits in a clipping box of that size.
     func makeNSView(context: Context) -> NSView {
-        let box = StartsInKeyWindow(start: start, stop: stop)
+        let box = StartsInKeyWindow(start: start, stop: stop, needsKeyWindow: needsKeyWindow)
         box.clipsToBounds = true
         let glyph = LAAuthenticationView(context: self.context, controlSize: .regular)
         glyph.translatesAutoresizingMaskIntoConstraints = false
@@ -141,10 +144,12 @@ struct InlineTouchID: NSViewRepresentable {
         private var start: (() -> Void)?
         private var stop: (() -> Void)?
         private var observer: NSObjectProtocol?
+        private let needsKeyWindow: Bool
 
-        init(start: @escaping () -> Void, stop: (() -> Void)?) {
+        init(start: @escaping () -> Void, stop: (() -> Void)?, needsKeyWindow: Bool) {
             self.start = start
             self.stop = stop
+            self.needsKeyWindow = needsKeyWindow
             super.init(frame: .zero)
         }
 
@@ -155,14 +160,15 @@ struct InlineTouchID: NSViewRepresentable {
             if let observer { NotificationCenter.default.removeObserver(observer) }
             observer = nil
             guard let window, start != nil else { return }
-            if window.isKeyWindow { DispatchQueue.main.async { [weak self] in self?.fire() }; return }
+            // Next turn of the run loop, once the glyph is laid out in the window: started earlier, it waits for a click.
+            if window.isKeyWindow || !needsKeyWindow { DispatchQueue.main.async { [weak self] in self?.fire() }; return }
             observer = NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: window, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.fire() }
             }
         }
 
         private func fire() {
-            touchIDLog.notice("glyph in a key window; app active \(NSApp.isActive, privacy: .public)")
+            touchIDLog.notice("glyph starting; window key \(self.window?.isKeyWindow ?? false, privacy: .public), app active \(NSApp.isActive, privacy: .public)")
             if let observer { NotificationCenter.default.removeObserver(observer) }
             observer = nil
             let run = start

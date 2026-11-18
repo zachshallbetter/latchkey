@@ -416,7 +416,7 @@ struct ApprovalView: View {
                         if Self.drawsStandInGlyph {
                             Image(systemName: "touchid").font(.system(size: 34, weight: .light)).foregroundStyle(.pink)
                         }
-                        InlineTouchID(context: touchID) { evaluate(touchID) }
+                        InlineTouchID(context: touchID, start: { evaluate(touchID) }, needsKeyWindow: false)
                             .id(ObjectIdentifier(touchID))
                     }
                     .frame(width: 44, height: 44)
