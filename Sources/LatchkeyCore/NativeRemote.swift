@@ -171,6 +171,7 @@ public struct NativeRemote: Sendable {
         case .github: return pushGitHub(target, token, values)
         case .railway: return pushRailway(target, token, values)
         case .fly: return pushFly(target, token, values)
+        case .ssh: return all(.invalidTarget("SSH has no API route"))   // `check` already refuses it
         }
     }
 
@@ -183,6 +184,7 @@ public struct NativeRemote: Sendable {
         case .github: return try namesGitHub(target, token)
         case .railway: return try namesRailway(target, token)
         case .fly: return try namesFly(target, token)
+        case .ssh: throw NativeRemoteError.invalidTarget("SSH has no API route")   // `check` already refuses it
         }
     }
 
@@ -195,6 +197,8 @@ public struct NativeRemote: Sendable {
         case .github: return "api.github.com"
         case .railway: return "backboard.railway.com"
         case .fly: return "api.machines.dev"
+        // No API: a reserved name that never resolves, so nothing could be contacted even if a request were built.
+        case .ssh: return "invalid.invalid"
         }
     }
 

@@ -156,6 +156,7 @@ private struct LinkRow: View {
         case .github: return "chevron.left.forwardslash.chevron.right"
         case .railway: return "tram.fill"
         case .fly: return "paperplane.fill"
+        case .ssh: return "terminal.fill"
         }
     }
 
@@ -174,6 +175,7 @@ extension RemoteTarget.Service {
         case .github: return "chevron.left.forwardslash.chevron.right"
         case .railway: return "tram.fill"
         case .fly: return "paperplane.fill"
+        case .ssh: return "terminal.fill"
         }
     }
 
@@ -184,6 +186,7 @@ extension RemoteTarget.Service {
         case .github: return URL(string: "https://cli.github.com")!
         case .railway: return URL(string: "https://docs.railway.com/guides/cli")!
         case .fly: return URL(string: "https://fly.io/docs/flyctl/install/")!
+        case .ssh: return URL(string: "https://www.openssh.com/manual.html")!
         }
     }
 }
@@ -198,10 +201,11 @@ struct AddLocationSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var service: RemoteTarget.Service = .vercel
 
-    /// The App Store build leaves out GitHub's sealed box, so it can't push to GitHub Actions.
+    /// The App Store build leaves out GitHub's sealed box, so it can't push to GitHub Actions, and runs no tools, so
+    /// it can't use ssh.
     static var services: [RemoteTarget.Service] {
         #if LATCHKEY_APP_STORE
-        return RemoteTarget.Service.allCases.filter { $0 != .github }
+        return RemoteTarget.Service.allCases.filter { $0 != .github && $0 != .ssh }
         #else
         return RemoteTarget.Service.allCases
         #endif
@@ -221,6 +225,8 @@ struct AddLocationSheet: View {
     @State private var directory = ""
     @State private var tokenItem = ""
     @State private var team = ""
+    @State private var host = ""
+    @State private var script = ""
     @State private var error: String?
     @State private var working = false
     /// The service's tool: its version when installed, nil while checking, "" when it isn't installed.
@@ -245,7 +251,8 @@ struct AddLocationSheet: View {
         func v(_ s: String) -> String? { let t = s.trimmingCharacters(in: .whitespaces); return t.isEmpty ? nil : t }
         return RemoteTarget(service: service, project: v(project), environment: v(environment), repo: v(repo),
                             serviceName: v(serviceName), app: v(app), branch: v(branch), directory: v(directory),
-                            tokenItem: v(tokenItem), team: service == .vercel ? v(team) : nil)
+                            tokenItem: service == .ssh ? nil : v(tokenItem), team: service == .vercel ? v(team) : nil,
+                            host: service == .ssh ? v(host) : nil, script: service == .ssh ? v(script) : nil)
     }
 
     /// What stops Add Location: with a token item the service's API needs more than a folder can give; the App Store
@@ -342,6 +349,9 @@ struct AddLocationSheet: View {
                 case .fly:
                     field("App", $app, "your-app", "The Fly app whose secrets are set. Changes are staged until your next deploy.")
                     tokenField
+                case .ssh:
+                    field("Host", $host, "titan", "The host as named in your SSH config. Your SSH keys are used; Latchkey stores none.")
+                    field("Script", $script, "/path/to/add-credential.sh", "Run on the host as sudo -n bash SCRIPT ADAPTER ACCOUNT --stdin, once per item, with the value on standard input. Items are named ADAPTER.ACCOUNT.")
                 }
             }
 
@@ -364,7 +374,8 @@ struct AddLocationSheet: View {
                 if let error { Label(error, systemImage: "exclamationmark.triangle.fill").foregroundStyle(.red).font(.callout) }
             }
 
-            SheetFooter(note: target.tokenItem == nil ? "Values go through \(service.label)'s own tool, signed in as you. Nothing is deployed."
+            SheetFooter(note: service == .ssh ? "Values go over ssh to the script on \(target.host ?? "the host"), which restarts the service that reads them."
+                        : target.tokenItem == nil ? "Values go through \(service.label)'s own tool, signed in as you. Nothing is deployed."
                                                        : "Values go to \(service.label)'s API with the token in \(target.tokenItem ?? ""). Nothing is deployed.") {
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
                 Button("Add Location") {

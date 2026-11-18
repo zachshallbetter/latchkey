@@ -2,10 +2,11 @@ import Foundation
 import Security
 
 /// A place outside this Mac that holds an environment's values: a Vercel project's environment, a GitHub
-/// repository's (or GitHub environment's) Actions secrets, a Railway service, or a Fly app.
+/// repository's (or GitHub environment's) Actions secrets, a Railway service, a Fly app, or a credential script on a
+/// Linux host reached over ssh.
 public struct RemoteTarget: Codable, Hashable, Sendable {
     public enum Service: String, Codable, CaseIterable, Sendable {
-        case vercel, github, railway, fly
+        case vercel, github, railway, fly, ssh
 
         public var label: String {
             switch self {
@@ -13,6 +14,7 @@ public struct RemoteTarget: Codable, Hashable, Sendable {
             case .github: return "GitHub Actions"
             case .railway: return "Railway"
             case .fly: return "Fly"
+            case .ssh: return "SSH"
             }
         }
 
@@ -23,6 +25,7 @@ public struct RemoteTarget: Codable, Hashable, Sendable {
             case .github: return "gh"
             case .railway: return "railway"
             case .fly: return "flyctl"
+            case .ssh: return "ssh"
             }
         }
     }
@@ -50,10 +53,15 @@ public struct RemoteTarget: Codable, Hashable, Sendable {
     /// Vercel, with a token: the team (a slug, or an ID starting `team_`) that owns the project. Leave out for a
     /// personal project. (Added with `tokenItem`; older links have none.)
     public var team: String?
+    /// SSH: the host, as named in your SSH config. (Added with `.ssh`; older links have none.)
+    public var host: String?
+    /// SSH: the absolute path of the script on the host that stores one credential. It's run as
+    /// `sudo -n bash SCRIPT ADAPTER ACCOUNT --stdin` with the value on standard input. (Added with `.ssh`.)
+    public var script: String?
 
     public init(service: Service, project: String? = nil, environment: String? = nil, repo: String? = nil,
                 serviceName: String? = nil, app: String? = nil, branch: String? = nil, directory: String? = nil,
-                tokenItem: String? = nil, team: String? = nil) {
+                tokenItem: String? = nil, team: String? = nil, host: String? = nil, script: String? = nil) {
         self.service = service
         self.project = project
         self.environment = environment
@@ -64,6 +72,8 @@ public struct RemoteTarget: Codable, Hashable, Sendable {
         self.directory = directory
         self.tokenItem = tokenItem
         self.team = team
+        self.host = host
+        self.script = script
     }
 
     /// "Vercel shop · production", "GitHub Actions owner/repo", "Fly shop-api".
@@ -74,6 +84,7 @@ public struct RemoteTarget: Codable, Hashable, Sendable {
         case .github: parts = [repo ?? "", environment.map { "environment \($0)" } ?? ""]
         case .railway: parts = [serviceName ?? project ?? "linked project", environment ?? ""]
         case .fly: parts = [app ?? ""]
+        case .ssh: parts = [host ?? ""]
         }
         if let b = branch, !b.isEmpty { parts.append("branch \(b)") }
         return service.label + " " + parts.filter { !$0.isEmpty }.joined(separator: " · ")
@@ -87,11 +98,13 @@ public struct RemoteTarget: Codable, Hashable, Sendable {
         if service == .railway, serviceName != nil, let p = project, !p.isEmpty { extra.append("project \(p)") }
         if let d = directory, !d.isEmpty { extra.append("folder \(Broker.tilde(d))") }
         if let t = team, !t.isEmpty { extra.append("team \(t)") }
+        if let s = script, !s.isEmpty { extra.append("script \(s)") }
         return extra.isEmpty ? label : label + " (" + extra.joined(separator: ", ") + ")"
     }
 
     /// Production gets an extra confirmation on every push. Fly secrets apply to the running app, so a Fly app
-    /// counts as production unless its name says otherwise.
+    /// counts as production unless its name says otherwise. An SSH credential script restarts the service that
+    /// reads it, so it always counts.
     public var isProduction: Bool {
         let env = (environment ?? "").lowercased()
         switch service {
@@ -100,6 +113,7 @@ public struct RemoteTarget: Codable, Hashable, Sendable {
         case .fly:
             let a = (app ?? "").lowercased()
             return !(a.contains("staging") || a.contains("preview") || a.contains("dev"))
+        case .ssh: return true
         }
     }
 
@@ -121,7 +135,15 @@ public struct RemoteTarget: Codable, Hashable, Sendable {
             if !set(serviceName) { return "Railway needs a service" }
         case .fly:
             if !set(app) { return "Fly needs an app" }
+        case .ssh:
+            guard let h = host, Self.isValidHost(h) else { return "SSH needs a host from your SSH config (letters, digits, ., _ and -)" }
+            guard let s = script, Self.isValidScript(s) else { return "SSH needs the script's absolute path on the host (letters, digits, ., _, - and /)" }
+            if set(tokenItem) { return "An access token doesn't apply to SSH; it uses your SSH keys" }
+            if set(directory) || set(project) || set(environment) || set(repo) || set(serviceName) || set(app) || set(branch) || set(team) {
+                return "SSH takes only a host and a script"
+            }
         }
+        if service != .ssh && (set(host) || set(script)) { return "A host and script only apply to SSH" }
         return nil
     }
 
@@ -133,6 +155,7 @@ public struct RemoteTarget: Codable, Hashable, Sendable {
         case .vercel: if !set(project) { return "Vercel needs a project name or ID to push with a token (a linked folder can't be read)" }
         case .railway: if !set(project) { return "Railway needs a project ID to push with a token (a linked folder can't be read)" }
         case .github, .fly: break
+        case .ssh: return "An access token doesn't apply to SSH; it uses your SSH keys"
         }
         if set(team) && service != .vercel { return "A team only applies to Vercel" }
         return nil
@@ -142,10 +165,59 @@ public struct RemoteTarget: Codable, Hashable, Sendable {
     public var suggestedEnvironment: String {
         switch service {
         case .fly: return "fly"
+        case .ssh: return "ssh"
         case .github: return environment.map { "github.\($0)" } ?? "github"
         default: return "\(service.rawValue).\(environment ?? "")"
         }
     }
+
+    // MARK: SSH credential scripts
+
+    /// The most a credential script reads from standard input, counting the newline Latchkey adds.
+    public static let sshValueLimit = 64 * 1024
+
+    /// An SSH config host name. It's passed to ssh after `--` and joined into the remote command line, so only
+    /// characters with no meaning to ssh or a shell are allowed, and it can't start with `-`.
+    public static func isValidHost(_ s: String) -> Bool {
+        guard let first = s.unicodeScalars.first, s.utf8.count <= 253, alnum(first) else { return false }
+        return s.unicodeScalars.allSatisfy { alnum($0) || "._-".unicodeScalars.contains($0) }
+    }
+
+    /// An absolute script path, made only of characters a remote shell reads literally, with no `..` part.
+    public static func isValidScript(_ s: String) -> Bool {
+        guard s.hasPrefix("/"), s.utf8.count <= 512, !s.contains("//"),
+              !s.split(separator: "/").contains(where: { $0 == ".." || $0 == "." }) else { return false }
+        return s.unicodeScalars.allSatisfy { alnum($0) || "._-/".unicodeScalars.contains($0) }
+    }
+
+    /// A credential name, `ADAPTER.ACCOUNT` (`bluesky.someone.bsky.social`), split at the first dot. Both parts start
+    /// with a letter or digit, so neither can pass for an option to the script, and use only letters, digits, `_` and
+    /// `-` (the account also `.`).
+    public static func credential(_ name: String) -> (adapter: String, account: String)? {
+        guard let dot = name.firstIndex(of: "."), name.utf8.count <= 128 else { return nil }
+        let adapter = String(name[..<dot]), account = String(name[name.index(after: dot)...])
+        guard let a = adapter.unicodeScalars.first, let b = account.unicodeScalars.first, alnum(a), alnum(b) else { return nil }
+        return adapter.unicodeScalars.allSatisfy({ alnum($0) || "_-".unicodeScalars.contains($0) })
+            && account.unicodeScalars.allSatisfy({ alnum($0) || "._-".unicodeScalars.contains($0) }) ? (adapter, account) : nil
+    }
+
+    private static func alnum(_ c: Unicode.Scalar) -> Bool { (c >= "A" && c <= "Z") || (c >= "a" && c <= "z") || (c >= "0" && c <= "9") }
+
+    /// Whether a name can be sent here: a credential name for SSH, an environment variable name everywhere else.
+    public func accepts(_ name: String) -> Bool {
+        service == .ssh ? Self.credential(name) != nil : EnvironmentRecord.isValidVariable(name)
+    }
+
+    /// Whether a push command that exited 0 did what was asked. A credential script says `stored NAME`; the services'
+    /// tools are taken at their exit status.
+    public func confirms(_ stdout: String, storing names: [String]) -> Bool {
+        guard service == .ssh else { return true }
+        let lines = stdout.split(whereSeparator: \.isNewline)
+        return names.allSatisfy { n in lines.contains { $0.hasPrefix("stored \(n)") } }
+    }
+
+    /// Whether the place can be asked what it holds. A credential script can't list what it stored.
+    public var canList: Bool { service != .ssh }
 }
 
 /// One command to run: a tool, its arguments, and what to write to its standard input. Values only ever travel
@@ -199,6 +271,17 @@ extension RemoteTarget {
         case .fly:
             let lines = values.map { "\($0.name)=\($0.value)" }.joined(separator: "\n") + "\n"
             return [RemoteCommand(tool: service.tool, args: ["secrets", "import", "--stage", "--app", app ?? ""], stdin: lines, directory: directory)]
+        case .ssh:
+            // ssh joins everything after the host into one remote command line; every part is checked to hold
+            // nothing a shell would read (`problem`, `credential`). The script strips one trailing newline, so one is
+            // added and the value arrives exactly. `sudo -n` fails instead of waiting for a password nobody can type.
+            return values.map { v in
+                let c = Self.credential(v.name) ?? (adapter: "", account: "")
+                return RemoteCommand(tool: service.tool,
+                                     args: ["-T", "-o", "BatchMode=yes", "-o", "ConnectTimeout=15", "--", host ?? "",
+                                            "sudo", "-n", "bash", script ?? "", c.adapter, c.account, "--stdin"],
+                                     stdin: v.value + "\n", directory: nil)
+            }
         }
     }
 
@@ -217,6 +300,9 @@ extension RemoteTarget {
             return RemoteCommand(tool: service.tool, args: ["variable", "list", "--json"] + railwayScope, stdin: nil, directory: directory)
         case .fly:
             return RemoteCommand(tool: service.tool, args: ["secrets", "list", "--app", app ?? "", "--json"], stdin: nil, directory: directory)
+        case .ssh:
+            // Never run: `canList` is false, and status reports from Latchkey's own push record instead.
+            return RemoteCommand(tool: service.tool, args: [], stdin: nil, directory: nil)
         }
     }
 
@@ -238,6 +324,8 @@ extension RemoteTarget {
                 } else if let a = x as? [Any] { a.forEach(walk) }
             }
             walk(json)
+        case .ssh:
+            return nil
         case .github, .fly:
             guard let rows = json as? [[String: Any]] else { return nil }
             out = rows.compactMap { ($0["name"] ?? $0["Name"]) as? String }

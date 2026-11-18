@@ -9,6 +9,7 @@ of pasting into each dashboard.
 | GitHub Actions | a repository's secrets, or a GitHub environment's | `gh` |
 | Railway | a service in an environment | `railway` |
 | Fly | an app's secrets | `flyctl` |
+| SSH | a credential script on a Linux host, one credential per item (direct download only) | `ssh` |
 
 Latchkey reaches each service one of two ways:
 
@@ -25,6 +26,7 @@ latchkey remote link shop/vercel.preview vercel project=shop environment=preview
 latchkey remote link shop/production github repo=me/shop environment=production
 latchkey remote link shop/railway.production railway environment=production service=api dir=~/Projects/shop
 latchkey remote link shop/production fly app=shop-api
+latchkey remote link distribution/production ssh host=titan script=/ai/projects/distribution-mcp/current/deploy/titan/add-credential.sh
 ```
 
 | Key | Used by | Meaning |
@@ -38,6 +40,8 @@ latchkey remote link shop/production fly app=shop-api
 | `dir` | Vercel, Railway | A folder linked with `vercel link` or `railway link`, instead of `project`. Tools only |
 | `token` | all | The item that holds the service's access token. Pushes and status then use the service's API |
 | `team` | Vercel, with `token` | The team's slug, or its ID (`team_…`), when the project belongs to a team |
+| `host` | SSH | The host as named in your SSH config (letters, digits, `.`, `_`, `-`) |
+| `script` | SSH | The absolute path of the credential script on the host |
 
 Linking asks for approval. A link covers the whole environment, including items added later. In the app: open an
 item's **Edit › Remote Locations…** (or its Remote card) › **Add a Location…**. The sheet asks for the service's
@@ -55,7 +59,9 @@ latchkey remote status shop/production
 ```
 
 For each link: names missing there, names only there, and items whose value changed since they were last pushed.
-Status reads names only. (Railway's listing includes values; Latchkey keeps the names and discards the rest.)
+Status reads names only. (Railway's listing includes values; Latchkey keeps the names and discards the rest.) An SSH
+credential script can't list what it holds, so its status comes from Latchkey's own record: items never pushed there,
+and items changed since they were.
 
 ## Pushing
 
@@ -66,8 +72,8 @@ latchkey push shop/production --to <link> --only shop/production/DATABASE_URL
 ```
 
 - Every push asks, every time. No grant covers a push.
-- Production targets (Vercel production, a GitHub or Railway environment named like production, and Fly apps unless
-  their name says staging, preview or dev) need **I mean to change production** ticked in the panel before you can
+- Production targets (Vercel production, a GitHub or Railway environment named like production, Fly apps unless
+  their name says staging, preview or dev, and every SSH credential script, which restarts the service reading it) need **I mean to change production** ticked in the panel before you can
   approve.
 - Pushes run only in the app.
 - Values go to each tool on standard input, never as command arguments:
@@ -78,6 +84,7 @@ latchkey push shop/production --to <link> --only shop/production/DATABASE_URL
   | GitHub | `gh secret set NAME --repo OWNER/REPO [--env ENV]` |
   | Railway | `railway variable set NAME --stdin --skip-deploys` |
   | Fly | `flyctl secrets import --stage --app APP` (one line per value; multi-line values aren't supported) |
+  | SSH | `ssh -T -o BatchMode=yes -- HOST sudo -n bash SCRIPT ADAPTER ACCOUNT --stdin` (see [SSH credential scripts](#ssh-credential-scripts)) |
 
 - **Nothing is deployed.** Railway and Fly would deploy by default, so those flags turn it off (the API calls below
   do the same). New values take effect
@@ -88,6 +95,26 @@ latchkey push shop/production --to <link> --only shop/production/DATABASE_URL
   name yet are sent too. Without a record, the environment's own items are sent, each named after the last part of
   its ID (`shop/production/DATABASE_URL` is pushed as `DATABASE_URL`). `remote status` compares the same list.
 - Error messages from the tools are shortened, and any value in them is replaced with `<value>`.
+
+### SSH credential scripts
+
+For a service on a Linux host that reads its credentials from files, such as a systemd unit with `LoadCredential=`.
+Latchkey runs the host's own script once per item, over your ssh connection, with your SSH keys; it stores no SSH
+credentials and the service never talks to Latchkey.
+
+- **Item names are credential names:** `ADAPTER.ACCOUNT`, split at the first dot.
+  `distribution/production/bluesky.someone.bsky.social` is sent as adapter `bluesky`, account
+  `someone.bsky.social`. Both parts start with a letter or digit and use letters, digits, `_` and `-` (the account
+  also `.`). A name that doesn't fit stops the push before anything runs.
+- **The script contract:** `sudo -n bash SCRIPT ADAPTER ACCOUNT --stdin`, the value on standard input followed by one
+  newline (which the script strips), at most 64 KiB in all. It prints `stored ADAPTER.ACCOUNT` when it has stored
+  the value; anything else counts as a failure even if it exits 0. Empty values aren't sent.
+- **sudo can't ask for a password.** The push has no terminal, so the host needs a sudoers rule letting your account
+  run that one script without a password; otherwise the push fails with sudo's message.
+- **Nothing a link holds reaches the remote shell as code.** ssh joins everything after the host into one command
+  line, so the host, script path and both name parts are limited to characters a shell reads literally, and a link
+  synced from another Mac is checked again before each push.
+- **Status is Latchkey's record** (see Checking), and unlinking doesn't remove anything from the host.
 
 ### Pushing through an API
 

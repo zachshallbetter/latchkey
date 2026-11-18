@@ -3,6 +3,10 @@
 ## Unreleased
 
 ### App
+- A new remote location, **SSH**, pushes to a credential script on a Linux host over your ssh connection, one item
+  per credential (`ADAPTER.ACCOUNT`) with the value on standard input: `latchkey remote link distribution/production
+  ssh host=titan script=/path/to/add-credential.sh`. It always counts as production, its status comes from
+  Latchkey's push record, and the direct download only (#96).
 - Approvals are one small panel with Touch ID inside it, for releases and changes alike; **Use Password…** opens the
   system sheet. Requests from the same agent in the same folder that arrive while it's up join it as rows, so one
   touch answers a burst; each row can be denied on its own. Pushes, SSH, Safari and unidentified programs are still

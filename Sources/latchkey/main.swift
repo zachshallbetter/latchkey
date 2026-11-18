@@ -847,7 +847,7 @@ func remoteCommand(_ args: [String]) -> Never {
         printLinks(send(Request(op: "links", names: rest.first.map { [$0] })).links ?? [])
     case "link":
         guard rest.count >= 2, RemoteLink.isValidScope(rest[0]), let service = RemoteTarget.Service(rawValue: rest[1]) else {
-            fail("usage: latchkey remote link PROJECT/ENV vercel|github|railway|fly KEY=VALUE...", code: 64)
+            fail("usage: latchkey remote link PROJECT/ENV vercel|github|railway|fly|ssh KEY=VALUE...", code: 64)
         }
         var t = RemoteTarget(service: service)
         for pair in rest.dropFirst(2) {
@@ -862,14 +862,17 @@ func remoteCommand(_ args: [String]) -> Never {
             case "branch": t.branch = value
             case "token": t.tokenItem = value
             case "team": t.team = value
+            case "host": t.host = value
+            case "script": t.script = value
             case "dir": t.directory = URL(fileURLWithPath: (value as NSString).expandingTildeInPath).standardizedFileURL.path
-            default: fail("unknown key \(key) (project, environment, repo, service, app, branch, dir, token, team)", code: 64)
+            default: fail("unknown key \(key) (project, environment, repo, service, app, branch, dir, token, team, host, script)", code: 64)
             }
         }
         if let problem = t.problem { fail(problem, code: 64) }
         let r = send(Request(op: "link", names: [rest[0]], target: t))
         if let l = r.links?.first { print("linked \(l.scope) → \(l.target.label) (\(l.id))") }
-        if ItemID(rest[0] + "/X")?.environment.contains(".") == false, rest[0].split(separator: "/").last.map(String.init) != t.suggestedEnvironment {
+        // An SSH credential script takes its own names (ADAPTER.ACCOUNT), so a per-service environment doesn't apply.
+        if t.service != .ssh, ItemID(rest[0] + "/X")?.environment.contains(".") == false, rest[0].split(separator: "/").last.map(String.init) != t.suggestedEnvironment {
             print("tip: values that differ by service can live in their own environment, e.g. \(rest[0].split(separator: "/")[0])/\(t.suggestedEnvironment)")
         }
     case "unlink":

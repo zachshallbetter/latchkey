@@ -1107,6 +1107,12 @@ public final class Broker: @unchecked Sendable {
         for link in try remotes.all() where link.scope == scope {
             let stale = entries.filter { e in e.item.map { link.state(of: $0, valueChangedAt: valueChangedAt($0)) == .outOfDate } ?? false }
                 .map(\.name).sorted()
+            if !link.target.canList {
+                // Nothing to ask: what's there is what Latchkey pushed, by its own record.
+                let never = entries.filter { link.pushed[$0.key] == nil }.map(\.name).sorted()
+                out.append(RemoteStatus(link: link.id, label: link.target.label, missing: never, outOfDate: stale))
+                continue
+            }
             if let route = nativeRoute(link) {
                 // Names only: the token is read for the request and nothing it returns is kept except names.
                 let listed: Result<[String], NativeRemoteError>
@@ -1154,10 +1160,15 @@ public final class Broker: @unchecked Sendable {
             return Response(ok: false, error: held.isEmpty ? "nothing to push in \(scope)"
                             : "\(scope) has only unconfirmed variables: \(held.map(\.name).joined(separator: ", ")) (lk env confirm \(scope))")
         }
+        // A link synced from another Mac is only checked where it was made, so each is checked again before it's used.
+        for link in links { if let problem = link.target.problem { return Response(ok: false, error: "\(link.target.label): \(problem); nothing was pushed") } }
         // Names reach each service's tool as arguments or `NAME=value` lines; a record synced from elsewhere is only
         // checked when written there, so every route checks the names it sends (the API route also does in NativeRemote).
-        if let bad = entries.first(where: { !EnvironmentRecord.isValidVariable($0.name) }) {
-            return Response(ok: false, error: "\(scope) has a variable named \(bad.name.debugDescription), which isn't a valid variable name; nothing was pushed")
+        for link in links {
+            if let bad = entries.first(where: { !link.target.accepts($0.name) }) {
+                let rule = link.target.service == .ssh ? "a credential name (ADAPTER.ACCOUNT)" : "a valid variable name"
+                return Response(ok: false, error: "\(scope) has a variable named \(bad.name.debugDescription), which isn't \(rule) for \(link.target.label); nothing was pushed")
+            }
         }
 
         // Links that push through an API say which item holds their token, and it has to exist before anyone is asked.
@@ -1195,6 +1206,11 @@ public final class Broker: @unchecked Sendable {
                     results.append(PushResult(link: link.id, item: e.key, ok: false, error: "Fly secrets import takes one line per value"))
                     continue
                 }
+                if link.target.service == .ssh && (value.isEmpty || value.utf8.count + 1 > RemoteTarget.sshValueLimit) {
+                    results.append(PushResult(link: link.id, item: e.key, ok: false,
+                                              error: value.isEmpty ? "an empty value isn't sent" : "longer than the script reads (64 KiB)"))
+                    continue
+                }
                 batch.append((e.name, value, e.secret))
                 ids.append(e.key)
             }
@@ -1216,11 +1232,16 @@ public final class Broker: @unchecked Sendable {
                 let commands = link.target.pushCommands(batch)
                 // One command per item, except Fly, where one command carries them all.
                 let groups: [[String]] = commands.count == ids.count ? ids.map { [$0] } : [ids]
+                let nameOf = Dictionary(entries.map { ($0.key, $0.name) }, uniquingKeysWith: { a, _ in a })
                 for (command, group) in zip(commands, groups) {
                     let r = runner.run(command, timeout: 120)
                     let secrets = group.compactMap { values[$0] }
+                    let confirmed = link.target.confirms(r.stdout, storing: group.compactMap { nameOf[$0] })
                     for id in group {
-                        if r.status == 0 {
+                        if r.status == 0 && !confirmed {
+                            results.append(PushResult(link: link.id, item: id, ok: false,
+                                                      error: "\(link.target.service.tool): \(link.target.host ?? "the host") didn't confirm storing it"))
+                        } else if r.status == 0 {
                             link.pushed[id] = Date()
                             results.append(PushResult(link: link.id, item: id, ok: true))
                         } else {
