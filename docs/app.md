@@ -27,7 +27,9 @@ search field (⌘F). Under the search field, **Type**, **Environment**, **Projec
 list and show what they're set to, and the button after them holds the grouping, sort order, access,
 **Clear Filters**, **Import .env File…** and **Move Selected to a Project…**.
 
-Items are listed in sections, each with a heading and a count that folds it away when clicked. **Group By** chooses
+Items are listed in sections. Each section's heading is a row like the sidebar's: the project's icon (or the
+environment's colour, the service's logo), its name and how many items, with a chevron that opens or folds it. Up to
+eight sections start open; more start folded, so the list reads as a table of contents, and a search opens them all. **Group By** chooses
 the sections: **Automatic** (environments in a project's view, projects everywhere else, Shared first), **Project**,
 **Environment**, **Service**, **Type** or **None**. Within a section items are listed by name in two lines: an icon for
 its type (token, API key, database, URL, password, key file, plain value; hover for its name) beside the name, and

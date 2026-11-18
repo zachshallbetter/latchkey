@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 351,
-    "includedBytes": 2777806,
+    "includedBytes": 2789832,
     "excludedCounts": {
       "extension": 86,
       "generated-or-transient-file": 1
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "5a1a1f7f88eb8f5404501e4185368f9e313c224d",
-        "branch": "audit-fixes",
+        "commit": "da0cfa11cdce15c53584749b8c5c179903f50582",
+        "branch": "list-grouping",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "34115bb89a9a83de4c607204c93e168bfb47c2345b9f8126d101c9ae973881f3",
+  "aggregateSourceDigest": "1a36eca5214b15fe23560a6679939b8970de5f0a1cca27039367814041f7754c",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -939,13 +939,13 @@
     },
     {
       "path": "App/Latchkey/LatchkeyApp.swift",
-      "bytes": 56735,
-      "sha256": "422d8268cf0aca31cb4a16ab6d224def74b2c848b8be62c38c1787927c171161"
+      "bytes": 60747,
+      "sha256": "328b8d2aef6f3cef4849f5a6397938a3f831834655de5de73f343f038ed1d31e"
     },
     {
       "path": "App/Latchkey/MainWindow.swift",
-      "bytes": 37139,
-      "sha256": "176c7fa3a2b8493cec5491d2520e4d10221c30c9d73b023ddc6aeb0ea823ac47"
+      "bytes": 41935,
+      "sha256": "f5b2c9d9bd15c5cbf9de56082f7d9c117eb7f27e4ec91ed151712f05c2ec8eab"
     },
     {
       "path": "App/Latchkey/MenuBarPanel.swift",
@@ -954,8 +954,8 @@
     },
     {
       "path": "App/Latchkey/Pages.swift",
-      "bytes": 45758,
-      "sha256": "ced6e7e29b033b5f7387eb57fe501db760791f12e285f2cc9356e4f8b53e0451"
+      "bytes": 47600,
+      "sha256": "ffc548380211dfe389a4b453ac1dd06c78139c548a3c3735012cffff681e9db0"
     },
     {
       "path": "App/Latchkey/ProEntitlement.swift",
@@ -1059,8 +1059,8 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 29400,
-      "sha256": "25660e90facbe2e1e48fbe0381fb3ee2ea9f714aa030af4cc163272d8d6292d8"
+      "bytes": 30037,
+      "sha256": "2c6bc692949d3366114ae8a420a812afd320f8591f127913ce4397ea9f4d743d"
     },
     {
       "path": "LICENSE.md",
@@ -1424,8 +1424,8 @@
     },
     {
       "path": "docs/app.md",
-      "bytes": 18158,
-      "sha256": "3354540c1fe88b7f5b46e1db30bc4c99e4069ae28cb68bc5ac929649b87b934a"
+      "bytes": 18897,
+      "sha256": "c6d8ae1ca11af44d5a4bcd59277f4ed18624c1d8424cf6f86d5ed79e858b8262"
     },
     {
       "path": "docs/apple-passwords-and-passkeys.md",

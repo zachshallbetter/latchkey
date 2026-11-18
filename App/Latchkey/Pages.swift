@@ -318,26 +318,20 @@ struct FindingDetail: View {
     let finding: Finding
     @State private var working = false
     @State private var combining = false
-    /// Project groups opened by hand. Long findings start folded, so the list reads as a table of contents.
-    @State private var opened: Set<String> = []
-    @State private var closed: Set<String> = []
+    /// Project groups opened or folded by hand; whether they start open follows the list's rule (few open, many folded).
+    @State private var toggled: Set<String> = []
 
     /// The finding's items by project, Shared first.
-    private var groups: [(key: String, title: String, items: [SecretInfo])] {
+    private var groups: [ItemGroup] {
         let by = Dictionary(grouping: finding.items) { $0.ref.isShared ? "" : $0.ref.project }
         return by.keys.sorted { a, b in a.isEmpty != b.isEmpty ? a.isEmpty : a.localizedStandardCompare(b) == .orderedAscending }
-            .map { ($0, $0.isEmpty ? "Shared" : $0, by[$0]!) }
+            .map { ItemGroup(id: $0, title: $0.isEmpty ? "Shared" : $0, items: by[$0]!, mode: .project, key: $0) }
     }
 
-    private func isOpen(_ key: String) -> Bool {
-        finding.items.count <= 30 ? !closed.contains(key) : opened.contains(key)
-    }
+    private func isOpen(_ key: String, among count: Int) -> Bool { (count <= 8) != toggled.contains(key) }
 
     private func toggle(_ key: String) {
-        withAnimation(.snappy) {
-            if finding.items.count <= 30 { if closed.contains(key) { closed.remove(key) } else { closed.insert(key) } }
-            else { if opened.contains(key) { opened.remove(key) } else { opened.insert(key) } }
-        }
+        withAnimation(.snappy) { if toggled.contains(key) { toggled.remove(key) } else { toggled.insert(key) } }
     }
 
     var body: some View {
@@ -348,27 +342,28 @@ struct FindingDetail: View {
                 if !finding.items.isEmpty {
                     let grouped = groups
                     Text("Items (\(finding.items.count))\(grouped.count > 1 ? " in \(grouped.count) places" : "")").font(.headline)
-                    ForEach(grouped, id: \.key) { group in
-                        VStack(alignment: .leading, spacing: 6) {
+                    Card(padding: 0) {
+                        ForEach(Array(grouped.enumerated()), id: \.element.id) { gi, group in
+                            let open = grouped.count == 1 || isOpen(group.key, among: grouped.count)
                             if grouped.count > 1 {
-                                GroupHeader(title: group.title, count: group.items.count, collapsed: !isOpen(group.key)) { toggle(group.key) }
+                                GroupRow(group: group, image: group.key.isEmpty ? nil : model.projectIcon(group.key), open: open) { toggle(group.key) }
+                                    .padding(.horizontal, 12).padding(.vertical, 3)
                             }
-                            if grouped.count == 1 || isOpen(group.key) {
-                                Card(padding: 0) {
-                                    ForEach(Array(group.items.enumerated()), id: \.element.id) { i, item in
-                                        Button { model.filter = .all; model.selection = [item.name] } label: {
-                                            HStack {
-                                                ItemRow(item: item, showsProject: false, showsEnvironment: true)
-                                                Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
-                                            }
-                                            .padding(.horizontal, 12)
-                                            .contentShape(Rectangle())
+                            if open {
+                                ForEach(group.items) { item in
+                                    if grouped.count > 1 || item.id != group.items.first?.id { Divider().padding(.leading, 12) }
+                                    Button { model.filter = .all; model.selection = [item.name] } label: {
+                                        HStack {
+                                            ItemRow(item: item, showsProject: false, showsEnvironment: true)
+                                            Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
                                         }
-                                        .buttonStyle(.plain)
-                                        if i < group.items.count - 1 { Divider() }
+                                        .padding(.leading, grouped.count > 1 ? 30 : 12).padding(.trailing, 12)
+                                        .contentShape(Rectangle())
                                     }
+                                    .buttonStyle(.plain)
                                 }
                             }
+                            if gi < grouped.count - 1 { Divider() }
                         }
                     }
                 }

@@ -340,16 +340,14 @@ struct ItemList: View {
                 if group.title.isEmpty {
                     rows(group.items, inProject: inProject, mode: mode)
                 } else {
-                    Section {
-                        if !model.collapsedGroups.contains(group.id) { rows(group.items, inProject: inProject, mode: mode) }
-                    } header: {
-                        GroupHeader(title: group.title, count: group.items.count, collapsed: model.collapsedGroups.contains(group.id)) {
-                            withAnimation(.snappy) {
-                                if model.collapsedGroups.contains(group.id) { model.collapsedGroups.remove(group.id) }
-                                else { model.collapsedGroups.insert(group.id) }
-                            }
-                        }
-                    }
+                    let open = model.groupIsOpen(group.id, among: groups.count)
+                    // A plain row, not a list section header, so a folded section is one compact line.
+                    GroupRow(group: group, image: group.mode == .project && !group.key.isEmpty ? model.projectIcon(group.key) : nil,
+                             open: open) { withAnimation(.snappy) { model.toggleGroup(group.id) } }
+                        .listRowSeparator(open ? .visible : .hidden, edges: .bottom)
+                        .listRowSeparator(.hidden, edges: .top)
+                        .selectionDisabled()
+                    if open { rows(group.items, inProject: inProject, mode: mode) }
                 }
             }
         }
@@ -395,27 +393,46 @@ struct ItemList: View {
     }
 }
 
-/// A list section's heading: its name and count, folding the section when clicked.
-struct GroupHeader: View {
-    let title: String
-    let count: Int
-    let collapsed: Bool
+/// A section's heading, drawn like the sidebar's project rows: the project's icon (or the environment's colour, the
+/// service's logo, the type's symbol), its name, how many items, and a chevron that folds it.
+struct GroupRow: View {
+    let group: ItemGroup
+    var image: NSImage? = nil
+    let open: Bool
     let toggle: () -> Void
 
     var body: some View {
         Button(action: toggle) {
-            HStack(spacing: 6) {
-                Image(systemName: "chevron.down").font(.caption2.weight(.bold)).foregroundStyle(.tertiary)
-                    .rotationEffect(.degrees(collapsed ? -90 : 0))
-                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
-                Text("\(count)").font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
-                Spacer()
+            HStack(spacing: 10) {
+                icon.frame(width: 20)
+                Text(group.title).font(.body.weight(.medium)).lineLimit(1).truncationMode(.middle)
+                Spacer(minLength: 4)
+                Text("\(group.items.count)").monospacedDigit().foregroundStyle(.secondary)
+                Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+                    .rotationEffect(.degrees(open ? 90 : 0))
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, 5)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help(collapsed ? "Show \(title)" : "Hide \(title)")
+        .help(open ? "Hide \(group.title)" : "Show \(group.title)")
+    }
+
+    @ViewBuilder private var icon: some View {
+        switch group.mode {
+        case .project where group.key.isEmpty, .environment where group.key.isEmpty:
+            Image(systemName: "tray.full").foregroundStyle(.secondary)
+        case .project:
+            if let image { SiteIcon(image: image) } else { Image(systemName: "folder").foregroundStyle(.secondary) }
+        case .environment:
+            Circle().fill(EnvBadge(environment: group.key).tint).frame(width: 9, height: 9)
+        case .service:
+            if let logo = SiteIcon.service(group.key) { SiteIcon(image: logo) } else { Image(systemName: "square.dashed").foregroundStyle(.secondary) }
+        case .type:
+            if let first = group.items.first { let t = ItemType(first); Image(systemName: t.symbol).foregroundStyle(t.tint) }
+        case .automatic, .none:
+            EmptyView()
+        }
     }
 }
 

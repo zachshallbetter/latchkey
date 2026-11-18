@@ -235,6 +235,9 @@ struct ItemGroup: Identifiable {
     let id: String
     let title: String
     let items: [SecretInfo]
+    /// What the section is by: its grouping and raw key ("" for Shared or No Service).
+    var mode: ListGrouping = .none
+    var key: String = ""
 }
 
 struct ImportDraft: Identifiable {
@@ -324,8 +327,18 @@ final class AppModel {
     }
     /// Narrows the sidebar's project list as typed.
     var projectQuery = ""
-    /// List sections folded away, by grouping and section ("project:shop").
-    var collapsedGroups: Set<String> = []
+    /// List sections opened or folded by hand, by grouping and section ("Project:shop"). Whether a section starts open
+    /// depends on how many there are (`groupStartsOpen`); a toggle flips that.
+    var toggledGroups: Set<String> = []
+
+    /// Few sections start open; many start folded, so the list reads as a table of contents. A search opens them all.
+    func groupStartsOpen(count: Int) -> Bool { count <= 8 || !search.isEmpty }
+
+    func groupIsOpen(_ id: String, among count: Int) -> Bool { groupStartsOpen(count: count) != toggledGroups.contains(id) }
+
+    func toggleGroup(_ id: String) {
+        if toggledGroups.contains(id) { toggledGroups.remove(id) } else { toggledGroups.insert(id) }
+    }
     var showingAdd = false
     /// Set when the broker refuses an op that needs Latchkey Pro.
     var showingUpgrade = false
@@ -602,7 +615,7 @@ final class AppModel {
             case .service: title = k.isEmpty ? "No Service" : k
             default: title = k
             }
-            return ItemGroup(id: "\(mode.rawValue):\(k)", title: title, items: byKey[k] ?? [])
+            return ItemGroup(id: "\(mode.rawValue):\(k)", title: title, items: byKey[k] ?? [], mode: mode, key: k)
         }
     }
 
