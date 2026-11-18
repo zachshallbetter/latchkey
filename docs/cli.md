@@ -306,7 +306,7 @@ dashboards. It takes you to the page, saves what you paste, and puts it everywhe
 | Command | |
 |---|---|
 | `latchkey remote list [PROJECT/ENV]` | Links, with when each was last pushed. |
-| `latchkey remote link PROJECT/ENV SERVICE KEY=VALUE...` | Link an environment. SERVICE is `vercel`, `github`, `railway` or `fly`. Asks. |
+| `latchkey remote link PROJECT/ENV SERVICE KEY=VALUE...` | Link an environment. SERVICE is `vercel`, `github`, `railway`, `fly` or `ssh`. Asks. |
 | `latchkey remote unlink LINK` | Remove a link. Doesn't ask. |
 | `latchkey remote status PROJECT/ENV` | Names missing on each side, and values changed since the last push. |
 | `latchkey push PROJECT/ENV [--to LINK] [--only IDS] [--dry-run]` | Push values. Asks every time; production needs its own confirmation in the app. |

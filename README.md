@@ -22,8 +22,8 @@ DATABASE_URL=latchkey://shop/…  ──► approve (Touch ID) or a grant ──
   are shared. Import a `.env` file, or a hundred, and Latchkey places each value for you.
 - **Remembers.** Every read and change is logged without values. Earlier values are kept, and a deleted item can
   be restored for 30 days.
-- **Pushes where values live.** Link an environment to Vercel, GitHub Actions, Railway or Fly and push to it, using
-  each service's own tool.
+- **Pushes where values live.** Link an environment to Vercel, GitHub Actions, Railway, Fly or a credential script
+  on a Linux host over ssh, and push to it, using each service's own tool.
 - **Syncs.** Values are in iCloud Keychain, end-to-end encrypted, on every Mac signed in to your Apple Account.
 
 ## Quick start
@@ -58,7 +58,7 @@ Codex CLI, Gemini CLI, Cursor and other tools that read Agent Skills can use the
 | [Command line](docs/cli.md) | Every command and option, and exit codes |
 | [Using with agents](docs/agents.md) | Running agents with secrets they can use but don't hold |
 | [Importing](docs/import.md) | Moving `.env` files into Latchkey, one or many at a time |
-| [Remote locations](docs/remote.md) | Vercel, GitHub Actions, Railway and Fly |
+| [Remote locations](docs/remote.md) | Vercel, GitHub Actions, Railway, Fly and Linux hosts over ssh |
 | [Security](docs/security.md) | What Latchkey protects against, and what it doesn't |
 | [Security policy](SECURITY.md) | Reporting a vulnerability |
 | [Apple Passwords and passkeys](docs/apple-passwords-and-passkeys.md) | How Latchkey relates to the Passwords app |

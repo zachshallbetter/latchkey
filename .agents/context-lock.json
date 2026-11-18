@@ -5,8 +5,8 @@
   "validityBasis": "aggregate-source-digest",
   "selectedPaths": [],
   "sourceSelection": {
-    "includedCount": 359,
-    "includedBytes": 2841846,
+    "includedCount": 360,
+    "includedBytes": 2862747,
     "excludedCounts": {
       "extension": 86,
       "generated-or-transient-file": 1
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "5e1487b4958fa66faf182393ce145e9bb29473b4",
-        "branch": "approval-groups",
+        "commit": "e07cc3a50cefde1879619fc3578a98c8346d0b6d",
+        "branch": "titan-credentials",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "12e9f0e0c3170029b1c5c04c6b946c2d50a346099288fcd05220be3173845c5b",
+  "aggregateSourceDigest": "fc8ad967e474cb56041a4da6a63c1449f184a35b67a3ab40809b8b39453b306f",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -989,8 +989,8 @@
     },
     {
       "path": "App/Latchkey/RemoteViews.swift",
-      "bytes": 24644,
-      "sha256": "389e687e71a60bbb7b3b0e8b1c6228d3bb2789357ff17958d91550a5829049da"
+      "bytes": 25614,
+      "sha256": "610ae79b7116baf7083620095bd881104d419fcb6f7bdda871e77e917d46badf"
     },
     {
       "path": "App/Latchkey/SandboxSelfTest.swift",
@@ -1079,8 +1079,8 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 31431,
-      "sha256": "0f50c2a2c592b2bdba696a4fbd6e508a01cf72eb80982cd02fe689d7b9d41205"
+      "bytes": 31832,
+      "sha256": "af5e76f6b2b3ada67577ba9e1442c67a9d6dfd5583e058416c7e1cecf2859bb2"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1104,8 +1104,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 5810,
-      "sha256": "e0f90866b18ab9099f8cd4ba42769c1b39a41a96add0f2350163b1cd766ab53e"
+      "bytes": 5879,
+      "sha256": "f294d98c54eb8d67a2bd52b7615fcded1447af46fbb635a9cab9dca846256e26"
     },
     {
       "path": "SECURITY.md",
@@ -1134,8 +1134,8 @@
     },
     {
       "path": "Sources/LatchkeyCore/Broker.swift",
-      "bytes": 99157,
-      "sha256": "eb728e0ff5e9d4ddd1881287f772ebc449667b76deae480c03dbb9d5fd9eff96"
+      "bytes": 100905,
+      "sha256": "a8b0a489d732101980da1bbd9be29d09c09b6067f9cdaf36f75764dfe32d4c4a"
     },
     {
       "path": "Sources/LatchkeyCore/BrokerEndpoint.swift",
@@ -1209,8 +1209,8 @@
     },
     {
       "path": "Sources/LatchkeyCore/NativeRemote.swift",
-      "bytes": 29574,
-      "sha256": "417567916ac85eef93cfa21c9790430dfe12b79b707d452ed6556e526afc5a00"
+      "bytes": 29949,
+      "sha256": "6b8bd7f676ee7b2ec0fd1c1aa915f1da4c6370f1bc07858d82f034e663926365"
     },
     {
       "path": "Sources/LatchkeyCore/Peer.swift",
@@ -1229,8 +1229,8 @@
     },
     {
       "path": "Sources/LatchkeyCore/Remote.swift",
-      "bytes": 21661,
-      "sha256": "7355dba8bd90b668eb969df34f6fc2b8bb4fc4006a6055d55855582c11bf968d"
+      "bytes": 27495,
+      "sha256": "c5675f74cb5fad93d58dcdd7d1e3262e12b0582d3098c6eb061312aa67c5cbef"
     },
     {
       "path": "Sources/LatchkeyCore/Repo.swift",
@@ -1299,8 +1299,8 @@
     },
     {
       "path": "Sources/latchkey/main.swift",
-      "bytes": 80794,
-      "sha256": "a357d3d5aec7faedb04b6254e0a9b0037dd619f0c36e837da706526d8182bb35"
+      "bytes": 80896,
+      "sha256": "969a4f4d4b503aad6105eafe9d407b216353ca5d3b12ca547c942f7e276a2b8b"
     },
     {
       "path": "Tests/LatchkeyCoreTests/AWSTests.swift",
@@ -1411,6 +1411,11 @@
       "path": "Tests/LatchkeyCoreTests/RemoteTests.swift",
       "bytes": 12195,
       "sha256": "a495e9803f5f7607c33abcaf8b6222cf7c6bf76d352e7e3a3c5ef7af8dc7a4ff"
+    },
+    {
+      "path": "Tests/LatchkeyCoreTests/SSHRemoteTests.swift",
+      "bytes": 8981,
+      "sha256": "82af518e23454302ca918141e2d6974754e951f4a93ae835b1c2b6a191f9e35c"
     },
     {
       "path": "Tests/LatchkeyCoreTests/ScanTests.swift",
@@ -1529,8 +1534,8 @@
     },
     {
       "path": "docs/cli.md",
-      "bytes": 23441,
-      "sha256": "7dfbfecfe97e49d3430f7beb527fc9864f8f3010c55fe6bc349efbe42fa34c04"
+      "bytes": 23448,
+      "sha256": "908bfc0b58018552355079f1f038c778c3f270fcdaf6ef8febbb3ed8c59f96fd"
     },
     {
       "path": "docs/concepts.md",
@@ -1604,8 +1609,8 @@
     },
     {
       "path": "docs/remote.md",
-      "bytes": 8576,
-      "sha256": "aad23a92af0119dfc8777565b5cfe2d3a7f6f703710f5b2ec590d6832cdc5e28"
+      "bytes": 10954,
+      "sha256": "6d1cfd7770b6c20ffe721aef7f22ba5987e30804e690331ec6b98ef0bffeac4a"
     },
     {
       "path": "docs/security.md",
@@ -1769,8 +1774,8 @@
     },
     {
       "path": "site/privacy.html",
-      "bytes": 7540,
-      "sha256": "7694c86eb8f8d5ea00599b136c4b3722870263ac9b298cbc28fa80a9ffcf9e24"
+      "bytes": 7576,
+      "sha256": "9dd0824674c43ae95edcd1684084ae2afc243269355aabdb562c5965644a5687"
     },
     {
       "path": "site/roadmap.html",
