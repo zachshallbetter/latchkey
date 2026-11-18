@@ -117,10 +117,15 @@ final class ApprovalWindow {
         let view = ApprovalView(group: group,
                                 deny: { [weak self] ticket in self?.deny(ticket) },
                                 decide: { [weak self] decision in self?.finish(decision) })
+        // The default sizing (the window follows the view's size through constraints). `.preferredContentSize` fed the
+        // window's size back into the view and looped until AppKit raised, when a production push's panel changed size.
         let host = NSHostingController(rootView: view)
-        host.sizingOptions = [.preferredContentSize]
         let panel = NSPanel(contentViewController: host)
-        panel.styleMask = [.titled, .fullSizeContentView]
+        // A panel that takes the keyboard without activating Latchkey: Touch ID inside it only listens while it's the
+        // key window, and macOS won't let a background app activate itself over the app you're in. Not activating also
+        // leaves Latchkey's main window where it was.
+        panel.styleMask = [.titled, .fullSizeContentView, .nonactivatingPanel]
+        panel.becomesKeyOnlyIfNeeded = false
         panel.titlebarAppearsTransparent = true
         panel.titleVisibility = .hidden
         panel.isMovableByWindowBackground = true
@@ -129,7 +134,6 @@ final class ApprovalWindow {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.center()
         self.panel = panel
-        NSApp.activate()
         panel.makeKeyAndOrderFront(nil)
     }
 
@@ -301,6 +305,8 @@ struct ApprovalView: View {
             } label: {
                 Text("Details").font(.callout)
             }
+            // Not the panel's first focus: the ring drew around Details as if it were the thing to press.
+            .focusEffectDisabled()
             if request.production {
                 VStack(alignment: .leading, spacing: 6) {
                     Label("This sends values to production.", systemImage: "exclamationmark.triangle.fill")
@@ -341,6 +347,9 @@ struct ApprovalView: View {
         }
         .padding(18)
         .frame(width: 420)
+        // No keyboard focus rings: with keyboard navigation on, one landed on Details or Use Password… as if that were
+        // the thing to press. Tab still moves between controls.
+        .focusEffectDisabled()
         .onAppear { startTouchID() }
         // A question that just joined starts Touch ID over, after a moment to read it.
         .onChange(of: group.joined) { _, _ in
@@ -391,18 +400,22 @@ struct ApprovalView: View {
 
     private var footer: some View {
         VStack(spacing: 12) {
-            if let touchID, ready {
+            if let touchID {
+                // The system's glyph, which shows the print being read, in the same space as the grey stand-in shown
+                // until production is ticked.
                 VStack(spacing: 6) {
-                    ZStack {
-                        // Snapshots can't draw the system's glyph, which needs a live window; this stands in for it.
-                        if Self.drawsStandInGlyph {
-                            Image(systemName: "touchid").font(.system(size: 34, weight: .light)).foregroundStyle(.pink)
+                    Group {
+                        if ready {
+                            InlineTouchID(context: touchID, start: { evaluate(touchID) }, needsKeyWindow: false)
+                                .id(ObjectIdentifier(touchID))
+                        } else {
+                            // Matched to the system glyph's size and thin stroke, so ticking the box only changes its colour.
+                            Image(systemName: "touchid").resizable().scaledToFit().fontWeight(.thin).foregroundStyle(.tertiary)
                         }
-                        InlineTouchID(context: touchID) { evaluate(touchID) }
-                            .id(ObjectIdentifier(touchID))
                     }
-                    .frame(width: 44, height: 44)
-                    Text("Touch ID to \(allowLabel.lowercased())").font(.callout).foregroundStyle(.secondary)
+                    .frame(width: InlineTouchID.side, height: InlineTouchID.side)
+                    Text(ready ? "Touch ID to \(allowLabel.lowercased())" : "Tick the box above, then Touch ID to \(allowLabel.lowercased())")
+                        .font(.callout).foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -419,9 +432,6 @@ struct ApprovalView: View {
             }
         }
     }
-
-    /// Set by the snapshot tool.
-    nonisolated(unsafe) static var drawsStandInGlyph = false
 
     /// Who and where, in a line: "Claude in ~/Projects/site".
     private var subtitle: String {
@@ -448,7 +458,9 @@ struct ApprovalView: View {
     }
 
     private func evaluate(_ context: LAContext) {
-        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: sheetReason) { passed, _ in
+        touchIDLog.notice("approval: Touch ID started; app active \(NSApp.isActive, privacy: .public)")
+        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: sheetReason) { passed, error in
+            touchIDLog.notice("approval: Touch ID ended; passed \(passed, privacy: .public), error \((error as? LAError)?.code.rawValue ?? 0, privacy: .public)")
             DispatchQueue.main.async {
                 guard touchID === context else { return }   // started over, or the sheet took over
                 if passed { finish(choice.decision) } else { touchID = nil }

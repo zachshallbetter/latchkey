@@ -2,6 +2,7 @@ import AppKit
 import LatchkeyCore
 import LocalAuthentication
 import LocalAuthenticationEmbeddedUI
+import os
 import SwiftUI
 
 extension ItemKind {
@@ -54,8 +55,9 @@ struct LockScreen: View {
             Text("Latchkey Is Locked").font(.title2.weight(.semibold))
             Text("Touch ID or enter your password to continue.").foregroundStyle(.secondary)
             if let touchID {
-                InlineTouchID(context: touchID) { model.unlockWithTouchID(touchID) { if self.touchID === touchID { self.touchID = nil } } }
-                    .frame(width: 44, height: 44)
+                InlineTouchID(context: touchID,
+                              start: { model.unlockWithTouchID(touchID) { if self.touchID === touchID { self.touchID = nil } } },
+                              stop: { stopTouchID() })
                     .padding(.vertical, 8)
                 Button("Use Password…") { usePassword() }.buttonStyle(.link)
             } else {
@@ -65,10 +67,16 @@ struct LockScreen: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .focusEffectDisabled()
         // Ask right away when the window is in front, and again each time Latchkey comes back to the front.
         .onAppear { if NSApp.isActive { askAgain() } }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             if touchID == nil { askAgain() }
+        }
+        // Touch ID here stops when an approval panel takes the keyboard (`InlineTouchID.stop`), so the touch goes to the
+        // panel; it starts again when a window (not a panel) has the keyboard back.
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { note in
+            if touchID == nil, NSApp.isActive, !(note.object is NSPanel) { askAgain() }
         }
         .onDisappear { stopTouchID() }
     }
@@ -95,18 +103,30 @@ struct LockScreen: View {
     }
 }
 
+/// What the inline Touch ID prompt does, in the system log (category "touchid"): when it starts and how it ends. No
+/// values or reasons are logged.
+let touchIDLog = Logger(subsystem: "io.snackstud.latchkey", category: "touchid")
+
 /// The system's own Touch ID prompt, drawn inside the window. Evaluating a biometric policy on a context that an
 /// `LAAuthenticationView` shows puts the prompt here instead of in a sheet.
 struct InlineTouchID: NSViewRepresentable {
     let context: LAContext
     /// Called once the view is in a key window. Started any earlier, the prompt waits for a click on the glyph.
     let start: () -> Void
+    /// Called if its window stops being key after `start`, so a request left waiting there can't take a touch meant
+    /// for whatever took the keyboard (an approval panel).
+    var stop: (() -> Void)?
+    /// False to start as soon as the glyph is in a window on screen, key or not: an approval panel, which you answer
+    /// from whatever app you're in. The lock screen waits for its window to be key.
+    var needsKeyWindow = true
+    /// The system glyph draws at a fixed size for its control size (`side`), whatever frame it's given.
+    static let controlSize = NSControl.ControlSize.small
+    /// Points on a side at `controlSize`: 16 mini, 32 small, 64 regular, 128 large (measured with `fittingSize`).
+    static let side: CGFloat = 32
 
-    /// The glyph draws at its control size whatever frame it gets, so it sits in a clipping box of that size.
     func makeNSView(context: Context) -> NSView {
-        let box = StartsInKeyWindow(start: start)
-        box.clipsToBounds = true
-        let glyph = LAAuthenticationView(context: self.context, controlSize: .regular)
+        let box = StartsInKeyWindow(start: start, stop: stop, needsKeyWindow: needsKeyWindow)
+        let glyph = LAAuthenticationView(context: self.context, controlSize: Self.controlSize)
         glyph.translatesAutoresizingMaskIntoConstraints = false
         box.addSubview(glyph)
         NSLayoutConstraint.activate([
@@ -120,13 +140,22 @@ struct InlineTouchID: NSViewRepresentable {
 
     func updateNSView(_ nsView: NSView, context: Context) {}
 
-    /// Runs `start` once, the first time its window is key.
+    /// The glyph's own size, so it's never squeezed or cut off and never pushes the layout around.
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: NSView, context: Context) -> CGSize? {
+        CGSize(width: Self.side, height: Self.side)
+    }
+
+    /// Runs `start` once, the first time its window is key, then `stop` once if the window stops being key.
     final class StartsInKeyWindow: NSView {
         private var start: (() -> Void)?
+        private var stop: (() -> Void)?
         private var observer: NSObjectProtocol?
+        private let needsKeyWindow: Bool
 
-        init(start: @escaping () -> Void) {
+        init(start: @escaping () -> Void, stop: (() -> Void)?, needsKeyWindow: Bool) {
             self.start = start
+            self.stop = stop
+            self.needsKeyWindow = needsKeyWindow
             super.init(frame: .zero)
         }
 
@@ -137,18 +166,37 @@ struct InlineTouchID: NSViewRepresentable {
             if let observer { NotificationCenter.default.removeObserver(observer) }
             observer = nil
             guard let window, start != nil else { return }
-            if window.isKeyWindow { DispatchQueue.main.async { [weak self] in self?.fire() }; return }
+            // Next turn of the run loop, once the glyph is laid out in the window: started earlier, it waits for a click.
+            if window.isKeyWindow || !needsKeyWindow { DispatchQueue.main.async { [weak self] in self?.fire() }; return }
             observer = NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: window, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.fire() }
             }
         }
 
         private func fire() {
+            touchIDLog.notice("glyph starting; window key \(self.window?.isKeyWindow ?? false, privacy: .public), app active \(NSApp.isActive, privacy: .public)")
             if let observer { NotificationCenter.default.removeObserver(observer) }
             observer = nil
             let run = start
             start = nil
             run?()
+            guard stop != nil, let window else { return }
+            observer = NotificationCenter.default.addObserver(forName: NSWindow.didResignKeyNotification, object: window, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.resigned() }
+            }
+        }
+
+        private func resigned() {
+            touchIDLog.notice("glyph's window lost the keyboard; Touch ID stopped")
+            if let observer { NotificationCenter.default.removeObserver(observer) }
+            observer = nil
+            let end = stop
+            stop = nil
+            end?()
+        }
+
+        deinit {
+            if let observer { NotificationCenter.default.removeObserver(observer) }
         }
     }
 }
