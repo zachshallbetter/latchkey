@@ -21,6 +21,8 @@
 - Rewriting references in a symlinked env file rewrites the file it points to, keeping its permissions, instead of
   replacing the link. The export check for Git looks through symlinks, and `scan --install-hook` won't write outside
   the repository's `.git` folder.
+- The grant command suggested after a refused run quotes the folder when its name has anything but ordinary path
+  characters, so a folder name can't turn into shell syntax when the command is pasted.
 
 ### App
 - Settings has its own window with a tab for each section (General, Privacy, Storage, Developer, Membership,

@@ -276,7 +276,7 @@ func failMissing(_ ids: [String]) -> Never {
 
 /// Exit 77 with the refused IDs and what to do.
 func failRefused(_ ids: [String]) -> Never {
-    let folder = Broker.tilde(currentDirectory())
+    let folder = Broker.shellWord(currentDirectory())
     fail("refused: \(ids.joined(separator: ", ")) (not agent-safe, not approved, no grant)\n  Ask the owner to approve it in Latchkey, or to grant it: latchkey grant \(ids.joined(separator: ",")) --folder \(folder) --for 2h. Don't retry.", code: 77)
 }
 

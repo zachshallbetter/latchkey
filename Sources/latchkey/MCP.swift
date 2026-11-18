@@ -392,7 +392,7 @@ final class MCPServer: @unchecked Sendable {
     static func describe(_ error: Error, folder: String) -> (String, [String: Any]) {
         switch error as? RunError {
         case .refused(let ids):
-            let grant = "latchkey grant \(ids.joined(separator: ",")) --folder \(Broker.tilde(folder)) --for 2h"
+            let grant = "latchkey grant \(ids.joined(separator: ",")) --folder \(Broker.shellWord(folder)) --for 2h"
             return ("Refused: \(ids.joined(separator: ", ")) (not agent-safe, not approved, no grant). Ask the owner to approve it when Latchkey asks, or to run `\(grant)`. You can ask once with latchkey_request_grant. Don't retry the same command.",
                     ["error": "refused", "ids": ids, "grantCommand": grant])
         case .missing(let ids):

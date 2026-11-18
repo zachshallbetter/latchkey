@@ -1322,6 +1322,16 @@ public final class Broker: @unchecked Sendable {
         return t.count > 32 && parts.count > 2 ? "…/" + parts.suffix(2).joined(separator: "/") : t
     }
 
+    /// A folder as a shell word for a command someone is told to paste: `~/Projects/site` when it holds only
+    /// ordinary path characters, else the full path in single quotes. A folder name can't become shell syntax.
+    public static func shellWord(_ path: String) -> String {
+        let shown = tilde(path)
+        let plain = shown.unicodeScalars.allSatisfy { CharacterSet(charactersIn: "~/._-+,@%=").contains($0)
+            || ($0.isASCII && CharacterSet.alphanumerics.contains($0)) }
+        if plain && !shown.isEmpty { return shown }
+        return "'" + path.replacingOccurrences(of: "'", with: "'\\''") + "'"
+    }
+
     public static func tilde(_ path: String) -> String {
         let home = NSHomeDirectory()
         return path.hasPrefix(home) ? "~" + path.dropFirst(home.count) : path

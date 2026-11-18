@@ -124,6 +124,14 @@ final class BoundaryRegressionTests: XCTestCase {
         XCTAssertEqual(try FileManager.default.attributesOfItem(atPath: target.path)[.posixPermissions] as? Int, 0o600)
     }
 
+    func testAPastableGrantHintQuotesAnUnusualFolder() {
+        XCTAssertEqual(Broker.shellWord("/tmp/site"), "/tmp/site")
+        XCTAssertEqual(Broker.shellWord(NSHomeDirectory() + "/Projects/site"), "~/Projects/site")
+        XCTAssertEqual(Broker.shellWord("/tmp/$(touch x)"), "'/tmp/$(touch x)'")
+        XCTAssertEqual(Broker.shellWord("/tmp/it's"), "'/tmp/it'\\''s'")
+        XCTAssertEqual(Broker.shellWord("/tmp/a b"), "'/tmp/a b'")
+    }
+
     func testExportGitCheckSeesACheckoutThroughASymlink() throws {
         let repo = root.appendingPathComponent("repo"), outside = root.appendingPathComponent("outside")
         try FileManager.default.createDirectory(at: repo.appendingPathComponent(".git"), withIntermediateDirectories: true)

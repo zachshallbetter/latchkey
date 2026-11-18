@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 351,
-    "includedBytes": 2776515,
+    "includedBytes": 2777806,
     "excludedCounts": {
       "extension": 86,
       "generated-or-transient-file": 1
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "3026767f863e9b862f3737d63c6fb6716430a9a8",
+        "commit": "5a1a1f7f88eb8f5404501e4185368f9e313c224d",
         "branch": "audit-fixes",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "5eced3629bafebf105fd5a24bb55c0cd9f2d73b961b5e531573b29de1022d940",
+  "aggregateSourceDigest": "34115bb89a9a83de4c607204c93e168bfb47c2345b9f8126d101c9ae973881f3",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -1059,8 +1059,8 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 29199,
-      "sha256": "c25ae7b92b3f11df871b5d520dd6b7e55d0e73460f96c9db4f868d92f1d0de43"
+      "bytes": 29400,
+      "sha256": "25660e90facbe2e1e48fbe0381fb3ee2ea9f714aa030af4cc163272d8d6292d8"
     },
     {
       "path": "LICENSE.md",
@@ -1099,8 +1099,8 @@
     },
     {
       "path": "Sources/LatchkeyCore/Broker.swift",
-      "bytes": 92932,
-      "sha256": "2147e89692ea66138a06460cba757a8504a7bbff156596eb70445c3df8187d4a"
+      "bytes": 93564,
+      "sha256": "fb9d7934838a439bf0ea6cfd2303122337e23e61b708b7b96ac1346987658ba3"
     },
     {
       "path": "Sources/LatchkeyCore/BrokerEndpoint.swift",
@@ -1249,8 +1249,8 @@
     },
     {
       "path": "Sources/latchkey/MCP.swift",
-      "bytes": 31810,
-      "sha256": "01e177f5cfad0c2829aecdb70b29f205aa9f83d8d6bd6cbcbf1f91a5fc139f55"
+      "bytes": 31814,
+      "sha256": "d9ca159046bcb193398acb89a58dff8b9305183e0ffe86632c84c68c948e1e0a"
     },
     {
       "path": "Sources/latchkey/Rotate.swift",
@@ -1264,8 +1264,8 @@
     },
     {
       "path": "Sources/latchkey/main.swift",
-      "bytes": 80790,
-      "sha256": "37ce15366543a3a0093f6b07779226e42570fb7e746526cfc9160435afae30e1"
+      "bytes": 80794,
+      "sha256": "a357d3d5aec7faedb04b6254e0a9b0037dd619f0c36e837da706526d8182bb35"
     },
     {
       "path": "Tests/LatchkeyCoreTests/AWSTests.swift",
@@ -1294,8 +1294,8 @@
     },
     {
       "path": "Tests/LatchkeyCoreTests/BoundaryRegressionTests.swift",
-      "bytes": 10190,
-      "sha256": "44254ca25e27ab5a77834b7a445c2388d54e4af48d22b6bee03e046d3ca2dd64"
+      "bytes": 10640,
+      "sha256": "dd4683f66057b1ce6aca85270c95eeef857a6a3b713f3fae05791711bbe8a7b4"
     },
     {
       "path": "Tests/LatchkeyCoreTests/BrokerEndpointTests.swift",
