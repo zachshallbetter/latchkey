@@ -79,4 +79,17 @@ final class MCPExportPathTests: XCTestCase {
             XCTAssertThrowsError(try MCPServer.inside(dir.path, escape), escape)
         }
     }
+
+    func testExportReferencesStaysInTheProjectItStartedIn() throws {
+        let fm = FileManager.default
+        let root = fm.temporaryDirectory.appendingPathComponent("latchkey-mcp-\(UUID().uuidString)").resolvingSymlinksInPath()
+        let home = root.appendingPathComponent("project"), sub = home.appendingPathComponent("apps/web"), other = root.appendingPathComponent("other")
+        try fm.createDirectory(at: sub, withIntermediateDirectories: true)
+        try fm.createDirectory(at: other, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: root) }
+        XCTAssertTrue(MCPServer.sameProject(home.path, as: home.path))
+        XCTAssertTrue(MCPServer.sameProject(sub.path, as: home.path))
+        XCTAssertFalse(MCPServer.sameProject(other.path, as: home.path), "an agent-chosen cwd elsewhere is refused")
+        XCTAssertFalse(MCPServer.sameProject(root.path, as: home.path), "and so is a parent folder, such as home")
+    }
 }

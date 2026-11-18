@@ -17,6 +17,7 @@ final class WorktreeTests: XCTestCase {
         try fm.createDirectory(at: worktree.appendingPathComponent("apps/web"), withIntermediateDirectories: true)
         try "gitdir: \(gitWorktreeDir.path)\n".write(to: worktree.appendingPathComponent(".git"), atomically: true, encoding: .utf8)
         try "../..\n".write(to: gitWorktreeDir.appendingPathComponent("commondir"), atomically: true, encoding: .utf8)
+        try "\(worktree.appendingPathComponent(".git").path)\n".write(to: gitWorktreeDir.appendingPathComponent("gitdir"), atomically: true, encoding: .utf8)
     }
 
     override func tearDownWithError() throws { try? FileManager.default.removeItem(at: root) }

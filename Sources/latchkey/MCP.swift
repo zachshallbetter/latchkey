@@ -231,6 +231,11 @@ final class MCPServer: @unchecked Sendable {
             throw RunError.usage("environment is required: PROJECT/ENV, such as shop/development")
         }
         let dir = try folder(args)
+        // This write asks the owner nothing (it holds references, not values), so it stays where the agent was started:
+        // inside that folder, or in another checkout of the same repository (a worktree). cwd alone is agent-chosen.
+        guard Self.sameProject(dir, as: home) else {
+            throw RunError.usage("cwd must be the folder this server started in, inside it, or a worktree of its repository: \(dir)")
+        }
         let file = try Self.inside(dir, args["file"] as? String ?? ".env.local")
         let cli = ["export", scope, "--out", file] + (args["replace"] as? Bool == true ? ["--replace"] : [])
         let result = try latchkey(cli, in: dir, timeout: 60, id: nil)
@@ -327,6 +332,15 @@ final class MCPServer: @unchecked Sendable {
     /// A file path for the agent to write, resolved against `dir` and required to stay inside it, after following
     /// symlinks in its folder: the export tool writes without asking the owner, so it may only write where the agent
     /// is already working.
+    /// Whether `dir` is `home`, inside it, or a checkout of the same git repository.
+    static func sameProject(_ dir: String, as home: String) -> Bool {
+        let d = URL(fileURLWithPath: dir).resolvingSymlinksInPath().path
+        let h = URL(fileURLWithPath: home).resolvingSymlinksInPath().path
+        if d == h || d.hasPrefix(h == "/" ? "/" : h + "/") { return true }
+        guard let repo = Repo.commonDir(for: h) else { return false }
+        return Repo.commonDir(for: d) == repo
+    }
+
     static func inside(_ dir: String, _ file: String) throws -> String {
         guard !file.isEmpty, !file.hasPrefix("~") else { throw RunError.usage("file must be a path inside cwd: \(file)") }
         let url = URL(fileURLWithPath: file, relativeTo: URL(fileURLWithPath: dir, isDirectory: true)).standardizedFileURL
@@ -378,7 +392,7 @@ final class MCPServer: @unchecked Sendable {
     static func describe(_ error: Error, folder: String) -> (String, [String: Any]) {
         switch error as? RunError {
         case .refused(let ids):
-            let grant = "latchkey grant \(ids.joined(separator: ",")) --folder \(Broker.tilde(folder)) --for 2h"
+            let grant = "latchkey grant \(ids.joined(separator: ",")) --folder \(Broker.shellWord(folder)) --for 2h"
             return ("Refused: \(ids.joined(separator: ", ")) (not agent-safe, not approved, no grant). Ask the owner to approve it when Latchkey asks, or to run `\(grant)`. You can ask once with latchkey_request_grant. Don't retry the same command.",
                     ["error": "refused", "ids": ids, "grantCommand": grant])
         case .missing(let ids):
@@ -480,7 +494,7 @@ final class MCPServer: @unchecked Sendable {
             "description": "Write an environment's env file from its Latchkey record, for a fresh checkout or worktree: latchkey:// references and plain settings such as PORT, never secret values. Run commands with it through latchkey_run (env_files). An existing file is left alone unless replace is true.",
             "inputSchema": ["type": "object", "required": ["environment"], "properties": [
                 "environment": ["type": "string", "description": "PROJECT/ENV, such as shop/development (see latchkey_project)."],
-                "file": ["type": "string", "description": "Where to write it, relative to cwd and inside it. Default .env.local."],
+                "file": ["type": "string", "description": "Where to write it, relative to cwd and inside it. Default .env.local. cwd must be the folder this server started in, inside it, or a worktree of the same repository."],
                 "replace": ["type": "boolean", "description": "Replace an existing file inside cwd."],
                 "cwd": cwdProperty,
             ]],

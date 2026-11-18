@@ -87,7 +87,8 @@ Everything else should ask.
 
 A **grant** lets commands run from one folder read some items without asking, until it ends:
 
-- It covers the folder, the folders inside it, and that repository's git worktrees wherever they live.
+- It covers the folder, the folders inside it, and that repository's git worktrees wherever they live. A worktree
+  counts only when git's own back-link confirms it; a `.git` file or symlink pointing at another checkout doesn't.
 - It names items, or a whole environment (`shop/development/*`) or project (`shop/*`), including items added later.
 - It lasts at most 7 days. Revocation stops future reads through that grant immediately; another grant or
   a No Approval setting may still permit access. Revocation cannot recall values a process already received.

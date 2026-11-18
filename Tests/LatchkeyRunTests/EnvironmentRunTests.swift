@@ -21,6 +21,7 @@ final class EnvironmentRunTests: XCTestCase {
         try FileManager.default.createDirectory(at: worktree, withIntermediateDirectories: true)
         try "gitdir: \(gitWorktreeDir.path)\n".write(to: worktree.appendingPathComponent(".git"), atomically: true, encoding: .utf8)
         try "../..\n".write(to: gitWorktreeDir.appendingPathComponent("commondir"), atomically: true, encoding: .utf8)
+        try "\(worktree.appendingPathComponent(".git").path)\n".write(to: gitWorktreeDir.appendingPathComponent("gitdir"), atomically: true, encoding: .utf8)
         worktreeFile = worktree.appendingPathComponent(".env.local").path
         mainFile = main.appendingPathComponent(".env").path
         try "DATABASE_URL=latchkey://shop/development/DATABASE_URL\nOPENAI_API_KEY=latchkey://OPENAI_API_KEY\n"

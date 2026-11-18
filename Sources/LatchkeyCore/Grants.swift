@@ -109,7 +109,8 @@ public struct GrantSession: Codable, Hashable, Sendable {
 /// Where grants are kept between launches.
 public protocol GrantBacking: Sendable {
     func load() -> Data?
-    func save(_ data: Data)
+    /// False when the grants couldn't be stored, so a revoke or a spent use isn't reported as lasting when it isn't.
+    func save(_ data: Data) -> Bool
 }
 
 /// Grants in one keychain item that only Latchkey can read or change, on this Mac only (not synced). A file would
@@ -119,7 +120,8 @@ public final class KeychainGrantBacking: GrantBacking, @unchecked Sendable {
     static let account = "grants"
     let items: KeychainStore
 
-    public init(mode: KeychainStore.Mode) { items = KeychainStore(mode: mode) }
+    /// Matches only this Mac's non-synced item: a synced item with the same name, from another device, is never read.
+    public init(mode: KeychainStore.Mode) { items = KeychainStore(mode: mode, synchronizable: false) }
 
     public func load() -> Data? {
         var q = items.query(Self.account, service: Self.service)
@@ -129,14 +131,16 @@ public final class KeychainGrantBacking: GrantBacking, @unchecked Sendable {
         return SecItemCopyMatching(q as CFDictionary, &out) == errSecSuccess ? out as? Data : nil
     }
 
-    public func save(_ data: Data) {
+    public func save(_ data: Data) -> Bool {
         let q = items.query(Self.account, service: Self.service)
-        if SecItemUpdate(q as CFDictionary, [kSecValueData as String: data] as CFDictionary) != errSecItemNotFound { return }
+        let status = SecItemUpdate(q as CFDictionary, [kSecValueData as String: data] as CFDictionary)
+        if status == errSecSuccess { return true }
+        guard status == errSecItemNotFound else { return false }
         var add = q
         add[kSecValueData as String] = data
         add[kSecAttrLabel as String] = "Latchkey grants"
         if case .iCloud = items.mode { add[kSecAttrSynchronizable as String] = false }
-        SecItemAdd(add as CFDictionary, nil)
+        return SecItemAdd(add as CFDictionary, nil) == errSecSuccess
     }
 }
 
@@ -146,7 +150,7 @@ public final class MemoryGrantBacking: GrantBacking, @unchecked Sendable {
     private var data: Data?
     public init() {}
     public func load() -> Data? { lock.withLock { data } }
-    public func save(_ data: Data) { lock.withLock { self.data = data } }
+    public func save(_ data: Data) -> Bool { lock.withLock { self.data = data }; return true }
 }
 
 /// The grants in effect. Expired grants are dropped on every read.
@@ -155,6 +159,8 @@ public final class GrantStore: @unchecked Sendable {
     private let backing: GrantBacking
     private var cache: [Grant] = []
     private let lock = NSLock()
+    /// The last attempt to store the grants failed: what's in effect now may not survive a restart.
+    public private(set) var saveFailed = false
 
     public init(backing: GrantBacking = MemoryGrantBacking()) {
         self.backing = backing
@@ -215,8 +221,8 @@ public final class GrantStore: @unchecked Sendable {
     }
 
     private func persist() {
-        guard let data = try? Wire.encoder().encode(cache) else { return }
-        backing.save(data)
+        guard let data = try? Wire.encoder().encode(cache) else { saveFailed = true; return }
+        saveFailed = !backing.save(data)
     }
 
     /// "30m", "2h", "1d", "90s". Nil for anything else.

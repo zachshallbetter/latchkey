@@ -5,8 +5,8 @@
   "validityBasis": "aggregate-source-digest",
   "selectedPaths": [],
   "sourceSelection": {
-    "includedCount": 350,
-    "includedBytes": 2753081,
+    "includedCount": 351,
+    "includedBytes": 2777806,
     "excludedCounts": {
       "extension": 86,
       "generated-or-transient-file": 1
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "87d63ede22b55507ab6b8e42ff145ab2a62a5901",
-        "branch": "context-lock-refresh",
-        "dirty": false,
+        "commit": "5a1a1f7f88eb8f5404501e4185368f9e313c224d",
+        "branch": "audit-fixes",
+        "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "144fd6160f28a32c9f164c0ee40b62766a4ccf7b1e0a834ccab51a0d2f87fbba",
+  "aggregateSourceDigest": "34115bb89a9a83de4c607204c93e168bfb47c2345b9f8126d101c9ae973881f3",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -714,8 +714,8 @@
     },
     {
       "path": "App/Latchkey/ApprovalPanel.swift",
-      "bytes": 13023,
-      "sha256": "95bce86972e7123e6373dbbffc3d13afb002db827b204139b2f08cb4d34d724b"
+      "bytes": 14113,
+      "sha256": "114f95cec8f585c354aea21e445943e0e25a898793d5e7001059e068e5ca49d9"
     },
     {
       "path": "App/Latchkey/Assets.xcassets/Contents.json",
@@ -1059,8 +1059,8 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 27474,
-      "sha256": "380a053b7c0c8bd5da95fca61c917f0ba6e851cda512db2bd554ca9b697d4710"
+      "bytes": 29400,
+      "sha256": "25660e90facbe2e1e48fbe0381fb3ee2ea9f714aa030af4cc163272d8d6292d8"
     },
     {
       "path": "LICENSE.md",
@@ -1094,13 +1094,13 @@
     },
     {
       "path": "Sources/LatchkeyCore/Approval.swift",
-      "bytes": 9290,
-      "sha256": "9eab3532351275e4d866a843880de06a8a781ad27321407b1682c86908168e47"
+      "bytes": 9550,
+      "sha256": "4c9cadaa01ba11a29ddffa399a6207080ab818ecede59f2e57eadb466bbc87e2"
     },
     {
       "path": "Sources/LatchkeyCore/Broker.swift",
-      "bytes": 89507,
-      "sha256": "9de96a92dcb03b363ee2727126edb661446705ebf74028e0fe7dd33f71bcb23a"
+      "bytes": 93564,
+      "sha256": "fb9d7934838a439bf0ea6cfd2303122337e23e61b708b7b96ac1346987658ba3"
     },
     {
       "path": "Sources/LatchkeyCore/BrokerEndpoint.swift",
@@ -1124,8 +1124,8 @@
     },
     {
       "path": "Sources/LatchkeyCore/EnvExport.swift",
-      "bytes": 6205,
-      "sha256": "2a3cd1b768023a9797a1716ddf8e2fed8102ead603ab47b8f23a901ade501162"
+      "bytes": 6344,
+      "sha256": "fc57813c1b46e2131f57b235df66a9e82c87535bf647ac77def550c3b4f32316"
     },
     {
       "path": "Sources/LatchkeyCore/EnvImport.swift",
@@ -1139,8 +1139,8 @@
     },
     {
       "path": "Sources/LatchkeyCore/Grants.swift",
-      "bytes": 10501,
-      "sha256": "630306a613686b3d2171cfdd95dc6b40cd3ee6788aeef3727da1e0d134ced80f"
+      "bytes": 11096,
+      "sha256": "0c0652cf913afab27364f579a66487d26a78258e3a9ea296ac1ac46831e87572"
     },
     {
       "path": "Sources/LatchkeyCore/KeyProxy.swift",
@@ -1154,8 +1154,8 @@
     },
     {
       "path": "Sources/LatchkeyCore/LogChain.swift",
-      "bytes": 9266,
-      "sha256": "551f6ecbc856df4a303f860ee473c1052163e93b7ceae0a1e6aa1a1bfd1b7fa7"
+      "bytes": 9412,
+      "sha256": "1088da3ae11c86f03db20b316aee268908ea7ce44240eef57be33f54690fb275"
     },
     {
       "path": "Sources/LatchkeyCore/LoopbackPeer.swift",
@@ -1189,18 +1189,18 @@
     },
     {
       "path": "Sources/LatchkeyCore/References.swift",
-      "bytes": 18794,
-      "sha256": "1d2e986a3cc51277d83d820c0dda4926b1821b5a1d25e48fc4e922c8a5977021"
+      "bytes": 19150,
+      "sha256": "9d012c88c50163ea01449ec3a5d0dcaaaf25f0965e276d34a2f970126c854a2c"
     },
     {
       "path": "Sources/LatchkeyCore/Remote.swift",
-      "bytes": 20882,
-      "sha256": "780ba446ff0469e0cbf67308ca01e35392f58b077ee836dcc98416b499939754"
+      "bytes": 21661,
+      "sha256": "7355dba8bd90b668eb969df34f6fc2b8bb4fc4006a6055d55855582c11bf968d"
     },
     {
       "path": "Sources/LatchkeyCore/Repo.swift",
-      "bytes": 2710,
-      "sha256": "8b9bc994d9e6b427e1510aab42a82282a3cce060b7201ca7b1c1276d01cec797"
+      "bytes": 3734,
+      "sha256": "a83c280646a0d2af3b017bf5676498c86d1735734581679845f7bc98dce2a3e7"
     },
     {
       "path": "Sources/LatchkeyCore/Scan.swift",
@@ -1249,8 +1249,8 @@
     },
     {
       "path": "Sources/latchkey/MCP.swift",
-      "bytes": 30777,
-      "sha256": "1a5eb13f677e7a228e88fad335c471e0100f4c2b7116119b255260339b93dfbd"
+      "bytes": 31814,
+      "sha256": "d9ca159046bcb193398acb89a58dff8b9305183e0ffe86632c84c68c948e1e0a"
     },
     {
       "path": "Sources/latchkey/Rotate.swift",
@@ -1264,8 +1264,8 @@
     },
     {
       "path": "Sources/latchkey/main.swift",
-      "bytes": 80181,
-      "sha256": "b2d8cb53b6c6c841e2be91cf20d98897360c5e77a19c59c49586d43441cb8bc8"
+      "bytes": 80794,
+      "sha256": "a357d3d5aec7faedb04b6254e0a9b0037dd619f0c36e837da706526d8182bb35"
     },
     {
       "path": "Tests/LatchkeyCoreTests/AWSTests.swift",
@@ -1291,6 +1291,11 @@
       "path": "Tests/LatchkeyCoreTests/BatchImportTests.swift",
       "bytes": 4364,
       "sha256": "4fcb3a150304f8592818caa072df5286e02bf7968797187a846a4921fe1bb552"
+    },
+    {
+      "path": "Tests/LatchkeyCoreTests/BoundaryRegressionTests.swift",
+      "bytes": 10640,
+      "sha256": "dd4683f66057b1ce6aca85270c95eeef857a6a3b713f3fae05791711bbe8a7b4"
     },
     {
       "path": "Tests/LatchkeyCoreTests/BrokerEndpointTests.swift",
@@ -1324,8 +1329,8 @@
     },
     {
       "path": "Tests/LatchkeyCoreTests/EnvironmentRecordTests.swift",
-      "bytes": 21505,
-      "sha256": "663d2560bd3489d685b10f5a6866c34775236c28aa6a2366384f4934749ad205"
+      "bytes": 21663,
+      "sha256": "020f37f11078924bf89c48102c7a0f7abe3f49d0cb2154634eb2518013609442"
     },
     {
       "path": "Tests/LatchkeyCoreTests/ExportMergeTests.swift",
@@ -1389,18 +1394,18 @@
     },
     {
       "path": "Tests/LatchkeyCoreTests/WorktreeTests.swift",
-      "bytes": 3089,
-      "sha256": "ede4d911288a742495fe9c953da4d8aa4500a8b6c33e814ca3679cecdf611303"
+      "bytes": 3247,
+      "sha256": "58d0c01f22b0aab73ed1874b62f4baab44b401edbf05d76e474c784c8bf075ca"
     },
     {
       "path": "Tests/LatchkeyRunTests/EnvironmentRunTests.swift",
-      "bytes": 12792,
-      "sha256": "dd5b3ce9c11fe7bd0c8f4bb114d4140dcb89c2c319d15c85a319f547ba137d38"
+      "bytes": 12950,
+      "sha256": "e339f3fb7a69b0a072192953dac8ee34bf30b6caf3d10958b8a089580e9a943f"
     },
     {
       "path": "Tests/LatchkeyRunTests/RunTests.swift",
-      "bytes": 4646,
-      "sha256": "691f4e3333823b1571bd40c6ab47458eb9febe983925293711faa094cfbe89c8"
+      "bytes": 5609,
+      "sha256": "d933c85f861e29b4a4c05187c65119206d12aadfcf5c24c39bbe232c71f58bbd"
     },
     {
       "path": "Tests/LatchkeySealTests/SealedBoxTests.swift",
@@ -1409,8 +1414,8 @@
     },
     {
       "path": "docs/agents.md",
-      "bytes": 9716,
-      "sha256": "6bd8669ab8b3ea7640e3e0523a007d105adfa896233a379ca8878776ca15f224"
+      "bytes": 9817,
+      "sha256": "d4e755164d3b53f116fa35509d3ec8f2c5a645baf95857a0882793b0cd0d2c98"
     },
     {
       "path": "docs/app-store.md",
@@ -1484,13 +1489,13 @@
     },
     {
       "path": "docs/cli.md",
-      "bytes": 23236,
-      "sha256": "1fa396af7a023de1f1d97cb8d9a5e8bb1b60bbff52673960803d100557e7436e"
+      "bytes": 23441,
+      "sha256": "7dfbfecfe97e49d3430f7beb527fc9864f8f3010c55fe6bc349efbe42fa34c04"
     },
     {
       "path": "docs/concepts.md",
-      "bytes": 6415,
-      "sha256": "f85e2945f07f12d2249a943794f5ec6f7683e4ab88f6957e9d908dd3c7d2a4b5"
+      "bytes": 6541,
+      "sha256": "44a6b6c979822975c0f887c52b07e20bd580ff75db56b505609e380158588378"
     },
     {
       "path": "docs/development.md",
@@ -1564,8 +1569,8 @@
     },
     {
       "path": "docs/security.md",
-      "bytes": 14213,
-      "sha256": "c7ddac302f3f57295a38cfd2d194b424b527ce3f617807eadd9d6f33aed974e4"
+      "bytes": 14407,
+      "sha256": "0dfe1a0e53798d47db874ae044c7214190de885b74b0e3b5ebcd4eb280c31aa0"
     },
     {
       "path": "docs/site.md",

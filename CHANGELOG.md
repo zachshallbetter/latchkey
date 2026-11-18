@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+### Security
+- Approvals show what they allow. The panel lists every item asked for, with a count, and the whole command a signed
+  `latchkey run` starts, unredacted and never cut off in the middle. Text a caller supplies (a service name, a link
+  label) can no longer end the Touch ID sheet's description early. A caller Latchkey can't identify is named as
+  unidentified, with the warning and the panel first, instead of passing for Latchkey's own tool.
+- Environment approvals name what each variable will resolve to, and link and push approvals name the Railway project,
+  Vercel team and working folder that decide where values go.
+- `combine` asks before comparing values, so whether two secrets match is never answered without approval.
+- A forged `.git` file or a `.git` symlink to another checkout no longer makes a folder count as that repository, so a
+  grant can't reach it.
+- MCP `latchkey_export_references` writes only in the folder the server started in, inside it, or a worktree of its
+  repository; an agent-chosen `cwd` elsewhere is refused.
+- `remote-status` errors never quote a service tool's list output, which can hold values. A push refuses a variable
+  name that isn't a valid identifier on every route, including names in records synced from another Mac.
+- Grants and the access-log keys are read only from this Mac's own keychain items, never a synced one, and a revoke
+  that can't be saved says so instead of reporting success.
+- Rewriting references in a symlinked env file rewrites the file it points to, keeping its permissions, instead of
+  replacing the link. The export check for Git looks through symlinks, and `scan --install-hook` won't write outside
+  the repository's `.git` folder.
+- The grant command suggested after a refused run quotes the folder when its name has anything but ordinary path
+  characters, so a folder name can't turn into shell syntax when the command is pasted.
+
 ### App
 - Settings has its own window with a tab for each section (General, Privacy, Storage, Developer, Membership,
   About), instead of a column in the main window that looked like the item list. **Settings…** at the bottom of the
