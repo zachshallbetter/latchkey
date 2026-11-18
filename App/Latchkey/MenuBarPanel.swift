@@ -64,6 +64,27 @@ struct MenuBarPanel: View {
     }
 
     var body: some View {
+        if model.locked { lockedBody } else { unlockedBody }
+    }
+
+    /// While locked the panel lists nothing: Unlock opens Latchkey, whose lock screen asks for Touch ID.
+    private var lockedBody: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Latchkey is locked", systemImage: "lock.fill").font(.headline)
+            Text("Unlock to see your items.").foregroundStyle(.secondary)
+            Divider()
+            HStack {
+                Button("Unlock…") { close(); model.openMainWindow() }
+                Spacer()
+                Button("Quit") { close(); AppDelegate.quitting = true; NSApp.terminate(nil) }
+            }
+            .buttonStyle(.borderless)
+        }
+        .padding(12)
+        .frame(width: 340)
+    }
+
+    @ViewBuilder private var unlockedBody: some View {
         let q = query.lowercased()
         let list = model.items.filter { q.isEmpty || $0.name.lowercased().contains(q) }
         VStack(alignment: .leading, spacing: 8) {
@@ -106,6 +127,7 @@ struct MenuBarPanel: View {
             HStack {
                 Button("Open Latchkey") { open() }
                 Spacer()
+                Button("Lock") { close(); model.lock(byHand: true) }
                 Button("Settings…") { close(); model.openSettings() }
                 Button("Quit") { close(); AppDelegate.quitting = true; NSApp.terminate(nil) }
             }

@@ -81,6 +81,15 @@ enum Snapshot {
             return
         }
         if let f = arg("--import") { model.beginImport(URL(fileURLWithPath: f)) }
+        if arg("--part") == "lock" {
+            drawOffscreen(LockScreen(model: model).frame(width: 860, height: 520), to: path)
+            return
+        }
+        if arg("--part") == "lockedpanel" {
+            model.locked = true
+            drawOffscreen(MenuBarPanel(model: model) {}, to: path)
+            return
+        }
         if arg("--part") == "sidebar" {
             drawOffscreen(Sidebar(model: model).frame(width: 250, height: Double(arg("--height") ?? "640") ?? 640), to: path)
             return

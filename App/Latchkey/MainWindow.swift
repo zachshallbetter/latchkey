@@ -1,5 +1,7 @@
 import AppKit
 import LatchkeyCore
+import LocalAuthentication
+import LocalAuthenticationEmbeddedUI
 import SwiftUI
 
 extension ItemKind {
@@ -31,6 +33,123 @@ struct KindIcon: View {
             .fill(kind.tint.gradient)
             .frame(width: size, height: size)
             .overlay(Image(systemName: kind.symbol).font(.system(size: size * 0.45, weight: .semibold)).foregroundStyle(.white))
+    }
+}
+
+/// Shown instead of the window while Latchkey is locked, as Passwords does: Touch ID is asked for right here in
+/// the window, with no system sheet; **Use Password…** brings up the sheet for the Mac password.
+struct LockScreen: View {
+    let model: AppModel
+    /// The Touch ID request the inline view is showing; nil when none is.
+    @State private var touchID: LAContext?
+
+    var body: some View {
+        VStack(spacing: 14) {
+            ZStack(alignment: .bottomTrailing) {
+                LogoMark(size: 64).foregroundStyle(.tint)
+                Image(systemName: "lock.fill").font(.system(size: 18, weight: .semibold)).foregroundStyle(.white)
+                    .padding(7).background(Circle().fill(.secondary)).offset(x: 10, y: 8)
+            }
+            .padding(.bottom, 6)
+            Text("Latchkey Is Locked").font(.title2.weight(.semibold))
+            Text("Touch ID or enter your password to continue.").foregroundStyle(.secondary)
+            if let touchID {
+                InlineTouchID(context: touchID) { model.unlockWithTouchID(touchID) { if self.touchID === touchID { self.touchID = nil } } }
+                    .frame(width: 44, height: 44)
+                    .padding(.vertical, 8)
+                Button("Use Password…") { usePassword() }.buttonStyle(.link)
+            } else {
+                Button(model.unlocking ? "Waiting for Approval…" : "Unlock…") { askAgain() }
+                    .controlSize(.large).keyboardShortcut(.defaultAction).disabled(model.unlocking)
+                    .padding(.top, 4)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Ask right away when the window is in front, and again each time Latchkey comes back to the front.
+        .onAppear { if NSApp.isActive { askAgain() } }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            if touchID == nil { askAgain() }
+        }
+        .onDisappear { stopTouchID() }
+    }
+
+    /// Touch ID in the window when this Mac has it; otherwise the system sheet (Apple Watch or password).
+    private func askAgain() {
+        guard model.locked, !model.unlocking else { return }
+        let context = LAContext()
+        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil) {
+            touchID = context
+        } else {
+            model.unlock()
+        }
+    }
+
+    private func usePassword() {
+        stopTouchID()
+        model.unlock()
+    }
+
+    private func stopTouchID() {
+        touchID?.invalidate()
+        touchID = nil
+    }
+}
+
+/// The system's own Touch ID prompt, drawn inside the window. Evaluating a biometric policy on a context that an
+/// `LAAuthenticationView` shows puts the prompt here instead of in a sheet.
+private struct InlineTouchID: NSViewRepresentable {
+    let context: LAContext
+    /// Called once the view is in a key window. Started any earlier, the prompt waits for a click on the glyph.
+    let start: () -> Void
+
+    /// The glyph draws at its control size whatever frame it gets, so it sits in a clipping box of that size.
+    func makeNSView(context: Context) -> NSView {
+        let box = StartsInKeyWindow(start: start)
+        box.clipsToBounds = true
+        let glyph = LAAuthenticationView(context: self.context, controlSize: .regular)
+        glyph.translatesAutoresizingMaskIntoConstraints = false
+        box.addSubview(glyph)
+        NSLayoutConstraint.activate([
+            glyph.centerXAnchor.constraint(equalTo: box.centerXAnchor),
+            glyph.centerYAnchor.constraint(equalTo: box.centerYAnchor),
+            glyph.widthAnchor.constraint(equalTo: box.widthAnchor),
+            glyph.heightAnchor.constraint(equalTo: box.heightAnchor),
+        ])
+        return box
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {}
+
+    /// Runs `start` once, the first time its window is key.
+    final class StartsInKeyWindow: NSView {
+        private var start: (() -> Void)?
+        private var observer: NSObjectProtocol?
+
+        init(start: @escaping () -> Void) {
+            self.start = start
+            super.init(frame: .zero)
+        }
+
+        required init?(coder: NSCoder) { nil }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            if let observer { NotificationCenter.default.removeObserver(observer) }
+            observer = nil
+            guard let window, start != nil else { return }
+            if window.isKeyWindow { DispatchQueue.main.async { [weak self] in self?.fire() }; return }
+            observer = NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: window, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.fire() }
+            }
+        }
+
+        private func fire() {
+            if let observer { NotificationCenter.default.removeObserver(observer) }
+            observer = nil
+            let run = start
+            start = nil
+            run?()
+        }
     }
 }
 

@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 358,
-    "includedBytes": 2802420,
+    "includedBytes": 2816243,
     "excludedCounts": {
       "extension": 86,
       "generated-or-transient-file": 1
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "1658dc8bb86fe8a0128b6fef98b4bba8e31690fd",
-        "branch": "docs/public-governance-2",
+        "commit": "58c481f0ecb956433e6ec05ff8f104a98422c680",
+        "branch": "app-lock",
         "dirty": false,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "cf54236438770ed6f0d0fd899a3297a2931543845a7da455d3d59d70260c9ce2",
+  "aggregateSourceDigest": "491ab972d8fc7f137e4ff57dd5ef1ef6afd9bf40b1607efb8de8c1ffa6b2d982",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -959,18 +959,18 @@
     },
     {
       "path": "App/Latchkey/LatchkeyApp.swift",
-      "bytes": 60747,
-      "sha256": "328b8d2aef6f3cef4849f5a6397938a3f831834655de5de73f343f038ed1d31e"
+      "bytes": 64732,
+      "sha256": "6d195bba574892e5f2cb0f6469c611fe3abb980ebf2997bfc10f4605051e63a3"
     },
     {
       "path": "App/Latchkey/MainWindow.swift",
-      "bytes": 41935,
-      "sha256": "f5b2c9d9bd15c5cbf9de56082f7d9c117eb7f27e4ec91ed151712f05c2ec8eab"
+      "bytes": 47058,
+      "sha256": "b76423e4e7b0cf62532d222c382b2cffcb0e733ed7b9368adb73caf1cba18b01"
     },
     {
       "path": "App/Latchkey/MenuBarPanel.swift",
-      "bytes": 5161,
-      "sha256": "a209736a1fbb090c399037a09338f1b1731fba4a874c23d5da588ad2fa3dfd0f"
+      "bytes": 6057,
+      "sha256": "f7187ae12788f8dbf3172a5b8b00d5672f46ef32406f83e99082f1664101a3c3"
     },
     {
       "path": "App/Latchkey/Pages.swift",
@@ -999,8 +999,8 @@
     },
     {
       "path": "App/Latchkey/SettingsView.swift",
-      "bytes": 17612,
-      "sha256": "9c724e09c53b250190efc2bbb3525adaef8cb929aa6bf1064c523b93ecd2017a"
+      "bytes": 18552,
+      "sha256": "b5b2b10eb33ecdb0a6356dca6558ff5cd5c1e6b76ba011586352dcc998faa995"
     },
     {
       "path": "App/Latchkey/Sheets.swift",
@@ -1009,8 +1009,8 @@
     },
     {
       "path": "App/Latchkey/Snapshot.swift",
-      "bytes": 13297,
-      "sha256": "f5d47f3a938a642ea9f4a2b010d1d44fd680b8a27c563072c47c2a1e5370be5f"
+      "bytes": 13628,
+      "sha256": "f56c8d7b5e528af00d10eda63dcc6242f890c501e819eadff892b61119e88684"
     },
     {
       "path": "App/Latchkey/Style.swift",
@@ -1079,8 +1079,8 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 30270,
-      "sha256": "59429b0fed4b3002c3d6478b600d1236b5a268d508201bcb97f74b54befb74bd"
+      "bytes": 30807,
+      "sha256": "3900b5d706ec2ee732a077ea10ccf66b2aa02cd7359659a7bdac2420e1bb1cf6"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1124,8 +1124,8 @@
     },
     {
       "path": "Sources/LatchkeyCore/AppPreferences.swift",
-      "bytes": 1665,
-      "sha256": "9ee373e4edb324e96859ccc161634ba94aa422ae870a4e443e7bb046c3f64509"
+      "bytes": 2338,
+      "sha256": "84dd712da58303bfeacf7d16b4460d7de451b3aa5049a1de1166472c92fedf1d"
     },
     {
       "path": "Sources/LatchkeyCore/Approval.swift",
@@ -1309,8 +1309,8 @@
     },
     {
       "path": "Tests/LatchkeyCoreTests/AppPreferencesTests.swift",
-      "bytes": 1911,
-      "sha256": "2b228b369723e7b6be4d4d65a6ab0c14081d8c5299ae53da41b63ad29ddb9d0a"
+      "bytes": 2399,
+      "sha256": "20ee704b36c93975999f18a8b1107be2bab68b5e2b4839b3b6314a34c1ba625b"
     },
     {
       "path": "Tests/LatchkeyCoreTests/ApprovalDisclosureTests.swift",
@@ -1459,8 +1459,8 @@
     },
     {
       "path": "docs/app.md",
-      "bytes": 18897,
-      "sha256": "c6d8ae1ca11af44d5a4bcd59277f4ed18624c1d8424cf6f86d5ed79e858b8262"
+      "bytes": 19747,
+      "sha256": "2b18fcd162c1a9710f5c36f4ecc645409f33546a918a4c55a98475e57893dfe3"
     },
     {
       "path": "docs/apple-passwords-and-passkeys.md",

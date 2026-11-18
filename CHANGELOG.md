@@ -3,6 +3,11 @@
 ## Unreleased
 
 ### App
+- Latchkey locks, as Passwords does: when it opens, after 5 minutes in the background (1, 5, 15 or 60 in Settings ›
+  Privacy), and when the Mac sleeps or the screen locks. Touch ID is asked for right in the lock screen, with no
+  system sheet; **Use Password…** opens the sheet for the Mac password. While locked the
+  window, Settings and the menu bar panel show nothing but the lock screen. **Lock Latchkey** (⌃⌘L) and **Lock** in
+  the menu bar panel lock it by hand. Approvals for commands, agents and Safari are unchanged.
 - The item list is in sections: by project in All Items (Shared first), by environment in a project, or by service or
   type from **Group By** in the list's menu. Each section is a compact row like the sidebar's, with its icon and count,
   that opens or folds; past eight sections they start folded. Rows no longer repeat what their section says.
