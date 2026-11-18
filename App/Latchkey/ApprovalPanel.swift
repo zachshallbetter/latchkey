@@ -1,60 +1,124 @@
 import AppKit
 import LatchkeyCore
+import LocalAuthentication
 import SwiftUI
 
-/// One prompt at a time. A change (add, change, delete, import, move, restore, link) gets the system Touch ID sheet
-/// alone, saying what, who and where; its Details… button opens this panel with everything, to allow or deny.
-/// Releasing values, grants, earlier values and pushes show the panel first, where the choice is made (once, this
-/// folder, until the agent quits; production), and the sheet confirms after. So does anything from another computer
-/// or a program that isn't Latchkey's tool, whose warning has to be read first.
-/// Things you started yourself, in the Latchkey window or in Latchkey for Safari, skip the panel: the system sheet
-/// alone confirms them, except pushes, which always show it.
+/// Every approval is one small panel saying what's asked, by whom and where, with Touch ID inside it: touch the sensor
+/// to allow, or Use Password… for the system sheet. Questions from the same caller in the same folder that arrive while
+/// the panel is up join it as rows, so one touch answers a burst of them; each row can be denied on its own. Questions
+/// from anyone else wait their turn. A production push is always asked on its own, and so is anything from a caller
+/// whose requests are never grouped (`ApprovalRequest.caller`).
 final class PanelApprover: Approver, @unchecked Sendable {
     let system = SystemApprover()
-    /// How long the panel waits before counting as a denial.
-    let timeout: TimeInterval = 90
+    /// How long a question waits, shown or behind another caller's, before counting as a denial.
+    let timeout: TimeInterval = 120
 
     var method: String { system.method }
+    var groupsRequests: Bool { true }
 
     func approve(_ request: ApprovalRequest) -> ApprovalDecision {
-        // Pushes always show the panel, even from the window: it's where production is confirmed.
-        if (request.fromApp || request.fromSafari) && request.action != .push { return system.approve(request) }
-        if request.sheetFirst {
-            switch system.evaluate(request.touchIDReason, cancelTitle: "Details…") {
-            case .passed: return .once
-            case .failed: return .deny   // no answer, or Touch ID failed: nothing more to show
-            case .cancelled: break       // show what was asked, in full, to allow after all or deny
-            }
+        let ticket = ApprovalTicket(request)
+        DispatchQueue.main.async { ApprovalWindow.shared.submit(ticket) }
+        if !ticket.wait(timeout) {
+            ticket.answer(.deny)
+            DispatchQueue.main.sync { ApprovalWindow.shared.withdraw(ticket) }
         }
-        let done = DispatchSemaphore(value: 0)
-        nonisolated(unsafe) var choice = ApprovalDecision.deny
-        DispatchQueue.main.async {
-            ApprovalWindow.shared.show(request, afterCancel: request.sheetFirst) { decision in
-                choice = decision
-                done.signal()
-            }
-        }
-        if done.wait(timeout: .now() + timeout) == .timedOut {
-            DispatchQueue.main.sync { ApprovalWindow.shared.dismiss() }
-            return .deny
-        }
-        guard choice.allowed else { return .deny }
-        return system.confirm(request.touchIDReason) ? choice : .deny
+        return ticket.decision
     }
+}
+
+/// One question waiting for its answer. The first answer stands.
+final class ApprovalTicket: @unchecked Sendable {
+    let request: ApprovalRequest
+    private let done = DispatchSemaphore(value: 0)
+    private let lock = NSLock()
+    private var given: ApprovalDecision?
+
+    init(_ request: ApprovalRequest) { self.request = request }
+
+    var decision: ApprovalDecision { lock.withLock { given ?? .deny } }
+
+    func answer(_ decision: ApprovalDecision) {
+        let first = lock.withLock { () -> Bool in
+            guard given == nil else { return false }
+            given = decision
+            return true
+        }
+        if first { done.signal() }
+    }
+
+    /// False if no answer came in time.
+    func wait(_ timeout: TimeInterval) -> Bool { done.wait(timeout: .now() + timeout) == .success }
+
+    /// Questions with the same key may share a panel: same caller, same folder. Nil for one that's always asked alone.
+    var groupKey: String? {
+        guard !request.caller.isEmpty, !request.production, request.action != .push else { return nil }
+        return [request.caller, request.folder, request.program ?? "", request.fromApp ? "app" : ""].joined(separator: "\n")
+    }
+}
+
+/// The questions one panel shows.
+@MainActor
+final class ApprovalGroup: ObservableObject {
+    let key: String?
+    @Published private(set) var tickets: [ApprovalTicket]
+    /// Counts questions joining, so Touch ID starts over and a touch can't allow one that just appeared.
+    @Published private(set) var joined = 0
+
+    init(_ first: ApprovalTicket) {
+        key = first.groupKey
+        tickets = [first]
+    }
+
+    var first: ApprovalRequest { tickets[0].request }
+
+    func add(_ ticket: ApprovalTicket) {
+        tickets.append(ticket)
+        joined += 1
+    }
+
+    func remove(_ ticket: ApprovalTicket) { tickets.removeAll { $0 === ticket } }
 }
 
 @MainActor
 final class ApprovalWindow {
     static let shared = ApprovalWindow()
+    /// Rows one panel holds; more from the same caller wait for the next panel.
+    static let most = 12
     private var panel: NSPanel?
-    private var reply: ((ApprovalDecision) -> Void)?
+    private var group: ApprovalGroup?
+    private var waiting: [ApprovalTicket] = []
 
-    /// `reply` gets the choice; the system sheet confirms an allowed one after the panel closes.
-    func show(_ request: ApprovalRequest, afterCancel: Bool, reply: @escaping (ApprovalDecision) -> Void) {
-        dismiss()
-        self.reply = reply
-        let view = ApprovalView(request: request, afterCancel: afterCancel) { [weak self] decision in self?.finish(decision) }
+    func submit(_ ticket: ApprovalTicket) {
+        if let group, let key = ticket.groupKey, group.key == key, group.tickets.count < Self.most {
+            group.add(ticket)
+        } else if group == nil {
+            show(ticket)
+        } else {
+            waiting.append(ticket)
+        }
+    }
+
+    /// A question that stopped waiting (it timed out): off the panel, or out of the queue.
+    func withdraw(_ ticket: ApprovalTicket) {
+        waiting.removeAll { $0 === ticket }
+        guard let group, group.tickets.contains(where: { $0 === ticket }) else { return }
+        group.remove(ticket)
+        if group.tickets.isEmpty { close() }
+    }
+
+    private func show(_ first: ApprovalTicket) {
+        let group = ApprovalGroup(first)
+        if let key = group.key {
+            for t in waiting where t.groupKey == key && group.tickets.count < Self.most { group.add(t) }
+            waiting.removeAll { t in group.tickets.contains { $0 === t } }
+        }
+        self.group = group
+        let view = ApprovalView(group: group,
+                                deny: { [weak self] ticket in self?.deny(ticket) },
+                                decide: { [weak self] decision in self?.finish(decision) })
         let host = NSHostingController(rootView: view)
+        host.sizingOptions = [.preferredContentSize]
         let panel = NSPanel(contentViewController: host)
         panel.styleMask = [.titled, .fullSizeContentView]
         panel.titlebarAppearsTransparent = true
@@ -69,18 +133,28 @@ final class ApprovalWindow {
         panel.makeKeyAndOrderFront(nil)
     }
 
-    func dismiss() {
-        panel?.orderOut(nil)
-        panel = nil
-        if let r = reply { reply = nil; r(.deny) }
+    /// One row denied; the panel stays for the rest.
+    private func deny(_ ticket: ApprovalTicket) {
+        ticket.answer(.deny)
+        group?.remove(ticket)
+        if group?.tickets.isEmpty == true { close() }
     }
 
+    /// The panel's answer for every row. A grant applies to the releases that offered one; everything else is allowed
+    /// once.
     private func finish(_ decision: ApprovalDecision) {
-        let r = reply
-        reply = nil
+        for t in group?.tickets ?? [] {
+            t.answer(decision.allowed && !t.request.canGrant ? .once : decision)
+        }
+        close()
+    }
+
+    private func close() {
+        for t in group?.tickets ?? [] { t.answer(.deny) }
+        group = nil
         panel?.orderOut(nil)
         panel = nil
-        r?(decision)
+        if !waiting.isEmpty { show(waiting.removeFirst()) }
     }
 }
 
@@ -101,23 +175,34 @@ final class ApprovalChoice: ObservableObject {
 }
 
 struct ApprovalView: View {
-    let request: ApprovalRequest
-    /// Shown after the Touch ID sheet for a change was cancelled.
-    var afterCancel = false
+    @ObservedObject var group: ApprovalGroup
+    /// Denies one row; the rest stay.
+    var deny: (ApprovalTicket) -> Void = { _ in }
     let decide: (ApprovalDecision) -> Void
     @StateObject private var choice = ApprovalChoice()
     /// Production pushes need this ticked, on top of Touch ID.
     @State private var confirmedProduction = false
     @State private var decided = false
+    /// The Touch ID request shown in the panel; nil when this Mac has no Touch ID, or after it gave up.
+    @State private var touchID: LAContext?
+    /// The system sheet is up (Use Password…, or Allow… without Touch ID).
+    @State private var sheetUp = false
+    /// Who's asking in full (the process chain, the folder, the command), folded until asked for.
+    @State private var showDetails = false
+
+    /// The caller and folder every row shares.
+    private var request: ApprovalRequest { group.first }
+    private var many: Bool { group.tickets.count > 1 }
 
     private func finish(_ decision: ApprovalDecision) {
         guard !decided else { return }
         decided = true
+        touchID?.invalidate()
         decide(decision)
     }
 
-    /// "add shop/development/DB", "use 2 items": the action and what it's on, for the title.
-    private var what: String {
+    /// "add shop/development/DB", "use 2 items": the action and what it's on.
+    static func what(_ request: ApprovalRequest) -> String {
         let one = request.names.count == 1 ? request.names[0] : nil
         let n = request.names.count
         func items(_ word: String = "item") -> String { one ?? "\(n) \(word)\(n == 1 ? "" : "s")" }
@@ -139,18 +224,27 @@ struct ApprovalView: View {
     }
 
     var title: String {
-        if let who = request.asker { return "\(who) wants to \(what)" }
+        let who = request.asker
+        if many { return "\(who ?? "A program") is asking for \(group.tickets.count) things" }
+        let what = Self.what(request)
+        if let who { return "\(who) wants to \(what)" }
         return what.prefix(1).uppercased() + what.dropFirst() + "?"
     }
 
+    /// What the system sheet says, for Use Password….
+    private var sheetReason: String {
+        guard many else { return request.touchIDReason }
+        let place = request.folder.isEmpty || request.folder == "/" ? "" : " in \(Broker.tilde(request.folder))"
+        return "allow \(group.tickets.count) requests from \(request.asker ?? "one program")\(place)"
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 12) {
-                Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 48, height: 48)
+                Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 40, height: 40)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.title3.weight(.semibold)).fixedSize(horizontal: false, vertical: true)
-                    Text(afterCancel ? "Everything about this request. Allow asks for Touch ID again." : "Latchkey")
-                        .font(.callout).foregroundStyle(.secondary)
+                    Text(title).font(.headline).fixedSize(horizontal: false, vertical: true)
+                    Text(subtitle).font(.callout).foregroundStyle(.secondary).lineLimit(1).truncationMode(.head)
                 }
             }
             if request.overSSH {
@@ -170,31 +264,42 @@ struct ApprovalView: View {
                     .foregroundStyle(.orange).font(.callout.weight(.semibold))
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 8) {
-                row(request.names.count > 1 ? "Items (\(request.names.count))" : "Items", request.names.joined(separator: ", "), mono: true, full: true)
-                if [.add, .change, .importItems, .restore].contains(request.action), !request.summary.isEmpty {
-                    row("Request", request.summary)
+            if many { rows }
+            // What the answer covers stays in view: every item (one is named in the title), the change's own words,
+            // and where values go. Who's asking in detail is folded below.
+            if !many {
+                if request.names.count > 1 { covered(request.names.joined(separator: ", "), mono: true) }
+                if [.add, .change, .importItems, .restore].contains(request.action), !request.summary.isEmpty, request.summary != Self.what(request) {
+                    covered(request.summary.prefix(1).uppercased() + request.summary.dropFirst())
                 }
-                if request.action == .compare {
-                    row("Purpose", "Compare their values inside Latchkey to find items holding the same key. Only which items match is shown; no value leaves Latchkey.")
+                if !request.targets.isEmpty { covered((request.action == .push ? "To " : "Target: ") + request.targets.joined(separator: ", ")) }
+            }
+            DisclosureGroup(isExpanded: $showDetails) {
+                Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 8) {
+                    if request.fromSafari {
+                        row("Asked by", "Latchkey's Safari extension")
+                        if let page = request.page { row("Page", page + "\n(as Safari reported it)", mono: true) }
+                    } else {
+                        let via = request.chain.prefix(4).joined(separator: " › ")
+                        row("Asked by", (request.asker.map { "\($0), via \(via)" } ?? via) + (request.byAgent ? "\nthrough Latchkey's MCP server" : ""))
+                    }
+                    if !request.folder.isEmpty { row("Folder", Broker.tilde(request.folder), mono: true) }
+                    if !many {
+                        // The command that will receive the values, in full: a signed `latchkey run` shows what it
+                        // starts, unredacted (the log keeps the redacted form), so a filter or truncation can't hide it.
+                        if let command = Self.command(request) { row("Command", command, mono: true, full: true) }
+                        if let d = request.duration { row("For", GrantStore.describe(d)) }
+                        if request.action == .compare {
+                            row("Purpose", "Compare their values inside Latchkey to find items holding the same key. Only which items match is shown; no value leaves Latchkey.")
+                        }
+                        if request.action == .scan {
+                            row("Purpose", "Check whether env files still hold these items' values in plain text. Only which items match is shown; no stored value leaves Latchkey.")
+                        }
+                    }
                 }
-                if request.action == .scan {
-                    row("Purpose", "Check whether env files still hold these items' values in plain text. Only which items match is shown; no stored value leaves Latchkey.")
-                }
-                if request.fromSafari {
-                    row("Asked by", "Latchkey's Safari extension")
-                    if let page = request.page { row("Page", page + "\n(as Safari reported it)", mono: true) }
-                } else {
-                    let via = request.chain.prefix(4).joined(separator: " › ")
-                    row("Asked by", (request.asker.map { "\($0), via \(via)" } ?? via) + (request.byAgent ? "\nthrough Latchkey's MCP server" : ""))
-                }
-                if !request.folder.isEmpty { row("Folder", Broker.tilde(request.folder), mono: true) }
-                // The command that will receive the values, in full: a signed `latchkey run` shows what it starts, unredacted
-                // (the log keeps the redacted form), so a filter or truncation can't hide the program being given values.
-                if let run = request.runCommand { row("Command", "latchkey run -- " + run.joined(separator: " "), mono: true, full: true) }
-                else if let c = request.command, !c.isEmpty { row("Command", c, mono: true, full: true) }
-                if let d = request.duration { row("For", GrantStore.describe(d)) }
-                if !request.targets.isEmpty { row(request.action == .push ? "To" : "Target", request.targets.joined(separator: "\n")) }
+                .padding(.top, 6)
+            } label: {
+                Text("Details").font(.callout)
             }
             if request.production {
                 VStack(alignment: .leading, spacing: 6) {
@@ -207,10 +312,10 @@ struct ApprovalView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 8).fill(.orange.opacity(0.12)))
             }
-            if request.canGrant {
+            if group.tickets.contains(where: { $0.request.canGrant }) {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Toggle("Allow from this folder", isOn: $choice.grant).toggleStyle(.checkbox)
+                        Toggle(many ? "Allow these from this folder" : "Allow from this folder", isOn: $choice.grant).toggleStyle(.checkbox)
                         Picker("", selection: $choice.grantFor) {
                             if let agent = request.sessionName { Text("until \(agent) quits").tag(ApprovalChoice.untilQuit) }
                             Text("for 1 hour").tag(3600.0)
@@ -220,7 +325,7 @@ struct ApprovalView: View {
                         }
                         .labelsHidden().fixedSize().disabled(!choice.grant)
                     }
-                    if let command = request.runCommand {
+                    if !many, let command = request.runCommand {
                         Toggle("Only for \(command.joined(separator: " "))", isOn: $choice.thisCommandOnly)
                             .toggleStyle(.checkbox).lineLimit(1).truncationMode(.middle).disabled(!choice.grant)
                     }
@@ -232,20 +337,149 @@ struct ApprovalView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 8).fill(.quaternary.opacity(0.5)))
             }
+            footer
+        }
+        .padding(18)
+        .frame(width: 420)
+        .onAppear { startTouchID() }
+        // A question that just joined starts Touch ID over, after a moment to read it.
+        .onChange(of: group.joined) { _, _ in
+            touchID?.invalidate()
+            touchID = nil
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { startTouchID() }
+        }
+    }
+
+    /// Each question from the caller, with what it covers in full and its own Deny.
+    private var rows: some View {
+        ScrollView(.vertical) {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(group.tickets.enumerated()), id: \.offset) { i, ticket in
+                    if i > 0 { Divider() }
+                    HStack(alignment: .top, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            let what = Self.what(ticket.request)
+                            Text(what.prefix(1).uppercased() + what.dropFirst())
+                                .font(.callout.weight(.medium)).fixedSize(horizontal: false, vertical: true)
+                            // One item is named in full above; more are listed here, every one of them.
+                            if ticket.request.names.count > 1 {
+                                Text(ticket.request.names.joined(separator: ", ")).font(.caption.monospaced())
+                                    .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+                            }
+                            if !ticket.request.targets.isEmpty {
+                                Text("To " + ticket.request.targets.joined(separator: ", ")).font(.caption)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            if showDetails, let command = Self.command(ticket.request) {
+                                Text(command).font(.caption.monospaced()).foregroundStyle(.secondary)
+                                    .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        Spacer(minLength: 0)
+                        Button { deny(ticket) } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }
+                            .buttonStyle(.plain).help("Deny this one")
+                    }
+                    .padding(.vertical, 7)
+                }
+            }
+            .padding(.horizontal, 10)
+        }
+        .frame(maxHeight: 220)
+        .fixedSize(horizontal: false, vertical: true)
+        .background(RoundedRectangle(cornerRadius: 8).fill(.quaternary.opacity(0.5)))
+    }
+
+    private var footer: some View {
+        VStack(spacing: 12) {
+            if let touchID, ready {
+                VStack(spacing: 6) {
+                    ZStack {
+                        // Snapshots can't draw the system's glyph, which needs a live window; this stands in for it.
+                        if Self.drawsStandInGlyph {
+                            Image(systemName: "touchid").font(.system(size: 34, weight: .light)).foregroundStyle(.pink)
+                        }
+                        InlineTouchID(context: touchID) { evaluate(touchID) }
+                            .id(ObjectIdentifier(touchID))
+                    }
+                    .frame(width: 44, height: 44)
+                    Text("Touch ID to \(allowLabel.lowercased())").font(.callout).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+            }
             HStack {
-                Text("Touch ID confirms your choice.").font(.caption).foregroundStyle(.secondary)
                 Spacer()
                 Button("Deny", role: .cancel) { finish(.deny) }.keyboardShortcut(.cancelAction)
-                Button(allowLabel) { finish(choice.decision) }
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(request.production && !confirmedProduction)
+                if touchID == nil {
+                    Button(allowLabel + "…") { useSheet() }
+                        .keyboardShortcut(.defaultAction)
+                        .disabled(!ready || sheetUp)
+                } else {
+                    Button("Use Password…") { useSheet() }.disabled(!ready || sheetUp)
+                }
             }
         }
-        .padding(20)
-        .frame(width: 440)
+    }
+
+    /// Set by the snapshot tool.
+    nonisolated(unsafe) static var drawsStandInGlyph = false
+
+    /// Who and where, in a line: "Claude in ~/Projects/site".
+    private var subtitle: String {
+        if request.fromSafari { return "Latchkey for Safari" + (request.page.map { " on \($0)" } ?? "") }
+        if request.overSSH { return "From another computer" }
+        let place = request.folder.isEmpty || request.folder == "/" ? "" : " in " + Broker.tilde(request.folder)
+        return (request.asker ?? (request.fromApp ? "Latchkey" : "A program")) + place
+    }
+
+    /// A line of what the answer covers, in full.
+    private func covered(_ text: String, mono: Bool = false) -> some View {
+        Text(text).font(mono ? .callout.monospaced() : .callout).textSelection(.enabled)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// Production waits for its box to be ticked before anything can allow it.
+    private var ready: Bool { !request.production || confirmedProduction }
+
+    private func startTouchID() {
+        guard !decided, !sheetUp, touchID == nil else { return }
+        let context = LAContext()
+        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil) else { return }
+        touchID = context
+    }
+
+    private func evaluate(_ context: LAContext) {
+        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: sheetReason) { passed, _ in
+            DispatchQueue.main.async {
+                guard touchID === context else { return }   // started over, or the sheet took over
+                if passed { finish(choice.decision) } else { touchID = nil }
+            }
+        }
+    }
+
+    /// The system sheet: the Mac password, an Apple Watch, or Touch ID on a Mac where it can't be shown here.
+    private func useSheet() {
+        touchID?.invalidate()
+        touchID = nil
+        sheetUp = true
+        let reason = sheetReason
+        DispatchQueue.global().async {
+            let passed = SystemApprover().confirm(reason)
+            DispatchQueue.main.async {
+                sheetUp = false
+                if passed { finish(choice.decision) }
+            }
+        }
+    }
+
+    /// The command that receives what's allowed, in full.
+    static func command(_ request: ApprovalRequest) -> String? {
+        if let run = request.runCommand { return "latchkey run -- " + run.joined(separator: " ") }
+        if let c = request.command, !c.isEmpty { return c }
+        return nil
     }
 
     private var allowLabel: String {
+        if group.tickets.contains(where: { $0.request.action != request.action }) { return "Allow" }
         switch request.action {
         case .push: return "Push"
         case .compare, .scan: return "Compare"

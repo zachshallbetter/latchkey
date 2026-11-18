@@ -55,8 +55,11 @@ latchkey (CLI) ──JSON over a Unix socket──► Broker (in the app) ──
   data-protection keychain with `kSecAttrSynchronizable` in the app's access group; `.thisMac` uses the login
   keychain. `KeychainStore.automatic` picks by trying a write (reads from an unentitled process just say "not
   found").
-- **`SystemApprover`** uses LocalAuthentication; the app's `PanelApprover` shows the Touch ID sheet alone for changes
-  (`ApprovalRequest.sheetFirst`), with the panel behind its Details… button, and the panel first for everything else.
+- **`SystemApprover`** uses LocalAuthentication. The app's `PanelApprover` shows every question in one panel with
+  Touch ID inside it (`InlineTouchID`), groups questions with the same `ApprovalRequest.caller` and folder
+  (`Approver.groupsRequests`), and keeps the system sheet for Use Password…. `Broker.handle` asks outside its lock in
+  two passes: the first records the question (`decide`), the second uses the answer only if `Broker.covers` it and
+  no item's value changed.
 - **`PeerInfo`** reads the caller's PID, working folder and command line from the kernel and walks parent processes.
   **`CodeIdentity`** checks code signatures through the socket's audit token: the app recognizes its own tool
   (`io.snackstud.latchkey.cli`), and the tool refuses to talk to anything but the app (`io.snackstud.latchkey`), both

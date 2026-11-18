@@ -1,4 +1,5 @@
 import Darwin
+import CryptoKit
 import Foundation
 
 /// Answers CLI requests: decides what may be read, asks for approval, writes the access log.
@@ -33,8 +34,14 @@ public final class Broker: @unchecked Sendable {
     public let logKeys: LogKeyStore?
     /// Called after every logged decision (reads, changes, denials), off the main thread.
     public var onChange: (@Sendable () -> Void)?
-    /// One request at a time, so approval sheets never stack.
+    /// One request runs at a time. Approval happens outside it (`handle`).
     private let serial = NSLock()
+    /// An approver that can't show more than one question at a time (the system sheet) is asked one at a time.
+    private let asking = NSLock()
+    /// The first pass of a request that needs approval (`handle`), while `serial` is held.
+    private var firstPass: FirstPass?
+    /// The answer the second pass may use, while `serial` is held.
+    private var answer: Answer?
     /// Whether this Mac has Latchkey Pro. The app passes its StoreKit resolver in the App Store build; everywhere else
     /// nothing grants it, so a Pro op is refused.
     private let hasPro: @Sendable () -> Bool
@@ -97,9 +104,47 @@ public final class Broker: @unchecked Sendable {
 
     // MARK: requests
 
+    /// Every request runs under `serial`. One that needs approval runs twice. The first pass stops where it would ask
+    /// and records the question. The lock is released while the person answers, so other requests aren't held up and
+    /// questions from the same caller can be shown together (`Approver.groupsRequests`). Then the request runs again
+    /// from the start and uses the answer only if it asks the same question (`covers`) about items whose values haven't
+    /// changed since it was shown. Otherwise it asks again, three times at most.
     public func handle(_ req: Request, peer: PeerInfo) -> Response {
-        serial.lock()
-        defer { serial.unlock() }
+        for _ in 0..<3 {
+            serial.lock()
+            firstPass = FirstPass()
+            let first = run(req, peer: peer)
+            let pass = firstPass ?? FirstPass()
+            firstPass = nil
+            guard let question = pass.asked else {
+                pass.held.forEach { $0() }
+                serial.unlock()
+                return first
+            }
+            let seen = digests(question.names)
+            serial.unlock()
+
+            let decision: ApprovalDecision
+            if approver.groupsRequests {
+                decision = approver.approve(question)
+            } else {
+                asking.lock()
+                decision = approver.approve(question)
+                asking.unlock()
+            }
+
+            serial.lock()
+            answer = Answer(request: question, seen: seen, decision: decision)
+            let second = run(req, peer: peer)
+            let stale = answer?.stale == true
+            answer = nil
+            serial.unlock()
+            if !stale { return second }
+        }
+        return Response(ok: false, error: "what this asked about kept changing while it waited for approval; nothing was done")
+    }
+
+    private func run(_ req: Request, peer: PeerInfo) -> Response {
         if let feature = proFeatures[req.op], !hasPro() { return Response(ok: false, error: ProGate.refusal(feature: feature)) }
         do {
             switch req.op {
@@ -211,7 +256,7 @@ public final class Broker: @unchecked Sendable {
 
         var denied: [String] = []
         if !toAsk.isEmpty {
-            switch ask(.read, toAsk, peer, req, "release \(Self.count(toAsk)), asked by \(Self.describe(peer, req))", offersGrant: true) {
+            switch try ask(.read, toAsk, peer, req, "release \(Self.count(toAsk)), asked by \(Self.describe(peer, req))", offersGrant: true) {
             case .deny:
                 denied = toAsk
                 log("get", toAsk, "denied", peer, req)
@@ -249,7 +294,7 @@ public final class Broker: @unchecked Sendable {
         let isNew = current == nil
         var what = isNew ? "add \(name)" : req.value == nil ? "change the settings of \(name)" : "change \(name)"
         what += Self.settingChanges(agentSafe: req.agentSafe, kind: req.kind, from: current)
-        guard ask(isNew ? .add : .change, [name], peer, req, "\(what), asked by \(Self.describe(peer, req))").allowed else {
+        guard try ask(isNew ? .add : .change, [name], peer, req, "\(what), asked by \(Self.describe(peer, req))").allowed else {
             log("set", [name], "denied", peer, req)
             return Response(ok: false, error: "change to \(name) was not approved")
         }
@@ -275,7 +320,7 @@ public final class Broker: @unchecked Sendable {
             let allowed = info.fillSites.map { "only on \($0.joined(separator: ", "))" } ?? "only on its service's own site and where deployments keep their environment variables"
             return Response(ok: false, error: "\(name) can't be filled on this site. It may be filled \(allowed); change that in Latchkey.")
         }
-        guard ask(.read, [name], peer, req, "fill \(name) into a field on \(host)").allowed else {
+        guard try ask(.read, [name], peer, req, "fill \(name) into a field on \(host)").allowed else {
             log("fill", [name], "denied", peer, req)
             return Response(ok: false, error: "filling \(name) was not approved")
         }
@@ -294,7 +339,7 @@ public final class Broker: @unchecked Sendable {
         if missing.count == names.count { return Response(ok: true, missing: missing) }
         guard missing.isEmpty else { return Response(ok: false, error: "no item named \(missing.joined(separator: ", ")); nothing deleted", missing: missing) }
         let what = names.count == 1 ? names[0] : Self.count(names)
-        guard ask(.delete, names, peer, req, "delete \(what), asked by \(Self.describe(peer, req))").allowed else {
+        guard try ask(.delete, names, peer, req, "delete \(what), asked by \(Self.describe(peer, req))").allowed else {
             log("rm", names, "denied", peer, req)
             return Response(ok: false, error: "removal of \(what) was not approved")
         }
@@ -351,7 +396,7 @@ public final class Broker: @unchecked Sendable {
         if req.note != nil { changes.append("change the note of") }
         if let s = sites { changes.append(s.isEmpty ? "let Safari fill on the default sites" : "let Safari fill only on \(s.joined(separator: ", "))") }
         let reason = "\(changes.joined(separator: " and ")) \(names.count == 1 ? names[0] : Self.count(names)), asked by \(Self.who(peer))"
-        guard ask(.change, names, peer, req, reason).allowed else {
+        guard try ask(.change, names, peer, req, reason).allowed else {
             log("update", names, "denied", peer, req)
             return Response(ok: false, error: "the change was not approved")
         }
@@ -383,7 +428,7 @@ public final class Broker: @unchecked Sendable {
         guard !writing.isEmpty else {
             // Nothing new to save, but the files still say which variables their environments have.
             if !given.isEmpty {
-                guard ask(.change, given.map(\.scope), peer, req, "record which variables \(Self.describeScopes(given)) has, asked by \(Self.describe(peer, req))").allowed else {
+                guard try ask(.change, given.map(\.scope), peer, req, "record which variables \(Self.describeScopes(given)) has, asked by \(Self.describe(peer, req))").allowed else {
                     log("import", [], "denied (environment records)", peer, req)
                     return Response(ok: false, error: "recording the environment was not approved")
                 }
@@ -404,7 +449,7 @@ public final class Broker: @unchecked Sendable {
         var from = ""
         if let src = req.source, !src.isEmpty { from = " from \(Self.tilde(src))" }
         if !given.isEmpty { from += " and record which variables \(Self.describeScopes(given)) has" }
-        guard ask(.importItems, writing, peer, req, "\(what.joined(separator: " and "))\(from), asked by \(Self.describe(peer, req))").allowed else {
+        guard try ask(.importItems, writing, peer, req, "\(what.joined(separator: " and "))\(from), asked by \(Self.describe(peer, req))").allowed else {
             log("import", writing, "denied", peer, req)
             return Response(ok: false, error: "import was not approved")
         }
@@ -471,7 +516,7 @@ public final class Broker: @unchecked Sendable {
         let preview = Grant(names: names, folder: folder, expires: Date(), createdBy: "", session: session, commands: req.commands, usesLeft: req.uses)
         let limits = preview.limits.isEmpty ? "" : " (\(preview.limits))"
         let reason = "let programs in \(Self.tilde(folder))\(worktrees) read \(Self.count(names)) without asking for \(GrantStore.describe(duration))\(limits), asked by \(Self.who(peer))"
-        guard ask(.grant, names, peer, req, reason, duration: duration, folder: folder).allowed else {
+        guard try ask(.grant, names, peer, req, reason, duration: duration, folder: folder).allowed else {
             log("grant", names, "denied", peer, req)
             return Response(ok: false, error: "the grant was not approved")
         }
@@ -506,7 +551,7 @@ public final class Broker: @unchecked Sendable {
 
         let moving = targets.keys.sorted()
         let place = project.isEmpty ? "shared items" : "\(project)/\(environment)"
-        guard ask(.move, moving, peer, req, "move \(Self.count(moving)) to \(place), asked by \(Self.who(peer))").allowed else {
+        guard try ask(.move, moving, peer, req, "move \(Self.count(moving)) to \(place), asked by \(Self.who(peer))").allowed else {
             log("move", moving, "denied", peer, req)
             return Response(ok: false, error: "the move was not approved")
         }
@@ -636,7 +681,7 @@ public final class Broker: @unchecked Sendable {
         let added = changed.flatMap { c in c.added.sorted().compactMap { n in c.record.variables[n].map { (n, $0) } } }
         let what = count == 0 ? "mark \(Self.describeScopes(changed.map(\.record))) as checked"
             : "record \(count) variable\(count == 1 ? "" : "s") in \(Self.describeScopes(changed.map(\.record))) (\(Self.describeTargets(added)))"
-        guard ask(.change, scopes, peer, req, "\(what), from your items and the files they came from, asked by \(Self.describe(peer, req))").allowed else {
+        guard try ask(.change, scopes, peer, req, "\(what), from your items and the files they came from, asked by \(Self.describe(peer, req))").allowed else {
             log("environment-add", scopes, "denied", peer, req)
             return Response(ok: false, error: "recording the environments was not approved")
         }
@@ -669,7 +714,7 @@ public final class Broker: @unchecked Sendable {
         if !unset.isEmpty { parts.append("remove \(unset.joined(separator: ", "))") }
         if !confirm.isEmpty { parts.append("confirm \(confirm.joined(separator: ", "))") }
         let reason = "\(parts.joined(separator: " and ")) in \(scope), asked by \(Self.describe(peer, req))"
-        guard ask(.change, [scope], peer, req, reason).allowed else {
+        guard try ask(.change, [scope], peer, req, reason).allowed else {
             log("environment-set", [scope], "denied", peer, req)
             return Response(ok: false, error: "the change to \(scope) was not approved")
         }
@@ -688,7 +733,7 @@ public final class Broker: @unchecked Sendable {
             return Response(ok: false, error: "give one environment, such as shop/development")
         }
         guard try records.environments().contains(where: { $0.scope == scope }) else { return Response(ok: true, missing: [scope]) }
-        guard ask(.delete, [scope], peer, req, "forget the record of \(scope) (its items stay), asked by \(Self.describe(peer, req))").allowed else {
+        guard try ask(.delete, [scope], peer, req, "forget the record of \(scope) (its items stay), asked by \(Self.describe(peer, req))").allowed else {
             log("environment-remove", [scope], "denied", peer, req)
             return Response(ok: false, error: "removing the record of \(scope) was not approved")
         }
@@ -727,7 +772,7 @@ public final class Broker: @unchecked Sendable {
             let place = peer.isSSHForward ? "\(dest) on another computer" : Self.tilde(dest)
             reason = "write \(Self.count(names))\(scope) in plain text to \(place), asked by \(Self.describe(peer, req))"
         }
-        guard ask(.read, names, peer, req, reason).allowed else {
+        guard try ask(.read, names, peer, req, reason).allowed else {
             log("export", names, clipboard ? "denied (copy to the clipboard)" : "denied (plain text to \(dest))", peer, req)
             return Response(ok: false, error: "the export was not approved")
         }
@@ -750,7 +795,7 @@ public final class Broker: @unchecked Sendable {
         var project = all.first { $0.name == name } ?? ProjectRecord(name: name, origins: [])
         let new = origins.filter { !project.origins.contains($0) }
         guard !new.isEmpty else { return Response(ok: true, projects: [project]) }
-        guard ask(.change, [name], peer, req, "remember \(new.joined(separator: ", ")) as project \(name), so its checkouts on your Macs are recognized, asked by \(Self.describe(peer, req))").allowed else {
+        guard try ask(.change, [name], peer, req, "remember \(new.joined(separator: ", ")) as project \(name), so its checkouts on your Macs are recognized, asked by \(Self.describe(peer, req))").allowed else {
             log("project-link", [name], "denied", peer, req)
             return Response(ok: false, error: "linking \(name) was not approved")
         }
@@ -767,7 +812,7 @@ public final class Broker: @unchecked Sendable {
         let origins = Set(req.origins ?? [])
         let removing = project.origins.filter(origins.contains)
         guard !removing.isEmpty else { return Response(ok: false, error: "\(name) isn't linked to \(origins.sorted().joined(separator: ", "))") }
-        guard ask(.change, [name], peer, req, "forget \(removing.joined(separator: ", ")) as project \(name), asked by \(Self.describe(peer, req))").allowed else {
+        guard try ask(.change, [name], peer, req, "forget \(removing.joined(separator: ", ")) as project \(name), asked by \(Self.describe(peer, req))").allowed else {
             log("project-unlink", [name], "denied", peer, req)
             return Response(ok: false, error: "unlinking \(name) was not approved")
         }
@@ -789,7 +834,7 @@ public final class Broker: @unchecked Sendable {
         let items = try store.list().filter { $0.kind.isSecret }
         guard !items.isEmpty else { return Response(ok: true, groups: []) }
         let names = items.map(\.name)
-        guard ask(.compare, names, peer, req, "compare the values of \(Self.count(names)) to find duplicates (no value leaves Latchkey), asked by \(Self.describe(peer, req))").allowed else {
+        guard try ask(.compare, names, peer, req, "compare the values of \(Self.count(names)) to find duplicates (no value leaves Latchkey), asked by \(Self.describe(peer, req))").allowed else {
             log("duplicates", [], "denied", peer, req)
             return Response(ok: false, error: "finding duplicates was not approved")
         }
@@ -812,7 +857,7 @@ public final class Broker: @unchecked Sendable {
         let items = try store.list().filter { $0.kind.isSecret }
         guard !found.isEmpty, !items.isEmpty else { return Response(ok: true, matches: [:]) }
         let names = items.map(\.name)
-        guard ask(.scan, names, peer, req, "compare \(found.count) value\(found.count == 1 ? "" : "s") found in files with the values of \(Self.count(names)) (no stored value leaves Latchkey), asked by \(Self.describe(peer, req))").allowed else {
+        guard try ask(.scan, names, peer, req, "compare \(found.count) value\(found.count == 1 ? "" : "s") found in files with the values of \(Self.count(names)) (no stored value leaves Latchkey), asked by \(Self.describe(peer, req))").allowed else {
             log("scan", [], "denied", peer, req)
             return Response(ok: false, error: "scanning was not approved")
         }
@@ -843,7 +888,7 @@ public final class Broker: @unchecked Sendable {
         let what = "combine \(Self.count(ids)) into \(target.isShared ? "the shared item " : "")\(into)\(infos[into] != nil ? "" : " (new)")"
         // Ask before reading any value: comparing them is reading them, and whether two secrets match is itself worth
         // knowing (as for duplicates and scan), so no answer about their values comes back unapproved.
-        guard ask(.move, ids, peer, req, "\(what); the others are deleted and references follow, asked by \(Self.who(peer))").allowed else {
+        guard try ask(.move, ids, peer, req, "\(what); the others are deleted and references follow, asked by \(Self.who(peer))").allowed else {
             log("combine", ids, "denied", peer, req)
             return Response(ok: false, error: "combining was not approved")
         }
@@ -908,7 +953,7 @@ public final class Broker: @unchecked Sendable {
     func versionValue(_ req: Request, peer: PeerInfo) throws -> Response {
         guard let v = try version(req) else { return Response(ok: false, error: "no such version") }
         let when = v.savedAt.formatted(date: .abbreviated, time: .shortened)
-        guard ask(.readVersion, [v.item], peer, req, "show the value \(v.item) had until \(when), asked by \(Self.who(peer))").allowed else {
+        guard try ask(.readVersion, [v.item], peer, req, "show the value \(v.item) had until \(when), asked by \(Self.who(peer))").allowed else {
             log("version", [v.item], "denied", peer, req)
             return Response(ok: false, denied: [v.item])
         }
@@ -926,7 +971,7 @@ public final class Broker: @unchecked Sendable {
         let back = exists ? "restore \(v.item) to its value from \(when)"
                           : "bring back \(v.item), deleted \(when)" + Self.settingChanges(agentSafe: v.agentSafe, kind: v.kind, from: nil)
         let reason = "\(back), asked by \(Self.who(peer))"
-        guard ask(.restore, [v.item], peer, req, reason).allowed else {
+        guard try ask(.restore, [v.item], peer, req, reason).allowed else {
             log("restore", [v.item], "denied", peer, req)
             return Response(ok: false, error: "the restore was not approved")
         }
@@ -949,7 +994,7 @@ public final class Broker: @unchecked Sendable {
         let found = try names.flatMap { try versions.list(item: $0) }
         guard !found.isEmpty else { return Response(ok: true, missing: names) }
         let what = names.count == 1 ? names[0] : Self.count(names)
-        guard ask(.delete, names, peer, req, "forget the earlier values of \(what) for good, asked by \(Self.who(peer))").allowed else {
+        guard try ask(.delete, names, peer, req, "forget the earlier values of \(what) for good, asked by \(Self.who(peer))").allowed else {
             log("forget", names, "denied", peer, req)
             return Response(ok: false, error: "forgetting the history was not approved")
         }
@@ -978,7 +1023,7 @@ public final class Broker: @unchecked Sendable {
         if try remotes.all().contains(where: { $0.scope == scope && $0.target == target }) {
             return Response(ok: false, error: "\(scope) is already linked to \(target.label)")
         }
-        guard ask(.link, [scope], peer, req, "link \(scope) to \(target.approvalLabel)\(target.tokenItem.map { " using the token in \($0)" } ?? ""), asked by \(Self.who(peer))", targets: [target.approvalLabel + (target.tokenItem.map { " (token: \($0))" } ?? "")]).allowed else {
+        guard try ask(.link, [scope], peer, req, "link \(scope) to \(target.approvalLabel)\(target.tokenItem.map { " using the token in \($0)" } ?? ""), asked by \(Self.who(peer))", targets: [target.approvalLabel + (target.tokenItem.map { " (token: \($0))" } ?? "")]).allowed else {
             log("link", [scope], "denied", peer, req)
             return Response(ok: false, error: "the link was not approved")
         }
@@ -1128,7 +1173,7 @@ public final class Broker: @unchecked Sendable {
                                       "push \(Self.count(names.map { ItemID($0)?.name ?? $0 })) to \(labels.joined(separator: ", ")), asked by \(Self.who(peer))")
         request.targets = labels
         request.production = links.contains { $0.target.isProduction }
-        guard approver.approve(request).allowed else {
+        guard try decide(request).allowed else {
             log("push", names, "denied", peer, req)
             return Response(ok: false, error: "the push was not approved")
         }
@@ -1222,11 +1267,70 @@ public final class Broker: @unchecked Sendable {
 
     private func ask(_ action: ApprovalRequest.Action, _ names: [String], _ peer: PeerInfo, _ req: Request,
                      _ reason: String, duration: TimeInterval? = nil, folder: String? = nil, targets: [String] = [],
-                     offersGrant: Bool = false) -> ApprovalDecision {
+                     offersGrant: Bool = false) throws -> ApprovalDecision {
         var request = approvalRequest(action, names, peer, req, reason, duration: duration, folder: folder)
         request.targets = targets
         request.offersGrant = offersGrant
+        return try decide(request)
+    }
+
+    // MARK: approval outside the lock
+
+    /// What a first pass recorded: the question it would ask, and the log lines it wrote before asking, held back
+    /// because the second pass writes them again.
+    private struct FirstPass {
+        var asked: ApprovalRequest?
+        var held: [() -> Void] = []
+    }
+
+    /// What was approved, the digest of each item's value when it was shown, and the decision.
+    private struct Answer {
+        let request: ApprovalRequest
+        let seen: [String: Data]
+        let decision: ApprovalDecision
+        var used = false
+        /// The second pass asked something else, or an item changed: ask again.
+        var stale = false
+    }
+
+    /// Stops a pass at its question; `run` turns it into a response that `handle` sets aside.
+    private struct Interrupted: Error {}
+
+    /// The answer to a request's question. In a first pass it records the question and stops; in a second pass it
+    /// gives the decision made outside the lock, if that still answers what's asked.
+    private func decide(_ request: ApprovalRequest) throws -> ApprovalDecision {
+        if firstPass != nil {
+            firstPass?.asked = request
+            throw Interrupted()
+        }
+        if var given = answer, !given.used {
+            given.used = true
+            let now = digests(request.names)
+            if Self.covers(given.request, request), request.names.allSatisfy({ now[$0] == given.seen[$0] }) {
+                answer = given
+                return given.decision
+            }
+            given.stale = true
+            answer = given
+            throw Interrupted()
+        }
+        // A second question in the same request (none asks one today) is asked here, under the lock.
         return approver.approve(request)
+    }
+
+    /// Whether approving `approved` answers `asked`: the same question, or for releasing values the same question
+    /// about fewer of the same items, as when a grant made from an approval in the same group now covers the rest.
+    static func covers(_ approved: ApprovalRequest, _ asked: ApprovalRequest) -> Bool {
+        if approved == asked { return true }
+        guard approved.action == .read, asked.action == .read, Set(asked.names).isSubset(of: approved.names) else { return false }
+        var a = approved, b = asked
+        (a.names, b.names, a.reason, b.reason, a.what, b.what) = ([], [], "", "", nil, nil)
+        return a == b
+    }
+
+    /// A digest of each named item's value, kept in memory only to notice a change while an approval waits.
+    private func digests(_ names: [String]) -> [String: Data] {
+        ((try? store.values(names)) ?? [:]).mapValues { Data(SHA256.hash(data: Data($0.utf8))) }
     }
 
     /// What the approval panel shows. Everything about the caller comes from the kernel: its folder, its command
@@ -1247,7 +1351,7 @@ public final class Broker: @unchecked Sendable {
             break
         }
         // A caller the kernel can't identify (it exited, or its details couldn't be read) is not Latchkey's own tool:
-        // name it as unidentified so the warning shows and changes don't fall back to the Touch ID sheet alone.
+        // name it as unidentified so the warning shows and its requests are never grouped with others.
         request.program = request.fromApp || peer.isLatchkeyTool ? nil
             : peer.path.isEmpty ? Self.unidentifiedProgram : peer.path
         if peer.isSafariExtension {
@@ -1264,6 +1368,9 @@ public final class Broker: @unchecked Sendable {
             request.sessionName = nil
         }
         request.byAgent = req.origin == "mcp"
+        if !peer.isSSHForward, !peer.isSafariExtension, !peer.path.isEmpty, !peer.ancestors.isEmpty {
+            request.caller = peer.ancestors.map { "\($0.pid)@\($0.started)" }.joined(separator: " ")
+        }
         return request
     }
 
@@ -1366,6 +1473,15 @@ public final class Broker: @unchecked Sendable {
     }
 
     private func log(_ op: String, _ names: [String], _ decision: String, _ peer: PeerInfo, _ req: Request) {
+        // A first pass's lines wait until it's known whether it asks (`handle`); if it does, the second pass writes them.
+        if firstPass != nil {
+            firstPass?.held.append { [self] in writeLog(op, names, decision, peer, req) }
+            return
+        }
+        writeLog(op, names, decision, peer, req)
+    }
+
+    private func writeLog(_ op: String, _ names: [String], _ decision: String, _ peer: PeerInfo, _ req: Request) {
         guard let url = logURL else { return }
         var entry = LogEntry(time: Date(), op: op, names: names, decision: decision,
                              chain: peer.chain, cwd: peer.cwd, command: peer.redactedCommandLine.isEmpty ? nil : peer.redactedCommandLine,

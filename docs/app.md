@@ -150,21 +150,24 @@ and **Add a Location…**. See [Remote locations](remote.md).
 
 ## The approval panel
 
-One prompt at a time:
+Every approval is one small panel titled like "Claude wants to use 2 items", with who and where under it ("Claude in
+~/Projects/shop"), every item it covers, and the Touch ID glyph with what a touch does ("Touch ID to allow once").
+**Details** opens the process chain, the folder and the command that receives the values. **Use Password…** brings up the macOS sheet for your password or
+an Apple Watch; a Mac without Touch ID shows **Allow…**, which does the same.
 
-- **Changes** (add, change, delete, import, move, restore, link) ask with the macOS Touch ID sheet alone, which says
-  what, who and where: "Latchkey is trying to add shop/development/DB, asked by Claude in ~/Projects/shop." Its
-  **Details…** button opens the panel with everything (the items, the agent and the programs it runs through, the
-  folder and the command), where **Allow** asks for Touch ID again and **Deny** refuses. A change that lets agents
-  read an item without approval, or makes it a plain value, says so in both.
-- **Releasing values to a command** shows the panel first, titled like "Claude wants to use 2 items". Choose
-  **Allow Once**, or tick **Allow from this folder** (for a time, until the agent quits, or only for this command);
-  Touch ID or your password confirms. So do earlier values, grants asked for ahead of time and pushes, where
-  production needs **I mean to change production** ticked first.
-- A request from another computer over SSH, or from a program that isn't Latchkey's command-line tool, always shows
-  the panel first, with its warning.
-- A sheet or panel nobody answers is a denial after 90 seconds. Things you start yourself, in the window or in
-  Latchkey for Safari, ask for Touch ID alone.
+- **Releasing values to a command:** allow once, or tick **Allow from this folder** (for a time, until the agent
+  quits, or only for this command). Earlier values, grants asked for ahead of time and changes (add, change, delete,
+  import, move, restore, link) show the same panel. A change that lets agents read an item without approval, or makes
+  it a plain value, says so.
+- **Several requests at once:** requests from the same agent in the same folder that come in while the panel is up
+  join it as rows, titled like "Claude is asking for 3 things", so one touch answers them all. Each row names every item it
+  covers (its command is under **Details**), and its ⓧ denies that one alone. A request joining starts Touch ID over, so a touch
+  can't allow one that just appeared. Requests from anyone else wait for the next panel.
+- **Asked on their own:** pushes, where production needs **I mean to change production** ticked first; requests
+  from another computer over SSH, from a program that isn't Latchkey's command-line tool (both with a warning), and
+  from Latchkey for Safari.
+- A request that waits two minutes without an answer, on the panel or behind another, is denied. A request whose
+  items change while it waits (another change was approved meanwhile) asks again instead of using the answer.
 See [Concepts](concepts.md#approvals).
 
 After an import or a new item, Latchkey shows what to do next: the reference to put in your env file and the

@@ -97,7 +97,7 @@ struct LockScreen: View {
 
 /// The system's own Touch ID prompt, drawn inside the window. Evaluating a biometric policy on a context that an
 /// `LAAuthenticationView` shows puts the prompt here instead of in a sheet.
-private struct InlineTouchID: NSViewRepresentable {
+struct InlineTouchID: NSViewRepresentable {
     let context: LAContext
     /// Called once the view is in a key window. Started any earlier, the prompt waits for a click on the glyph.
     let start: () -> Void
