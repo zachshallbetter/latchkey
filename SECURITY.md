@@ -2,9 +2,11 @@
 
 ## Reporting a vulnerability
 
-Report it privately by email to latchkey@snackstud.io with "Security" in the subject, or through GitHub: the
-repository's **Security** tab › **Report a vulnerability**. Please don't open a public issue, pull request or
+Report it privately through GitHub: [report a vulnerability](https://github.com/zachshallbetter/latchkey/security/advisories/new)
+(the repository's **Security** tab › **Report a vulnerability**). Please don't open a public issue, pull request or
 discussion for it.
+
+Latchkey has a solo maintainer. Reports are handled on a best-effort basis, with no response-time guarantee (no SLA).
 
 Include what you can of:
 
@@ -13,7 +15,7 @@ Include what you can of:
   approved agent, a pushed link);
 - steps to reproduce, with example values only. Never send a real secret.
 
-You'll get a reply by email or in the advisory. Once a fix ships, the advisory is published and credits you unless you'd rather
+You'll get a reply in the advisory. Once a fix ships, the advisory is published and credits you unless you'd rather
 it didn't.
 
 ## In scope

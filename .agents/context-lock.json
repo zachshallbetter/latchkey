@@ -5,8 +5,8 @@
   "validityBasis": "aggregate-source-digest",
   "selectedPaths": [],
   "sourceSelection": {
-    "includedCount": 351,
-    "includedBytes": 2792915,
+    "includedCount": 358,
+    "includedBytes": 2802420,
     "excludedCounts": {
       "extension": 86,
       "generated-or-transient-file": 1
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "6b5cf662209b0dad6212b2a4ea2bebf8c633f3f8",
-        "branch": "list-grouping",
-        "dirty": true,
+        "commit": "1658dc8bb86fe8a0128b6fef98b4bba8e31690fd",
+        "branch": "docs/public-governance-2",
+        "dirty": false,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "4e52722b0dc010de90bd772fbbde00e23b66e2b8a23f604b16bd5c7384b76dc6",
+  "aggregateSourceDigest": "cf54236438770ed6f0d0fd899a3297a2931543845a7da455d3d59d70260c9ce2",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -698,6 +698,26 @@
       "sha256": "cab3fd43747dd7975ad7a46032fadb10667e8e9c776901c56e44b3a88c817f23"
     },
     {
+      "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "bytes": 1717,
+      "sha256": "bc8bec91c9c77bbc07f3cc2a6fc5dc0443b14e3d50c34af5e2252012ef40d863"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "bytes": 227,
+      "sha256": "90511ff618d2da811e48e61c6185010561a34220769a88c17de867579e0fc0be"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/feature_request.yml",
+      "bytes": 884,
+      "sha256": "b3452d8a58149fb96816094ad91ee7f535ab5f47127c5fc482a5ae7a27ab6891"
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "bytes": 625,
+      "sha256": "81adede746e59990018f4491a5bf0eab5918c1bf96badd3edd0476f2e4076c85"
+    },
+    {
       "path": ".github/workflows/swift-package.yml",
       "bytes": 1176,
       "sha256": "3e97242993a5555bfaae50635880d4278739b0d9bfee5cf60281d0ce2e284bd4"
@@ -1063,6 +1083,16 @@
       "sha256": "59429b0fed4b3002c3d6478b600d1236b5a268d508201bcb97f74b54befb74bd"
     },
     {
+      "path": "CODE_OF_CONDUCT.md",
+      "bytes": 1376,
+      "sha256": "9198215e8ab4349a1fbf2ed5731626270d48577dc268570c80829ea0f5a256ee"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "bytes": 2526,
+      "sha256": "bcfffd66e3ec7a4b4bb2eb1940a2122b360c3ce5fcebdb8646de80ba395022f1"
+    },
+    {
       "path": "LICENSE.md",
       "bytes": 3744,
       "sha256": "324a5cd8604c7d08203f1da2eeafe3d195d15bccaa68630770f29ade31e05dc8"
@@ -1074,13 +1104,18 @@
     },
     {
       "path": "README.md",
-      "bytes": 4294,
-      "sha256": "7775741cb9f62444f0e212ac9bf4eecc74289081f8f3c6847db21f18dcfa03c1"
+      "bytes": 5810,
+      "sha256": "e0f90866b18ab9099f8cd4ba42769c1b39a41a96add0f2350163b1cd766ab53e"
     },
     {
       "path": "SECURITY.md",
-      "bytes": 2238,
-      "sha256": "3dda3ab3632bbf059ca30dcef410b901c1263df2adb92df4e76f7e4dd104c072"
+      "bytes": 2372,
+      "sha256": "ce8ac0481a4848645474dd25f7edf520fe31b3c7657e632699292065e42445cb"
+    },
+    {
+      "path": "SUPPORT.md",
+      "bytes": 500,
+      "sha256": "a22075acf23253efe15cc87d858ef04bd266ada647a1cb7ccdb8615817f468f3"
     },
     {
       "path": "Sources/LatchkeyCore/AWSSTS.swift",

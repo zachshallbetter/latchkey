@@ -1,0 +1,26 @@
+name: Feature request
+description: Propose a change to the app, the command-line tool, the MCP server or the Safari extension.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Tell us the problem first. Anything that changes who can read a value, or adds a new caller, gate or
+        system of record, changes Latchkey's trust boundary (see docs/security.md), so describe the threat model you
+        have in mind.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem or workflow
+      description: What are you trying to do, and what is in the way?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How you imagine it
+      description: A command, an option, a setting, a screen.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
