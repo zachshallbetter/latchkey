@@ -77,7 +77,23 @@ enum Snapshot {
                                          reason: "release DATABASE_URL and STRIPE_KEY")
             sample.sessionName = "agent"
             sample.offersGrant = true
-            drawOffscreen(ApprovalView(request: sample) { _ in }, to: path)
+            drawOffscreen(ApprovalView(group: ApprovalGroup(ApprovalTicket(sample))) { _ in }, to: path)
+            return
+        }
+        if arg("--part") == "approvalgroup" {
+            func ask(_ names: [String], _ command: String) -> ApprovalTicket {
+                var r = ApprovalRequest(action: .read, names: names, chain: ["zsh", "claude", "Terminal"],
+                                        folder: NSHomeDirectory() + "/Projects/site", command: command,
+                                        reason: "release \(names.joined(separator: " and "))")
+                r.sessionName = "claude"
+                r.offersGrant = true
+                r.caller = "1@1"
+                return ApprovalTicket(r)
+            }
+            let group = ApprovalGroup(ask(["site/development/DATABASE_URL"], "latchkey get site/development/DATABASE_URL"))
+            group.add(ask(["site/development/STRIPE_KEY", "site/development/STRIPE_WEBHOOK_SECRET"], "latchkey run -- npm test"))
+            group.add(ask(["site/development/RESEND_API_KEY"], "latchkey get site/development/RESEND_API_KEY"))
+            drawOffscreen(ApprovalView(group: group) { _ in }, to: path)
             return
         }
         if let f = arg("--import") { model.beginImport(URL(fileURLWithPath: f)) }
@@ -148,7 +164,7 @@ enum Snapshot {
                                     chain: ["the Latchkey app"], folder: "", reason: "push 2 items")
             r.targets = ["Vercel shop · production", Self.secondTarget.label]
             r.production = true
-            drawOffscreen(ApprovalView(request: r) { _ in }, to: path)
+            drawOffscreen(ApprovalView(group: ApprovalGroup(ApprovalTicket(r))) { _ in }, to: path)
             return
         }
         if arg("--part") == "list" {

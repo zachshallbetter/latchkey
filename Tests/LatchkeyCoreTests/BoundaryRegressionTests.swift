@@ -22,13 +22,13 @@ final class BoundaryRegressionTests: XCTestCase {
         XCTAssertTrue(r.touchIDReason.contains("attacker.example"), r.touchIDReason)
     }
 
-    func testAnUnidentifiedCallerIsWarnedAboutAndNotSheetFirst() throws {
+    func testAnUnidentifiedCallerIsWarnedAboutAndNeverGrouped() throws {
         let approver = RecordingApprover()
         let b = Broker(store: MemoryStore(), approver: approver, logURL: nil)
         _ = b.handle(Request(op: "set", names: ["A"], value: "a-value-1"), peer: PeerInfo(pid: 99999, path: "", cwd: "", chain: []))
         let r = try XCTUnwrap(approver.requests.first)
         XCTAssertEqual(r.program, Broker.unidentifiedProgram)
-        XCTAssertFalse(r.sheetFirst, "the panel and its warning come first")
+        XCTAssertEqual(r.caller, "", "a caller the kernel can't identify isn't approved together with anything")
     }
 
     func testCombineAsksBeforeComparingValues() throws {

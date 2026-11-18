@@ -33,11 +33,20 @@ command gets which value. This page says what it protects against, how, and wher
   Latchkey's own command-line tool, by code signature. The approval panel and the log show those. Any other program
   talking to the socket is named by its path, with a warning. Grants are matched against the folder the caller
   really runs in.
-- **Approvals** use macOS LocalAuthentication: Touch ID, a paired Apple Watch, or your account password. Releasing values
-  shows the panel with the caller's folder, command and process chain before Touch ID. A change asks with the system
-  sheet alone, naming the item, the agent and the folder; its Details… button shows the rest. A request over SSH or
-  from a program that isn't Latchkey's tool always shows the panel and its warning first. Nothing unanswered is
-  allowed: either prompt denies after 90 seconds. Allow Once authorizes one request; approvals are never cached.
+- **Approvals** use macOS LocalAuthentication: Touch ID, a paired Apple Watch, or your account password. Every request
+  shows Latchkey's panel with what it covers, the caller's folder, command and process chain; Touch ID is evaluated
+  inside the panel (`LAAuthenticationView`, biometrics only), and **Use Password…** falls back to the system sheet.
+  Touch ID runs in the Secure Enclave either way: another app drawing a lookalike panel gets a touch that authorizes
+  nothing in Latchkey. Requests from the same process tree in the same folder (each parent's process ID and start
+  time, from the kernel) that arrive while the panel is up are listed in it as rows and answered by one touch; a row
+  joining restarts Touch ID. Pushes, requests over SSH, from Latchkey for Safari or from a program the kernel couldn't
+  identify are never grouped. Nothing unanswered is allowed: a request denies after two minutes. Allow Once authorizes
+  one request; approvals are never cached.
+- **Approval waits outside the broker lock.** A request that needs approval runs once to find its question, waits
+  for the answer without holding the broker, then runs again from the start. It uses the answer only if it asks the
+  same question (for releasing values, the same or fewer of the same items) and each item's value is unchanged (a
+  SHA-256 of each value, kept in memory only for the wait). Otherwise it asks again, three times at most, then
+  refuses. An approver that can show only one question at a time, the system sheet, is still asked one at a time.
 - **Grants** are kept in a keychain item only Latchkey can read or change, on this Mac only, and last at most 7 days.
   No file holds them, so no other program can write itself one.
 - **The key proxy** (`latchkey run --proxy`) keeps OpenAI and Anthropic keys in the signed `latchkey` process, which

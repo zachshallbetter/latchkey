@@ -3,11 +3,15 @@
 ## Unreleased
 
 ### App
+- Approvals are one small panel with Touch ID inside it, for releases and changes alike; **Use Password…** opens the
+  system sheet. Requests from the same agent in the same folder that arrive while it's up join it as rows, so one
+  touch answers a burst; each row can be denied on its own. Pushes, SSH, Safari and unidentified programs are still
+  asked on their own.
 - Latchkey locks, as Passwords does: when it opens, after 5 minutes in the background (1, 5, 15 or 60 in Settings ›
   Privacy), and when the Mac sleeps or the screen locks. Touch ID is asked for right in the lock screen, with no
   system sheet; **Use Password…** opens the sheet for the Mac password. While locked the
   window, Settings and the menu bar panel show nothing but the lock screen. **Lock Latchkey** (⌃⌘L) and **Lock** in
-  the menu bar panel lock it by hand. Approvals for commands, agents and Safari are unchanged.
+  the menu bar panel lock it by hand. The lock covers the app only: approvals for commands, agents and Safari still appear while it is locked.
 - The item list is in sections: by project in All Items (Shared first), by environment in a project, or by service or
   type from **Group By** in the list's menu. Each section is a compact row like the sidebar's, with its icon and count,
   that opens or folds; past eight sections they start folded. Rows no longer repeat what their section says.
@@ -18,6 +22,8 @@
   (an app icon) is drawn without a white frame, and a dark logo keeps a light tile in dark mode so it stays visible.
 
 ### Security
+- The broker no longer holds its lock while a request waits for approval. The request runs again after the answer
+  and uses it only for the same question about unchanged values; anything else asks again.
 - Approvals show what they allow. The panel lists every item asked for, with a count, and the whole command a signed
   `latchkey run` starts, unredacted and never cut off in the middle. Text a caller supplies (a service name, a link
   label) can no longer end the Touch ID sheet's description early. A caller Latchkey can't identify is named as

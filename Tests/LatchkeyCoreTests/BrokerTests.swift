@@ -64,16 +64,6 @@ final class BrokerTests: XCTestCase {
         XCTAssertEqual(fill.touchIDReason, "fill A into a field on vercel.com")
     }
 
-    func testOnlyChangesWithoutWarningsGoStraightToTheSheet() {
-        func req(_ a: ApprovalRequest.Action) -> ApprovalRequest { ApprovalRequest(action: a, names: ["A"], chain: ["zsh"], folder: "/tmp", reason: "r") }
-        for a in [ApprovalRequest.Action.add, .change, .delete, .importItems, .move, .restore, .link] { XCTAssertTrue(req(a).sheetFirst, "\(a)") }
-        for a in [ApprovalRequest.Action.read, .readVersion, .grant, .push] { XCTAssertFalse(req(a).sheetFirst, "\(a)") }
-        var foreign = req(.delete); foreign.program = "/tmp/evil"
-        XCTAssertFalse(foreign.sheetFirst, "a program that isn't Latchkey's tool: its warning comes first")
-        var ssh = req(.add); ssh.overSSH = true
-        XCTAssertFalse(ssh.sheetFirst)
-    }
-
     func testOnlyAReleaseOffersAGrant() throws {
         let approver = RecordingApprover()
         let store = MemoryStore()

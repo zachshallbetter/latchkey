@@ -2,7 +2,7 @@ import Foundation
 import LocalAuthentication
 
 /// What the broker is asking the person at the Mac to allow.
-public struct ApprovalRequest: Sendable {
+public struct ApprovalRequest: Sendable, Equatable {
     public enum Action: String, Sendable {
         case read, add, change, delete, importItems, grant, move, readVersion, restore, link, push
         /// Compare values inside Latchkey without releasing them (finding duplicates).
@@ -46,6 +46,10 @@ public struct ApprovalRequest: Sendable {
     /// What the request does, without its "asked by" part, set by the broker from the exact suffix it appended. Text a
     /// caller supplied (a service name, a link label) can't end it early by containing ", asked by ".
     public var what: String?
+    /// The process tree asking, as the kernel reported it (each parent's process ID and start time). Requests with the
+    /// same caller and folder may be approved together (`Approver.groupsRequests`); empty for a caller whose requests
+    /// are never grouped: one over SSH, Latchkey for Safari, or a program the kernel couldn't identify.
+    public var caller = ""
 
     public init(action: Action, names: [String], chain: [String], folder: String, command: String? = nil,
                 duration: TimeInterval? = nil, reason: String) {
@@ -67,28 +71,17 @@ public struct ApprovalRequest: Sendable {
         return name.prefix(1).uppercased() + name.dropFirst()
     }
 
-    /// The line for the Touch ID sheet, which macOS shows as "Latchkey is trying to …": what's asked, by whom and from
-    /// which folder. The full process chain and command are in the panel, for anyone who wants them.
     /// What the request does, as the broker worded it: the reason without its "asked by" part.
     public var summary: String { what ?? reason.range(of: ", asked by ").map { String(reason[..<$0.lowerBound]) } ?? reason }
 
+    /// The line for the system sheet, which macOS shows as "Latchkey is trying to …": what's asked, by whom and from
+    /// which folder. The full process chain and command are in the panel, for anyone who wants them.
     public var touchIDReason: String {
         let what = summary
         guard let who = asker else { return what }
         let place = folder.isEmpty || folder == "/" ? "" : " in \(Broker.tilde(folder))"
         if action == .read, what.hasPrefix("release ") { return "give \(what.dropFirst(8)) to \(who)\(place)" }
         return "\(what), asked by \(who)\(place)"
-    }
-
-    /// Changes are confirmed by the system's Touch ID sheet alone; the panel with every detail appears only if that's
-    /// cancelled. Releasing values, grants, earlier values and pushes have choices to make, and a request from another
-    /// computer or from a program that isn't Latchkey's tool has a warning to read, so those show the panel first.
-    public var sheetFirst: Bool {
-        guard !overSSH, program == nil, !production else { return false }
-        switch action {
-        case .add, .change, .delete, .importItems, .move, .restore, .link, .compare, .scan: return true
-        case .read, .readVersion, .grant, .push: return false
-        }
     }
 
     /// Reads from a folder can be turned into a grant from the approval itself.
@@ -121,7 +114,14 @@ public struct GrantChoice: Sendable, Equatable {
 public protocol Approver: Sendable {
     /// How approval happens, for `latchkey status`.
     var method: String { get }
+    /// True when it can take questions from several threads at once and show those from the same caller together.
+    /// Otherwise the broker asks it one question at a time.
+    var groupsRequests: Bool { get }
     func approve(_ request: ApprovalRequest) -> ApprovalDecision
+}
+
+extension Approver {
+    public var groupsRequests: Bool { false }
 }
 
 /// The system authentication sheet: Touch ID, a paired Apple Watch, or the account password, in that
