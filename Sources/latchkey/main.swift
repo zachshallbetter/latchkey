@@ -871,7 +871,8 @@ func remoteCommand(_ args: [String]) -> Never {
         if let problem = t.problem { fail(problem, code: 64) }
         let r = send(Request(op: "link", names: [rest[0]], target: t))
         if let l = r.links?.first { print("linked \(l.scope) → \(l.target.label) (\(l.id))") }
-        if ItemID(rest[0] + "/X")?.environment.contains(".") == false, rest[0].split(separator: "/").last.map(String.init) != t.suggestedEnvironment {
+        // An SSH credential script takes its own names (ADAPTER.ACCOUNT), so a per-service environment doesn't apply.
+        if t.service != .ssh, ItemID(rest[0] + "/X")?.environment.contains(".") == false, rest[0].split(separator: "/").last.map(String.init) != t.suggestedEnvironment {
             print("tip: values that differ by service can live in their own environment, e.g. \(rest[0].split(separator: "/")[0])/\(t.suggestedEnvironment)")
         }
     case "unlink":
