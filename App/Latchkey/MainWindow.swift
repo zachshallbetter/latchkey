@@ -34,6 +34,30 @@ struct KindIcon: View {
     }
 }
 
+/// Shown instead of the window while Latchkey is locked, as Passwords does: Touch ID or the Mac password opens it.
+struct LockScreen: View {
+    let model: AppModel
+
+    var body: some View {
+        VStack(spacing: 14) {
+            ZStack(alignment: .bottomTrailing) {
+                LogoMark(size: 64).foregroundStyle(.tint)
+                Image(systemName: "lock.fill").font(.system(size: 18, weight: .semibold)).foregroundStyle(.white)
+                    .padding(7).background(Circle().fill(.secondary)).offset(x: 10, y: 8)
+            }
+            .padding(.bottom, 6)
+            Text("Latchkey Is Locked").font(.title2.weight(.semibold))
+            Text("Touch ID or enter your password to continue.").foregroundStyle(.secondary)
+            Button(model.unlocking ? "Waiting for Touch ID…" : "Unlock…") { model.unlock() }
+                .controlSize(.large).keyboardShortcut(.defaultAction).disabled(model.unlocking)
+                .padding(.top, 4)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Ask right away when the window is in front, so a glance at Touch ID is all it takes.
+        .onAppear { if NSApp.isActive { model.unlock() } }
+    }
+}
+
 /// The Latchkey key, tinted like an SF Symbol so it follows the context it sits in.
 struct LogoMark: View {
     var size: CGFloat = 44

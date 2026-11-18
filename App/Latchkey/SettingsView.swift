@@ -61,6 +61,8 @@ struct SettingsView: View {
     @AppStorage(AppPreferences.Key.clipboardSeconds) private var clipboardSeconds = AppPreferences.defaultClipboardSeconds
     @AppStorage(AppPreferences.Key.revealSeconds) private var revealSeconds = AppPreferences.defaultRevealSeconds
     @AppStorage(AppPreferences.Key.hideOnDeactivate) private var hideOnDeactivate = true
+    @AppStorage(AppPreferences.Key.lockApp) private var lockApp = true
+    @AppStorage(AppPreferences.Key.lockAfterMinutes) private var lockAfterMinutes = AppPreferences.defaultLockMinutes
     @AppStorage(AppPreferences.Key.keepRunningFromDock) private var keepRunningFromDock = true
     @State private var atLogin = false
     @State private var loginError: String?
@@ -110,6 +112,15 @@ struct SettingsView: View {
     }
 
     @ViewBuilder private var privacy: some View {
+        Section("Lock") {
+            Toggle("Lock Latchkey automatically", isOn: $lockApp)
+            Picker("Lock after", selection: $lockAfterMinutes) {
+                ForEach(AppPreferences.lockChoices, id: \.self) { Text($0 == 60 ? "1 hour away" : $0 == 1 ? "1 minute away" : "\($0) minutes away").tag($0) }
+            }
+            .disabled(!lockApp)
+            Button("Lock Now") { model.lock(byHand: true) }
+            SettingsNote("Latchkey locks when it opens, when your Mac sleeps or the screen locks, and after the time you choose here away from Latchkey. Touch ID or your Mac password unlocks it. The lock covers the window and the menu bar; requests from commands, agents and Safari keep asking for approval as before.")
+        }
         Section("Values & Clipboard") {
             Picker("Clear copied values after", selection: $clipboardSeconds) {
                 ForEach(AppPreferences.clipboardChoices, id: \.self) { Text("\($0) seconds").tag($0) }

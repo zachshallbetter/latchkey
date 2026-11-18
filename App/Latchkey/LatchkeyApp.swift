@@ -64,7 +64,10 @@ struct LatchkeyApp: App {
 
     var body: some Scene {
         Window("Latchkey", id: "main") {
-            MainWindow(model: model)
+            Group {
+                // Not drawn underneath while locked, so nothing shows through or reaches the accessibility tree.
+                if model.locked { LockScreen(model: model) } else { MainWindow(model: model) }
+            }
                 .frame(minWidth: 860, minHeight: 520)
                 // In the Dock while the window is open; closing it (or quitting from the Dock) leaves the menu bar icon.
                 .onAppear { NSApp.setActivationPolicy(.regular) }
@@ -86,6 +89,11 @@ struct LatchkeyApp: App {
                 Button("Install Command Line Tool…") { model.installCommandLineTool() }
                 #endif
             }
+            CommandGroup(after: .appSettings) {
+                Button("Lock Latchkey") { model.lock(byHand: true) }
+                    .keyboardShortcut("l", modifiers: [.command, .control])
+                    .disabled(model.locked)
+            }
             CommandGroup(replacing: .newItem) {
                 Button("New Item…") { model.showingAdd = true }.keyboardShortcut("n")
                 Button("Import .env File…") { model.chooseImportFile() }.keyboardShortcut("i", modifiers: [.command, .shift])
@@ -103,7 +111,9 @@ struct LatchkeyApp: App {
 
         // Its own window, so it doesn't look like the item list (⌘, and the menus open it).
         Settings {
-            SettingsWindow(model: model)
+            Group {
+                if model.locked { LockScreen(model: model).frame(width: 620, height: 560) } else { SettingsWindow(model: model) }
+            }
         }
     }
 }
@@ -313,6 +323,58 @@ final class AppModel {
         openSettingsWindow()
     }
 
+    /// The window and menu bar panel show a lock screen instead of items until Touch ID or the Mac password. Requests
+    /// from the command line, agents and Safari still ask for approval as they always do; this guards browsing.
+    var locked = false
+    /// A Touch ID prompt for unlocking is showing, so another isn't started.
+    var unlocking = false
+    @ObservationIgnored private var lockTimer: Timer?
+
+    /// `byHand`: the Lock command, which works even with automatic locking turned off.
+    func lock(byHand: Bool = false) {
+        guard byHand || AppPreferences().lockApp else { return }
+        concealRevealedValues()
+        locked = true
+    }
+
+    func unlock() {
+        guard locked, !unlocking else { return }
+        unlocking = true
+        Task.detached {
+            let passed = SystemApprover().confirm("unlock Latchkey")
+            await MainActor.run {
+                self.unlocking = false
+                if passed { self.locked = false }
+            }
+        }
+    }
+
+    /// Locks at launch, after the chosen minutes in the background, and when the Mac sleeps or the screen locks.
+    private func watchForLock() {
+        locked = AppPreferences().lockApp
+        let center = NotificationCenter.default
+        // A timer rather than a check on return, so a window left visible behind other apps locks on time too.
+        center.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in
+                guard let self else { return }
+                self.lockTimer?.invalidate()
+                self.lockTimer = Timer.scheduledTimer(withTimeInterval: Double(AppPreferences().lockAfterMinutes * 60), repeats: false) { [weak self] _ in
+                    Task { @MainActor in self?.lock() }
+                }
+            }
+        }
+        center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.lockTimer?.invalidate(); self?.lockTimer = nil }
+        }
+        let workspace = NSWorkspace.shared.notificationCenter
+        for name in [NSWorkspace.willSleepNotification, NSWorkspace.screensDidSleepNotification, NSWorkspace.sessionDidResignActiveNotification] {
+            workspace.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in Task { @MainActor in self?.lock() } }
+        }
+        DistributedNotificationCenter.default().addObserver(forName: Notification.Name("com.apple.screenIsLocked"), object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.lock() }
+        }
+    }
+
     func concealRevealedValues() {
         revealed.removeAll()
         revealedVersions.removeAll()
@@ -408,6 +470,7 @@ final class AppModel {
             return
         }
         #endif
+        watchForLock()
         broker.onChange = { [weak self] in Task { @MainActor in self?.refresh() } }
         // Changes made on your other Macs arrive through iCloud Keychain without any notice to the app, so look again
         // whenever Latchkey comes to the front, and every 30 seconds while one of its windows is open.
