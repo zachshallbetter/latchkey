@@ -55,11 +55,17 @@ struct LockScreen: View {
             Text("Latchkey Is Locked").font(.title2.weight(.semibold))
             Text("Touch ID or enter your password to continue.").foregroundStyle(.secondary)
             if let touchID {
-                InlineTouchID(context: touchID,
-                              start: { model.unlockWithTouchID(touchID) { if self.touchID === touchID { self.touchID = nil } } },
-                              stop: { stopTouchID() })
-                    .frame(width: 44, height: 44)
-                    .padding(.vertical, 8)
+                // The same small glyph as the approval panel, red while Touch ID listens; the system's glyph stays under
+                // it, nearly invisible, so the request stays in this window.
+                ZStack {
+                    InlineTouchID(context: touchID,
+                                  start: { model.unlockWithTouchID(touchID) { if self.touchID === touchID { self.touchID = nil } } },
+                                  stop: { stopTouchID() }, showsSystemGlyph: false)
+                    Image(systemName: "touchid").font(.system(size: 34, weight: .light)).foregroundStyle(.red)
+                        .allowsHitTesting(false)
+                }
+                .frame(width: 44, height: 44)
+                .padding(.vertical, 8)
                 Button("Use Password…") { usePassword() }.buttonStyle(.link)
             } else {
                 Button(model.unlocking ? "Waiting for Approval…" : "Unlock…") { askAgain() }
