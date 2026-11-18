@@ -99,12 +99,12 @@ struct LockScreen: View {
 /// `LAAuthenticationView` shows puts the prompt here instead of in a sheet.
 private struct InlineTouchID: NSViewRepresentable {
     let context: LAContext
-    /// Called once the view is in the window, so the request lands in it rather than in a sheet.
+    /// Called once the view is in a key window. Started any earlier, the prompt waits for a click on the glyph.
     let start: () -> Void
 
     /// The glyph draws at its control size whatever frame it gets, so it sits in a clipping box of that size.
     func makeNSView(context: Context) -> NSView {
-        let box = NSView()
+        let box = StartsInKeyWindow(start: start)
         box.clipsToBounds = true
         let glyph = LAAuthenticationView(context: self.context, controlSize: .regular)
         glyph.translatesAutoresizingMaskIntoConstraints = false
@@ -115,11 +115,42 @@ private struct InlineTouchID: NSViewRepresentable {
             glyph.widthAnchor.constraint(equalTo: box.widthAnchor),
             glyph.heightAnchor.constraint(equalTo: box.heightAnchor),
         ])
-        DispatchQueue.main.async(execute: start)
         return box
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {}
+
+    /// Runs `start` once, the first time its window is key.
+    final class StartsInKeyWindow: NSView {
+        private var start: (() -> Void)?
+        private var observer: NSObjectProtocol?
+
+        init(start: @escaping () -> Void) {
+            self.start = start
+            super.init(frame: .zero)
+        }
+
+        required init?(coder: NSCoder) { nil }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            if let observer { NotificationCenter.default.removeObserver(observer) }
+            observer = nil
+            guard let window, start != nil else { return }
+            if window.isKeyWindow { DispatchQueue.main.async { [weak self] in self?.fire() }; return }
+            observer = NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: window, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.fire() }
+            }
+        }
+
+        private func fire() {
+            if let observer { NotificationCenter.default.removeObserver(observer) }
+            observer = nil
+            let run = start
+            start = nil
+            run?()
+        }
+    }
 }
 
 /// The Latchkey key, tinted like an SF Symbol so it follows the context it sits in.
