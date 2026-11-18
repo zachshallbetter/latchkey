@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 351,
-    "includedBytes": 2789832,
+    "includedBytes": 2792915,
     "excludedCounts": {
       "extension": 86,
       "generated-or-transient-file": 1
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "da0cfa11cdce15c53584749b8c5c179903f50582",
+        "commit": "6b5cf662209b0dad6212b2a4ea2bebf8c633f3f8",
         "branch": "list-grouping",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "1a36eca5214b15fe23560a6679939b8970de5f0a1cca27039367814041f7754c",
+  "aggregateSourceDigest": "4e52722b0dc010de90bd772fbbde00e23b66e2b8a23f604b16bd5c7384b76dc6",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -989,13 +989,13 @@
     },
     {
       "path": "App/Latchkey/Snapshot.swift",
-      "bytes": 13181,
-      "sha256": "2352b071838ab9e927f2072690406dac1752d97f422bd131ee25ee671f5fa7b5"
+      "bytes": 13297,
+      "sha256": "f5d47f3a938a642ea9f4a2b010d1d44fd680b8a27c563072c47c2a1e5370be5f"
     },
     {
       "path": "App/Latchkey/Style.swift",
-      "bytes": 9763,
-      "sha256": "a666dd16826554b404207abde1043a3644ba92426692afe4a46724f4799a43a2"
+      "bytes": 12401,
+      "sha256": "54fd49ebe4c059c02e7332f3385d59a9c904396239414498ea44870f11ddc79d"
     },
     {
       "path": "App/Latchkey/Updater.swift",
@@ -1059,8 +1059,8 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 30037,
-      "sha256": "2c6bc692949d3366114ae8a420a812afd320f8591f127913ce4397ea9f4d743d"
+      "bytes": 30270,
+      "sha256": "59429b0fed4b3002c3d6478b600d1236b5a268d508201bcb97f74b54befb74bd"
     },
     {
       "path": "LICENSE.md",
@@ -1499,8 +1499,8 @@
     },
     {
       "path": "docs/development.md",
-      "bytes": 9685,
-      "sha256": "4512f597232897343f91c1c33203132598bcd3ec23533b8d9b7cde919edf77c9"
+      "bytes": 9781,
+      "sha256": "c7c38c03115d6b0955d21268499c2531ae4e0270bf5b6d37e67d9e12e78523fe"
     },
     {
       "path": "docs/evidence/app-store/2026-11-11-cli-transport.json",
