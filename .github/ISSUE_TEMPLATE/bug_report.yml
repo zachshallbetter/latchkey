@@ -1,0 +1,55 @@
+name: Bug report
+description: Something in the app, the command-line tool, the MCP server or the Safari extension isn't behaving as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Thanks for the report. Never paste a real secret or value: use example values, and remove any value from logs
+        or screenshots. Report a security problem privately, see SECURITY.md.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - App
+        - Command-line tool (latchkey)
+        - MCP server (latchkey mcp)
+        - Latchkey for Safari
+        - Agent skill or Claude Code plugin
+        - Documentation or website
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Latchkey version and install
+      description: From `latchkey status` or Latchkey › About Latchkey, and how you installed it.
+      placeholder: Latchkey 0.3.1, direct download (or Mac App Store, or built from source)
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: What should have happened. Quote the docs section if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Commands or clicks, with example values only.
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: macOS version, Mac model, signed in to iCloud Keychain or not
