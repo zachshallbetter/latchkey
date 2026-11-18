@@ -18,9 +18,9 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "3026767f863e9b862f3737d63c6fb6716430a9a8",
+        "commit": "bf9e06b961375265e9b4ddda66e85e5760a06617",
         "branch": "docs/public-governance",
-        "dirty": true,
+        "dirty": false,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
