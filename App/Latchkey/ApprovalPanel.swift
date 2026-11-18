@@ -117,8 +117,9 @@ final class ApprovalWindow {
         let view = ApprovalView(group: group,
                                 deny: { [weak self] ticket in self?.deny(ticket) },
                                 decide: { [weak self] decision in self?.finish(decision) })
+        // The default sizing (the window follows the view's size through constraints). `.preferredContentSize` fed the
+        // window's size back into the view and looped until AppKit raised, when a production push's panel changed size.
         let host = NSHostingController(rootView: view)
-        host.sizingOptions = [.preferredContentSize]
         let panel = NSPanel(contentViewController: host)
         // A panel that takes the keyboard without activating Latchkey: Touch ID inside it only listens while it's the
         // key window, and macOS won't let a background app activate itself over the app you're in. Not activating also
