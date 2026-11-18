@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Guides: development secrets on a Mac · Latchkey</title>
+  <meta name="description" content="16 short guides to keeping development credentials out of env files, agent sessions, configs and deploys on a Mac, each with the exact commands.">
+  <link rel="canonical" href="https://latchkey.snackstud.io/guides/">
+  <meta property="og:url" content="https://latchkey.snackstud.io/guides/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:image" content="https://latchkey.snackstud.io/social/guides-index.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Guides: Development secrets on a Mac. 16 short guides to keeping development credentials out of env files, agent sessions, configs and deploys… Latchkey, latchkey.snackstud.io.">
+  <meta property="og:title" content="Guides: development secrets on a Mac · Latchkey">
+  <meta property="og:description" content="16 short guides to keeping development credentials out of env files, agent sessions, configs and deploys on a Mac, each with the exact commands.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="../logo.svg" type="image/svg+xml">
+  <link rel="author" href="https://zachshallbetter.com/">
+  <link rel="icon" href="../favicon.ico" sizes="48x48">
+  <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="manifest" href="../site.webmanifest">
+  <link rel="alternate" type="text/plain" href="../llms.txt" title="Latchkey for language models">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="author" content="Zach Shallbetter">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta name="application-name" content="Latchkey">
+  <meta name="apple-mobile-web-app-title" content="Latchkey">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta name="twitter:title" content="Guides: development secrets on a Mac · Latchkey">
+  <meta name="twitter:description" content="16 short guides to keeping development credentials out of env files, agent sessions, configs and deploys on a Mac, each with the exact commands.">
+  <meta name="twitter:image" content="https://latchkey.snackstud.io/social/guides-index.jpg">
+  <meta name="twitter:image:alt" content="Guides: Development secrets on a Mac. 16 short guides to keeping development credentials out of env files, agent sessions, configs and deploys… Latchkey, latchkey.snackstud.io.">
+  <link rel="stylesheet" href="../site.css">
+  <style>
+    .guides .eyebrow { margin-top: 8px; }
+    .guides .byline { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 14px 0 0; font-size: 14px; color: var(--muted); }
+    .guides h3 { font-size: 18px; margin: 28px 0 8px; }
+    .guides .short { margin-top: 28px; padding: 18px 22px; border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); box-shadow: var(--card-shadow); }
+    .guides .short p { margin: 0; }
+    .guides .short b { display: block; margin-bottom: 6px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+    .guides ol.steps { padding-left: 1.2em; }
+    .guides .next { margin-top: 48px; }
+    .guides .card-grid { margin-top: 12px; }
+    .guides .cat { margin-top: 44px; }
+    .guides .cat > p { color: var(--muted); margin: 0; }
+  </style>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": "https://latchkey.snackstud.io/guides/#webpage",
+      "url": "https://latchkey.snackstud.io/guides/",
+      "name": "Guides: development secrets on a Mac · Latchkey",
+      "description": "16 short guides to keeping development credentials out of env files, agent sessions, configs and deploys on a Mac, each with the exact commands.",
+      "inLanguage": "en",
+      "isPartOf": {
+        "@id": "https://latchkey.snackstud.io/#website"
+      },
+      "about": {
+        "@id": "https://latchkey.snackstud.io/#latchkey"
+      },
+      "author": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "publisher": {
+        "@id": "https://www.snackstud.io/#organization"
+      },
+      "primaryImageOfPage": {
+        "@type": "ImageObject",
+        "url": "https://latchkey.snackstud.io/social/guides-index.jpg",
+        "width": 1200,
+        "height": 630,
+        "caption": "Guides: Development secrets on a Mac. 16 short guides to keeping development credentials out of env files, agent sessions, configs and deploys… Latchkey, latchkey.snackstud.io."
+      },
+      "breadcrumb": {
+        "@id": "https://latchkey.snackstud.io/guides/#breadcrumb"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Latchkey",
+          "item": "https://latchkey.snackstud.io/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Guides",
+          "item": "https://latchkey.snackstud.io/guides/"
+        }
+      ],
+      "@id": "https://latchkey.snackstud.io/guides/#breadcrumb"
+    },
+    {
+      "@type": "Person",
+      "@id": "https://zachshallbetter.com/#person",
+      "name": "Zach Shallbetter",
+      "url": "https://zachshallbetter.com/",
+      "sameAs": [
+        "https://github.com/zachshallbetter"
+      ],
+      "jobTitle": "Systems engineer",
+      "description": "Zach Shallbetter designs and builds Latchkey. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
+      "homeLocation": {
+        "@type": "Place",
+        "name": "Spokane, Washington"
+      },
+      "worksFor": {
+        "@id": "https://www.snackstud.io/#organization"
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://www.snackstud.io/#organization",
+      "name": "Snack Studio",
+      "url": "https://www.snackstud.io",
+      "email": "latchkey@snackstud.io",
+      "founder": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://latchkey.snackstud.io/icon-512.png",
+        "width": 512,
+        "height": 512
+      }
+    }
+  ]
+}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site">
+    <nav class="top wrap" aria-label="Main">
+      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+      <ul>
+        <li><a href="../features.html">Features</a></li>
+        <li><a href="../index.html#how">How it works</a></li>
+        <li><a href="../pricing.html">Pricing</a></li>
+        <li><a href="../security.html">Security</a></li>
+        <li><a href="../developers/index.html">Developers</a></li>
+        <li><a href="index.html" aria-current="page">Guides</a></li>
+        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main" class="wrap docs guides">
+    <nav class="side" aria-label="Developers and guides"><div class="side-group"><p class="side-title">Developers</p><ul><li><a href="../developers/index.html"><i class="ic ic-book" aria-hidden="true"></i>Overview</a></li><li><a href="../developers/quickstart.html"><i class="ic ic-bolt" aria-hidden="true"></i>Quickstart</a></li><li><a href="../developers/cli.html"><i class="ic ic-terminal" aria-hidden="true"></i>CLI reference</a></li><li><a href="../developers/agents.html"><i class="ic ic-agent" aria-hidden="true"></i>Agents and MCP</a></li><li><a href="../developers/api.html"><i class="ic ic-code" aria-hidden="true"></i>References and API</a></li></ul></div><div class="side-group current"><p class="side-title">Guides</p><ul><li><a href="index.html" aria-current="page"><i class="ic ic-grid" aria-hidden="true"></i>All guides</a></li><li><a href="index.html#env"><i class="ic ic-fileenv" aria-hidden="true"></i>Env files</a></li><li><a href="index.html#agents"><i class="ic ic-sparkles" aria-hidden="true"></i>Coding agents</a></li><li><a href="index.html#deploy"><i class="ic ic-upload" aria-hidden="true"></i>Deploying</a></li><li><a href="index.html#everyday"><i class="ic ic-macs" aria-hidden="true"></i>Everyday use</a></li></ul></div></nav>
+    <article class="doc">
+      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><span aria-current="page">Guides</span></li></ol></nav>
+      <p class="eyebrow">Guides</p>
+      <h1>Practical guides</h1>
+      <p class="lede">Task-sized walkthroughs, each with the exact commands and what it doesn't cover.</p>
+      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#env">Env files</a></li><li><a href="#agents">Coding agents</a></li><li><a href="#deploy">Deploying</a></li><li><a href="#everyday">Everyday use</a></li></ul></nav>
+
+      <section class="cat" id="env" aria-labelledby="env-title">
+        <h2 id="env-title">Env files</h2>
+        <p>Keep values out of files, find duplicates, and set up new checkouts.</p>
+        <div class="card-grid g2"><a class="card" href="env-files-without-secrets.html"><span class="cico" aria-hidden="true"><i class="ic ic-fileenv"></i></span><b>Keep API keys out of your .env files</b><span>Move values into iCloud Keychain and leave references in the file.</span></a><a class="card" href="pre-commit-secret-check.html"><span class="cico" aria-hidden="true"><i class="ic ic-scan"></i></span><b>Block commits that contain secrets</b><span>Refuse commits that add plain secrets to env files.</span></a><a class="card" href="worktrees-and-fresh-clones.html"><span class="cico" aria-hidden="true"><i class="ic ic-branch"></i></span><b>Set up a clone or worktree without .env</b><span>Get a new clone or worktree running without copying .env.</span></a><a class="card" href="duplicate-api-keys.html"><span class="cico" aria-hidden="true"><i class="ic ic-copy"></i></span><b>Find the same API key in many projects</b><span>Find reused keys and give production its own.</span></a><a class="card" href="merge-into-an-existing-env-file.html"><span class="cico" aria-hidden="true"><i class="ic ic-merge"></i></span><b>Merge into an existing .env file</b><span>Add variables to a .env and keep your comments and order.</span></a><a class="card" href="paste-env-into-a-dashboard.html"><span class="cico" aria-hidden="true"><i class="ic ic-export"></i></span><b>Paste env vars into a dashboard, no file</b><span>Paste an environment into a hosting dashboard, no file on disk.</span></a></div>
+      </section>
+      <section class="cat" id="agents" aria-labelledby="agents-title">
+        <h2 id="agents-title">Coding agents</h2>
+        <p>Give agents what a task needs, and nothing they could keep.</p>
+        <div class="card-grid g2"><a class="card" href="coding-agents-and-api-keys.html"><span class="cico" aria-hidden="true"><i class="ic ic-sparkles"></i></span><b>Give coding agents API keys without handing them over</b><span>Approvals, grants, and keys an agent can use but never read.</span></a><a class="card" href="proxy-api-keys-for-agents.html"><span class="cico" aria-hidden="true"><i class="ic ic-shield"></i></span><b>Hide your OpenAI or Anthropic key from an AI agent</b><span>Let a command call OpenAI or Anthropic without holding the key.</span></a><a class="card" href="rotate-after-an-agent-session.html"><span class="cico" aria-hidden="true"><i class="ic ic-history"></i></span><b>Rotate the keys an AI agent touched</b><span>List what an agent was given, then replace each key in one pass.</span></a><a class="card" href="mcp-server-api-keys.html"><span class="cico" aria-hidden="true"><i class="ic ic-plug"></i></span><b>Keep API keys out of MCP server configs</b><span>Start the server through latchkey run so the config holds references.</span></a></div>
+      </section>
+      <section class="cat" id="deploy" aria-labelledby="deploy-title">
+        <h2 id="deploy-title">Deploying</h2>
+        <p>Get values to platforms, build tools and cloud accounts.</p>
+        <div class="card-grid g2"><a class="card" href="push-to-deployment-platforms.html"><span class="cico" aria-hidden="true"><i class="ic ic-upload"></i></span><b>Push env vars to your deploy platforms</b><span>Send one environment&#x27;s values to Vercel, GitHub, Railway or Fly.</span></a><a class="card" href="short-lived-aws-credentials.html"><span class="cico" aria-hidden="true"><i class="ic ic-cloud"></i></span><b>Use short-lived AWS credentials locally</b><span>Give a command AWS credentials that expire, not your long-lived key.</span></a><a class="card" href="fastlane-app-store-connect-key.html"><span class="cico" aria-hidden="true"><i class="ic ic-keyfile"></i></span><b>Use an App Store Connect key with fastlane</b><span>Give fastlane a .p8 key as a temporary file that is deleted when it exits.</span></a></div>
+      </section>
+      <section class="cat" id="everyday" aria-labelledby="everyday-title">
+        <h2 id="everyday-title">Everyday use</h2>
+        <p>Other Macs, Safari, and a record of every read.</p>
+        <div class="card-grid g2"><a class="card" href="secrets-over-ssh.html"><span class="cico" aria-hidden="true"><i class="ic ic-macs"></i></span><b>Use your secrets on another Mac over SSH</b><span>Run commands on another Mac and approve each secret read on yours.</span></a><a class="card" href="save-keys-from-safari.html"><span class="cico" aria-hidden="true"><i class="ic ic-safari"></i></span><b>Save an API key straight from the provider&#x27;s page</b><span>Save a new key from the provider&#x27;s page, and fill it back in later.</span></a><a class="card" href="audit-secret-access.html"><span class="cico" aria-hidden="true"><i class="ic ic-pulse"></i></span><b>See which programs read your secrets</b><span>See which programs read which secrets, and check the log is intact.</span></a></div>
+      </section>
+    </article>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+          <p>Development credentials in your Mac's iCloud Keychain, filled in when a command starts.</p>
+          <a class="button primary small" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
+        </div>
+        <nav class="foot-col" aria-label="Product">
+          <h2>Product</h2>
+          <ul>
+            <li><a href="../features.html">Features</a></li>
+            <li><a href="../index.html#how">How it works</a></li>
+            <li><a href="../pricing.html">Pricing</a></li>
+            <li><a href="../teams.html">For teams</a></li>
+            <li><a href="../roadmap.html">Roadmap</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey/blob/main/CHANGELOG.md">Changelog</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Developers">
+          <h2>Developers</h2>
+          <ul>
+            <li><a href="../developers/index.html">Developers</a></li>
+            <li><a href="../guides/index.html">Guides</a></li>
+            <li><a href="../developers/quickstart.html">Quickstart</a></li>
+            <li><a href="../cli.html">Command-line tool</a></li>
+            <li><a href="../developers/cli.html">CLI reference</a></li>
+            <li><a href="../developers/agents.html">Agents and MCP</a></li>
+            <li><a href="../developers/api.html">References and API</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey">Source on GitHub</a></li>
+            <li><a href="../llms.txt">For agents (llms.txt)</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Trust and help">
+          <h2>Trust and help</h2>
+          <ul>
+            <li><a href="../security.html">Security</a></li>
+            <li><a href="../support.html">Support</a></li>
+            <li><a href="../support.html#mistake">Report a mistake</a></li>
+            <li><a href="../privacy.html">Privacy</a></li>
+            <li><a href="../terms.html">Terms</a></li>
+          </ul>
+        </nav>
+      </div>
+      <div class="foot-base">
+        <span>Designed and built by <a href="https://zachshallbetter.com/" rel="author">Zach Shallbetter</a> at <a href="https://www.snackstud.io">Snack Studio</a></span>
+        <span>Source-available under FSL-1.1-ALv2. This site makes no third-party requests.</span>
+      </div>
+    </div>
+  </footer>
+  <script src="../site.js"></script>
+</body>
+</html>

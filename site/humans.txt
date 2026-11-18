@@ -1,0 +1,21 @@
+/* PEOPLE */
+Designed and built by: Zach Shallbetter
+Role: Systems engineer
+Based in: Spokane, Washington, USA
+Personal site: https://zachshallbetter.com/
+GitHub: https://github.com/zachshallbetter
+
+/* STUDIO */
+Published by: Snack Studio, https://www.snackstud.io
+Questions, corrections and security reports: latchkey@snackstud.io
+
+/* LATCHKEY */
+What it is: a free Mac app and command-line tool that keeps development credentials in iCloud Keychain
+Source: https://github.com/zachshallbetter/latchkey (FSL-1.1-ALv2)
+Changes: https://github.com/zachshallbetter/latchkey/blob/main/CHANGELOG.md
+
+/* THIS SITE */
+Built with: hand-written HTML, CSS and JavaScript; no framework and no build step
+Type: the system font stack, so pages load nothing from other servers
+Hosting: Vercel, published by hand
+Standards: HTML, CSS, schema.org JSON-LD, Open Graph, WCAG 2.2 AA as the target

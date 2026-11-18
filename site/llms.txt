@@ -3,34 +3,154 @@
 > Your projects move; your secrets don't. Latchkey keeps API keys, database URLs and key files in iCloud Keychain;
 > project files keep latchkey:// references; Latchkey fills the values in when a command starts, after the owner
 > approves with Touch ID, Apple Watch or their password, or under a grant they made. For developers and the coding
-> agents they run.
+> agents they run. This file is everything an agent needs to work with it; the full text of every page is at
+> https://latchkey.snackstud.io/llms-full.txt.
 
-- Platform: macOS 15 or later (app); the command-line tool `latchkey` (`lk` for short) ships inside the app.
+- Platform: a Mac app, macOS 15 or later, with a command-line tool, `latchkey` (`lk` for short).
 - Storage: iCloud Keychain, in Latchkey's own access group, synced to the owner's Macs. No Latchkey server or account.
-- Made by Snack Studio.
+- Price: free to download and use, and the core is meant to stay free. Latchkey Pro is a planned one-time purchase in the Mac
+  App Store version; it isn't on sale.
+- Source: https://github.com/zachshallbetter/latchkey (FSL-1.1-ALv2).
+- Made by Zach Shallbetter (https://zachshallbetter.com/), a systems engineer in Spokane, Washington; published by
+  his studio, Snack Studio (https://www.snackstud.io). Contact: latchkey@snackstud.io.
 
-## For agents
+## Rules for agents
 
-- Run commands that need secrets as `latchkey run --env-file .env.local -- <command>` or
-  `latchkey run --env <project>/<environment> -- <command>`.
-- Never run `latchkey get`, never print the environment, never write values into .env files.
-- Exit 77 means refused and 66 means missing: stop and ask the person; don't retry.
-- `latchkey check` (or the MCP tool latchkey_check) shows what a run would get without asking.
-- In a fresh clone or worktree: `latchkey project`, then `latchkey export <project>/<environment> --out .env.local`
-  writes references from the environment's record (never values).
-- MCP: `latchkey mcp` serves latchkey_status, latchkey_list, latchkey_check, latchkey_run,
-  latchkey_request_grant, latchkey_project and latchkey_export_references. It has no direct secret-read tool; child output masks exact values, but transformed secrets can leak.
+Put this in CLAUDE.md, AGENTS.md or your instructions, and follow it:
 
-## Docs
+> Secrets are in Latchkey. Env files hold `latchkey://` references, not values. Run anything that needs secrets as
+> `latchkey run --env-file .env.local -- <command>` or `latchkey run --env <project>/<environment> -- <command>`.
+> Never run `latchkey get`, never print the environment, and never read or write values in `.env` files. If
+> `latchkey` exits with 77 (refused) or 66 (missing), stop and ask; don't retry.
 
-- [Features](features.html)
-- [Security](security.html)
-- [Roadmap](roadmap.html)
-- [Pricing](pricing.html): free during the development preview; Latchkey Pro (the premium individual Mac tool, a planned one-time in-app purchase in the Mac App Store) and Latchkey Teams (shared team environments) are planned, not on sale
-- [Support](support.html), [Privacy](privacy.html) and [Terms](terms.html); contact latchkey@snackstud.io
-- [For teams](teams.html): Developer Credential Migration, a fixed-scope engagement from Snack Studio
-- [Developers overview](developers/index.html)
-- [Quickstart](developers/quickstart.html)
-- [CLI reference](developers/cli.html)
-- [Agents and MCP](developers/agents.html)
-- [References and API](developers/api.html)
+- Installing the app, approving reads and making grants are the person's job. Ask them; don't work around a refusal.
+- `latchkey check --env-file .env.local` (or the MCP tool `latchkey_check`) shows what a run would get without
+  asking, what would ask, and what's missing. Use it before a slow run.
+- Never put a value in a command line, a file, a commit or a chat message. If a key is missing, give the person the
+  command to add it: `latchkey set <project>/<environment>/<NAME>` (the value is read from a hidden prompt or
+  standard input).
+
+## Is it installed?
+
+- `latchkey status` prints where values are kept, how the person approves, item and grant counts and the socket. It
+  should say `storage: iCloud Keychain`.
+- If `latchkey` isn't found: the person installs the app (https://github.com/zachshallbetter/latchkey/releases/latest,
+  or `brew tap zachshallbetter/latchkey`, `brew trust zachshallbetter/latchkey`, `brew install --cask latchkey`, which
+  adds `latchkey` and `lk` to `~/.local/bin`). With the disk image, they choose Latchkey › Install Command Line Tool….
+  With the Mac App Store version, the tool is a separate download: after tapping as above, `brew install latchkey-cli`
+  (https://latchkey.snackstud.io/cli.html). `~/.local/bin` must be on the PATH.
+- Exit 69 means the app can't be reached: ask the person to open Latchkey.
+
+## Running commands
+
+```bash
+latchkey run --env-file .env.local -- npm test
+latchkey run --env shop/development -- npm run dev           # no env file needed
+latchkey run --file ASC_KEY_PATH=shop/production/ASC_P8 -- fastlane beta   # a key file, as a temporary path
+```
+
+- References: `latchkey://ID` is replaced by the value; `latchkey-file://ID` by the path of a temporary file only the
+  owner can read, deleted when the command exits.
+- Output is masked: exact copies of secret values (6 characters or longer) are hidden in what the command prints.
+  Transformed or encoded copies are not.
+- Exit codes: 0 done; 64 wrong usage (fix the command); 66 no item with that ID (stop, ask the person to add it);
+  69 app unreachable (ask them to open Latchkey); 73 a file couldn't be rewritten (stop and report); 77 refused (stop,
+  ask them to approve or grant; don't retry); 127 the command couldn't start. On 66 and 77 Latchkey prints the IDs and,
+  for 77, the exact `latchkey grant` command that would allow them.
+
+## Approvals and grants
+
+- Each read that isn't agent-safe or covered by a grant asks the person, showing the agent, the programs it runs
+  through, the folder and the command.
+- Before they step away, the person can grant what a job needs:
+  `latchkey grant 'shop/development/*' --session --for 4h` (ends when the agent quits),
+  `latchkey grant 'shop/development/*' --command "npm test" --for 2h` (only that command), or
+  `--folder ~/Projects/shop --for 2h`. A grant for a repository's folder covers its worktrees.
+- Through MCP, `latchkey_request_grant` asks the person for a grant on items in the agent's folder; it ends when the
+  agent quits or after a day at most, and can't include production environments or a whole project.
+
+## New clones and worktrees
+
+`.env` files are gitignored, so a fresh clone or worktree has none. `latchkey project` says which project the
+checkout is (from its Git remotes); `latchkey export <project>/<environment> --out .env.local` writes an env file of
+references and plain settings, never values; or skip the file with `latchkey run --env <project>/<environment>`.
+
+## Keys an agent can use but never read
+
+- OpenAI and Anthropic: `latchkey run --proxy --env-file .env.local -- npm test` gives the command a placeholder key
+  and a local base URL; the real key is added only to requests to the provider. `--proxy-models A,B` and
+  `--proxy-requests N` limit which models a run may name and how many requests it may make.
+- AWS: `latchkey run --aws-session` (or `--aws-role ARN`) gives the command credentials that expire after 15 minutes
+  by default instead of the long-lived key; `--aws-for` sets the time, up to 12 hours.
+
+## MCP
+
+```bash
+claude mcp add latchkey -- ~/.local/bin/latchkey mcp
+```
+
+- Tools: latchkey_status, latchkey_list (IDs, never values), latchkey_check, latchkey_run (runs a command with
+  references filled in; output masked, last 64 KB of each stream; stops after 10 minutes by default, at most 60;
+  `proxy`, `proxy_models` and `proxy_requests` work as on the command line), latchkey_request_grant, latchkey_project
+  and latchkey_export_references. There is no tool that reads a value, exports values, changes items or pushes.
+- Another MCP server started as a command can get its keys through Latchkey: wrap its command and keep references in
+  its environment.
+
+```json
+{
+  "command": "latchkey",
+  "args": ["run", "--no-masking", "--", "npx", "-y", "some-mcp-server"],
+  "env": { "SOME_API_KEY": "latchkey://SOME_API_KEY" }
+}
+```
+
+## Keeping values out of files
+
+- `latchkey import .env.local --dry-run` shows where each value would go (names and counts, never values);
+  `latchkey import .env.local --rewrite` saves them with one approval and leaves references in the file. Settings
+  such as PORT and NODE_ENV stay in the file; public values are saved plain; anything unclear is a secret.
+- `latchkey scan --staged` lists env files a commit would add that still hold plain values (file, line and name,
+  never the value) and exits 1 if there are any. `latchkey scan --install-hook` adds it as a pre-commit hook.
+
+## What Latchkey can't do
+
+A value released to a command is in that command's memory and environment. The command can print it to a file, send
+it over the network or encode it so masking doesn't catch it. Agent-safe settings and grants decide what reaches a
+command; they can't control what it does with it. Anything running as the owner can ask, which is why reads ask by
+default. https://latchkey.snackstud.io/security.html covers every protection and where it ends.
+
+## Pages
+
+- Full text of every page: https://latchkey.snackstud.io/llms-full.txt
+- Command-line tool: https://latchkey.snackstud.io/cli.html
+- Quickstart: https://latchkey.snackstud.io/developers/quickstart.html
+- CLI reference: https://latchkey.snackstud.io/developers/cli.html
+- Agents and MCP: https://latchkey.snackstud.io/developers/agents.html
+- References and API: https://latchkey.snackstud.io/developers/api.html
+- Security: https://latchkey.snackstud.io/security.html
+- Features: https://latchkey.snackstud.io/features.html
+- Pricing: https://latchkey.snackstud.io/pricing.html
+- Roadmap: https://latchkey.snackstud.io/roadmap.html
+- Support, privacy and terms: https://latchkey.snackstud.io/support.html, https://latchkey.snackstud.io/privacy.html,
+  https://latchkey.snackstud.io/terms.html
+- For teams (Developer Credential Migration from Snack Studio): https://latchkey.snackstud.io/teams.html
+
+## Guides
+
+- All guides: https://latchkey.snackstud.io/guides/
+- Keep API keys out of your .env files: https://latchkey.snackstud.io/guides/env-files-without-secrets.html
+- Block commits that contain secrets: https://latchkey.snackstud.io/guides/pre-commit-secret-check.html
+- Set up a clone or worktree without .env: https://latchkey.snackstud.io/guides/worktrees-and-fresh-clones.html
+- Find the same API key in many projects: https://latchkey.snackstud.io/guides/duplicate-api-keys.html
+- Merge into an existing .env file: https://latchkey.snackstud.io/guides/merge-into-an-existing-env-file.html
+- Paste env vars into a dashboard: https://latchkey.snackstud.io/guides/paste-env-into-a-dashboard.html
+- Give coding agents API keys without handing them over: https://latchkey.snackstud.io/guides/coding-agents-and-api-keys.html
+- Hide your OpenAI or Anthropic key from an agent: https://latchkey.snackstud.io/guides/proxy-api-keys-for-agents.html
+- Rotate the keys an agent touched: https://latchkey.snackstud.io/guides/rotate-after-an-agent-session.html
+- Keep API keys out of MCP server configs: https://latchkey.snackstud.io/guides/mcp-server-api-keys.html
+- Push env vars to deployment platforms: https://latchkey.snackstud.io/guides/push-to-deployment-platforms.html
+- Short-lived AWS credentials: https://latchkey.snackstud.io/guides/short-lived-aws-credentials.html
+- App Store Connect keys with fastlane: https://latchkey.snackstud.io/guides/fastlane-app-store-connect-key.html
+- Secrets on another Mac over SSH: https://latchkey.snackstud.io/guides/secrets-over-ssh.html
+- Save a key from the provider's page in Safari: https://latchkey.snackstud.io/guides/save-keys-from-safari.html
+- See which programs read your secrets: https://latchkey.snackstud.io/guides/audit-secret-access.html

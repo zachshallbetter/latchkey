@@ -149,6 +149,74 @@
 - Link records gain optional `tokenItem` and `team` fields; links saved before them decode unchanged.
 
 ### Website
+- More headlines act out what they say, one per page: "Migration" slides in on Teams, "stops" stops dead on
+  Security, "next" fills in on the Roadmap, "Free" holds in the accent colour on Pricing, and "References" (API) and
+  "no page" (404) are drawn as dashed placeholders. Each guide's headline does the same with its own word ("Block"
+  stops dead, "out" and "Push" move, "API keys" and ".env" are placeholders), and so do the docs ("Quickstart" moves,
+  "Agents" fills in). Support, Privacy and Terms keep plain headlines, since those are what people look for; their
+  repeated labels are gone, Support is titled "Support and troubleshooting", and "stays" in Privacy's "What stays on
+  your Macs" holds in the accent colour.
+- A `latchkey://` reference in prose is drawn as a dashed placeholder, with a hover note that the value is filled in
+  when a command starts; on Features, "filled in" arrives masked and then fills in, once, unless motion is reduced.
+- Headings say what each section holds instead of generic lines ("Everything in one window", "Three ways in",
+  "What would make Latchkey excellent"); labels that repeated their headings are gone; the hero glow, the closing
+  band's three-colour glow, the Pro cards' gradients and the frosted header are flat.
+- Pro's four groups are described with their planned roadmap items: secret requests and a hook that stops `cat .env`;
+  last-used and expiry dates, reminders and leak alerts; importers and an encrypted backup; each key's origin. The
+  core is described as meant to stay free rather than free for good; storing, reading and exporting your own values
+  still never depend on Pro. Opening **For agents** no longer moves the hero's scene.
+- End-to-end audit: Lighthouse, WCAG 2.0 AA with axe-core, a crawl and a reader's review. Fixes: scene pause buttons
+  are reachable by keyboard and screen readers, the home page no longer shifts on phones as its scene lays out, the
+  404's terminal passes contrast in light mode, drawings no longer break the heading outline, pages swap without a
+  fade, and the comparison table names included and not-included cells. Copy now matches what's shipped: the source
+  is public, the notarized release exists, the Mac App Store version is still to come, the Homebrew cask adds the
+  command-line tool, and the CLI's real "cannot reach the Latchkey app" message.
+- A **For humans / For agents** switch under the home page's buttons gives the line to point a coding agent at
+  `llms.txt`, which now covers everything an agent needs in one file. Every footer links to it.
+- Thirteen new guides, checked against the CLI's source: blocking secrets at commit, fresh clones and worktrees,
+  duplicate keys, merging into an existing env file, pasting into a dashboard, the key proxy, rotating after an agent
+  session, short-lived AWS credentials, App Store Connect keys with fastlane, pushing to deployment platforms, SSH,
+  saving keys from Safari, and auditing access. The guides index groups all sixteen into four categories.
+- The docs and guides share one sidebar with icons that stays in place between pages: it sticks under the header, the
+  scrollbar's space is reserved so nothing shifts, and supporting browsers keep it still while the content changes.
+  The footer's docs link reads Developers.
+- The header has a Guides tab, and Docs is now Developers. It stays one row at every width, dropping How it works and
+  Security below 1000px, the download button below 720px and Features below 480px.
+- Guides use the developer docs' layout, with a Guides sidebar, breadcrumbs and contents. The architecture diagram on
+  the docs overview is drawn top to bottom so it no longer wraps.
+- Phone pass: the pricing comparison stacks each row, inline code breaks only at spaces and keeps flags whole, docs
+  breadcrumbs and "On this page" links and the footer byline are larger tap targets, the closing band drops its
+  first sentence, and roadmap labels are 12px.
+- Search and authorship: descriptive titles under 66 characters, a social card per page, author metadata and a
+  JSON-LD graph on every page naming Zach Shallbetter (with the person and studio IDs Snack Studio's other sites use),
+  a footer byline, a "Who makes Latchkey" section, `humans.txt`, browser icons and a web manifest from the app icon,
+  `llms-full.txt`, an IndexNow key, and three guides (env files, coding agents, MCP server configs).
+  `scripts/discovery.py` replaces `scripts/sitemap.py`; `scripts/social-images.py` renders the cards.
+- A quieter home page header: the title in one colour with its second sentence muted on its own line, a two-sentence
+  introduction, the buttons, and one line of facts; the scene's caption is one line. The social image matches.
+- A footer with the download and Product, Developers and Trust and help columns on every page, and a 404 page that
+  shows what `lk get` prints for a name it doesn't have, with links onward.
+- Digital Presence Protocol pass: a social preview image and large card on every page, descriptions under 170
+  characters, breadcrumbs on every page and one organization, website and app graph on the home page, a sitemap with
+  each page's last change (`scripts/sitemap.py`), a 404 page, a route for reporting mistakes and a changelog link in
+  every footer. `docs/presence.md` records the entities, claims and their evidence, surfaces, access checks, and the
+  metrics and query panel still to run. Pricing no longer says the source "will be" available: it is.
+- Layout pass: no single words on their own line, card links and plan buttons line up across each row, availability
+  labels sit beside each card's symbol, and the lightest cards gained a real example or detail.
+- The app window on the home page and Features follows the app's current layout: sidebar with Review and the
+  iCloud Keychain badge, a flat list with search, filters and the app's type icons, and the detail as cards with
+  recent activity. One icon set, after the app's SF Symbols, gives every card, button and fact a symbol.
+- Every code block explains its parts on hover or focus, not only `lk` lines: Features examples, CLI synopses and
+  their placeholders, env files, JSON, `brew`, `ssh`, `claude` and `export`, the agent note and the architecture
+  diagram.
+- More colour: each section takes a hue (eyebrow, steps, scene wash), the hero line and closing band
+  carry a gradient, and Pro is orange as in the app's upgrade sheet.
+- Caught up with the product: Features, the Roadmap, the CLI and agent docs and `llms.txt` cover `lk scan` and its
+  pre-commit hook, duplicates and combine, import classes, export merge and clipboard, the proxy's limits and
+  updates. Pro's four groups use the app's own wording, and duplicates, scanning, rotation and pushing are listed as
+  free.
+- Free leads: every primary button is **Download free**, the home page and Features show what Pro adds
+  (marked planned), and Pricing lists Pro's features in place of four labels.
 - Privacy policy, terms and support pages, linked from every footer; canonical URLs and a sitemap for
   latchkey.snackstud.io, published from Vercel on request only.
 - Pricing: Latchkey Pro is a one-time in-app purchase ($79) in the Mac App Store version, with updates included and

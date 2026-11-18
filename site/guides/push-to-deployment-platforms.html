@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Push env vars to Vercel, GitHub and more · Latchkey</title>
+  <meta name="description" content="Link a project&#x27;s environment to Vercel, GitHub Actions, Railway or Fly, check what differs, and push values from Latchkey instead of pasting into dashboards.">
+  <link rel="canonical" href="https://latchkey.snackstud.io/guides/push-to-deployment-platforms.html">
+  <meta property="og:url" content="https://latchkey.snackstud.io/guides/push-to-deployment-platforms.html">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:image" content="https://latchkey.snackstud.io/social/guides-push-to-deployment-platforms.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Guide: Push env vars to Vercel, GitHub and more. Link a project&#x27;s environment to Vercel, GitHub Actions, Railway or Fly, check what differs, and push… Latchkey, latchkey.snackstud.io.">
+  <meta property="og:title" content="Push env vars to Vercel, GitHub and more · Latchkey">
+  <meta property="og:description" content="Link a project&#x27;s environment to Vercel, GitHub Actions, Railway or Fly, check what differs, and push values from Latchkey instead of pasting into dashboards.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="../logo.svg" type="image/svg+xml">
+  <link rel="author" href="https://zachshallbetter.com/">
+  <link rel="icon" href="../favicon.ico" sizes="48x48">
+  <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="manifest" href="../site.webmanifest">
+  <link rel="alternate" type="text/plain" href="../llms.txt" title="Latchkey for language models">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="author" content="Zach Shallbetter">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta name="application-name" content="Latchkey">
+  <meta name="apple-mobile-web-app-title" content="Latchkey">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta name="twitter:title" content="Push env vars to Vercel, GitHub and more · Latchkey">
+  <meta name="twitter:description" content="Link a project&#x27;s environment to Vercel, GitHub Actions, Railway or Fly, check what differs, and push values from Latchkey instead of pasting into dashboards.">
+  <meta name="twitter:image" content="https://latchkey.snackstud.io/social/guides-push-to-deployment-platforms.jpg">
+  <meta name="twitter:image:alt" content="Guide: Push env vars to Vercel, GitHub and more. Link a project&#x27;s environment to Vercel, GitHub Actions, Railway or Fly, check what differs, and push… Latchkey, latchkey.snackstud.io.">
+  <meta property="article:author" content="https://zachshallbetter.com/">
+  <link rel="stylesheet" href="../site.css">
+  <style>
+    .guides .eyebrow { margin-top: 8px; }
+    .guides .byline { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 14px 0 0; font-size: 14px; color: var(--muted); }
+    .guides h3 { font-size: 18px; margin: 28px 0 8px; }
+    .guides .short { margin-top: 28px; padding: 18px 22px; border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); box-shadow: var(--card-shadow); }
+    .guides .short p { margin: 0; }
+    .guides .short b { display: block; margin-bottom: 6px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+    .guides ol.steps { padding-left: 1.2em; }
+    .guides .next { margin-top: 48px; }
+    .guides .card-grid { margin-top: 12px; }
+    .guides .cat { margin-top: 44px; }
+    .guides .cat > p { color: var(--muted); margin: 0; }
+  </style>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": "https://latchkey.snackstud.io/guides/push-to-deployment-platforms.html#webpage",
+      "url": "https://latchkey.snackstud.io/guides/push-to-deployment-platforms.html",
+      "name": "Push env vars to Vercel, GitHub and more · Latchkey",
+      "description": "Link a project's environment to Vercel, GitHub Actions, Railway or Fly, check what differs, and push values from Latchkey instead of pasting into dashboards.",
+      "inLanguage": "en",
+      "isPartOf": {
+        "@id": "https://latchkey.snackstud.io/#website"
+      },
+      "about": {
+        "@id": "https://latchkey.snackstud.io/#latchkey"
+      },
+      "author": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "publisher": {
+        "@id": "https://www.snackstud.io/#organization"
+      },
+      "primaryImageOfPage": {
+        "@type": "ImageObject",
+        "url": "https://latchkey.snackstud.io/social/guides-push-to-deployment-platforms.jpg",
+        "width": 1200,
+        "height": 630,
+        "caption": "Guide: Push env vars to Vercel, GitHub and more. Link a project's environment to Vercel, GitHub Actions, Railway or Fly, check what differs, and push… Latchkey, latchkey.snackstud.io."
+      },
+      "breadcrumb": {
+        "@id": "https://latchkey.snackstud.io/guides/push-to-deployment-platforms.html#breadcrumb"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Latchkey",
+          "item": "https://latchkey.snackstud.io/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Guides",
+          "item": "https://latchkey.snackstud.io/guides/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Push to platforms",
+          "item": "https://latchkey.snackstud.io/guides/push-to-deployment-platforms.html"
+        }
+      ],
+      "@id": "https://latchkey.snackstud.io/guides/push-to-deployment-platforms.html#breadcrumb"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://latchkey.snackstud.io/guides/push-to-deployment-platforms.html#article",
+      "headline": "Push env vars to your deploy platforms",
+      "description": "Link a project's environment to Vercel, GitHub Actions, Railway or Fly, check what differs, and push values from Latchkey instead of pasting into dashboards.",
+      "url": "https://latchkey.snackstud.io/guides/push-to-deployment-platforms.html",
+      "datePublished": "2026-11-14",
+      "author": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "publisher": {
+        "@id": "https://www.snackstud.io/#organization"
+      },
+      "about": {
+        "@id": "https://latchkey.snackstud.io/#latchkey"
+      },
+      "articleSection": "Deploying",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "Person",
+      "@id": "https://zachshallbetter.com/#person",
+      "name": "Zach Shallbetter",
+      "url": "https://zachshallbetter.com/",
+      "sameAs": [
+        "https://github.com/zachshallbetter"
+      ],
+      "jobTitle": "Systems engineer",
+      "description": "Zach Shallbetter designs and builds Latchkey. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
+      "homeLocation": {
+        "@type": "Place",
+        "name": "Spokane, Washington"
+      },
+      "worksFor": {
+        "@id": "https://www.snackstud.io/#organization"
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://www.snackstud.io/#organization",
+      "name": "Snack Studio",
+      "url": "https://www.snackstud.io",
+      "email": "latchkey@snackstud.io",
+      "founder": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://latchkey.snackstud.io/icon-512.png",
+        "width": 512,
+        "height": 512
+      }
+    }
+  ]
+}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site">
+    <nav class="top wrap" aria-label="Main">
+      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+      <ul>
+        <li><a href="../features.html">Features</a></li>
+        <li><a href="../index.html#how">How it works</a></li>
+        <li><a href="../pricing.html">Pricing</a></li>
+        <li><a href="../security.html">Security</a></li>
+        <li><a href="../developers/index.html">Developers</a></li>
+        <li><a href="index.html" aria-current="page">Guides</a></li>
+        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main" class="wrap docs guides">
+    <nav class="side" aria-label="Developers and guides"><div class="side-group"><p class="side-title">Developers</p><ul><li><a href="../developers/index.html"><i class="ic ic-book" aria-hidden="true"></i>Overview</a></li><li><a href="../developers/quickstart.html"><i class="ic ic-bolt" aria-hidden="true"></i>Quickstart</a></li><li><a href="../developers/cli.html"><i class="ic ic-terminal" aria-hidden="true"></i>CLI reference</a></li><li><a href="../developers/agents.html"><i class="ic ic-agent" aria-hidden="true"></i>Agents and MCP</a></li><li><a href="../developers/api.html"><i class="ic ic-code" aria-hidden="true"></i>References and API</a></li></ul></div><div class="side-group current"><p class="side-title">Guides</p><ul><li><a href="index.html"><i class="ic ic-grid" aria-hidden="true"></i>All guides</a></li><li><a href="index.html#env"><i class="ic ic-fileenv" aria-hidden="true"></i>Env files</a></li><li><a href="index.html#agents"><i class="ic ic-sparkles" aria-hidden="true"></i>Coding agents</a></li><li><a href="index.html#deploy" class="here"><i class="ic ic-upload" aria-hidden="true"></i>Deploying</a></li><li><a href="index.html#everyday"><i class="ic ic-macs" aria-hidden="true"></i>Everyday use</a></li></ul></div></nav>
+    <article class="doc">
+      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><a href="index.html">Guides</a></li><li><span aria-current="page">Push to platforms</span></li></ol></nav>
+      <p class="eyebrow">Guide · Deploy</p>
+      <h1><span class="moves">Push</span> env vars to your deploy platforms</h1>
+      <p class="lede">Your keys live in one place on your Mac and in a dashboard for each service that runs your code. Every change means pasting the same value again, and nobody remembers which copy is stale.</p>
+      <p class="byline"><span>By <a href="https://zachshallbetter.com/" rel="author">Zach Shallbetter</a></span><span>Published 14 November 2026</span><span>Needs <a href="../cli.html">the command-line tool</a></span></p>
+      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#why-the-copies-drift">Why the copies drift</a></li><li><a href="#push-an-environment">Push an environment</a></li><li><a href="#push-through-an-api-instead">Push through an API instead</a></li><li><a href="#what-this-doesn-t-do">What this doesn't do</a></li></ul></nav>
+      <div class="short"><p><b>In short</b>Link an environment once with <code>lk remote link</code>, check it with <code>lk remote status</code>, and send it with <code>lk push</code>. Every push asks you to approve it, and nothing is deployed: new values apply on the service's next deploy.</p></div>
+<h2 id="why-the-copies-drift">Why the copies drift</h2>
+<p>A deployed app can't read your keychain, so each platform keeps its own copy of every value. Vercel has one, GitHub Actions has another, Railway and Fly have more. You change a key on your Mac, paste it into one dashboard, and forget the other two. Weeks later a build fails and nothing says which copy is old.</p>
+<p>Latchkey can hold the list of places an environment goes. It then compares names and sends values from one place.</p>
+
+<h2 id="push-an-environment">Push an environment</h2>
+<p>The examples use a project called <code>shop</code> with a <code>production</code> environment. Install and sign in to the tool for each service you use first: <code>vercel login</code>, <code>gh auth login</code>, <code>railway login</code> or <code>flyctl auth login</code>. By default Latchkey runs those tools as you and stores no service tokens.</p>
+<ol class="steps">
+<li>
+<h3>Link the environment</h3>
+<p>Each link names a service and the target on it. Linking asks for approval. A link covers the whole environment, including items you add later.</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">lk remote link shop/vercel.preview vercel project=shop environment=preview
+lk remote link shop/production github repo=me/shop environment=production
+lk remote link shop/production fly app=shop-api</code></pre></figure>
+<p>In the app, open an item's <b>Edit</b> menu, choose <b>Remote Locations…</b>, then <b>Add a Location…</b>. The sheet asks for the service's details and says whether its command-line tool is installed. <b>Add Location</b> turns on once the details are complete. It never asks for a service token.</p>
+</li>
+<li>
+<h3>Check what differs</h3>
+<p>Status shows names missing on each side, and items whose value changed since they were last pushed. It compares names and doesn't use values.</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">lk remote status shop/production</code></pre></figure>
+</li>
+<li>
+<h3>Rehearse, then push</h3>
+<p>Use <code>--dry-run</code> for a first look before a real push. Then run the push. You can limit it to one link with <code>--to</code> or to chosen items with <code>--only</code>.</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">lk push shop/production --dry-run
+lk push shop/production
+lk push shop/production --to LINK_ID --only shop/production/DATABASE_URL</code></pre></figure>
+<p>Every push asks, every time, and no grant covers one. A production target also needs <b>I mean to change production</b> ticked in the approval panel. The Latchkey app does the pushing, so it must be running; <code>lk push</code> asks it. With a command-line tool, values reach the tool on standard input, never as arguments. Find a link's ID for <code>--to</code> with <code>lk remote list shop/production</code>.</p>
+</li>
+<li>
+<h3>See what changed since the last push</h3>
+<p>After a push, Latchkey records when each item went to each link. An item changed since then gets an orange badge in the list and "Changed since last push" in its detail. <b>Review</b> has a <b>Changes</b> filter that lists those items, and also items not pushed yet, with a <b>Push…</b> action.</p>
+</li>
+</ol>
+
+<h2 id="push-through-an-api-instead">Push through an API instead</h2>
+<p>If you'd rather not depend on the command-line tools, keep the service's access token as an ordinary Latchkey item and name it in the link. Use a token limited to what you push.</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">lk set VERCEL_TOKEN --kind token
+lk remote link shop/vercel.preview vercel project=shop environment=preview token=VERCEL_TOKEN</code></pre></figure>
+<p>The Mac App Store version can only push this way, and it can't push to GitHub. The <a href="../developers/cli.html#remote">CLI reference</a> lists every key each service takes.</p>
+
+<h2 id="what-this-doesn-t-do">What this doesn't do</h2>
+<ul>
+<li>It deploys nothing. Railway and Fly would deploy by default, so Latchkey turns that off. New values take effect on the service's next deploy, which you start.</li>
+<li>Unlinking stops tracking and pushing. Values already at the service stay there.</li>
+<li>Pushing Fly secrets through <code>flyctl</code> sends one line per value, so multi-line values aren't supported on that route. When you push through an API token, variable names must be letters, digits and underscores, and GitHub refuses names starting with <code>GITHUB_</code>.</li>
+<li>Latchkey records what it sent, not what a service later does with it. A push always waits for your approval, so a script or agent can start one but can't complete it without you. Agents have no push tool.</li>
+</ul>
+    <section class="next" aria-labelledby="next-title">
+      <h2 id="next-title">Related</h2>
+      <div class="card-grid g2"><a class="card" href="paste-env-into-a-dashboard.html"><span class="cico" aria-hidden="true"><i class="ic ic-export"></i></span><b>Paste env vars into a dashboard, no file</b><span>Paste an environment into a hosting dashboard, no file on disk.</span></a><a class="card" href="rotate-after-an-agent-session.html"><span class="cico" aria-hidden="true"><i class="ic ic-history"></i></span><b>Rotate the keys an AI agent touched</b><span>List what an agent was given, then replace each key in one pass.</span></a></div>
+    </section>
+    </article>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+          <p>Development credentials in your Mac's iCloud Keychain, filled in when a command starts.</p>
+          <a class="button primary small" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
+        </div>
+        <nav class="foot-col" aria-label="Product">
+          <h2>Product</h2>
+          <ul>
+            <li><a href="../features.html">Features</a></li>
+            <li><a href="../index.html#how">How it works</a></li>
+            <li><a href="../pricing.html">Pricing</a></li>
+            <li><a href="../teams.html">For teams</a></li>
+            <li><a href="../roadmap.html">Roadmap</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey/blob/main/CHANGELOG.md">Changelog</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Developers">
+          <h2>Developers</h2>
+          <ul>
+            <li><a href="../developers/index.html">Developers</a></li>
+            <li><a href="../guides/index.html">Guides</a></li>
+            <li><a href="../developers/quickstart.html">Quickstart</a></li>
+            <li><a href="../cli.html">Command-line tool</a></li>
+            <li><a href="../developers/cli.html">CLI reference</a></li>
+            <li><a href="../developers/agents.html">Agents and MCP</a></li>
+            <li><a href="../developers/api.html">References and API</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey">Source on GitHub</a></li>
+            <li><a href="../llms.txt">For agents (llms.txt)</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Trust and help">
+          <h2>Trust and help</h2>
+          <ul>
+            <li><a href="../security.html">Security</a></li>
+            <li><a href="../support.html">Support</a></li>
+            <li><a href="../support.html#mistake">Report a mistake</a></li>
+            <li><a href="../privacy.html">Privacy</a></li>
+            <li><a href="../terms.html">Terms</a></li>
+          </ul>
+        </nav>
+      </div>
+      <div class="foot-base">
+        <span>Designed and built by <a href="https://zachshallbetter.com/" rel="author">Zach Shallbetter</a> at <a href="https://www.snackstud.io">Snack Studio</a></span>
+        <span>Source-available under FSL-1.1-ALv2. This site makes no third-party requests.</span>
+      </div>
+    </div>
+  </footer>
+  <script src="../site.js"></script>
+</body>
+</html>
