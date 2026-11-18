@@ -2,6 +2,7 @@ import AppKit
 import LatchkeyCore
 import LocalAuthentication
 import LocalAuthenticationEmbeddedUI
+import os
 import SwiftUI
 
 extension ItemKind {
@@ -65,6 +66,7 @@ struct LockScreen: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .focusEffectDisabled()
         // Ask right away when the window is in front, and again each time Latchkey comes back to the front.
         .onAppear { if NSApp.isActive { askAgain() } }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
@@ -94,6 +96,10 @@ struct LockScreen: View {
         touchID = nil
     }
 }
+
+/// What the inline Touch ID prompt does, in the system log (category "touchid"): when it starts and how it ends. No
+/// values or reasons are logged.
+let touchIDLog = Logger(subsystem: "io.snackstud.latchkey", category: "touchid")
 
 /// The system's own Touch ID prompt, drawn inside the window. Evaluating a biometric policy on a context that an
 /// `LAAuthenticationView` shows puts the prompt here instead of in a sheet.
@@ -144,6 +150,7 @@ struct InlineTouchID: NSViewRepresentable {
         }
 
         private func fire() {
+            touchIDLog.notice("glyph in a key window; app active \(NSApp.isActive, privacy: .public)")
             if let observer { NotificationCenter.default.removeObserver(observer) }
             observer = nil
             let run = start

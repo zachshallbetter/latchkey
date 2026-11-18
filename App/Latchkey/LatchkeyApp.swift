@@ -342,7 +342,9 @@ final class AppModel {
     /// too many tries, or the request withdrawn; the lock screen then offers the system sheet.
     func unlockWithTouchID(_ context: LAContext, failed: @escaping @MainActor () -> Void) {
         guard locked, !unlocking else { return }
-        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: "unlock Latchkey") { [weak self] passed, _ in
+        touchIDLog.notice("lock screen: Touch ID started; app active \(NSApp.isActive, privacy: .public)")
+        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: "unlock Latchkey") { [weak self] passed, error in
+            touchIDLog.notice("lock screen: Touch ID ended; passed \(passed, privacy: .public), error \((error as? LAError)?.code.rawValue ?? 0, privacy: .public)")
             Task { @MainActor in
                 if passed { self?.locked = false } else { failed() }
             }

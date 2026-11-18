@@ -347,6 +347,9 @@ struct ApprovalView: View {
         }
         .padding(18)
         .frame(width: 420)
+        // No keyboard focus rings: with keyboard navigation on, one landed on Details or Use Password… as if that were
+        // the thing to press. Tab still moves between controls.
+        .focusEffectDisabled()
         .onAppear { startTouchID() }
         // A question that just joined starts Touch ID over, after a moment to read it.
         .onChange(of: group.joined) { _, _ in
@@ -397,6 +400,15 @@ struct ApprovalView: View {
 
     private var footer: some View {
         VStack(spacing: 12) {
+            if touchID != nil, !ready {
+                // The same space the live glyph takes, so ticking the box doesn't move anything.
+                VStack(spacing: 6) {
+                    Image(systemName: "touchid").font(.system(size: 34, weight: .light)).foregroundStyle(.tertiary)
+                        .frame(width: 44, height: 44)
+                    Text("Tick the box above, then Touch ID to \(allowLabel.lowercased())").font(.callout).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+            }
             if let touchID, ready {
                 VStack(spacing: 6) {
                     ZStack {
@@ -454,7 +466,9 @@ struct ApprovalView: View {
     }
 
     private func evaluate(_ context: LAContext) {
-        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: sheetReason) { passed, _ in
+        touchIDLog.notice("approval: Touch ID started; app active \(NSApp.isActive, privacy: .public)")
+        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: sheetReason) { passed, error in
+            touchIDLog.notice("approval: Touch ID ended; passed \(passed, privacy: .public), error \((error as? LAError)?.code.rawValue ?? 0, privacy: .public)")
             DispatchQueue.main.async {
                 guard touchID === context else { return }   // started over, or the sheet took over
                 if passed { finish(choice.decision) } else { touchID = nil }
