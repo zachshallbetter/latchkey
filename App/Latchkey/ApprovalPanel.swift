@@ -409,7 +409,8 @@ struct ApprovalView: View {
                             InlineTouchID(context: touchID, start: { evaluate(touchID) }, needsKeyWindow: false)
                                 .id(ObjectIdentifier(touchID))
                         } else {
-                            Image(systemName: "touchid").font(.system(size: 26, weight: .light)).foregroundStyle(.tertiary)
+                            // Matched to the system glyph's size and thin stroke, so ticking the box only changes its colour.
+                            Image(systemName: "touchid").resizable().scaledToFit().fontWeight(.thin).foregroundStyle(.tertiary)
                         }
                     }
                     .frame(width: InlineTouchID.side, height: InlineTouchID.side)
