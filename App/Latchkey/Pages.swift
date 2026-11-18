@@ -318,6 +318,21 @@ struct FindingDetail: View {
     let finding: Finding
     @State private var working = false
     @State private var combining = false
+    /// Project groups opened or folded by hand; whether they start open follows the list's rule (few open, many folded).
+    @State private var toggled: Set<String> = []
+
+    /// The finding's items by project, Shared first.
+    private var groups: [ItemGroup] {
+        let by = Dictionary(grouping: finding.items) { $0.ref.isShared ? "" : $0.ref.project }
+        return by.keys.sorted { a, b in a.isEmpty != b.isEmpty ? a.isEmpty : a.localizedStandardCompare(b) == .orderedAscending }
+            .map { ItemGroup(id: $0, title: $0.isEmpty ? "Shared" : $0, items: by[$0]!, mode: .project, key: $0) }
+    }
+
+    private func isOpen(_ key: String, among count: Int) -> Bool { (count <= 8) != toggled.contains(key) }
+
+    private func toggle(_ key: String) {
+        withAnimation(.snappy) { if toggled.contains(key) { toggled.remove(key) } else { toggled.insert(key) } }
+    }
 
     var body: some View {
         ScrollView {
@@ -325,19 +340,30 @@ struct FindingDetail: View {
                 DetailHeader(symbol: finding.symbol, tint: finding.tint, title: finding.title, subtitle: finding.summary) { EmptyView() } trailing: { EmptyView() }
                 Text(finding.why).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true).padding(.horizontal, 4)
                 if !finding.items.isEmpty {
-                    Text("Items (\(finding.items.count))").font(.headline)
+                    let grouped = groups
+                    Text("Items (\(finding.items.count))\(grouped.count > 1 ? " in \(grouped.count) places" : "")").font(.headline)
                     Card(padding: 0) {
-                        ForEach(Array(finding.items.enumerated()), id: \.element.id) { i, item in
-                            Button { model.filter = .all; model.selection = [item.name] } label: {
-                                HStack {
-                                    ItemRow(item: item)
-                                    Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
-                                }
-                                .padding(.horizontal, 12)
-                                .contentShape(Rectangle())
+                        ForEach(Array(grouped.enumerated()), id: \.element.id) { gi, group in
+                            let open = grouped.count == 1 || isOpen(group.key, among: grouped.count)
+                            if grouped.count > 1 {
+                                GroupRow(group: group, image: group.key.isEmpty ? nil : model.projectIcon(group.key), open: open) { toggle(group.key) }
+                                    .padding(.horizontal, 12).padding(.vertical, 3)
                             }
-                            .buttonStyle(.plain)
-                            if i < finding.items.count - 1 { Divider() }
+                            if open {
+                                ForEach(group.items) { item in
+                                    if grouped.count > 1 || item.id != group.items.first?.id { Divider().padding(.leading, 12) }
+                                    Button { model.filter = .all; model.selection = [item.name] } label: {
+                                        HStack {
+                                            ItemRow(item: item, showsProject: false, showsEnvironment: true)
+                                            Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+                                        }
+                                        .padding(.leading, grouped.count > 1 ? 30 : 12).padding(.trailing, 12)
+                                        .contentShape(Rectangle())
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            if gi < grouped.count - 1 { Divider() }
                         }
                     }
                 }

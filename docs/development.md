@@ -130,6 +130,8 @@ Snapshot startup uses an in-memory broker and skips the live Keychain, migration
 `--sample` fills the view with examples; without it, the fixture starts empty. `--part` draws one view off screen
 (more reliable than the whole window when started from a shell).
 
+Add `--appearance light` or `--appearance dark` to draw in that theme instead of the system's.
+
 Use `--settings general|privacy|storage|developer|membership|about --part settings` for one Settings tab, or
 `--settings privacy --part settings-window` for the tabbed window (off screen, the tabs draw as a segmented control).
 Native sidebar materials may be absent from an off-screen full-window capture; `--part sidebar` renders that

@@ -16,17 +16,25 @@ Arranged the way 1Password arranges vaults and tags:
 - **Services**, like tags: the services items name, each with its site's icon. The icons ship with the app, so
   nothing is fetched.
 - **Grants** and **Recently Deleted**.
-- Projects and Services fold away.
+- Projects and Services fold away. With more than a dozen projects, a **Filter projects** field narrows the list as
+  you type.
 - At the bottom, where values are kept: **iCloud Keychain** or **This Mac only**. Hover for what that means.
 
 ### The list
 
 The list's header names what's shown and how many (items, projects and services), with a **New Item** button and a
 search field (⌘F). Under the search field, **Type**, **Environment**, **Project** and **Service** dropdowns narrow the
-list and show what they're set to, and the button after them holds the sort order, access, **Clear Filters**,
-**Import .env File…** and **Move Selected to a Project…**. Items are listed by name in two lines: an icon for its type
-(token, API key, database, URL, password, key file, plain value; hover for its name) beside the name, and under it its
-project, environment and service. Long names are shortened in the middle, with
+list and show what they're set to, and the button after them holds the grouping, sort order, access,
+**Clear Filters**, **Import .env File…** and **Move Selected to a Project…**.
+
+Items are listed in sections. Each section's heading is a row like the sidebar's: the project's icon (or the
+environment's colour, the service's logo), its name and how many items, with a chevron that opens or folds it. Up to
+eight sections start open; more start folded, so the list reads as a table of contents, and a search opens them all. **Group By** chooses
+the sections: **Automatic** (environments in a project's view, projects everywhere else, Shared first), **Project**,
+**Environment**, **Service**, **Type** or **None**. Within a section items are listed by name in two lines: an icon for
+its type (token, API key, database, URL, password, key file, plain value; hover for its name) beside the name, and
+under it what the section and view don't already say (project, environment, service), with the environment as a
+badge on the right. Long names are shortened in the middle, with
 the full ID on hover, and hovering a row shows a button that copies its `latchkey://` reference.
 
 Badges on an item: a green shield for agent-safe, an orange arrow when its value changed since it was last pushed to a

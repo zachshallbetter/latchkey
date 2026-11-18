@@ -172,7 +172,21 @@ struct Sidebar: View {
 
                     if !model.items.isEmpty {
                         SidebarSection(model: model, title: "Projects") {
-                            ForEach(model.projects, id: \.self) { p in
+                            // A long project list gets a filter, so one project is a few keystrokes away.
+                            if model.projects.count > 12 {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "line.3.horizontal.decrease").foregroundStyle(.secondary).font(.caption)
+                                    TextField("Filter projects", text: $model.projectQuery).textFieldStyle(.plain).font(.callout)
+                                    if !model.projectQuery.isEmpty {
+                                        Button { model.projectQuery = "" } label: { Image(systemName: "xmark.circle.fill") }
+                                            .buttonStyle(.plain).foregroundStyle(.secondary)
+                                    }
+                                }
+                                .padding(.horizontal, 8).padding(.vertical, 5)
+                                .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(.quaternary.opacity(0.5)))
+                                .padding(.horizontal, 4).padding(.bottom, 4)
+                            }
+                            ForEach(model.projects.filter { model.projectQuery.isEmpty || $0.localizedCaseInsensitiveContains(model.projectQuery) }, id: \.self) { p in
                                 NavRow(title: p, symbol: "folder", image: model.projectIcon(p), count: model.count(.project(p)),
                                        selected: model.filter == .project(p)) { model.filter = .project(p) }
                                     .contextMenu { ProjectMenu(model: model, project: p) }
@@ -314,17 +328,27 @@ struct ItemList: View {
         .toolbar(removing: .title)
     }
 
-    /// Every item that matches, in one list, as 1Password lists them: each row says its project and environment
-    /// unless the view already does.
+    /// Every item that matches, in sections (by project, environment, service or type; see `ListGrouping`). Each row
+    /// says its project and environment unless the view or its section already does.
     @ViewBuilder
     private func itemList(_ list: [SecretInfo]) -> some View {
         let inProject: Bool = { if case .project = model.filter { return true } else { return false } }()
+        let mode = model.effectiveGrouping
+        let groups = model.groupedItems
         List(selection: $model.selection) {
-            ForEach(list) { item in
-                ItemRow(model: model, item: item, showsProject: !inProject,
-                        showsEnvironment: model.environmentFilter == nil, remote: model.remoteStates[item.name])
-                    .tag(item.name)
-                    .listRowSeparator(.visible)
+            ForEach(groups) { group in
+                if group.title.isEmpty {
+                    rows(group.items, inProject: inProject, mode: mode)
+                } else {
+                    let open = model.groupIsOpen(group.id, among: groups.count)
+                    // A plain row, not a list section header, so a folded section is one compact line.
+                    GroupRow(group: group, image: group.mode == .project && !group.key.isEmpty ? model.projectIcon(group.key) : nil,
+                             open: open) { withAnimation(.snappy) { model.toggleGroup(group.id) } }
+                        .listRowSeparator(open ? .visible : .hidden, edges: .bottom)
+                        .listRowSeparator(.hidden, edges: .top)
+                        .selectionDisabled()
+                    if open { rows(group.items, inProject: inProject, mode: mode) }
+                }
             }
         }
         .listStyle(.inset)
@@ -339,6 +363,15 @@ struct ItemList: View {
             if !ids.isEmpty { model.deleteRequest = DeleteRequest(ids: ids) }
         }
         .overlay { emptyOverlay(list) }
+    }
+
+    private func rows(_ items: [SecretInfo], inProject: Bool, mode: ListGrouping) -> some View {
+        ForEach(items) { item in
+            ItemRow(model: model, item: item, showsProject: !inProject && mode != .project,
+                    showsEnvironment: model.environmentFilter == nil && mode != .environment, remote: model.remoteStates[item.name])
+                .tag(item.name)
+                .listRowSeparator(.visible)
+        }
     }
 
     @ViewBuilder
@@ -357,6 +390,49 @@ struct ItemList: View {
                     }
                 }
             }
+    }
+}
+
+/// A section's heading, drawn like the sidebar's project rows: the project's icon (or the environment's colour, the
+/// service's logo, the type's symbol), its name, how many items, and a chevron that folds it.
+struct GroupRow: View {
+    let group: ItemGroup
+    var image: NSImage? = nil
+    let open: Bool
+    let toggle: () -> Void
+
+    var body: some View {
+        Button(action: toggle) {
+            HStack(spacing: 10) {
+                icon.frame(width: 20)
+                Text(group.title).font(.body.weight(.medium)).lineLimit(1).truncationMode(.middle)
+                Spacer(minLength: 4)
+                Text("\(group.items.count)").monospacedDigit().foregroundStyle(.secondary)
+                Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+                    .rotationEffect(.degrees(open ? 90 : 0))
+            }
+            .padding(.vertical, 5)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(open ? "Hide \(group.title)" : "Show \(group.title)")
+    }
+
+    @ViewBuilder private var icon: some View {
+        switch group.mode {
+        case .project where group.key.isEmpty, .environment where group.key.isEmpty:
+            Image(systemName: "tray.full").foregroundStyle(.secondary)
+        case .project:
+            if let image { SiteIcon(image: image) } else { Image(systemName: "folder").foregroundStyle(.secondary) }
+        case .environment:
+            Circle().fill(EnvBadge(environment: group.key).tint).frame(width: 9, height: 9)
+        case .service:
+            if let logo = SiteIcon.service(group.key) { SiteIcon(image: logo) } else { Image(systemName: "square.dashed").foregroundStyle(.secondary) }
+        case .type:
+            if let first = group.items.first { let t = ItemType(first); Image(systemName: t.symbol).foregroundStyle(t.tint) }
+        case .automatic, .none:
+            EmptyView()
+        }
     }
 }
 
@@ -462,6 +538,11 @@ struct FilterBar: View {
             }
             Spacer(minLength: 0)
             Menu {
+                Picker("Group By", selection: $model.grouping) {
+                    ForEach(ListGrouping.allCases, id: \.self) { g in
+                        Text(g == .automatic ? "Automatic (\(Self.automaticLabel(model)))" : g.rawValue).tag(g)
+                    }
+                }
                 Picker("Sort By", selection: $model.sort) {
                     ForEach(SortOrder.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                 }
@@ -487,9 +568,12 @@ struct FilterBar: View {
                     .contentShape(RoundedRectangle(cornerRadius: 8))
             }
             .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize().focusEffectDisabled()
-            .help("Sort order, access, import and move")
+            .help("Grouping, sort order, access, import and move")
         }
     }
+
+    /// What Automatic groups by in the current view.
+    static func automaticLabel(_ model: AppModel) -> String { model.automaticGrouping.rawValue }
 
     /// A dropdown that names its choice, highlighted while one is made.
     private func pill<Items: View>(_ title: String, _ choice: String?, @ViewBuilder _ items: () -> Items) -> some View {
@@ -536,7 +620,7 @@ struct ItemRow: View {
     /// with the environment as a badge on the right.
     private var subtitle: String {
         var parts: [String] = []
-        if !showsProject && !item.ref.isShared { parts.append(ItemType(item).label) }
+        if !showsProject { parts.append(ItemType(item).label) }
         else if item.ref.isShared { parts.append("Shared") }
         else {
             parts.append(item.ref.project)

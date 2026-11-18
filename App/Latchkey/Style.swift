@@ -22,13 +22,57 @@ struct IconTile: View {
 struct SiteIcon: View {
     let image: NSImage
     var size: CGFloat = 20
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
-        Image(nsImage: image).resizable().interpolation(.high).aspectRatio(contentMode: .fit)
-            .padding(size * 0.1)
-            .frame(width: size, height: size)
-            .background(RoundedRectangle(cornerRadius: size * 0.24, style: .continuous).fill(Color.white))
-            .clipShape(RoundedRectangle(cornerRadius: size * 0.24, style: .continuous))
+        let look = Self.look(of: image)
+        let shape = RoundedRectangle(cornerRadius: size * 0.24, style: .continuous)
+        if look.fillsTile {
+            // Already an app icon or a filled square: drawn as it is, with no tile of our own around it.
+            Image(nsImage: image).resizable().interpolation(.high).aspectRatio(contentMode: .fit)
+                .frame(width: size, height: size)
+                .clipShape(shape)
+        } else {
+            // A logo on transparency sits on a tile that follows the theme, unless its own colours would vanish
+            // there: a dark mark keeps a light tile in dark mode, a white mark a dark tile in light mode.
+            let lightTile = scheme == .dark ? look.darkContent : !look.lightContent
+            Image(nsImage: image).resizable().interpolation(.high).aspectRatio(contentMode: .fit)
+                .padding(size * 0.1)
+                .frame(width: size, height: size)
+                .background(shape.fill(lightTile ? Color(white: scheme == .dark ? 0.9 : 1) : Color(white: scheme == .dark ? 0.24 : 0.3)))
+                .overlay(shape.strokeBorder(.separator.opacity(0.6), lineWidth: 0.5))
+                .clipShape(shape)
+        }
+    }
+
+    struct Look { var fillsTile: Bool; var darkContent: Bool; var lightContent: Bool }
+
+    nonisolated(unsafe) private static var looks: [ObjectIdentifier: Look] = [:]
+    private static let looksLock = NSLock()
+
+    /// How much of the icon is opaque and how bright its opaque pixels are, from a 32-pixel copy, remembered per image.
+    static func look(of image: NSImage) -> Look {
+        let id = ObjectIdentifier(image)
+        if let known = looksLock.withLock({ looks[id] }) { return known }
+        var look = Look(fillsTile: false, darkContent: false, lightContent: false)
+        let n = 32
+        var pixels = [UInt8](repeating: 0, count: n * n * 4)
+        if let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil),
+           let ctx = CGContext(data: &pixels, width: n, height: n, bitsPerComponent: 8, bytesPerRow: n * 4,
+                               space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) {
+            ctx.interpolationQuality = .medium
+            ctx.draw(cg, in: CGRect(x: 0, y: 0, width: n, height: n))
+            var opaque = 0, luminance = 0.0
+            for i in stride(from: 0, to: pixels.count, by: 4) where pixels[i + 3] > 128 {
+                let a = Double(pixels[i + 3]) / 255
+                luminance += (0.2126 * Double(pixels[i]) + 0.7152 * Double(pixels[i + 1]) + 0.0722 * Double(pixels[i + 2])) / 255 / a
+                opaque += 1
+            }
+            let mean = opaque > 0 ? luminance / Double(opaque) : 0.5
+            look = Look(fillsTile: Double(opaque) / Double(n * n) > 0.75, darkContent: mean < 0.35, lightContent: mean > 0.8)
+        }
+        looksLock.withLock { looks[id] = look }
+        return look
     }
 
     /// The bundled icon for a service Latchkey knows (fetched by scripts/fetch-service-icons.py), or nil.

@@ -219,6 +219,27 @@ enum SortOrder: String, CaseIterable {
     case updated = "Recently Changed"
 }
 
+/// How the item list is split into sections. Automatic picks what the view doesn't already say: environments in a
+/// project, projects everywhere else.
+enum ListGrouping: String, CaseIterable {
+    case automatic = "Automatic"
+    case project = "Project"
+    case environment = "Environment"
+    case service = "Service"
+    case type = "Type"
+    case none = "None"
+}
+
+/// One section of the item list.
+struct ItemGroup: Identifiable {
+    let id: String
+    let title: String
+    let items: [SecretInfo]
+    /// What the section is by: its grouping and raw key ("" for Shared or No Service).
+    var mode: ListGrouping = .none
+    var key: String = ""
+}
+
 struct ImportDraft: Identifiable {
     struct Row: Identifiable {
         /// The .env key; the item id comes from the draft's project and environment.
@@ -301,6 +322,23 @@ final class AppModel {
     var selection: Set<String> = []
     var search = ""
     var sort: SortOrder = .name
+    var grouping: ListGrouping = ListGrouping(rawValue: UserDefaults.standard.string(forKey: "listGrouping") ?? "") ?? .automatic {
+        didSet { UserDefaults.standard.set(grouping.rawValue, forKey: "listGrouping") }
+    }
+    /// Narrows the sidebar's project list as typed.
+    var projectQuery = ""
+    /// List sections opened or folded by hand, by grouping and section ("Project:shop"). Whether a section starts open
+    /// depends on how many there are (`groupStartsOpen`); a toggle flips that.
+    var toggledGroups: Set<String> = []
+
+    /// Few sections start open; many start folded, so the list reads as a table of contents. A search opens them all.
+    func groupStartsOpen(count: Int) -> Bool { count <= 8 || !search.isEmpty }
+
+    func groupIsOpen(_ id: String, among count: Int) -> Bool { groupStartsOpen(count: count) != toggledGroups.contains(id) }
+
+    func toggleGroup(_ id: String) {
+        if toggledGroups.contains(id) { toggledGroups.remove(id) } else { toggledGroups.insert(id) }
+    }
     var showingAdd = false
     /// Set when the broker refuses an op that needs Latchkey Pro.
     var showingUpgrade = false
@@ -533,6 +571,54 @@ final class AppModel {
         }
     }
 
+    /// The grouping in effect: Automatic resolves to environments in a project's view, projects elsewhere, and none
+    /// when a single environment or search already narrows the list to a short run.
+    var effectiveGrouping: ListGrouping { grouping == .automatic ? automaticGrouping : grouping }
+
+    /// What Automatic means in the current view.
+    var automaticGrouping: ListGrouping {
+        switch filter {
+        case .project: return environmentFilter == nil ? .environment : .none
+        case .shared: return .none
+        default: return .project
+        }
+    }
+
+    /// The visible items split into sections, in a fixed order: Shared first among projects, environments in their
+    /// usual order, services by name with "No Service" last, types in the filter's order.
+    var groupedItems: [ItemGroup] {
+        let list = visibleItems
+        let mode = effectiveGrouping
+        func key(_ i: SecretInfo) -> String {
+            switch mode {
+            case .project: return i.ref.isShared ? "" : i.ref.project
+            case .environment: return i.ref.isShared ? "" : i.ref.environment
+            case .service: return i.service ?? ""
+            case .type: return ItemType(i).label
+            case .automatic, .none: return ""
+            }
+        }
+        guard mode != .none, mode != .automatic else { return [ItemGroup(id: "all", title: "", items: list)] }
+        let byKey = Dictionary(grouping: list, by: key)
+        let keys: [String]
+        switch mode {
+        case .project: keys = byKey.keys.sorted { a, b in a.isEmpty != b.isEmpty ? a.isEmpty : a.localizedStandardCompare(b) == .orderedAscending }
+        case .environment: keys = byKey.keys.sorted { a, b in a.isEmpty != b.isEmpty ? b.isEmpty : Environments.order(a, b) }
+        case .service: keys = byKey.keys.sorted { a, b in a.isEmpty != b.isEmpty ? b.isEmpty : a.localizedStandardCompare(b) == .orderedAscending }
+        case .type: keys = categories.filter { byKey[$0] != nil }
+        case .automatic, .none: keys = []
+        }
+        return keys.map { k in
+            let title: String
+            switch mode {
+            case .project, .environment: title = k.isEmpty ? "Shared" : k
+            case .service: title = k.isEmpty ? "No Service" : k
+            default: title = k
+            }
+            return ItemGroup(id: "\(mode.rawValue):\(k)", title: title, items: byKey[k] ?? [], mode: mode, key: k)
+        }
+    }
+
     var visibleLog: [Broker.LogEntry] {
         let q = search.trimmingCharacters(in: .whitespaces).lowercased()
         guard !q.isEmpty else { return log }
@@ -543,7 +629,6 @@ final class AppModel {
 
     func item(_ name: String?) -> SecretInfo? { items.first { $0.name == name } }
 
-    /// Groups closed by hand during a search, where groups otherwise start open to show the matches.
     /// The one selected item, when exactly one is selected.
     var selectedItem: SecretInfo? { selection.count == 1 ? item(selection.first) : nil }
 

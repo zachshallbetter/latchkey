@@ -36,6 +36,7 @@ enum Snapshot {
     static func runIfRequested(_ model: AppModel) {
         guard let path = arg("--snapshot"), !started else { return }
         started = true
+        if let a = arg("--appearance") { NSApp.appearance = NSAppearance(named: a == "light" ? .aqua : .darkAqua) }
         if CommandLine.arguments.contains("--sample") {
             model.items = sampleItems
             model.log = sampleLog
