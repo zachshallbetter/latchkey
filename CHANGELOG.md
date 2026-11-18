@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### App
+- The item list is in sections with headings and counts that fold away: by project in All Items (Shared first), by
+  environment in a project, or by service or type from **Group By** in the list's menu. Rows no longer repeat what
+  their section says.
+- A Review finding lists its items by project, folded when there are many, so a finding covering hundreds of items
+  reads as a list of places with counts.
+- The sidebar's project list has a filter field once there are more than a dozen projects.
+
 ### Security
 - Approvals show what they allow. The panel lists every item asked for, with a count, and the whole command a signed
   `latchkey run` starts, unredacted and never cut off in the middle. Text a caller supplies (a service name, a link

@@ -172,7 +172,21 @@ struct Sidebar: View {
 
                     if !model.items.isEmpty {
                         SidebarSection(model: model, title: "Projects") {
-                            ForEach(model.projects, id: \.self) { p in
+                            // A long project list gets a filter, so one project is a few keystrokes away.
+                            if model.projects.count > 12 {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "line.3.horizontal.decrease").foregroundStyle(.secondary).font(.caption)
+                                    TextField("Filter projects", text: $model.projectQuery).textFieldStyle(.plain).font(.callout)
+                                    if !model.projectQuery.isEmpty {
+                                        Button { model.projectQuery = "" } label: { Image(systemName: "xmark.circle.fill") }
+                                            .buttonStyle(.plain).foregroundStyle(.secondary)
+                                    }
+                                }
+                                .padding(.horizontal, 8).padding(.vertical, 5)
+                                .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(.quaternary.opacity(0.5)))
+                                .padding(.horizontal, 4).padding(.bottom, 4)
+                            }
+                            ForEach(model.projects.filter { model.projectQuery.isEmpty || $0.localizedCaseInsensitiveContains(model.projectQuery) }, id: \.self) { p in
                                 NavRow(title: p, symbol: "folder", image: model.projectIcon(p), count: model.count(.project(p)),
                                        selected: model.filter == .project(p)) { model.filter = .project(p) }
                                     .contextMenu { ProjectMenu(model: model, project: p) }
@@ -314,17 +328,29 @@ struct ItemList: View {
         .toolbar(removing: .title)
     }
 
-    /// Every item that matches, in one list, as 1Password lists them: each row says its project and environment
-    /// unless the view already does.
+    /// Every item that matches, in sections (by project, environment, service or type; see `ListGrouping`). Each row
+    /// says its project and environment unless the view or its section already does.
     @ViewBuilder
     private func itemList(_ list: [SecretInfo]) -> some View {
         let inProject: Bool = { if case .project = model.filter { return true } else { return false } }()
+        let mode = model.effectiveGrouping
+        let groups = model.groupedItems
         List(selection: $model.selection) {
-            ForEach(list) { item in
-                ItemRow(model: model, item: item, showsProject: !inProject,
-                        showsEnvironment: model.environmentFilter == nil, remote: model.remoteStates[item.name])
-                    .tag(item.name)
-                    .listRowSeparator(.visible)
+            ForEach(groups) { group in
+                if group.title.isEmpty {
+                    rows(group.items, inProject: inProject, mode: mode)
+                } else {
+                    Section {
+                        if !model.collapsedGroups.contains(group.id) { rows(group.items, inProject: inProject, mode: mode) }
+                    } header: {
+                        GroupHeader(title: group.title, count: group.items.count, collapsed: model.collapsedGroups.contains(group.id)) {
+                            withAnimation(.snappy) {
+                                if model.collapsedGroups.contains(group.id) { model.collapsedGroups.remove(group.id) }
+                                else { model.collapsedGroups.insert(group.id) }
+                            }
+                        }
+                    }
+                }
             }
         }
         .listStyle(.inset)
@@ -339,6 +365,15 @@ struct ItemList: View {
             if !ids.isEmpty { model.deleteRequest = DeleteRequest(ids: ids) }
         }
         .overlay { emptyOverlay(list) }
+    }
+
+    private func rows(_ items: [SecretInfo], inProject: Bool, mode: ListGrouping) -> some View {
+        ForEach(items) { item in
+            ItemRow(model: model, item: item, showsProject: !inProject && mode != .project,
+                    showsEnvironment: model.environmentFilter == nil && mode != .environment, remote: model.remoteStates[item.name])
+                .tag(item.name)
+                .listRowSeparator(.visible)
+        }
     }
 
     @ViewBuilder
@@ -357,6 +392,30 @@ struct ItemList: View {
                     }
                 }
             }
+    }
+}
+
+/// A list section's heading: its name and count, folding the section when clicked.
+struct GroupHeader: View {
+    let title: String
+    let count: Int
+    let collapsed: Bool
+    let toggle: () -> Void
+
+    var body: some View {
+        Button(action: toggle) {
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.down").font(.caption2.weight(.bold)).foregroundStyle(.tertiary)
+                    .rotationEffect(.degrees(collapsed ? -90 : 0))
+                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
+                Text("\(count)").font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
+                Spacer()
+            }
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(collapsed ? "Show \(title)" : "Hide \(title)")
     }
 }
 
@@ -462,6 +521,11 @@ struct FilterBar: View {
             }
             Spacer(minLength: 0)
             Menu {
+                Picker("Group By", selection: $model.grouping) {
+                    ForEach(ListGrouping.allCases, id: \.self) { g in
+                        Text(g == .automatic ? "Automatic (\(Self.automaticLabel(model)))" : g.rawValue).tag(g)
+                    }
+                }
                 Picker("Sort By", selection: $model.sort) {
                     ForEach(SortOrder.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                 }
@@ -487,9 +551,12 @@ struct FilterBar: View {
                     .contentShape(RoundedRectangle(cornerRadius: 8))
             }
             .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize().focusEffectDisabled()
-            .help("Sort order, access, import and move")
+            .help("Grouping, sort order, access, import and move")
         }
     }
+
+    /// What Automatic groups by in the current view.
+    static func automaticLabel(_ model: AppModel) -> String { model.automaticGrouping.rawValue }
 
     /// A dropdown that names its choice, highlighted while one is made.
     private func pill<Items: View>(_ title: String, _ choice: String?, @ViewBuilder _ items: () -> Items) -> some View {
@@ -536,7 +603,7 @@ struct ItemRow: View {
     /// with the environment as a badge on the right.
     private var subtitle: String {
         var parts: [String] = []
-        if !showsProject && !item.ref.isShared { parts.append(ItemType(item).label) }
+        if !showsProject { parts.append(ItemType(item).label) }
         else if item.ref.isShared { parts.append("Shared") }
         else {
             parts.append(item.ref.project)

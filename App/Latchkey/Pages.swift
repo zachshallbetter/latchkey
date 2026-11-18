@@ -318,6 +318,27 @@ struct FindingDetail: View {
     let finding: Finding
     @State private var working = false
     @State private var combining = false
+    /// Project groups opened by hand. Long findings start folded, so the list reads as a table of contents.
+    @State private var opened: Set<String> = []
+    @State private var closed: Set<String> = []
+
+    /// The finding's items by project, Shared first.
+    private var groups: [(key: String, title: String, items: [SecretInfo])] {
+        let by = Dictionary(grouping: finding.items) { $0.ref.isShared ? "" : $0.ref.project }
+        return by.keys.sorted { a, b in a.isEmpty != b.isEmpty ? a.isEmpty : a.localizedStandardCompare(b) == .orderedAscending }
+            .map { ($0, $0.isEmpty ? "Shared" : $0, by[$0]!) }
+    }
+
+    private func isOpen(_ key: String) -> Bool {
+        finding.items.count <= 30 ? !closed.contains(key) : opened.contains(key)
+    }
+
+    private func toggle(_ key: String) {
+        withAnimation(.snappy) {
+            if finding.items.count <= 30 { if closed.contains(key) { closed.remove(key) } else { closed.insert(key) } }
+            else { if opened.contains(key) { opened.remove(key) } else { opened.insert(key) } }
+        }
+    }
 
     var body: some View {
         ScrollView {
@@ -325,19 +346,29 @@ struct FindingDetail: View {
                 DetailHeader(symbol: finding.symbol, tint: finding.tint, title: finding.title, subtitle: finding.summary) { EmptyView() } trailing: { EmptyView() }
                 Text(finding.why).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true).padding(.horizontal, 4)
                 if !finding.items.isEmpty {
-                    Text("Items (\(finding.items.count))").font(.headline)
-                    Card(padding: 0) {
-                        ForEach(Array(finding.items.enumerated()), id: \.element.id) { i, item in
-                            Button { model.filter = .all; model.selection = [item.name] } label: {
-                                HStack {
-                                    ItemRow(item: item)
-                                    Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
-                                }
-                                .padding(.horizontal, 12)
-                                .contentShape(Rectangle())
+                    let grouped = groups
+                    Text("Items (\(finding.items.count))\(grouped.count > 1 ? " in \(grouped.count) places" : "")").font(.headline)
+                    ForEach(grouped, id: \.key) { group in
+                        VStack(alignment: .leading, spacing: 6) {
+                            if grouped.count > 1 {
+                                GroupHeader(title: group.title, count: group.items.count, collapsed: !isOpen(group.key)) { toggle(group.key) }
                             }
-                            .buttonStyle(.plain)
-                            if i < finding.items.count - 1 { Divider() }
+                            if grouped.count == 1 || isOpen(group.key) {
+                                Card(padding: 0) {
+                                    ForEach(Array(group.items.enumerated()), id: \.element.id) { i, item in
+                                        Button { model.filter = .all; model.selection = [item.name] } label: {
+                                            HStack {
+                                                ItemRow(item: item, showsProject: false, showsEnvironment: true)
+                                                Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+                                            }
+                                            .padding(.horizontal, 12)
+                                            .contentShape(Rectangle())
+                                        }
+                                        .buttonStyle(.plain)
+                                        if i < group.items.count - 1 { Divider() }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
