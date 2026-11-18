@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 385,
-    "includedBytes": 3452853,
+    "includedBytes": 3453422,
     "excludedCounts": {
       "extension": 124,
       "generated-or-transient-file": 2
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "162badc7df5f0c061d3f0de6140b4bd883c7ee36",
-        "branch": "site-deploy",
+        "commit": "405a51c33317759120e8d205b3e73beda15377c3",
+        "branch": "presence-first-observation",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "e9e77bdc83b963267eadf910528705e731cce66c742fa1b23dbee7d5d4f2bb5f",
+  "aggregateSourceDigest": "d0a33b81041fcd3280fd775a24681dea87426561669cbae5da9b1e141b42da61",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -1609,8 +1609,8 @@
     },
     {
       "path": "docs/presence.md",
-      "bytes": 10970,
-      "sha256": "d5c9da037cc86b2dc020c67dec77bac8a59f106dacd27485396e1fff7550bc25"
+      "bytes": 11539,
+      "sha256": "99d56bc19e9661cd5f0933eef5c9f1a8ce2c66a944dde2f763cc3c29a8b181f7"
     },
     {
       "path": "docs/releasing.md",

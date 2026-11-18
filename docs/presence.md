@@ -11,9 +11,9 @@ measured. It's the source for the site's claims; `docs/site.md` has the page rul
 | Protocol | DPP 0.3.0 (CORE, PRP, DAP, DIS, AEP, OIP, OEP, MPF) |
 | Entity scope | Latchkey and its planned editions; the Developer Credential Migration service; Snack Studio as publisher |
 | Surface scope | The surfaces listed below |
-| Observation window | None yet: nothing has been observed in production |
+| Observation window | One dated observation: availability on 2026-11-18, after the publish of `405a51c` (see Observation) |
 | Level | **Documented** for every module. The DAP checks below are **Tested** on a local preview only |
-| Exclusions | Measurement (OIP, MPF) and experiments (OEP) have no data; their states are `GRAY` |
+| Exclusions | Measurement (OIP, MPF) has one availability observation and nothing else; experiments (OEP) have no data. Every unobserved state is `GRAY` |
 | Evaluator, evidence | The owner; this file and the receipts it names |
 
 Nothing here claims indexing, citation, reach or any effect of a change. A check that passes locally says nothing
@@ -108,7 +108,7 @@ automated outreach.
 ## Observation (OIP, MPF)
 
 The site makes no third-party requests and runs no analytics, so nothing about visitors is collected. Each metric
-below is defined but not collected; every value is `GRAY`, not zero.
+below is defined; only availability has been observed. Every other value is `GRAY`, not zero.
 
 | Metric | Numerator / denominator | Source | Needs |
 |---|---|---|---|
@@ -117,6 +117,14 @@ below is defined but not collected; every value is `GRAY`, not zero.
 | Downloads | Release asset downloads per release | GitHub API (first-party, no visitor data) | Nothing |
 | Referrals | Visits by source | Analytics | A privacy decision; none is planned |
 | AI answers (MPF-RT is out of reach; answers are observed mentions only) | Answers that describe Latchkey correctly / queries asked | The panel below, by hand | A dated run |
+
+### Observations
+
+| Date | Metric | Value | Source |
+|---|---|---|---|
+| 2026-11-18 | Availability (MPF-AV) | 32 / 32: every URL in `sitemap.xml` answered 200 and named itself as canonical | A fetch of https://latchkey.snackstud.io after the production deploy of `405a51c` (Vercel `dpl_wjFmjByJT2JhUZCDbgrahSxTk9dj`) |
+
+This says the published pages are reachable and self-consistent. It says nothing about indexing, ranking or answers.
 
 ### Query panel v0 (MPF-03)
 
