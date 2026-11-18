@@ -2,20 +2,40 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <script>document.documentElement.classList.add("js")</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Pricing · Latchkey</title>
-  <meta name="description" content="Latchkey is free during the development preview. Planned: Latchkey Pro, a one-time purchase in the Mac App Store, and Latchkey Teams. Storage, references and security protections never depend on paying.">
+  <title>Pricing: free today, with Latchkey Pro planned · Latchkey</title>
+  <meta name="description" content="Latchkey is free to download and use, and the core is meant to stay free. Latchkey Pro is planned as a one-time Mac App Store purchase; Teams is in design.">
   <link rel="canonical" href="https://latchkey.snackstud.io/pricing.html">
   <meta property="og:url" content="https://latchkey.snackstud.io/pricing.html">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Latchkey">
-  <meta property="og:title" content="Pricing · Latchkey">
-  <meta property="og:description" content="Free to use. Pro, when it's ready, for the work it saves. Your credentials never depend on paying.">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="https://latchkey.snackstud.io/social/pricing.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Pricing: Free today, with Latchkey Pro planned. Latchkey is free to download and use, and the core is meant to stay free. Latchkey Pro is planned as a… Latchkey, latchkey.snackstud.io.">
+  <meta property="og:title" content="Pricing: free today, with Latchkey Pro planned · Latchkey">
+  <meta property="og:description" content="Latchkey is free to download and use, and the core is meant to stay free. Latchkey Pro is planned as a one-time Mac App Store purchase; Teams is in design.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="author" content="Zach Shallbetter">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta name="application-name" content="Latchkey">
+  <meta name="apple-mobile-web-app-title" content="Latchkey">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta name="twitter:title" content="Pricing: free today, with Latchkey Pro planned · Latchkey">
+  <meta name="twitter:description" content="Latchkey is free to download and use, and the core is meant to stay free. Latchkey Pro is planned as a one-time Mac App Store purchase; Teams is in design.">
+  <meta name="twitter:image" content="https://latchkey.snackstud.io/social/pricing.jpg">
+  <meta name="twitter:image:alt" content="Pricing: Free today, with Latchkey Pro planned. Latchkey is free to download and use, and the core is meant to stay free. Latchkey Pro is planned as a… Latchkey, latchkey.snackstud.io.">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="author" href="https://zachshallbetter.com/">
+  <link rel="icon" href="favicon.ico" sizes="48x48">
+  <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="alternate" type="text/plain" href="llms.txt" title="Latchkey for language models">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="stylesheet" href="site.css">
   <style>
@@ -29,7 +49,9 @@
     .promise span { color: var(--muted); }
     .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 48px; }
     .plan { display: flex; flex-direction: column; padding: var(--card-pad); border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); min-width: 0;  box-shadow: var(--card-shadow);}
-    .plan.feature-plan { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+    .plan.feature-plan { --hue: var(--h-orange); border-color: var(--hue); box-shadow: 0 0 0 1px var(--hue) inset; background: var(--surface); }
+    .plan.feature-plan .tier { color: var(--hue); }
+    .plan .cico { margin-bottom: 14px; }
     .plan .tier { font: 650 12.5px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
     .plan h2 { margin: 10px 0 2px; font-size: 22px; }
     .plan .price { margin: 10px 0 0; font: 700 34px/1.1 var(--display); letter-spacing: -0.02em; }
@@ -64,8 +86,110 @@
     @media (max-width: 760px) {
       .plans, .policy, .faq { grid-template-columns: minmax(0, 1fr); }
         .grid-table th, .grid-table td { padding: 10px 8px; }
+        .grid-table th { font-size: 11px; letter-spacing: .02em; }
+        .grid-table th:not(:first-child), .grid-table td:not(:first-child) { padding-left: 4px; padding-right: 4px; }
+        .grid-table td:first-child { font-size: 14px; }
+    }
+    /* On a phone each row stacks: the capability, then Free, Pro and Teams side by side. */
+    @media (max-width: 480px) {
+      .grid-table table, .grid-table tbody { display: block; }
+      .grid-table thead { display: none; }
+      .grid-table tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px 8px; padding: 12px 8px; border-bottom: 1px solid var(--line); }
+      .grid-table tr:last-child { border-bottom: 0; }
+      .grid-table td, .grid-table tr:last-child td { border: 0; padding: 0; text-align: left; }
+      .grid-table td:first-child { grid-column: 1 / -1; margin-bottom: 6px; font-weight: 600; font-size: 15px; }
+      .grid-table td:not(:first-child)::before { content: attr(data-th) " "; color: var(--muted); font-size: 12.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
     }
   </style>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": "https://latchkey.snackstud.io/pricing.html#webpage",
+      "url": "https://latchkey.snackstud.io/pricing.html",
+      "name": "Pricing: free today, with Latchkey Pro planned · Latchkey",
+      "description": "Latchkey is free to download and use, and the core is meant to stay free. Latchkey Pro is planned as a one-time Mac App Store purchase; Teams is in design.",
+      "inLanguage": "en",
+      "isPartOf": {
+        "@id": "https://latchkey.snackstud.io/#website"
+      },
+      "about": {
+        "@id": "https://latchkey.snackstud.io/#latchkey"
+      },
+      "author": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "publisher": {
+        "@id": "https://www.snackstud.io/#organization"
+      },
+      "primaryImageOfPage": {
+        "@type": "ImageObject",
+        "url": "https://latchkey.snackstud.io/social/pricing.jpg",
+        "width": 1200,
+        "height": 630,
+        "caption": "Pricing: Free today, with Latchkey Pro planned. Latchkey is free to download and use, and the core is meant to stay free. Latchkey Pro is planned as a… Latchkey, latchkey.snackstud.io."
+      },
+      "breadcrumb": {
+        "@id": "https://latchkey.snackstud.io/pricing.html#breadcrumb"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Latchkey",
+          "item": "https://latchkey.snackstud.io/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Pricing",
+          "item": "https://latchkey.snackstud.io/pricing.html"
+        }
+      ],
+      "@id": "https://latchkey.snackstud.io/pricing.html#breadcrumb"
+    },
+    {
+      "@type": "Person",
+      "@id": "https://zachshallbetter.com/#person",
+      "name": "Zach Shallbetter",
+      "url": "https://zachshallbetter.com/",
+      "sameAs": [
+        "https://github.com/zachshallbetter"
+      ],
+      "jobTitle": "Systems engineer",
+      "description": "Zach Shallbetter designs and builds Latchkey. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
+      "homeLocation": {
+        "@type": "Place",
+        "name": "Spokane, Washington"
+      },
+      "worksFor": {
+        "@id": "https://www.snackstud.io/#organization"
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://www.snackstud.io/#organization",
+      "name": "Snack Studio",
+      "url": "https://www.snackstud.io",
+      "email": "latchkey@snackstud.io",
+      "founder": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://latchkey.snackstud.io/icon-512.png",
+        "width": 512,
+        "height": 512
+      }
+    }
+  ]
+}
+  </script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -77,8 +201,9 @@
         <li><a href="index.html#how">How it works</a></li>
         <li><a href="pricing.html" aria-current="page">Pricing</a></li>
         <li><a href="security.html">Security</a></li>
-        <li><a href="developers/index.html">Docs</a></li>
-        <li><a class="button primary" href="index.html#install">Install the preview</a></li>
+        <li><a href="developers/index.html">Developers</a></li>
+        <li><a href="guides/index.html">Guides</a></li>
+        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
       </ul>
     </nav>
   </header>
@@ -86,90 +211,93 @@
   <main id="main" class="wrap pr">
     <section class="page-hero" aria-labelledby="title" style="margin-top:0">
       <div>
-      <p class="eyebrow">Pricing</p>
-      <h1 id="title">Free to use. Pro for the work it saves.</h1>
-      <p class="lede">Latchkey is free during the development preview: everything it does today costs nothing, and the core stays free. When it's ready, Latchkey Pro will be a one-time purchase in the Mac App Store: the premium Mac tool for working across projects, Macs and coding agents. Latchkey Teams is a separate subscription for organizations. Neither is on sale yet.</p>
+      <h1 id="title"><span class="stays">Free</span> to use. Pro for the work it saves.</h1>
+      <p class="lede">Latchkey is free to download and use: everything it does today costs nothing, and the core is meant to stay free. When it's ready, Latchkey Pro will be a one-time purchase in the Mac App Store, for working across projects, Macs and coding agents. Latchkey Teams is a separate subscription for organizations. Neither is on sale yet.</p>
       </div>
-      <div class="promise"><span aria-hidden="true">✓</span><div><b>Your credentials never depend on paying.</b><span>Keychain storage, references, import, running commands, approvals, the security protections and exporting your own values are in every plan, and stay that way. Pro charges for convenience and sophistication around the core, never for access to what's yours.</span></div></div>
+      <div class="promise"><span aria-hidden="true">✓</span><div><b>Your credentials never depend on paying.</b><span>Keychain storage, references, import, running commands, approvals, the security protections and exporting your own values are in every plan. Pro charges for extra tools around the core, never for access to what's yours.</span></div></div>
     </section>
 
     <div class="plans section" style="--section:56px" aria-label="Plans">
       <article class="plan">
+        <span class="cico" aria-hidden="true"><i class="ic ic-download"></i></span>
         <span class="tier">Free</span>
-        <h2>Latchkey Core</h2>
+        <h2>Latchkey</h2>
         <p class="price">$0</p>
-        <p class="terms">For every developer, for good.</p>
+        <p class="terms">Available now. Free for every developer.</p>
         <ul>
           <li>iCloud Keychain storage and <code>latchkey://</code> references</li>
           <li>Env file import and <code>lk run</code></li>
           <li>Approvals, grants and the security protections</li>
-          <li>The CLI and the MCP server</li>
+          <li>The CLI, the MCP server and the key proxy</li>
           <li>Exporting references and your own values</li>
           <li>Pushes to Vercel, Railway, Fly and GitHub Actions</li>
         </ul>
-        <div class="cta"><a class="button secondary" href="index.html#install">Install the preview</a><p class="fine">Development preview: a free, notarized download.</p></div>
+        <div class="cta"><p class="fine">A free download, notarized by Apple.</p><a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></div>
       </article>
       <article class="plan feature-plan" id="pro">
+        <span class="cico" aria-hidden="true"><i class="ic ic-star"></i></span>
         <span class="tier">One-time purchase</span>
         <h2>Latchkey Pro</h2>
         <p class="price">$79 <small>one time</small></p>
         <p class="terms">In the Mac App Store. No subscription; updates included.</p>
-        <p class="what">The premium Mac tool for developers working across projects, Macs and agents:</p>
+        <p class="what">Everything in Latchkey, plus:</p>
         <ul>
-          <li>Agent controls</li>
-          <li>Recovery and migration</li>
-          <li>Rotation and lifecycle</li>
-          <li>More provider integrations</li>
+          <li><b>Agent controls:</b> secret requests, where an agent asks you for a missing key and gets back only the reference, and a hook that stops commands like <code>cat .env</code></li>
+          <li><b>Recovery and migration:</b> importers for 1Password, Bitwarden and the Passwords app, and an encrypted backup with restore</li>
+          <li><b>Rotation and lifecycle:</b> last-used dates, expiry dates with reminders, and leak alerts</li>
+          <li><b>Provider integrations:</b> each key's origin: the service, the console where it's managed, and when it was last rotated</li>
         </ul>
-        <div class="cta"><a class="button primary" href="mailto:latchkey@snackstud.io?subject=Latchkey%20Pro%20early%20access">Request early access</a><p class="fine">Not on sale yet. We'll write when Pro is in the Mac App Store.</p></div>
+        <div class="cta"><p class="fine">Not on sale yet. We'll write when Pro is in the Mac App Store.</p><a class="button primary" href="mailto:latchkey@snackstud.io?subject=Latchkey%20Pro%20early%20access"><i class="ic ic-star" aria-hidden="true"></i>Request early access</a></div>
       </article>
       <article class="plan">
+        <span class="cico" aria-hidden="true"><i class="ic ic-people"></i></span>
         <span class="tier">Team subscription</span>
         <h2>Latchkey Teams</h2>
         <p class="price">$15 <small>per user a month</small></p>
         <p class="terms">Billed yearly, when it's ready.</p>
+        <p class="what">Everything in Latchkey Pro, plus:</p>
         <ul>
           <li>Shared organizational environments</li>
           <li>Membership and roles</li>
           <li>Approval workflows and central evidence</li>
           <li>Managed team credentials</li>
         </ul>
-        <div class="cta"><a class="button secondary" href="teams.html#teams">Become a design partner</a><p class="fine">In design. Teams needs substantial new engineering.</p></div>
+        <div class="cta"><p class="fine">In design. Teams needs substantial new engineering.</p><a class="button secondary" href="teams.html#teams"><i class="ic ic-people" aria-hidden="true"></i>Become a design partner</a></div>
       </article>
     </div>
     <p class="fine" style="margin-top:14px">Prices are planned, not current offers. Pro will be sold only through the Mac App Store, and no plan's features are promised by a date.</p>
 
-    <section class="section" id="compare" aria-labelledby="compare-title">
+    <section class="section" id="compare" aria-labelledby="compare-title" data-hue="blue">
       <div class="shead"><h2 id="compare-title">What each plan includes</h2><p>The free column is what Latchkey does today. Pro and Teams rows are planned and marked as such.</p></div>
       <div class="grid-table"><table>
         <thead><tr><th>Capability</th><th>Free</th><th>Pro</th><th>Teams</th></tr></thead>
         <tbody>
-          <tr><td>Keychain storage and references</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>Env file import and command execution</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>Approvals, grants and security protections</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>Exporting references and values</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>Pushing to deployment platforms<small>Vercel, Railway and Fly; GitHub Actions in the direct download</small></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>Agent controls<small>Planned: credential provisioning for agents, scoped agent policies</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>Recovery and migration<small>Planned: duplicates and combine, relinking moved projects, recovery on a new Mac</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>Rotation and lifecycle<small>Planned: rotation that follows exports, expiry and validity, activity tools</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>More provider integrations<small>Planned: pulling values back, and more services</small></td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-          <tr><td>Organization-wide credential sharing<small>Planned</small></td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
-          <tr><td>Central policy administration and evidence<small>Planned</small></td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
-          <tr><td>Team provisioning and managed access<small>Planned</small></td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+          <tr><td data-th="Capability">Keychain storage and references</td><td data-th="Free" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td><td data-th="Pro" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td><td data-th="Teams" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td></tr>
+          <tr><td data-th="Capability">Env file import and command execution</td><td data-th="Free" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td><td data-th="Pro" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td><td data-th="Teams" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td></tr>
+          <tr><td data-th="Capability">Approvals, grants and security protections</td><td data-th="Free" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td><td data-th="Pro" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td><td data-th="Teams" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td></tr>
+          <tr><td data-th="Capability">Duplicates, scanning, rotation and pushing to services</td><td data-th="Free" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td><td data-th="Pro" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td><td data-th="Teams" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td></tr>
+          <tr><td data-th="Capability">Exporting references and values</td><td data-th="Free" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td><td data-th="Pro" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td><td data-th="Teams" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td></tr>
+          <tr><td data-th="Capability">Agent controls<small>Planned: secret requests, a hook that stops <code>cat .env</code></small></td><td data-th="Free" class="no"><span aria-hidden="true">–</span><span class="sr-only">Not included</span></td><td data-th="Pro" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td><td data-th="Teams" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td></tr>
+          <tr><td data-th="Capability">Recovery and migration<small>Planned: importers for 1Password, Bitwarden and Passwords; encrypted backup</small></td><td data-th="Free" class="no"><span aria-hidden="true">–</span><span class="sr-only">Not included</span></td><td data-th="Pro" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td><td data-th="Teams" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td></tr>
+          <tr><td data-th="Capability">Rotation and lifecycle<small>Planned: last-used and expiry dates, reminders, leak alerts</small></td><td data-th="Free" class="no"><span aria-hidden="true">–</span><span class="sr-only">Not included</span></td><td data-th="Pro" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td><td data-th="Teams" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td></tr>
+          <tr><td data-th="Capability">Provider integrations<small>Planned: each key's service, console and last rotation</small></td><td data-th="Free" class="no"><span aria-hidden="true">–</span><span class="sr-only">Not included</span></td><td data-th="Pro" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td><td data-th="Teams" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td></tr>
+          <tr><td data-th="Capability">Organization-wide credential sharing<small>Planned</small></td><td data-th="Free" class="no"><span aria-hidden="true">–</span><span class="sr-only">Not included</span></td><td data-th="Pro" class="no"><span aria-hidden="true">–</span><span class="sr-only">Not included</span></td><td data-th="Teams" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td></tr>
+          <tr><td data-th="Capability">Central policy administration and evidence<small>Planned</small></td><td data-th="Free" class="no"><span aria-hidden="true">–</span><span class="sr-only">Not included</span></td><td data-th="Pro" class="no"><span aria-hidden="true">–</span><span class="sr-only">Not included</span></td><td data-th="Teams" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td></tr>
+          <tr><td data-th="Capability">Team provisioning and managed access<small>Planned</small></td><td data-th="Free" class="no"><span aria-hidden="true">–</span><span class="sr-only">Not included</span></td><td data-th="Pro" class="no"><span aria-hidden="true">–</span><span class="sr-only">Not included</span></td><td data-th="Teams" class="yes"><span aria-hidden="true">✓</span><span class="sr-only">Included</span></td></tr>
         </tbody>
       </table></div>
     </section>
 
-    <section class="section" id="updates" aria-labelledby="updates-title">
-      <div class="shead"><h2 id="updates-title">Buy it once. Keep it.</h2><p>Latchkey runs on your Mac and keeps nothing on a server, so Pro works like a tool you own.</p></div>
+    <section class="section" id="updates" aria-labelledby="updates-title" data-hue="orange">
+      <div class="shead"><h2 id="updates-title">Buy it once. Keep it.</h2><p>Latchkey runs on your Mac and has no server of its own, so Pro works like a tool you own.</p></div>
       <div class="card-grid g3">
-        <div class="card"><b>One purchase</b><span>Pro is a one-time purchase in the Mac App Store, with no subscription or renewal.</span></div>
-        <div class="card"><b>Updates included</b><span>Updates come through the Mac App Store. Restore the purchase on your other Macs with the same Apple Account.</span></div>
-        <div class="card"><b>Free stays free</b><span>Storage, references, import, running commands, approvals and export never move behind Pro.</span></div>
+        <div class="card"><span class="cico" aria-hidden="true"><i class="ic ic-receipt"></i></span><b>One purchase</b><span>Pro is a one-time purchase in the Mac App Store, with no subscription or renewal.</span></div>
+        <div class="card"><span class="cico" aria-hidden="true"><i class="ic ic-download"></i></span><b>Updates included</b><span>Updates come through the Mac App Store. Restore the purchase on your other Macs with the same Apple Account.</span></div>
+        <div class="card"><span class="cico" aria-hidden="true"><i class="ic ic-check"></i></span><b>The core isn't Pro</b><span>Storage, references, import, running commands, approvals and export aren't part of Pro, and aren't planned to be.</span></div>
       </div>
     </section>
 
-    <section id="teams-path" class="section band" aria-labelledby="teams-path-title">
+    <section id="teams-path" class="section band" aria-labelledby="teams-path-title" data-hue="green">
       <div class="band-copy">
         <p class="eyebrow">For teams · Snack Studio</p>
         <h2 id="teams-path-title">Start with a migration</h2>
@@ -178,7 +306,7 @@
         <a class="more" href="teams.html">What the engagement includes</a>
       </div>
       <figure class="band-art">
-        <div class="scene-wrap" data-scene="inventory" style="--w:600;--h:360" aria-hidden="true">
+        <div class="scene-wrap" data-scene="inventory" style="--w:600;--h:360;--pw:360;--ph:600" aria-hidden="true">
           <div class="canvas">
             <div class="mw tty" style="left:12px;top:12px;width:576px;height:336px">
               <div class="mw-bar"><i></i><i></i><i></i><span>Terminal</span></div>
@@ -190,19 +318,19 @@
       </figure>
     </section>
 
-    <section class="section" id="faq" aria-labelledby="faq-title">
-      <div class="shead"><p class="eyebrow">Questions</p><h2 id="faq-title">Good questions, short answers</h2></div>
+    <section class="section" id="faq" aria-labelledby="faq-title" data-hue="violet">
+      <div class="shead"><h2 id="faq-title">Price, licensing and what&rsquo;s next</h2></div>
       <div class="faq">
         <div>
-          <details><summary>Is Latchkey free?</summary><p>Yes. During the development preview everything it does is free. Storage, references, import, running commands, approvals, the security protections and export stay free when Pro arrives.</p></details>
-          <details><summary>What will Pro add?</summary><p>Pro is the premium Mac tool for one developer working across projects, Macs and agents: agent controls, recovery and migration, rotation and lifecycle, and more provider integrations. They're planned, and none is sold before it exists. Shared team environments are Latchkey Teams, a separate product.</p></details>
+          <details><summary>Is Latchkey free?</summary><p>Yes. Everything Latchkey does today is free to download and use, with no account or trial. Storage, references, import, running commands, approvals, the security protections and export aren't part of Pro.</p></details>
+          <details><summary>What will Pro add?</summary><p>Pro is for one developer working across projects, Macs and agents: agent controls, recovery and migration, rotation and lifecycle, and provider integrations. They're planned, and none is sold before it exists. Shared team environments are Latchkey Teams, a separate product.</p></details>
           <details><summary>Can I buy Pro now?</summary><p>No. Pro isn't on sale. It will be a one-time in-app purchase in the Mac App Store version, with its features stated before anyone pays. <a href="mailto:latchkey@snackstud.io?subject=Latchkey%20Pro%20early%20access">Ask to hear when it is</a>.</p></details>
-          <details><summary>Will the free download stay?</summary><p>Yes. The direct download stays free, with everything in Latchkey Core. Pro is only in the Mac App Store version.</p></details>
+          <details><summary>Will the free download stay?</summary><p>That's the plan: the direct download stays free, with everything that is free in Latchkey. Pro is only in the Mac App Store version.</p></details>
           <details><summary>Will my credentials ever depend on a license?</summary><p>No. Your values stay in your iCloud Keychain, and you can always read or export them through Latchkey's approvals, whatever plan you're on.</p></details>
         </div>
         <div>
           <details><summary>Does Latchkey send my credentials anywhere?</summary><p>Not to Latchkey: there's no Latchkey server or account. Values sync through iCloud Keychain to your own Macs, and leave them only where you send them: to a command you've allowed, or to a deployment platform you push to.</p></details>
-          <details><summary>Is the source available?</summary><p>Latchkey will be source-available under the <a href="https://fsl.software/">Functional Source License</a>: free to read, change and use for anything but a competing product, with each version becoming Apache 2.0 two years after release. <a href="https://github.com/zachshallbetter/latchkey">Read it on GitHub</a>.</p></details>
+          <details><summary>Is the source available?</summary><p>Yes. Latchkey is source-available under the <a href="https://fsl.software/">Functional Source License</a> (FSL-1.1-ALv2): free to read, change and use for anything but a competing product, with each version becoming Apache 2.0 two years after release. <a href="https://github.com/zachshallbetter/latchkey">Read it on GitHub</a>.</p></details>
           <details><summary>When is Teams coming?</summary><p>When real teams have shown they'll pay for it. We're looking for two or three design partners first; nothing is built before then.</p></details>
           <details><summary>Can you help my team move over?</summary><p>Yes. The Developer Credential Migration is a fixed-scope engagement for small teams on Macs, from $2,500. <a href="teams.html">See what it includes</a>.</p></details>
           <details><summary>How do refunds and other Macs work?</summary><p>Apple handles both: refunds through <a href="https://reportaproblem.apple.com/">reportaproblem.apple.com</a>, and Pro unlocks on the Macs signed in to your Apple Account. See the <a href="terms.html">terms</a>.</p></details>
@@ -211,31 +339,61 @@
     </section>
     <section class="section cta-band" aria-labelledby="cta-title">
       <div>
-        <p class="eyebrow">Free during the development preview</p>
         <h2 id="cta-title">Stop being the credential courier.</h2>
-        <p>Keep your projects, credentials and coding agents working together, with access you can inspect and control. Download Latchkey free today; Pro comes later, in the Mac App Store.</p>
+        <p><span class="cta-lead">Keep your projects, credentials and coding agents working together, with access you can inspect and control. </span>Latchkey is free to download and use, and the core is meant to stay free. Pro will add more for a one-time price in the Mac App Store.</p>
       </div>
-      <div class="cta-actions"><a class="button primary" href="#pro">Get early access</a><a class="button secondary" href="index.html#install">Install the preview</a></div>
+      <div class="cta-actions"><a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a><a class="button secondary" href="#pro"><i class="ic ic-star" aria-hidden="true"></i>See what Pro adds</a></div>
     </section>
   </main>
 
   <footer class="site">
     <div class="wrap">
-      <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
-      <ul>
-        <li><a href="features.html">Features</a></li>
-        <li><a href="pricing.html" aria-current="page">Pricing</a></li>
-        <li><a href="teams.html">Teams</a></li>
-        <li><a href="security.html">Security</a></li>
-        <li><a href="roadmap.html">Roadmap</a></li>
-        <li><a href="developers/index.html">Docs</a></li>
-        <li><a href="developers/cli.html">CLI reference</a></li>
-        <li><a href="developers/agents.html">Agents and MCP</a></li>
-        <li><a href="developers/api.html">References and API</a></li>
-        <li><a href="support.html">Support</a></li>
-        <li><a href="privacy.html">Privacy</a></li>
-        <li><a href="terms.html">Terms</a></li>
-      </ul>
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <a class="brand" href="index.html"><img class="logo" src="logo.svg" alt="">Latchkey</a>
+          <p>Development credentials in your Mac's iCloud Keychain, filled in when a command starts.</p>
+          <a class="button primary small" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
+        </div>
+        <nav class="foot-col" aria-label="Product">
+          <h2>Product</h2>
+          <ul>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="index.html#how">How it works</a></li>
+            <li><a href="pricing.html" aria-current="page">Pricing</a></li>
+            <li><a href="teams.html">For teams</a></li>
+            <li><a href="roadmap.html">Roadmap</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey/blob/main/CHANGELOG.md">Changelog</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Developers">
+          <h2>Developers</h2>
+          <ul>
+            <li><a href="developers/index.html">Developers</a></li>
+            <li><a href="guides/index.html">Guides</a></li>
+            <li><a href="developers/quickstart.html">Quickstart</a></li>
+            <li><a href="cli.html">Command-line tool</a></li>
+            <li><a href="developers/cli.html">CLI reference</a></li>
+            <li><a href="developers/agents.html">Agents and MCP</a></li>
+            <li><a href="developers/api.html">References and API</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey">Source on GitHub</a></li>
+            <li><a href="llms.txt">For agents (llms.txt)</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Trust and help">
+          <h2>Trust and help</h2>
+          <ul>
+            <li><a href="security.html">Security</a></li>
+            <li><a href="support.html">Support</a></li>
+            <li><a href="support.html#mistake">Report a mistake</a></li>
+            <li><a href="privacy.html">Privacy</a></li>
+            <li><a href="terms.html">Terms</a></li>
+          </ul>
+        </nav>
+      </div>
+      <div class="foot-base">
+        <span>Designed and built by <a href="https://zachshallbetter.com/" rel="author">Zach Shallbetter</a> at <a href="https://www.snackstud.io">Snack Studio</a></span>
+        <span>Source-available under FSL-1.1-ALv2. This site makes no third-party requests.</span>
+      </div>
     </div>
   </footer>
   <script src="site.js"></script>

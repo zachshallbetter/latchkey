@@ -2,51 +2,140 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <script>document.documentElement.classList.add("js")</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Quickstart · Latchkey</title>
+  <title>Quickstart: install, import and run · Latchkey</title>
   <meta name="description" content="Install the latchkey command-line tool, import an env file into iCloud Keychain, run a command with its values, and grant a folder for an agent.">
   <link rel="canonical" href="https://latchkey.snackstud.io/developers/quickstart.html">
   <meta property="og:url" content="https://latchkey.snackstud.io/developers/quickstart.html">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Latchkey">
-  <meta property="og:title" content="Quickstart · Latchkey">
+  <meta property="og:image" content="https://latchkey.snackstud.io/social/developers-quickstart.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Quickstart: Install, import and run. Install the latchkey command-line tool, import an env file into iCloud Keychain, run a command with its… Latchkey, latchkey.snackstud.io.">
+  <meta property="og:title" content="Quickstart: install, import and run · Latchkey">
   <meta property="og:description" content="Install the latchkey command-line tool, import an env file into iCloud Keychain, run a command with its values, and grant a folder for an agent.">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="../logo.svg" type="image/svg+xml">
+  <link rel="author" href="https://zachshallbetter.com/">
+  <link rel="icon" href="../favicon.ico" sizes="48x48">
+  <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="manifest" href="../site.webmanifest">
+  <link rel="alternate" type="text/plain" href="../llms.txt" title="Latchkey for language models">
   <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-  <meta name="twitter:card" content="summary">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="author" content="Zach Shallbetter">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta name="application-name" content="Latchkey">
+  <meta name="apple-mobile-web-app-title" content="Latchkey">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta name="twitter:title" content="Quickstart: install, import and run · Latchkey">
+  <meta name="twitter:description" content="Install the latchkey command-line tool, import an env file into iCloud Keychain, run a command with its values, and grant a folder for an agent.">
+  <meta name="twitter:image" content="https://latchkey.snackstud.io/social/developers-quickstart.jpg">
+  <meta name="twitter:image:alt" content="Quickstart: Install, import and run. Install the latchkey command-line tool, import an env file into iCloud Keychain, run a command with its… Latchkey, latchkey.snackstud.io.">
+  <meta property="article:author" content="https://zachshallbetter.com/">
   <link rel="stylesheet" href="../site.css">
+  <script defer src="../site.js"></script>
+  <script defer src="../scenes.js"></script>
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
+  "@graph": [
     {
-      "@type": "ListItem",
-      "position": 1,
-      "name": "Latchkey",
-      "item": "../index.html"
+      "@type": "WebPage",
+      "@id": "https://latchkey.snackstud.io/developers/quickstart.html#webpage",
+      "url": "https://latchkey.snackstud.io/developers/quickstart.html",
+      "name": "Quickstart: install, import and run · Latchkey",
+      "description": "Install the latchkey command-line tool, import an env file into iCloud Keychain, run a command with its values, and grant a folder for an agent.",
+      "inLanguage": "en",
+      "isPartOf": {
+        "@id": "https://latchkey.snackstud.io/#website"
+      },
+      "about": {
+        "@id": "https://latchkey.snackstud.io/#latchkey"
+      },
+      "author": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "publisher": {
+        "@id": "https://www.snackstud.io/#organization"
+      },
+      "primaryImageOfPage": {
+        "@type": "ImageObject",
+        "url": "https://latchkey.snackstud.io/social/developers-quickstart.jpg",
+        "width": 1200,
+        "height": 630,
+        "caption": "Quickstart: Install, import and run. Install the latchkey command-line tool, import an env file into iCloud Keychain, run a command with its… Latchkey, latchkey.snackstud.io."
+      },
+      "breadcrumb": {
+        "@id": "https://latchkey.snackstud.io/developers/quickstart.html#breadcrumb"
+      }
     },
     {
-      "@type": "ListItem",
-      "position": 2,
-      "name": "Developers",
-      "item": "index.html"
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Latchkey",
+          "item": "../index.html"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Developers",
+          "item": "index.html"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Quickstart",
+          "item": "quickstart.html"
+        }
+      ],
+      "@id": "https://latchkey.snackstud.io/developers/quickstart.html#breadcrumb"
     },
     {
-      "@type": "ListItem",
-      "position": 3,
-      "name": "Quickstart",
-      "item": "quickstart.html"
+      "@type": "Person",
+      "@id": "https://zachshallbetter.com/#person",
+      "name": "Zach Shallbetter",
+      "url": "https://zachshallbetter.com/",
+      "sameAs": [
+        "https://github.com/zachshallbetter"
+      ],
+      "jobTitle": "Systems engineer",
+      "description": "Zach Shallbetter designs and builds Latchkey. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
+      "homeLocation": {
+        "@type": "Place",
+        "name": "Spokane, Washington"
+      },
+      "worksFor": {
+        "@id": "https://www.snackstud.io/#organization"
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://www.snackstud.io/#organization",
+      "name": "Snack Studio",
+      "url": "https://www.snackstud.io",
+      "email": "latchkey@snackstud.io",
+      "founder": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://latchkey.snackstud.io/icon-512.png",
+        "width": 512,
+        "height": 512
+      }
     }
   ]
 }
   </script>
-  <link rel="alternate" type="text/plain" title="Latchkey, summarized for language models" href="../llms.txt">
-  <script defer src="../site.js"></script>
-  <script defer src="../scenes.js"></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -58,21 +147,22 @@
         <li><a href="../index.html#how">How it works</a></li>
         <li><a href="../pricing.html">Pricing</a></li>
         <li><a href="../security.html">Security</a></li>
-        <li><a href="index.html">Docs</a></li>
-        <li><a class="button primary" href="../index.html#install">Install the preview</a></li>
+        <li><a href="index.html" aria-current="page">Developers</a></li>
+        <li><a href="../guides/index.html">Guides</a></li>
+        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
       </ul>
     </nav>
   </header>
   <main id="main" class="wrap docs">
-    <nav class="side" aria-label="Developer documentation"><p class="side-title">Developers</p><ul><li><a href="index.html">Overview</a></li><li><a href="quickstart.html" aria-current="page">Quickstart</a></li><li><a href="cli.html">CLI reference</a></li><li><a href="agents.html">Agents and MCP</a></li><li><a href="api.html">References and API</a></li></ul></nav>
+    <nav class="side" aria-label="Developers and guides"><div class="side-group current"><p class="side-title">Developers</p><ul><li><a href="index.html"><i class="ic ic-book" aria-hidden="true"></i>Overview</a></li><li><a href="quickstart.html" aria-current="page"><i class="ic ic-bolt" aria-hidden="true"></i>Quickstart</a></li><li><a href="cli.html"><i class="ic ic-terminal" aria-hidden="true"></i>CLI reference</a></li><li><a href="agents.html"><i class="ic ic-agent" aria-hidden="true"></i>Agents and MCP</a></li><li><a href="api.html"><i class="ic ic-code" aria-hidden="true"></i>References and API</a></li></ul></div><div class="side-group"><p class="side-title">Guides</p><ul><li><a href="../guides/index.html"><i class="ic ic-grid" aria-hidden="true"></i>All guides</a></li><li><a href="../guides/index.html#env"><i class="ic ic-fileenv" aria-hidden="true"></i>Env files</a></li><li><a href="../guides/index.html#agents"><i class="ic ic-sparkles" aria-hidden="true"></i>Coding agents</a></li><li><a href="../guides/index.html#deploy"><i class="ic ic-upload" aria-hidden="true"></i>Deploying</a></li><li><a href="../guides/index.html#everyday"><i class="ic ic-macs" aria-hidden="true"></i>Everyday use</a></li></ul></div></nav>
     <article class="doc">
       <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><a href="index.html">Developers</a></li><li><span aria-current="page">Quickstart</span></li></ol></nav>
-      <h1>Quickstart</h1>
+      <h1><span class="moves">Quickstart</span></h1>
       <p class="lede">From an env file full of secrets to a command that gets them at start-up, in four steps.</p>
       <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#install">1. Install</a></li><li><a href="#import">2. Import an env file</a></li><li><a href="#run">3. Run a command</a></li><li><a href="#grant">4. Let an agent work</a></li></ul></nav>
 
 <h2 id="install">1. Install</h2>
-<p>Download the <a href="https://github.com/zachshallbetter/latchkey/releases/latest">latest disk image</a> and drag Latchkey to Applications, or install it with Homebrew: <code>brew tap zachshallbetter/latchkey</code>, <code>brew trust zachshallbetter/latchkey</code>, then <code>brew install --cask latchkey</code>. Open it and choose <strong>Latchkey › Install Command Line Tool…</strong>, which links <code>~/.local/bin/latchkey</code>, and <code>lk</code> for short, to the copy inside the app so it updates with the app. Make sure <code>~/.local/bin</code> is on your <code>PATH</code>.</p>
+<p>Download the <a href="https://github.com/zachshallbetter/latchkey/releases/latest">latest disk image</a> and drag Latchkey to Applications, or install it with Homebrew: <code>brew tap zachshallbetter/latchkey</code>, <code>brew trust zachshallbetter/latchkey</code>, then <code>brew install --cask latchkey</code>. The cask adds both commands for you. With the disk image, open it and choose <strong>Latchkey › Install Command Line Tool…</strong>, which links <code>~/.local/bin/latchkey</code>, and <code>lk</code> for short, to the copy inside the app so it updates with the app. Make sure <code>~/.local/bin</code> is on your <code>PATH</code>; in zsh, <code>echo 'export PATH="$HOME/.local/bin:$PATH"' &gt;&gt; ~/.zshrc</code> does it. With the Mac App Store version, see <a href="../cli.html">the command-line tool</a>.</p>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey status</code></pre></figure>
 <p>You should see <code>storage: iCloud Keychain storage (sync status not verified)</code>.</p>
 
@@ -80,12 +170,13 @@
 <p>Look first. A dry run prints names and where each would go, never values:</p>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">cd ~/Projects/shop
 latchkey import .env.local --dry-run</code></pre></figure>
+<p>The dry run also classes each line: <strong>secret</strong>, <strong>setting</strong> (such as <code>PORT</code>, left in the file), <strong>public value</strong> (such as <code>NEXT_PUBLIC_*</code>, saved as a plain value) or <strong>existing reference</strong>. It counts each class and lists each setting it would leave. Change a line with <code>--class KEY=secret|setting|public</code>.</p>
 <p>Then import, and replace each value in the file with its reference. The project is named after the repository; the environment comes from the file name (<code>.env.local</code> is <code>development</code>).</p>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey import .env.local --rewrite</code></pre></figure>
 <figure class="code"><figcaption><span>.env.local</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">DATABASE_URL=latchkey://shop/development/DATABASE_URL
 STRIPE_KEY=latchkey://shop/development/STRIPE_KEY</code></pre></figure>
 <p>Imports support quoted multiline values and refuse malformed syntax before saving anything. Rewriting replaces the complete assignment and stops if the file changed while approval was pending.</p>
-<figure class="doc-scene"><div class="scene-wrap" data-scene="importenv" style="--w:600;--h:380" aria-hidden="true">
+<figure class="doc-scene"><div class="scene-wrap" data-scene="importenv" style="--w:600;--h:380;--pw:360;--ph:508" aria-hidden="true">
           <div class="canvas">
             <div class="mw ed" id="imp-env" style="left:12px;top:12px;width:576px;height:134px">
               <div class="mw-bar"><i></i><i></i><i></i><span>shop/.env.local</span></div>
@@ -106,7 +197,7 @@ STRIPE_KEY=latchkey://shop/development/STRIPE_KEY</code></pre></figure>
 <h2 id="run">3. Run a command</h2>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey run --env-file .env.local -- npm run dev
 latchkey run --env shop/development -- npm test      # no env file needed</code></pre></figure>
-<figure class="doc-scene"><div class="scene-wrap" data-scene="flow" style="--w:600;--h:340" aria-hidden="true">
+<figure class="doc-scene"><div class="scene-wrap" data-scene="flow" style="--w:600;--h:340;--pw:360;--ph:494" aria-hidden="true">
         <div class="canvas" id="flow">
           <div class="mw ed" id="flow-env" style="left:12px;top:16px;width:400px;height:142px">
             <div class="mw-bar"><i></i><i></i><i></i><span>shop/.env.local</span></div>
@@ -138,21 +229,52 @@ latchkey revoke all</code></pre></figure>
   </main>
   <footer class="site">
     <div class="wrap">
-      <span>Latchkey by <a href="https://www.snackstud.io">Snack Studio</a></span>
-      <ul>
-        <li><a href="../features.html">Features</a></li>
-        <li><a href="../pricing.html">Pricing</a></li>
-        <li><a href="../teams.html">Teams</a></li>
-        <li><a href="../security.html">Security</a></li>
-        <li><a href="../roadmap.html">Roadmap</a></li>
-        <li><a href="index.html">Docs</a></li>
-        <li><a href="cli.html">CLI reference</a></li>
-        <li><a href="agents.html">Agents and MCP</a></li>
-        <li><a href="api.html">References and API</a></li>
-        <li><a href="../support.html">Support</a></li>
-        <li><a href="../privacy.html">Privacy</a></li>
-        <li><a href="../terms.html">Terms</a></li>
-      </ul>
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+          <p>Development credentials in your Mac's iCloud Keychain, filled in when a command starts.</p>
+          <a class="button primary small" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
+        </div>
+        <nav class="foot-col" aria-label="Product">
+          <h2>Product</h2>
+          <ul>
+            <li><a href="../features.html">Features</a></li>
+            <li><a href="../index.html#how">How it works</a></li>
+            <li><a href="../pricing.html">Pricing</a></li>
+            <li><a href="../teams.html">For teams</a></li>
+            <li><a href="../roadmap.html">Roadmap</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey/blob/main/CHANGELOG.md">Changelog</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Developers">
+          <h2>Developers</h2>
+          <ul>
+            <li><a href="../developers/index.html">Developers</a></li>
+            <li><a href="../guides/index.html">Guides</a></li>
+            <li><a href="../developers/quickstart.html" aria-current="page">Quickstart</a></li>
+            <li><a href="../cli.html">Command-line tool</a></li>
+            <li><a href="../developers/cli.html">CLI reference</a></li>
+            <li><a href="../developers/agents.html">Agents and MCP</a></li>
+            <li><a href="../developers/api.html">References and API</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey">Source on GitHub</a></li>
+            <li><a href="../llms.txt">For agents (llms.txt)</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Trust and help">
+          <h2>Trust and help</h2>
+          <ul>
+            <li><a href="../security.html">Security</a></li>
+            <li><a href="../support.html">Support</a></li>
+            <li><a href="../support.html#mistake">Report a mistake</a></li>
+            <li><a href="../privacy.html">Privacy</a></li>
+            <li><a href="../terms.html">Terms</a></li>
+          </ul>
+        </nav>
+      </div>
+      <div class="foot-base">
+        <span>Designed and built by <a href="https://zachshallbetter.com/" rel="author">Zach Shallbetter</a> at <a href="https://www.snackstud.io">Snack Studio</a></span>
+        <span>Source-available under FSL-1.1-ALv2. This site makes no third-party requests.</span>
+      </div>
     </div>
   </footer>
 </body>

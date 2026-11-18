@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Rotate the keys an AI agent touched · Latchkey</title>
+  <meta name="description" content="Find the API keys Latchkey released to an AI coding agent, replace them one by one, and push the new values to your linked environments.">
+  <link rel="canonical" href="https://latchkey.snackstud.io/guides/rotate-after-an-agent-session.html">
+  <meta property="og:url" content="https://latchkey.snackstud.io/guides/rotate-after-an-agent-session.html">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:image" content="https://latchkey.snackstud.io/social/guides-rotate-after-an-agent-session.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Guide: Rotate the keys an AI agent touched. Find the API keys Latchkey released to an AI coding agent, replace them one by one, and push the new… Latchkey, latchkey.snackstud.io.">
+  <meta property="og:title" content="Rotate the keys an AI agent touched · Latchkey">
+  <meta property="og:description" content="Find the API keys Latchkey released to an AI coding agent, replace them one by one, and push the new values to your linked environments.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="../logo.svg" type="image/svg+xml">
+  <link rel="author" href="https://zachshallbetter.com/">
+  <link rel="icon" href="../favicon.ico" sizes="48x48">
+  <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="manifest" href="../site.webmanifest">
+  <link rel="alternate" type="text/plain" href="../llms.txt" title="Latchkey for language models">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="author" content="Zach Shallbetter">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta name="application-name" content="Latchkey">
+  <meta name="apple-mobile-web-app-title" content="Latchkey">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta name="twitter:title" content="Rotate the keys an AI agent touched · Latchkey">
+  <meta name="twitter:description" content="Find the API keys Latchkey released to an AI coding agent, replace them one by one, and push the new values to your linked environments.">
+  <meta name="twitter:image" content="https://latchkey.snackstud.io/social/guides-rotate-after-an-agent-session.jpg">
+  <meta name="twitter:image:alt" content="Guide: Rotate the keys an AI agent touched. Find the API keys Latchkey released to an AI coding agent, replace them one by one, and push the new… Latchkey, latchkey.snackstud.io.">
+  <meta property="article:author" content="https://zachshallbetter.com/">
+  <link rel="stylesheet" href="../site.css">
+  <style>
+    .guides .eyebrow { margin-top: 8px; }
+    .guides .byline { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 14px 0 0; font-size: 14px; color: var(--muted); }
+    .guides h3 { font-size: 18px; margin: 28px 0 8px; }
+    .guides .short { margin-top: 28px; padding: 18px 22px; border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); box-shadow: var(--card-shadow); }
+    .guides .short p { margin: 0; }
+    .guides .short b { display: block; margin-bottom: 6px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+    .guides ol.steps { padding-left: 1.2em; }
+    .guides .next { margin-top: 48px; }
+    .guides .card-grid { margin-top: 12px; }
+    .guides .cat { margin-top: 44px; }
+    .guides .cat > p { color: var(--muted); margin: 0; }
+  </style>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": "https://latchkey.snackstud.io/guides/rotate-after-an-agent-session.html#webpage",
+      "url": "https://latchkey.snackstud.io/guides/rotate-after-an-agent-session.html",
+      "name": "Rotate the keys an AI agent touched · Latchkey",
+      "description": "Find the API keys Latchkey released to an AI coding agent, replace them one by one, and push the new values to your linked environments.",
+      "inLanguage": "en",
+      "isPartOf": {
+        "@id": "https://latchkey.snackstud.io/#website"
+      },
+      "about": {
+        "@id": "https://latchkey.snackstud.io/#latchkey"
+      },
+      "author": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "publisher": {
+        "@id": "https://www.snackstud.io/#organization"
+      },
+      "primaryImageOfPage": {
+        "@type": "ImageObject",
+        "url": "https://latchkey.snackstud.io/social/guides-rotate-after-an-agent-session.jpg",
+        "width": 1200,
+        "height": 630,
+        "caption": "Guide: Rotate the keys an AI agent touched. Find the API keys Latchkey released to an AI coding agent, replace them one by one, and push the new… Latchkey, latchkey.snackstud.io."
+      },
+      "breadcrumb": {
+        "@id": "https://latchkey.snackstud.io/guides/rotate-after-an-agent-session.html#breadcrumb"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Latchkey",
+          "item": "https://latchkey.snackstud.io/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Guides",
+          "item": "https://latchkey.snackstud.io/guides/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Rotate after an agent",
+          "item": "https://latchkey.snackstud.io/guides/rotate-after-an-agent-session.html"
+        }
+      ],
+      "@id": "https://latchkey.snackstud.io/guides/rotate-after-an-agent-session.html#breadcrumb"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://latchkey.snackstud.io/guides/rotate-after-an-agent-session.html#article",
+      "headline": "Rotate the keys an AI agent touched",
+      "description": "Find the API keys Latchkey released to an AI coding agent, replace them one by one, and push the new values to your linked environments.",
+      "url": "https://latchkey.snackstud.io/guides/rotate-after-an-agent-session.html",
+      "datePublished": "2026-11-14",
+      "author": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "publisher": {
+        "@id": "https://www.snackstud.io/#organization"
+      },
+      "about": {
+        "@id": "https://latchkey.snackstud.io/#latchkey"
+      },
+      "articleSection": "Coding agents",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "Person",
+      "@id": "https://zachshallbetter.com/#person",
+      "name": "Zach Shallbetter",
+      "url": "https://zachshallbetter.com/",
+      "sameAs": [
+        "https://github.com/zachshallbetter"
+      ],
+      "jobTitle": "Systems engineer",
+      "description": "Zach Shallbetter designs and builds Latchkey. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
+      "homeLocation": {
+        "@type": "Place",
+        "name": "Spokane, Washington"
+      },
+      "worksFor": {
+        "@id": "https://www.snackstud.io/#organization"
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://www.snackstud.io/#organization",
+      "name": "Snack Studio",
+      "url": "https://www.snackstud.io",
+      "email": "latchkey@snackstud.io",
+      "founder": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://latchkey.snackstud.io/icon-512.png",
+        "width": 512,
+        "height": 512
+      }
+    }
+  ]
+}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site">
+    <nav class="top wrap" aria-label="Main">
+      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+      <ul>
+        <li><a href="../features.html">Features</a></li>
+        <li><a href="../index.html#how">How it works</a></li>
+        <li><a href="../pricing.html">Pricing</a></li>
+        <li><a href="../security.html">Security</a></li>
+        <li><a href="../developers/index.html">Developers</a></li>
+        <li><a href="index.html" aria-current="page">Guides</a></li>
+        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main" class="wrap docs guides">
+    <nav class="side" aria-label="Developers and guides"><div class="side-group"><p class="side-title">Developers</p><ul><li><a href="../developers/index.html"><i class="ic ic-book" aria-hidden="true"></i>Overview</a></li><li><a href="../developers/quickstart.html"><i class="ic ic-bolt" aria-hidden="true"></i>Quickstart</a></li><li><a href="../developers/cli.html"><i class="ic ic-terminal" aria-hidden="true"></i>CLI reference</a></li><li><a href="../developers/agents.html"><i class="ic ic-agent" aria-hidden="true"></i>Agents and MCP</a></li><li><a href="../developers/api.html"><i class="ic ic-code" aria-hidden="true"></i>References and API</a></li></ul></div><div class="side-group current"><p class="side-title">Guides</p><ul><li><a href="index.html"><i class="ic ic-grid" aria-hidden="true"></i>All guides</a></li><li><a href="index.html#env"><i class="ic ic-fileenv" aria-hidden="true"></i>Env files</a></li><li><a href="index.html#agents" class="here"><i class="ic ic-sparkles" aria-hidden="true"></i>Coding agents</a></li><li><a href="index.html#deploy"><i class="ic ic-upload" aria-hidden="true"></i>Deploying</a></li><li><a href="index.html#everyday"><i class="ic ic-macs" aria-hidden="true"></i>Everyday use</a></li></ul></div></nav>
+    <article class="doc">
+      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><a href="index.html">Guides</a></li><li><span aria-current="page">Rotate after an agent</span></li></ol></nav>
+      <p class="eyebrow">Guide · Rotation</p>
+      <h1><span class="moves">Rotate</span> the keys an AI agent touched</h1>
+      <p class="lede">After a long agent session you can't say for sure which keys it ran with. Latchkey keeps a log of every release, so you can list those keys and replace them instead of guessing.</p>
+      <p class="byline"><span>By <a href="https://zachshallbetter.com/" rel="author">Zach Shallbetter</a></span><span>Published 14 November 2026</span><span>Needs <a href="../cli.html">the command-line tool</a></span></p>
+      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#why-you-end-up-rotating-everything">Why you end up rotating everything</a></li><li><a href="#list-the-keys-then-replace-them">List the keys, then replace them</a></li><li><a href="#shorten-the-list-next-time">Shorten the list next time</a></li><li><a href="#what-this-doesn-t-do">What this doesn't do</a></li></ul></nav>
+      <div class="short"><p><b>In short</b>Run <code>lk touched --since 4h --by claude</code> to list the items Latchkey released to programs under <code>claude</code>. Then run <code>lk rotate --touched --since 4h --by claude --open --push</code> to replace each one, end the grants that covered it and push the new value to linked environments.</p></div>
+<h2 id="why-you-end-up-rotating-everything">Why you end up rotating everything</h2>
+<p>An agent runs commands for you, and those commands need keys. Once a command has a value, it is in that command's memory and environment. Masking hides exact copies in the output, but it can't stop a command that prints, sends or encodes the value in another form. So after a session you can't prove which keys stayed private.</p>
+<p>The usual answer is to rotate every key in the project. That is slow, and people skip it. A better answer is to rotate only what the agent could have seen, and to have a list of that. Latchkey writes one entry to its access log for each release, with the program chain, folder and command. It never logs values. The list comes from that log.</p>
+<p>For the setup that comes before the session, see <a href="coding-agents-and-api-keys.html">Give coding agents API keys safely</a>.</p>
+<h2 id="list-the-keys-then-replace-them">List the keys, then replace them</h2>
+<ol class="steps">
+<li>
+<h3>See what was released</h3>
+<p><code>lk touched</code> lists the items released to commands in a time window, including through <code>lk run</code>. <code>--by claude</code> narrows it to programs running under <code>claude</code>, so keys you read yourself in the same hours don't show up. Use the same window you worked in.</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">lk touched --since 4h --by claude</code></pre></figure>
+<p>Without <code>--by</code> you get every release in that time, to anything. If you worked under a single grant, <code>--grant ID</code> lists what that grant released. Add <code>--json</code> for scripts.</p>
+</li>
+<li>
+<h3>Replace them with one command</h3>
+<p>Give <code>lk rotate</code> the same filters and it works through the same list, one item at a time. Add <code>--open</code> to open the service's key page where Latchkey knows it, and <code>--push</code> to send the new values to the environments you linked.</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">lk rotate --touched --since 4h --by claude --open --push</code></pre></figure>
+<p>First it ends any grant that covers these items. Then, for each item, it shows where to make the new key and asks for the new value; leave it empty to skip that item. You make the key in the service's dashboard and paste it in. The old value stays in the item's history. With <code>--push</code>, the new value then goes to each linked environment, such as a Vercel project. A push asks every time, and production needs its own confirmation in the app.</p>
+</li>
+<li>
+<h3>Rotate one key by name</h3>
+<p>You can also name items or use a pattern. This is useful when the list shows one key that matters more than the rest.</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">lk rotate shop/development/STRIPE_KEY --open --push</code></pre></figure>
+</li>
+<li>
+<h3>Check Activity</h3>
+<p>Open <b>Activity</b> in the Latchkey app to see the same releases with more detail. An entry shows the action, the items, the decision, who asked through which programs, the folder and the command. You can filter by event and project.</p>
+</li>
+</ol>
+<h2 id="shorten-the-list-next-time">Shorten the list next time</h2>
+<p>The smaller the grant, the shorter the list. A grant can end when the agent quits (<code>--session</code>), cover one command (<code>--command</code>) or last one use (<code>--once</code>). Keys behind <code>--proxy</code> never reach the command, so you can leave them out of the rotation, though they still appear in the list because <code>lk run</code> itself fetched them. <a href="proxy-api-keys-for-agents.html">The proxy guide</a> covers that.</p>
+<h2 id="what-this-doesn-t-do">What this doesn't do</h2>
+<ul>
+<li>It can't make the new key. Stripe, GitHub, OpenAI and most services only issue keys in their dashboards. Latchkey takes you to the page and saves what you paste.</li>
+<li><code>touched</code> reads Latchkey's access log for values released to commands. It says nothing about what a command did with a value.</li>
+<li>Values copied or written with <code>lk export --values</code>, filled by Safari or shown from history are logged but not listed by <code>touched</code>; check Activity for those.</li>
+<li>Rotation replaces the stored value and ends grants. It does not recall a value that was already released, and it does not disable the old key at the service. Do that in the service.</li>
+<li>History keeps old values, with your approval to read them, for up to 30 days after deletion or until they are more than 10 versions old. Use <b>Forget History</b> when an old value shouldn't linger.</li>
+</ul>
+<p>The <a href="../developers/cli.html#rotating">CLI reference</a> has the full option list, and the <a href="../security.html">security page</a> says where protection ends.</p>
+    <section class="next" aria-labelledby="next-title">
+      <h2 id="next-title">Related</h2>
+      <div class="card-grid g2"><a class="card" href="coding-agents-and-api-keys.html"><span class="cico" aria-hidden="true"><i class="ic ic-sparkles"></i></span><b>Give coding agents API keys without handing them over</b><span>Approvals, grants, and keys an agent can use but never read.</span></a><a class="card" href="proxy-api-keys-for-agents.html"><span class="cico" aria-hidden="true"><i class="ic ic-shield"></i></span><b>Hide your OpenAI or Anthropic key from an AI agent</b><span>Let a command call OpenAI or Anthropic without holding the key.</span></a></div>
+    </section>
+    </article>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+          <p>Development credentials in your Mac's iCloud Keychain, filled in when a command starts.</p>
+          <a class="button primary small" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
+        </div>
+        <nav class="foot-col" aria-label="Product">
+          <h2>Product</h2>
+          <ul>
+            <li><a href="../features.html">Features</a></li>
+            <li><a href="../index.html#how">How it works</a></li>
+            <li><a href="../pricing.html">Pricing</a></li>
+            <li><a href="../teams.html">For teams</a></li>
+            <li><a href="../roadmap.html">Roadmap</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey/blob/main/CHANGELOG.md">Changelog</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Developers">
+          <h2>Developers</h2>
+          <ul>
+            <li><a href="../developers/index.html">Developers</a></li>
+            <li><a href="../guides/index.html">Guides</a></li>
+            <li><a href="../developers/quickstart.html">Quickstart</a></li>
+            <li><a href="../cli.html">Command-line tool</a></li>
+            <li><a href="../developers/cli.html">CLI reference</a></li>
+            <li><a href="../developers/agents.html">Agents and MCP</a></li>
+            <li><a href="../developers/api.html">References and API</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey">Source on GitHub</a></li>
+            <li><a href="../llms.txt">For agents (llms.txt)</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Trust and help">
+          <h2>Trust and help</h2>
+          <ul>
+            <li><a href="../security.html">Security</a></li>
+            <li><a href="../support.html">Support</a></li>
+            <li><a href="../support.html#mistake">Report a mistake</a></li>
+            <li><a href="../privacy.html">Privacy</a></li>
+            <li><a href="../terms.html">Terms</a></li>
+          </ul>
+        </nav>
+      </div>
+      <div class="foot-base">
+        <span>Designed and built by <a href="https://zachshallbetter.com/" rel="author">Zach Shallbetter</a> at <a href="https://www.snackstud.io">Snack Studio</a></span>
+        <span>Source-available under FSL-1.1-ALv2. This site makes no third-party requests.</span>
+      </div>
+    </div>
+  </footer>
+  <script src="../site.js"></script>
+</body>
+</html>

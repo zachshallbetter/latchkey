@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Set up a git worktree without copying .env · Latchkey</title>
+  <meta name="description" content="Give a new git worktree or fresh clone its environment without copying a .env file: match the project, write references or run with --env.">
+  <link rel="canonical" href="https://latchkey.snackstud.io/guides/worktrees-and-fresh-clones.html">
+  <meta property="og:url" content="https://latchkey.snackstud.io/guides/worktrees-and-fresh-clones.html">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:image" content="https://latchkey.snackstud.io/social/guides-worktrees-and-fresh-clones.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Guide: Set up a git worktree without copying .env. Give a new git worktree or fresh clone its environment without copying a .env file: match the project,… Latchkey, latchkey.snackstud.io.">
+  <meta property="og:title" content="Set up a git worktree without copying .env · Latchkey">
+  <meta property="og:description" content="Give a new git worktree or fresh clone its environment without copying a .env file: match the project, write references or run with --env.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="../logo.svg" type="image/svg+xml">
+  <link rel="author" href="https://zachshallbetter.com/">
+  <link rel="icon" href="../favicon.ico" sizes="48x48">
+  <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="manifest" href="../site.webmanifest">
+  <link rel="alternate" type="text/plain" href="../llms.txt" title="Latchkey for language models">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="author" content="Zach Shallbetter">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta name="application-name" content="Latchkey">
+  <meta name="apple-mobile-web-app-title" content="Latchkey">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta name="twitter:title" content="Set up a git worktree without copying .env · Latchkey">
+  <meta name="twitter:description" content="Give a new git worktree or fresh clone its environment without copying a .env file: match the project, write references or run with --env.">
+  <meta name="twitter:image" content="https://latchkey.snackstud.io/social/guides-worktrees-and-fresh-clones.jpg">
+  <meta name="twitter:image:alt" content="Guide: Set up a git worktree without copying .env. Give a new git worktree or fresh clone its environment without copying a .env file: match the project,… Latchkey, latchkey.snackstud.io.">
+  <meta property="article:author" content="https://zachshallbetter.com/">
+  <link rel="stylesheet" href="../site.css">
+  <style>
+    .guides .eyebrow { margin-top: 8px; }
+    .guides .byline { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 14px 0 0; font-size: 14px; color: var(--muted); }
+    .guides h3 { font-size: 18px; margin: 28px 0 8px; }
+    .guides .short { margin-top: 28px; padding: 18px 22px; border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); box-shadow: var(--card-shadow); }
+    .guides .short p { margin: 0; }
+    .guides .short b { display: block; margin-bottom: 6px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+    .guides ol.steps { padding-left: 1.2em; }
+    .guides .next { margin-top: 48px; }
+    .guides .card-grid { margin-top: 12px; }
+    .guides .cat { margin-top: 44px; }
+    .guides .cat > p { color: var(--muted); margin: 0; }
+  </style>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": "https://latchkey.snackstud.io/guides/worktrees-and-fresh-clones.html#webpage",
+      "url": "https://latchkey.snackstud.io/guides/worktrees-and-fresh-clones.html",
+      "name": "Set up a git worktree without copying .env · Latchkey",
+      "description": "Give a new git worktree or fresh clone its environment without copying a .env file: match the project, write references or run with --env.",
+      "inLanguage": "en",
+      "isPartOf": {
+        "@id": "https://latchkey.snackstud.io/#website"
+      },
+      "about": {
+        "@id": "https://latchkey.snackstud.io/#latchkey"
+      },
+      "author": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "publisher": {
+        "@id": "https://www.snackstud.io/#organization"
+      },
+      "primaryImageOfPage": {
+        "@type": "ImageObject",
+        "url": "https://latchkey.snackstud.io/social/guides-worktrees-and-fresh-clones.jpg",
+        "width": 1200,
+        "height": 630,
+        "caption": "Guide: Set up a git worktree without copying .env. Give a new git worktree or fresh clone its environment without copying a .env file: match the project,… Latchkey, latchkey.snackstud.io."
+      },
+      "breadcrumb": {
+        "@id": "https://latchkey.snackstud.io/guides/worktrees-and-fresh-clones.html#breadcrumb"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Latchkey",
+          "item": "https://latchkey.snackstud.io/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Guides",
+          "item": "https://latchkey.snackstud.io/guides/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Worktrees and clones",
+          "item": "https://latchkey.snackstud.io/guides/worktrees-and-fresh-clones.html"
+        }
+      ],
+      "@id": "https://latchkey.snackstud.io/guides/worktrees-and-fresh-clones.html#breadcrumb"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://latchkey.snackstud.io/guides/worktrees-and-fresh-clones.html#article",
+      "headline": "Set up a clone or worktree without .env",
+      "description": "Give a new git worktree or fresh clone its environment without copying a .env file: match the project, write references or run with --env.",
+      "url": "https://latchkey.snackstud.io/guides/worktrees-and-fresh-clones.html",
+      "datePublished": "2026-11-14",
+      "author": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "publisher": {
+        "@id": "https://www.snackstud.io/#organization"
+      },
+      "about": {
+        "@id": "https://latchkey.snackstud.io/#latchkey"
+      },
+      "articleSection": "Env files",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "Person",
+      "@id": "https://zachshallbetter.com/#person",
+      "name": "Zach Shallbetter",
+      "url": "https://zachshallbetter.com/",
+      "sameAs": [
+        "https://github.com/zachshallbetter"
+      ],
+      "jobTitle": "Systems engineer",
+      "description": "Zach Shallbetter designs and builds Latchkey. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
+      "homeLocation": {
+        "@type": "Place",
+        "name": "Spokane, Washington"
+      },
+      "worksFor": {
+        "@id": "https://www.snackstud.io/#organization"
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://www.snackstud.io/#organization",
+      "name": "Snack Studio",
+      "url": "https://www.snackstud.io",
+      "email": "latchkey@snackstud.io",
+      "founder": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://latchkey.snackstud.io/icon-512.png",
+        "width": 512,
+        "height": 512
+      }
+    }
+  ]
+}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site">
+    <nav class="top wrap" aria-label="Main">
+      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+      <ul>
+        <li><a href="../features.html">Features</a></li>
+        <li><a href="../index.html#how">How it works</a></li>
+        <li><a href="../pricing.html">Pricing</a></li>
+        <li><a href="../security.html">Security</a></li>
+        <li><a href="../developers/index.html">Developers</a></li>
+        <li><a href="index.html" aria-current="page">Guides</a></li>
+        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main" class="wrap docs guides">
+    <nav class="side" aria-label="Developers and guides"><div class="side-group"><p class="side-title">Developers</p><ul><li><a href="../developers/index.html"><i class="ic ic-book" aria-hidden="true"></i>Overview</a></li><li><a href="../developers/quickstart.html"><i class="ic ic-bolt" aria-hidden="true"></i>Quickstart</a></li><li><a href="../developers/cli.html"><i class="ic ic-terminal" aria-hidden="true"></i>CLI reference</a></li><li><a href="../developers/agents.html"><i class="ic ic-agent" aria-hidden="true"></i>Agents and MCP</a></li><li><a href="../developers/api.html"><i class="ic ic-code" aria-hidden="true"></i>References and API</a></li></ul></div><div class="side-group current"><p class="side-title">Guides</p><ul><li><a href="index.html"><i class="ic ic-grid" aria-hidden="true"></i>All guides</a></li><li><a href="index.html#env" class="here"><i class="ic ic-fileenv" aria-hidden="true"></i>Env files</a></li><li><a href="index.html#agents"><i class="ic ic-sparkles" aria-hidden="true"></i>Coding agents</a></li><li><a href="index.html#deploy"><i class="ic ic-upload" aria-hidden="true"></i>Deploying</a></li><li><a href="index.html#everyday"><i class="ic ic-macs" aria-hidden="true"></i>Everyday use</a></li></ul></div></nav>
+    <article class="doc">
+      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><a href="index.html">Guides</a></li><li><span aria-current="page">Worktrees and clones</span></li></ol></nav>
+      <p class="eyebrow">Guide · Worktrees</p>
+      <h1>Set up a clone or worktree without <span class="placeholder">.env</span></h1>
+      <p class="lede">A fresh clone or a new git worktree has no .env, because the file was never committed. Copying it from another folder spreads your keys one folder further.</p>
+      <p class="byline"><span>By <a href="https://zachshallbetter.com/" rel="author">Zach Shallbetter</a></span><span>Published 14 November 2026</span><span>Needs <a href="../cli.html">the command-line tool</a></span></p>
+      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#why-the-file-is-missing">Why the file is missing</a></li><li><a href="#set-up-the-new-checkout">Set up the new checkout</a></li><li><a href="#let-an-agent-work-in-the-worktree">Let an agent work in the worktree</a></li><li><a href="#what-this-doesn-t-do">What this doesn't do</a></li></ul></nav>
+      <div class="short"><p><b>In short</b>Run <code>lk project</code> in the new checkout to see which project it is, then either write an env file of references with <code>lk export shop/development --out .env.local</code> or skip the file and start the app with <code>lk run --env shop/development -- npm run dev</code>.</p></div>
+<h2 id="why-the-file-is-missing">Why the file is missing</h2>
+<p>An env file is gitignored, so it stays in the folder where you made it. <code>git worktree add</code> and <code>git clone</code> give you the tracked files only. The usual fix is to copy the old file across, and every copy is another place a key can leak from.</p>
+<p>Latchkey keeps a record for each environment: its variables, each pointing at a stored item or holding a plain setting such as <code>PORT=3000</code>. The record belongs to the project, not to a folder, so a new checkout can use it. The examples below use an example project called <code>shop</code>.</p>
+<h2 id="set-up-the-new-checkout">Set up the new checkout</h2>
+<ol class="steps">
+<li>
+<h3>Ask which project this is</h3>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">cd ~/Projects/_worktrees/shop/fix-checkout
+lk project</code></pre></figure>
+<p>Latchkey matches the checkout to a project by its Git remotes, read from git's config and never with credentials. It shows the matching project, its environments, and a suggested <code>export</code> command.</p>
+</li>
+<li>
+<h3>Link the checkout if nothing matches</h3>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">lk project link shop</code></pre></figure>
+<p>This remembers the checkout's <code>origin</code> as project <code>shop</code> and asks you first. Use <code>--remote R</code> to name another remote. After that, a clone in any folder resolves to <code>shop</code>, and an import from it names items after the project rather than the folder.</p>
+</li>
+<li>
+<h3>Write an env file of references</h3>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">lk export shop/development --out .env.local</code></pre></figure>
+<p>The file holds <code>latchkey://</code> references and plain settings, sorted by name, and no values. If the file already exists, it is left alone and the variables that would change are named. <a href="merge-into-an-existing-env-file.html">Merge into an existing .env file</a> covers that case.</p>
+<figure class="code"><figcaption><span>.env.local, after</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text"># Latchkey environment shop/development
+DATABASE_URL=latchkey://shop/development/DATABASE_URL
+PORT=3000
+STRIPE_KEY=latchkey://shop/development/STRIPE_KEY</code></pre></figure>
+</li>
+<li>
+<h3>Or run without a file</h3>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">lk run --env shop/development -- npm run dev</code></pre></figure>
+<p><code>--env</code> sets the environment's variables from its record when the command starts. Nothing is written to the folder. Without a record for that environment, it loads what the older lookup finds and says so.</p>
+</li>
+</ol>
+<h2 id="let-an-agent-work-in-the-worktree">Let an agent work in the worktree</h2>
+<p>If a coding agent works in the new worktree, a grant for the main repository's folder covers it. Grants cover the folder, the folders inside it and that repository's worktrees.</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">lk grant &#x27;shop/development/*&#x27; --folder ~/Projects/shop --for 2h</code></pre></figure>
+<p>The grant asks once, lasts two hours here, and can last at most 7 days. See <a href="coding-agents-and-api-keys.html">Give coding agents API keys safely</a>.</p>
+<h2 id="what-this-doesn-t-do">What this doesn't do</h2>
+<ul>
+<li>A project match only names the project. It never releases a value or widens a grant.</li>
+<li>A match through a remote other than <code>origin</code>, as a fork has, is flagged and never taken as the project.</li>
+<li>Values are still released only after approval, unless an item is agent-safe or a grant covers it.</li>
+<li>A file written without <code>--values</code> holds references, not values, so it needs Latchkey to fill them in when a command starts.</li>
+<li>If an environment has no record yet, <code>lk env migrate</code> builds one from what Latchkey already knows. Variables found through old file locations stay unconfirmed until you run <code>lk env confirm</code>.</li>
+</ul>
+<p>See the <a href="../developers/cli.html#environments">environments</a> and <a href="../developers/cli.html#export">export</a> reference.</p>
+    <section class="next" aria-labelledby="next-title">
+      <h2 id="next-title">Related</h2>
+      <div class="card-grid g2"><a class="card" href="merge-into-an-existing-env-file.html"><span class="cico" aria-hidden="true"><i class="ic ic-merge"></i></span><b>Merge into an existing .env file</b><span>Add variables to a .env and keep your comments and order.</span></a><a class="card" href="coding-agents-and-api-keys.html"><span class="cico" aria-hidden="true"><i class="ic ic-sparkles"></i></span><b>Give coding agents API keys without handing them over</b><span>Approvals, grants, and keys an agent can use but never read.</span></a></div>
+    </section>
+    </article>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+          <p>Development credentials in your Mac's iCloud Keychain, filled in when a command starts.</p>
+          <a class="button primary small" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
+        </div>
+        <nav class="foot-col" aria-label="Product">
+          <h2>Product</h2>
+          <ul>
+            <li><a href="../features.html">Features</a></li>
+            <li><a href="../index.html#how">How it works</a></li>
+            <li><a href="../pricing.html">Pricing</a></li>
+            <li><a href="../teams.html">For teams</a></li>
+            <li><a href="../roadmap.html">Roadmap</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey/blob/main/CHANGELOG.md">Changelog</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Developers">
+          <h2>Developers</h2>
+          <ul>
+            <li><a href="../developers/index.html">Developers</a></li>
+            <li><a href="../guides/index.html">Guides</a></li>
+            <li><a href="../developers/quickstart.html">Quickstart</a></li>
+            <li><a href="../cli.html">Command-line tool</a></li>
+            <li><a href="../developers/cli.html">CLI reference</a></li>
+            <li><a href="../developers/agents.html">Agents and MCP</a></li>
+            <li><a href="../developers/api.html">References and API</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey">Source on GitHub</a></li>
+            <li><a href="../llms.txt">For agents (llms.txt)</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Trust and help">
+          <h2>Trust and help</h2>
+          <ul>
+            <li><a href="../security.html">Security</a></li>
+            <li><a href="../support.html">Support</a></li>
+            <li><a href="../support.html#mistake">Report a mistake</a></li>
+            <li><a href="../privacy.html">Privacy</a></li>
+            <li><a href="../terms.html">Terms</a></li>
+          </ul>
+        </nav>
+      </div>
+      <div class="foot-base">
+        <span>Designed and built by <a href="https://zachshallbetter.com/" rel="author">Zach Shallbetter</a> at <a href="https://www.snackstud.io">Snack Studio</a></span>
+        <span>Source-available under FSL-1.1-ALv2. This site makes no third-party requests.</span>
+      </div>
+    </div>
+  </footer>
+  <script src="../site.js"></script>
+</body>
+</html>

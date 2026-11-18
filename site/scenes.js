@@ -478,6 +478,7 @@
     var isPortrait = wantsPortrait(wrap);
     layout(wrap, isPortrait);
     fit();
+    wrap.classList.add("laid");
     if ("ResizeObserver" in window) new ResizeObserver(fit).observe(wrap); else window.addEventListener("resize", fit);
     // Rotating a phone or resizing a window can narrow or widen the column: switch layouts and start again.
     var relayout = function () {
@@ -497,6 +498,9 @@
 
     var btn = document.createElement("button");
     btn.type = "button"; btn.className = "scene-pause"; btn.innerHTML = PAUSE; btn.setAttribute("aria-label", "Pause this animation");
+    // The drawing stays hidden from assistive technology; its pause button mustn't be, so the hiding moves to the canvas.
+    wrap.removeAttribute("aria-hidden");
+    wrap.querySelectorAll(":scope > *").forEach(function (child) { child.setAttribute("aria-hidden", "true"); });
     wrap.appendChild(btn);
     async function loop() {
       if (playing) return;

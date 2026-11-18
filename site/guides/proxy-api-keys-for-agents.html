@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Hide an OpenAI or Anthropic key from an agent · Latchkey</title>
+  <meta name="description" content="Let a coding agent call OpenAI or Anthropic without ever holding the key: run the command with lk run --proxy and cap the models and request count.">
+  <link rel="canonical" href="https://latchkey.snackstud.io/guides/proxy-api-keys-for-agents.html">
+  <meta property="og:url" content="https://latchkey.snackstud.io/guides/proxy-api-keys-for-agents.html">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:image" content="https://latchkey.snackstud.io/social/guides-proxy-api-keys-for-agents.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Guide: Hide an OpenAI or Anthropic key from an agent. Let a coding agent call OpenAI or Anthropic without ever holding the key: run the command with lk run… Latchkey, latchkey.snackstud.io.">
+  <meta property="og:title" content="Hide an OpenAI or Anthropic key from an agent · Latchkey">
+  <meta property="og:description" content="Let a coding agent call OpenAI or Anthropic without ever holding the key: run the command with lk run --proxy and cap the models and request count.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="../logo.svg" type="image/svg+xml">
+  <link rel="author" href="https://zachshallbetter.com/">
+  <link rel="icon" href="../favicon.ico" sizes="48x48">
+  <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="manifest" href="../site.webmanifest">
+  <link rel="alternate" type="text/plain" href="../llms.txt" title="Latchkey for language models">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="author" content="Zach Shallbetter">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta name="application-name" content="Latchkey">
+  <meta name="apple-mobile-web-app-title" content="Latchkey">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta name="twitter:title" content="Hide an OpenAI or Anthropic key from an agent · Latchkey">
+  <meta name="twitter:description" content="Let a coding agent call OpenAI or Anthropic without ever holding the key: run the command with lk run --proxy and cap the models and request count.">
+  <meta name="twitter:image" content="https://latchkey.snackstud.io/social/guides-proxy-api-keys-for-agents.jpg">
+  <meta name="twitter:image:alt" content="Guide: Hide an OpenAI or Anthropic key from an agent. Let a coding agent call OpenAI or Anthropic without ever holding the key: run the command with lk run… Latchkey, latchkey.snackstud.io.">
+  <meta property="article:author" content="https://zachshallbetter.com/">
+  <link rel="stylesheet" href="../site.css">
+  <style>
+    .guides .eyebrow { margin-top: 8px; }
+    .guides .byline { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 14px 0 0; font-size: 14px; color: var(--muted); }
+    .guides h3 { font-size: 18px; margin: 28px 0 8px; }
+    .guides .short { margin-top: 28px; padding: 18px 22px; border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); box-shadow: var(--card-shadow); }
+    .guides .short p { margin: 0; }
+    .guides .short b { display: block; margin-bottom: 6px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+    .guides ol.steps { padding-left: 1.2em; }
+    .guides .next { margin-top: 48px; }
+    .guides .card-grid { margin-top: 12px; }
+    .guides .cat { margin-top: 44px; }
+    .guides .cat > p { color: var(--muted); margin: 0; }
+  </style>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": "https://latchkey.snackstud.io/guides/proxy-api-keys-for-agents.html#webpage",
+      "url": "https://latchkey.snackstud.io/guides/proxy-api-keys-for-agents.html",
+      "name": "Hide an OpenAI or Anthropic key from an agent · Latchkey",
+      "description": "Let a coding agent call OpenAI or Anthropic without ever holding the key: run the command with lk run --proxy and cap the models and request count.",
+      "inLanguage": "en",
+      "isPartOf": {
+        "@id": "https://latchkey.snackstud.io/#website"
+      },
+      "about": {
+        "@id": "https://latchkey.snackstud.io/#latchkey"
+      },
+      "author": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "publisher": {
+        "@id": "https://www.snackstud.io/#organization"
+      },
+      "primaryImageOfPage": {
+        "@type": "ImageObject",
+        "url": "https://latchkey.snackstud.io/social/guides-proxy-api-keys-for-agents.jpg",
+        "width": 1200,
+        "height": 630,
+        "caption": "Guide: Hide an OpenAI or Anthropic key from an agent. Let a coding agent call OpenAI or Anthropic without ever holding the key: run the command with lk run… Latchkey, latchkey.snackstud.io."
+      },
+      "breadcrumb": {
+        "@id": "https://latchkey.snackstud.io/guides/proxy-api-keys-for-agents.html#breadcrumb"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Latchkey",
+          "item": "https://latchkey.snackstud.io/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Guides",
+          "item": "https://latchkey.snackstud.io/guides/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Proxy keys for agents",
+          "item": "https://latchkey.snackstud.io/guides/proxy-api-keys-for-agents.html"
+        }
+      ],
+      "@id": "https://latchkey.snackstud.io/guides/proxy-api-keys-for-agents.html#breadcrumb"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://latchkey.snackstud.io/guides/proxy-api-keys-for-agents.html#article",
+      "headline": "Hide your OpenAI or Anthropic key from an AI agent",
+      "description": "Let a coding agent call OpenAI or Anthropic without ever holding the key: run the command with lk run --proxy and cap the models and request count.",
+      "url": "https://latchkey.snackstud.io/guides/proxy-api-keys-for-agents.html",
+      "datePublished": "2026-11-14",
+      "author": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "publisher": {
+        "@id": "https://www.snackstud.io/#organization"
+      },
+      "about": {
+        "@id": "https://latchkey.snackstud.io/#latchkey"
+      },
+      "articleSection": "Coding agents",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "Person",
+      "@id": "https://zachshallbetter.com/#person",
+      "name": "Zach Shallbetter",
+      "url": "https://zachshallbetter.com/",
+      "sameAs": [
+        "https://github.com/zachshallbetter"
+      ],
+      "jobTitle": "Systems engineer",
+      "description": "Zach Shallbetter designs and builds Latchkey. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
+      "homeLocation": {
+        "@type": "Place",
+        "name": "Spokane, Washington"
+      },
+      "worksFor": {
+        "@id": "https://www.snackstud.io/#organization"
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://www.snackstud.io/#organization",
+      "name": "Snack Studio",
+      "url": "https://www.snackstud.io",
+      "email": "latchkey@snackstud.io",
+      "founder": {
+        "@id": "https://zachshallbetter.com/#person"
+      },
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://latchkey.snackstud.io/icon-512.png",
+        "width": 512,
+        "height": 512
+      }
+    }
+  ]
+}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site">
+    <nav class="top wrap" aria-label="Main">
+      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+      <ul>
+        <li><a href="../features.html">Features</a></li>
+        <li><a href="../index.html#how">How it works</a></li>
+        <li><a href="../pricing.html">Pricing</a></li>
+        <li><a href="../security.html">Security</a></li>
+        <li><a href="../developers/index.html">Developers</a></li>
+        <li><a href="index.html" aria-current="page">Guides</a></li>
+        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main" class="wrap docs guides">
+    <nav class="side" aria-label="Developers and guides"><div class="side-group"><p class="side-title">Developers</p><ul><li><a href="../developers/index.html"><i class="ic ic-book" aria-hidden="true"></i>Overview</a></li><li><a href="../developers/quickstart.html"><i class="ic ic-bolt" aria-hidden="true"></i>Quickstart</a></li><li><a href="../developers/cli.html"><i class="ic ic-terminal" aria-hidden="true"></i>CLI reference</a></li><li><a href="../developers/agents.html"><i class="ic ic-agent" aria-hidden="true"></i>Agents and MCP</a></li><li><a href="../developers/api.html"><i class="ic ic-code" aria-hidden="true"></i>References and API</a></li></ul></div><div class="side-group current"><p class="side-title">Guides</p><ul><li><a href="index.html"><i class="ic ic-grid" aria-hidden="true"></i>All guides</a></li><li><a href="index.html#env"><i class="ic ic-fileenv" aria-hidden="true"></i>Env files</a></li><li><a href="index.html#agents" class="here"><i class="ic ic-sparkles" aria-hidden="true"></i>Coding agents</a></li><li><a href="index.html#deploy"><i class="ic ic-upload" aria-hidden="true"></i>Deploying</a></li><li><a href="index.html#everyday"><i class="ic ic-macs" aria-hidden="true"></i>Everyday use</a></li></ul></div></nav>
+    <article class="doc">
+      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><a href="index.html">Guides</a></li><li><span aria-current="page">Proxy keys for agents</span></li></ol></nav>
+      <p class="eyebrow">Guide · Key proxy</p>
+      <h1>Hide your OpenAI or Anthropic <span class="placeholder">key</span> from an AI agent</h1>
+      <p class="lede">Your tests call OpenAI or Anthropic, so the agent that runs them needs a working key. It doesn't need to hold the key, and what it holds it can print.</p>
+      <p class="byline"><span>By <a href="https://zachshallbetter.com/" rel="author">Zach Shallbetter</a></span><span>Published 14 November 2026</span><span>Needs <a href="../cli.html">the command-line tool</a></span></p>
+      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#why-a-working-key-means-an-exposed-key">Why a working key means an exposed key</a></li><li><a href="#run-the-command-through-the-proxy">Run the command through the proxy</a></li><li><a href="#who-can-use-the-proxy">Who can use the proxy</a></li><li><a href="#what-this-doesn-t-do">What this doesn't do</a></li></ul></nav>
+      <div class="short"><p><b>In short</b>Run the command as <code>lk run --proxy --env-file .env.local -- npm test</code>. It gets a placeholder and a local base URL instead of the key, and Latchkey adds the real key only to requests bound for the provider. Add <code>--proxy-models</code> and <code>--proxy-requests</code> to narrow what it can do.</p></div>
+<h2 id="why-a-working-key-means-an-exposed-key">Why a working key means an exposed key</h2>
+<p>Normally <code>lk run</code> puts the real value in the command's environment. That is how <code>process.env.OPENAI_API_KEY</code> works. It also means the command, and any agent driving it, can print the value, write it to a file or send it somewhere. Masking hides exact copies in the output, nothing more.</p>
+<p>For OpenAI and Anthropic keys there is a better arrangement. The command doesn't need the key. It needs to make API calls that carry it. So Latchkey adds the key to those calls outside the command.</p>
+<h2 id="run-the-command-through-the-proxy">Run the command through the proxy</h2>
+<ol class="steps">
+<li>
+<h3>Keep the key as a whole reference</h3>
+<p>The variable must be exactly a <code>latchkey://</code> reference to the key, in an env file or in the environment's record. If you haven't moved your keys yet, start with <a href="env-files-without-secrets.html">Keep API keys out of your .env files</a>.</p>
+<figure class="code"><figcaption><span>.env.local</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">OPENAI_API_KEY=latchkey://shop/development/OPENAI_API_KEY</code></pre></figure>
+</li>
+<li>
+<h3>Add <code>--proxy</code></h3>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">lk run --proxy --env-file .env.local -- npm test</code></pre></figure>
+<p>The command gets a random placeholder in <code>OPENAI_API_KEY</code>, and <code>OPENAI_BASE_URL</code> points at a port on this Mac that <code>lk run</code> listens on. The same applies to <code>ANTHROPIC_API_KEY</code> and <code>ANTHROPIC_BASE_URL</code>. Requests that carry the placeholder go to <code>api.openai.com</code> or <code>api.anthropic.com</code> with the real key in its place. Anything else is refused. Programs that use the OpenAI or Anthropic SDKs, or read those base URL variables, work without changes.</p>
+</li>
+<li>
+<h3>Narrow what the command may do</h3>
+<p>The proxy lets the command use the key. These two options limit how.</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">lk run --proxy --proxy-models gpt-4o-mini --proxy-requests 100 --env-file .env.local -- npm test</code></pre></figure>
+<p><code>--proxy-models A,B</code> forwards only requests whose JSON body names a listed model. A request with no body, a compressed or malformed body, or a call such as <code>GET /v1/models</code> is refused. <code>--proxy-requests N</code> refuses requests after N have been forwarded, across both providers. When either is set, <code>lk run</code> prints <code>latchkey: proxy limits enforced: ...</code> on standard error, so you can see it took effect. Both need <code>--proxy</code>.</p>
+</li>
+<li>
+<h3>Use it from an agent that has no shell</h3>
+<p>The MCP tool <code>latchkey_run</code> takes the same settings as fields: <code>proxy: true</code>, <code>proxy_models</code> as an array of model names, and <code>proxy_requests</code> as a number. Both limits need <code>proxy: true</code>. <a href="mcp-server-api-keys.html">The MCP guide</a> covers adding the server.</p>
+</li>
+</ol>
+<h2 id="who-can-use-the-proxy">Who can use the proxy</h2>
+<p>Only the command and the processes it starts. A request from any other program gets a 403, even from one that read the placeholder out of the environment, and the proxy stops when the command exits. A process that detaches from the command and is adopted by launchd is refused too. The placeholder is new for each run.</p>
+<h2 id="what-this-doesn-t-do">What this doesn't do</h2>
+<ul>
+<li>The command and everything it starts can still use the key within your limits. It can send any prompt or file to the provider. Without <code>--proxy-models</code> it isn't restricted to certain paths or methods.</li>
+<li>Spend is capped by <code>--proxy-requests</code> only, not by tokens or money.</li>
+<li>The placeholder can show up in output or logs. It is useless outside the command's process tree, but it isn't concealed.</li>
+<li>Proxy mode refuses to start if a supported key isn't a whole reference, if its base URL is already set, or if the key would also reach the command through another variable or key file. At least one supported key reference is required.</li>
+<li>Other credentials are delivered normally. A database URL in the same run is not protected by this proxy.</li>
+<li>A program running as you that can attach a debugger to the command or read its memory gets whatever the command has.</li>
+</ul>
+<p>See the <a href="../developers/cli.html#proxy">CLI reference</a> and the <a href="../security.html">security page</a> for the details.</p>
+    <section class="next" aria-labelledby="next-title">
+      <h2 id="next-title">Related</h2>
+      <div class="card-grid g2"><a class="card" href="coding-agents-and-api-keys.html"><span class="cico" aria-hidden="true"><i class="ic ic-sparkles"></i></span><b>Give coding agents API keys without handing them over</b><span>Approvals, grants, and keys an agent can use but never read.</span></a><a class="card" href="mcp-server-api-keys.html"><span class="cico" aria-hidden="true"><i class="ic ic-plug"></i></span><b>Keep API keys out of MCP server configs</b><span>Start the server through latchkey run so the config holds references.</span></a></div>
+    </section>
+    </article>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+          <p>Development credentials in your Mac's iCloud Keychain, filled in when a command starts.</p>
+          <a class="button primary small" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
+        </div>
+        <nav class="foot-col" aria-label="Product">
+          <h2>Product</h2>
+          <ul>
+            <li><a href="../features.html">Features</a></li>
+            <li><a href="../index.html#how">How it works</a></li>
+            <li><a href="../pricing.html">Pricing</a></li>
+            <li><a href="../teams.html">For teams</a></li>
+            <li><a href="../roadmap.html">Roadmap</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey/blob/main/CHANGELOG.md">Changelog</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Developers">
+          <h2>Developers</h2>
+          <ul>
+            <li><a href="../developers/index.html">Developers</a></li>
+            <li><a href="../guides/index.html">Guides</a></li>
+            <li><a href="../developers/quickstart.html">Quickstart</a></li>
+            <li><a href="../cli.html">Command-line tool</a></li>
+            <li><a href="../developers/cli.html">CLI reference</a></li>
+            <li><a href="../developers/agents.html">Agents and MCP</a></li>
+            <li><a href="../developers/api.html">References and API</a></li>
+            <li><a href="https://github.com/zachshallbetter/latchkey">Source on GitHub</a></li>
+            <li><a href="../llms.txt">For agents (llms.txt)</a></li>
+          </ul>
+        </nav>
+        <nav class="foot-col" aria-label="Trust and help">
+          <h2>Trust and help</h2>
+          <ul>
+            <li><a href="../security.html">Security</a></li>
+            <li><a href="../support.html">Support</a></li>
+            <li><a href="../support.html#mistake">Report a mistake</a></li>
+            <li><a href="../privacy.html">Privacy</a></li>
+            <li><a href="../terms.html">Terms</a></li>
+          </ul>
+        </nav>
+      </div>
+      <div class="foot-base">
+        <span>Designed and built by <a href="https://zachshallbetter.com/" rel="author">Zach Shallbetter</a> at <a href="https://www.snackstud.io">Snack Studio</a></span>
+        <span>Source-available under FSL-1.1-ALv2. This site makes no third-party requests.</span>
+      </div>
+    </div>
+  </footer>
+  <script src="../site.js"></script>
+</body>
+</html>

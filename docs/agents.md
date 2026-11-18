@@ -119,6 +119,10 @@ export LATCHKEY_SOCKET=/tmp/latchkey-$USER.sock    # on the other Mac
 latchkey run --env shop/development -- npm test
 ```
 
+`$USER` expands to your login name on each Mac: use the same name on both, or put a fixed name in both commands.
+Forwarding needs the direct-download app on your Mac; the Mac App Store version doesn't support it yet, and if the
+other Mac has the App Store version installed, set `LATCHKEY_BROKER=direct` there.
+
 Requests reach the app on your Mac, which asks you there. The other computer needs `latchkey` too (a Mac; the tool
 is macOS only). What's different:
 
