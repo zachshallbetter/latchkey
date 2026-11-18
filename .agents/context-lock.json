@@ -18,8 +18,8 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "87c35372cc537860a63f679303925293b3591a98",
-        "branch": "free-and-pro",
+        "commit": "162badc7df5f0c061d3f0de6140b4bd883c7ee36",
+        "branch": "site-deploy",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
