@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 360,
-    "includedBytes": 2862747,
+    "includedBytes": 2867443,
     "excludedCounts": {
       "extension": 86,
       "generated-or-transient-file": 1
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "e07cc3a50cefde1879619fc3578a98c8346d0b6d",
-        "branch": "titan-credentials",
-        "dirty": true,
+        "commit": "8848a80a590afcaa9bd1c531a0c7b371dbf927b6",
+        "branch": "approval-focus",
+        "dirty": false,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "fc8ad967e474cb56041a4da6a63c1449f184a35b67a3ab40809b8b39453b306f",
+  "aggregateSourceDigest": "f38a4bcb4f7946855667f1a777f470d14e71fa1580fad1e5663b30f7a4a9b3fc",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -734,8 +734,8 @@
     },
     {
       "path": "App/Latchkey/ApprovalPanel.swift",
-      "bytes": 24369,
-      "sha256": "94be04dfc4af0b899ba016c495199a64effad356193903aa3c43db52af9fbab2"
+      "bytes": 25788,
+      "sha256": "2e618ce5554524d4e07d85447a153bb3ad076ef2456d2ad484d127de5554f230"
     },
     {
       "path": "App/Latchkey/Assets.xcassets/Contents.json",
@@ -959,13 +959,13 @@
     },
     {
       "path": "App/Latchkey/LatchkeyApp.swift",
-      "bytes": 64732,
-      "sha256": "6d195bba574892e5f2cb0f6469c611fe3abb980ebf2997bfc10f4605051e63a3"
+      "bytes": 65008,
+      "sha256": "1fc419288b56fc68915518a4e46c6653865be79a87ee5786e859ae8c5a040208"
     },
     {
       "path": "App/Latchkey/MainWindow.swift",
-      "bytes": 47050,
-      "sha256": "7fb5fc269f8c707bd6f2156c1ee66bf04bdbc37c8ecbca323da7ae68ebc05328"
+      "bytes": 49959,
+      "sha256": "4fe316b70fae4563758bcf3d001979fda0ce266309c2bbce69ab33ea8f93c6f9"
     },
     {
       "path": "App/Latchkey/MenuBarPanel.swift",
@@ -1009,8 +1009,8 @@
     },
     {
       "path": "App/Latchkey/Snapshot.swift",
-      "bytes": 14797,
-      "sha256": "1feb214cf8e39c7bb879253fbb63d46e1bbc205e416b798c8d1eea1f26119921"
+      "bytes": 14751,
+      "sha256": "19a494451f06d55be3eea220fe8f56331e63bebbb50aa82f85dc315cc4adca75"
     },
     {
       "path": "App/Latchkey/Style.swift",
@@ -1299,8 +1299,8 @@
     },
     {
       "path": "Sources/latchkey/main.swift",
-      "bytes": 80896,
-      "sha256": "969a4f4d4b503aad6105eafe9d407b216353ca5d3b12ca547c942f7e276a2b8b"
+      "bytes": 81034,
+      "sha256": "516808cd72485d78ff392bc9465d8ee3e44b563f97d46ade0e2b94dc31eb4e5b"
     },
     {
       "path": "Tests/LatchkeyCoreTests/AWSTests.swift",
