@@ -1,5 +1,7 @@
 import AppKit
 import LatchkeyCore
+import LocalAuthentication
+import LocalAuthenticationEmbeddedUI
 import SwiftUI
 
 extension ItemKind {
@@ -34,9 +36,12 @@ struct KindIcon: View {
     }
 }
 
-/// Shown instead of the window while Latchkey is locked, as Passwords does: Touch ID or the Mac password opens it.
+/// Shown instead of the window while Latchkey is locked, as Passwords does: Touch ID is asked for right here in
+/// the window, with no system sheet; **Use Password…** brings up the sheet for the Mac password.
 struct LockScreen: View {
     let model: AppModel
+    /// The Touch ID request the inline view is showing; nil when none is.
+    @State private var touchID: LAContext?
 
     var body: some View {
         VStack(spacing: 14) {
@@ -48,14 +53,62 @@ struct LockScreen: View {
             .padding(.bottom, 6)
             Text("Latchkey Is Locked").font(.title2.weight(.semibold))
             Text("Touch ID or enter your password to continue.").foregroundStyle(.secondary)
-            Button(model.unlocking ? "Waiting for Touch ID…" : "Unlock…") { model.unlock() }
-                .controlSize(.large).keyboardShortcut(.defaultAction).disabled(model.unlocking)
-                .padding(.top, 4)
+            if let touchID {
+                InlineTouchID(context: touchID) { model.unlockWithTouchID(touchID) { if self.touchID === touchID { self.touchID = nil } } }
+                    .frame(width: 60, height: 60)
+                    .padding(.top, 4)
+                Button("Use Password…") { usePassword() }.buttonStyle(.link)
+            } else {
+                Button(model.unlocking ? "Waiting for Approval…" : "Unlock…") { askAgain() }
+                    .controlSize(.large).keyboardShortcut(.defaultAction).disabled(model.unlocking)
+                    .padding(.top, 4)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        // Ask right away when the window is in front, so a glance at Touch ID is all it takes.
-        .onAppear { if NSApp.isActive { model.unlock() } }
+        // Ask right away when the window is in front, and again each time Latchkey comes back to the front.
+        .onAppear { if NSApp.isActive { askAgain() } }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            if touchID == nil { askAgain() }
+        }
+        .onDisappear { stopTouchID() }
     }
+
+    /// Touch ID in the window when this Mac has it; otherwise the system sheet (Apple Watch or password).
+    private func askAgain() {
+        guard model.locked, !model.unlocking else { return }
+        let context = LAContext()
+        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil) {
+            touchID = context
+        } else {
+            model.unlock()
+        }
+    }
+
+    private func usePassword() {
+        stopTouchID()
+        model.unlock()
+    }
+
+    private func stopTouchID() {
+        touchID?.invalidate()
+        touchID = nil
+    }
+}
+
+/// The system's own Touch ID prompt, drawn inside the window. Evaluating a biometric policy on a context that an
+/// `LAAuthenticationView` shows puts the prompt here instead of in a sheet.
+private struct InlineTouchID: NSViewRepresentable {
+    let context: LAContext
+    /// Called once the view is in the window, so the request lands in it rather than in a sheet.
+    let start: () -> Void
+
+    func makeNSView(context: Context) -> LAAuthenticationView {
+        let view = LAAuthenticationView(context: self.context, controlSize: .large)
+        DispatchQueue.main.async(execute: start)
+        return view
+    }
+
+    func updateNSView(_ nsView: LAAuthenticationView, context: Context) {}
 }
 
 /// The Latchkey key, tinted like an SF Symbol so it follows the context it sits in.

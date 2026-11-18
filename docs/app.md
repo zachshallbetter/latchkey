@@ -199,7 +199,8 @@ sidebar, or use **Latchkey › Settings…** or the menu bar panel's **Settings�
   it locks: 1, 5, 15 or 60 minutes. It also locks when it opens and when the Mac sleeps or the screen locks; **Lock
   Now**, **Lock Latchkey** (⌃⌘L) in the app menu and **Lock** in the menu bar panel lock it by hand even with
   automatic locking off. While locked the window, Settings and the menu bar panel show only the lock screen, revealed
-  values are hidden, and Touch ID or the Mac password unlocks it. The lock is for the app's own window: requests from
+  values are hidden. Touch ID is asked for inside the lock screen itself, with no system sheet, as in Passwords;
+  **Use Password…** (or a Mac without Touch ID) brings up the system sheet for the Mac password or an Apple Watch. The lock is for the app's own window: requests from
   commands, agents and Safari keep going through approval as before, locked or not. Clear copied values after 15, 30, 60 or 120 seconds; hide revealed values after 10, 30 or
   60 seconds; hide revealed values when the app loses focus; or hide them immediately. Timer changes apply on
   the next copy or reveal. Closing the window also hides values. Clipboard clearing preserves anything copied

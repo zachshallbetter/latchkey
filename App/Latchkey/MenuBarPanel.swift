@@ -67,14 +67,14 @@ struct MenuBarPanel: View {
         if model.locked { lockedBody } else { unlockedBody }
     }
 
-    /// While locked the panel lists nothing: unlock opens Latchkey, where Touch ID asks.
+    /// While locked the panel lists nothing: Unlock opens Latchkey, whose lock screen asks for Touch ID.
     private var lockedBody: some View {
         VStack(alignment: .leading, spacing: 10) {
             Label("Latchkey is locked", systemImage: "lock.fill").font(.headline)
             Text("Unlock to see your items.").foregroundStyle(.secondary)
             Divider()
             HStack {
-                Button("Unlock…") { close(); model.openMainWindow(); model.unlock() }
+                Button("Unlock…") { close(); model.openMainWindow() }
                 Spacer()
                 Button("Quit") { close(); AppDelegate.quitting = true; NSApp.terminate(nil) }
             }

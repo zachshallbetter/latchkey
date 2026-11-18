@@ -3,6 +3,7 @@ import LatchkeyCore
 #if !LATCHKEY_APP_STORE
 import LatchkeySeal
 #endif
+import LocalAuthentication
 import ServiceManagement
 import SwiftUI
 
@@ -337,6 +338,18 @@ final class AppModel {
         locked = true
     }
 
+    /// Touch ID shown inside the lock screen (`LockScreen`). `failed` runs when it ends without unlocking: a cancel,
+    /// too many tries, or the request withdrawn; the lock screen then offers the system sheet.
+    func unlockWithTouchID(_ context: LAContext, failed: @escaping @MainActor () -> Void) {
+        guard locked, !unlocking else { return }
+        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: "unlock Latchkey") { [weak self] passed, _ in
+            Task { @MainActor in
+                if passed { self?.locked = false } else { failed() }
+            }
+        }
+    }
+
+    /// The system sheet: Touch ID, Apple Watch or the Mac password.
     func unlock() {
         guard locked, !unlocking else { return }
         unlocking = true
