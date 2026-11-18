@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 359,
-    "includedBytes": 2839568,
+    "includedBytes": 2841846,
     "excludedCounts": {
       "extension": 86,
       "generated-or-transient-file": 1
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "1fb4ed52e3e0353b2572fa0e615c99f17ad2df1a",
+        "commit": "5e1487b4958fa66faf182393ce145e9bb29473b4",
         "branch": "approval-groups",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "ceabae223c90b1d705057580de555571c326553a91b98f844e67e84f08fc1fe9",
+  "aggregateSourceDigest": "12e9f0e0c3170029b1c5c04c6b946c2d50a346099288fcd05220be3173845c5b",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -734,8 +734,8 @@
     },
     {
       "path": "App/Latchkey/ApprovalPanel.swift",
-      "bytes": 22308,
-      "sha256": "38d3bb0f966c842fbfd2d544662e7866aea46a06f18e5ccb70582d4c485f8c05"
+      "bytes": 24369,
+      "sha256": "94be04dfc4af0b899ba016c495199a64effad356193903aa3c43db52af9fbab2"
     },
     {
       "path": "App/Latchkey/Assets.xcassets/Contents.json",
@@ -1009,8 +1009,8 @@
     },
     {
       "path": "App/Latchkey/Snapshot.swift",
-      "bytes": 14751,
-      "sha256": "19a494451f06d55be3eea220fe8f56331e63bebbb50aa82f85dc315cc4adca75"
+      "bytes": 14797,
+      "sha256": "1feb214cf8e39c7bb879253fbb63d46e1bbc205e416b798c8d1eea1f26119921"
     },
     {
       "path": "App/Latchkey/Style.swift",
@@ -1464,8 +1464,8 @@
     },
     {
       "path": "docs/app.md",
-      "bytes": 20091,
-      "sha256": "a80ca9771086e5962248758a1720b2e10d33e72930c4f88f5085703948653398"
+      "bytes": 20262,
+      "sha256": "d07ff6ce689c77cc72d5ef5b82df3e81d7ab87bc2e7cee9a9220a16e55718486"
     },
     {
       "path": "docs/apple-passwords-and-passkeys.md",

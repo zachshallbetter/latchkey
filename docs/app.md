@@ -150,8 +150,9 @@ and **Add a Location…**. See [Remote locations](remote.md).
 
 ## The approval panel
 
-Every approval is one small panel saying what's asked, by whom and where, titled like "Claude wants to use 2 items",
-with Touch ID inside it: touch the sensor to allow. **Use Password…** brings up the macOS sheet for your password or
+Every approval is one small panel titled like "Claude wants to use 2 items", with who and where under it ("Claude in
+~/Projects/shop"), every item it covers, and the Touch ID glyph with what a touch does ("Touch ID to allow once").
+**Details** opens the process chain, the folder and the command that receives the values. **Use Password…** brings up the macOS sheet for your password or
 an Apple Watch; a Mac without Touch ID shows **Allow…**, which does the same.
 
 - **Releasing values to a command:** allow once, or tick **Allow from this folder** (for a time, until the agent
@@ -159,8 +160,8 @@ an Apple Watch; a Mac without Touch ID shows **Allow…**, which does the same.
   import, move, restore, link) show the same panel. A change that lets agents read an item without approval, or makes
   it a plain value, says so.
 - **Several requests at once:** requests from the same agent in the same folder that come in while the panel is up
-  join it as rows, titled like "Claude is asking for 3 things", so one touch answers them all. Each row names what it
-  covers and the command asking, and its ⓧ denies that one alone. A request joining starts Touch ID over, so a touch
+  join it as rows, titled like "Claude is asking for 3 things", so one touch answers them all. Each row names every item it
+  covers (its command is under **Details**), and its ⓧ denies that one alone. A request joining starts Touch ID over, so a touch
   can't allow one that just appeared. Requests from anyone else wait for the next panel.
 - **Asked on their own:** pushes, where production needs **I mean to change production** ticked first; requests
   from another computer over SSH, from a program that isn't Latchkey's command-line tool (both with a warning), and

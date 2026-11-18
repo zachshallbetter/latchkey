@@ -187,6 +187,8 @@ struct ApprovalView: View {
     @State private var touchID: LAContext?
     /// The system sheet is up (Use Password…, or Allow… without Touch ID).
     @State private var sheetUp = false
+    /// Who's asking in full (the process chain, the folder, the command), folded until asked for.
+    @State private var showDetails = false
 
     /// The caller and folder every row shares.
     private var request: ApprovalRequest { group.first }
@@ -242,7 +244,7 @@ struct ApprovalView: View {
                 Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 40, height: 40)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title).font(.headline).fixedSize(horizontal: false, vertical: true)
-                    Text("Latchkey").font(.callout).foregroundStyle(.secondary)
+                    Text(subtitle).font(.callout).foregroundStyle(.secondary).lineLimit(1).truncationMode(.head)
                 }
             }
             if request.overSSH {
@@ -263,34 +265,41 @@ struct ApprovalView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if many { rows }
-            Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 8) {
-                if !many {
-                    row(request.names.count > 1 ? "Items (\(request.names.count))" : "Items", request.names.joined(separator: ", "), mono: true, full: true)
-                    if [.add, .change, .importItems, .restore].contains(request.action), !request.summary.isEmpty {
-                        row("Request", request.summary)
+            // What the answer covers stays in view: every item (one is named in the title), the change's own words,
+            // and where values go. Who's asking in detail is folded below.
+            if !many {
+                if request.names.count > 1 { covered(request.names.joined(separator: ", "), mono: true) }
+                if [.add, .change, .importItems, .restore].contains(request.action), !request.summary.isEmpty, request.summary != Self.what(request) {
+                    covered(request.summary.prefix(1).uppercased() + request.summary.dropFirst())
+                }
+                if !request.targets.isEmpty { covered((request.action == .push ? "To " : "Target: ") + request.targets.joined(separator: ", ")) }
+            }
+            DisclosureGroup(isExpanded: $showDetails) {
+                Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 8) {
+                    if request.fromSafari {
+                        row("Asked by", "Latchkey's Safari extension")
+                        if let page = request.page { row("Page", page + "\n(as Safari reported it)", mono: true) }
+                    } else {
+                        let via = request.chain.prefix(4).joined(separator: " › ")
+                        row("Asked by", (request.asker.map { "\($0), via \(via)" } ?? via) + (request.byAgent ? "\nthrough Latchkey's MCP server" : ""))
                     }
-                    if request.action == .compare {
-                        row("Purpose", "Compare their values inside Latchkey to find items holding the same key. Only which items match is shown; no value leaves Latchkey.")
-                    }
-                    if request.action == .scan {
-                        row("Purpose", "Check whether env files still hold these items' values in plain text. Only which items match is shown; no stored value leaves Latchkey.")
+                    if !request.folder.isEmpty { row("Folder", Broker.tilde(request.folder), mono: true) }
+                    if !many {
+                        // The command that will receive the values, in full: a signed `latchkey run` shows what it
+                        // starts, unredacted (the log keeps the redacted form), so a filter or truncation can't hide it.
+                        if let command = Self.command(request) { row("Command", command, mono: true, full: true) }
+                        if let d = request.duration { row("For", GrantStore.describe(d)) }
+                        if request.action == .compare {
+                            row("Purpose", "Compare their values inside Latchkey to find items holding the same key. Only which items match is shown; no value leaves Latchkey.")
+                        }
+                        if request.action == .scan {
+                            row("Purpose", "Check whether env files still hold these items' values in plain text. Only which items match is shown; no stored value leaves Latchkey.")
+                        }
                     }
                 }
-                if request.fromSafari {
-                    row("Asked by", "Latchkey's Safari extension")
-                    if let page = request.page { row("Page", page + "\n(as Safari reported it)", mono: true) }
-                } else {
-                    let via = request.chain.prefix(4).joined(separator: " › ")
-                    row("Asked by", (request.asker.map { "\($0), via \(via)" } ?? via) + (request.byAgent ? "\nthrough Latchkey's MCP server" : ""))
-                }
-                if !request.folder.isEmpty { row("Folder", Broker.tilde(request.folder), mono: true) }
-                if !many {
-                    // The command that will receive the values, in full: a signed `latchkey run` shows what it starts,
-                    // unredacted (the log keeps the redacted form), so a filter or truncation can't hide the program.
-                    if let command = Self.command(request) { row("Command", command, mono: true, full: true) }
-                    if let d = request.duration { row("For", GrantStore.describe(d)) }
-                    if !request.targets.isEmpty { row(request.action == .push ? "To" : "Target", request.targets.joined(separator: "\n")) }
-                }
+                .padding(.top, 6)
+            } label: {
+                Text("Details").font(.callout)
             }
             if request.production {
                 VStack(alignment: .leading, spacing: 6) {
@@ -361,7 +370,7 @@ struct ApprovalView: View {
                                 Text("To " + ticket.request.targets.joined(separator: ", ")).font(.caption)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
-                            if let command = Self.command(ticket.request) {
+                            if showDetails, let command = Self.command(ticket.request) {
                                 Text(command).font(.caption.monospaced()).foregroundStyle(.secondary)
                                     .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
                             }
@@ -381,23 +390,51 @@ struct ApprovalView: View {
     }
 
     private var footer: some View {
-        HStack(spacing: 10) {
+        VStack(spacing: 12) {
             if let touchID, ready {
-                InlineTouchID(context: touchID) { evaluate(touchID) }
-                    .id(ObjectIdentifier(touchID))
-                    .frame(width: 32, height: 32)
-                Text("Touch ID to \(allowLabel.lowercased())").font(.callout).foregroundStyle(.secondary)
+                VStack(spacing: 6) {
+                    ZStack {
+                        // Snapshots can't draw the system's glyph, which needs a live window; this stands in for it.
+                        if Self.drawsStandInGlyph {
+                            Image(systemName: "touchid").font(.system(size: 34, weight: .light)).foregroundStyle(.pink)
+                        }
+                        InlineTouchID(context: touchID) { evaluate(touchID) }
+                            .id(ObjectIdentifier(touchID))
+                    }
+                    .frame(width: 44, height: 44)
+                    Text("Touch ID to \(allowLabel.lowercased())").font(.callout).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
             }
-            Spacer()
-            Button("Deny", role: .cancel) { finish(.deny) }.keyboardShortcut(.cancelAction)
-            if touchID == nil {
-                Button(allowLabel + "…") { useSheet() }
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(!ready || sheetUp)
-            } else {
-                Button("Use Password…") { useSheet() }.disabled(!ready || sheetUp)
+            HStack {
+                Spacer()
+                Button("Deny", role: .cancel) { finish(.deny) }.keyboardShortcut(.cancelAction)
+                if touchID == nil {
+                    Button(allowLabel + "…") { useSheet() }
+                        .keyboardShortcut(.defaultAction)
+                        .disabled(!ready || sheetUp)
+                } else {
+                    Button("Use Password…") { useSheet() }.disabled(!ready || sheetUp)
+                }
             }
         }
+    }
+
+    /// Set by the snapshot tool.
+    nonisolated(unsafe) static var drawsStandInGlyph = false
+
+    /// Who and where, in a line: "Claude in ~/Projects/site".
+    private var subtitle: String {
+        if request.fromSafari { return "Latchkey for Safari" + (request.page.map { " on \($0)" } ?? "") }
+        if request.overSSH { return "From another computer" }
+        let place = request.folder.isEmpty || request.folder == "/" ? "" : " in " + Broker.tilde(request.folder)
+        return (request.asker ?? (request.fromApp ? "Latchkey" : "A program")) + place
+    }
+
+    /// A line of what the answer covers, in full.
+    private func covered(_ text: String, mono: Bool = false) -> some View {
+        Text(text).font(mono ? .callout.monospaced() : .callout).textSelection(.enabled)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     /// Production waits for its box to be ticked before anything can allow it.
