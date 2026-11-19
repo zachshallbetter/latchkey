@@ -8,6 +8,8 @@ The command-line tool starts the app when it isn't running. If that fails:
 - Open it once by hand, then try again.
 - If `latchkey-broker` (the development broker) is running, stop it: it uses the same socket.
 - `LATCHKEY_NO_LAUNCH=1` is set? Unset it, or start the app yourself.
+- `connection refused` or `connection closed` right after installing or updating Latchkey: the app was restarting.
+  Run the command again.
 
 ## "the program answering on Latchkey's socket isn't the Latchkey app"
 
@@ -24,7 +26,7 @@ to the socket directly, or an unsigned development build of the tool. Deny it un
 
 The item isn't agent-safe, nobody approved, and no grant covers it. The message names the items and the grant command
 that would allow them. Approve the next request, grant the folder, or mark the item agent-safe if it really isn't
-secret. An approval panel nobody answers counts as a denial after 90 seconds.
+secret. A request nobody answers is denied after two minutes.
 
 ## "no item named" (exit 66)
 
@@ -56,8 +58,14 @@ background by the command-line tool, click its Dock icon or the key in the menu 
 
 ## An approval panel didn't show up
 
-Check for it behind other windows; it floats above most of them. If the screen was locked or nobody answered for 90
-seconds, the request was denied: run the command again.
+It appears over whatever app you're in, without bringing Latchkey's window forward. If the screen was locked or nobody
+answered for two minutes, the request was denied: run the command again.
+
+## Touch ID in the panel doesn't respond
+
+The fingerprint in the panel turns red when it's listening. For a production push it waits until **I mean to change
+production** is ticked. If it still doesn't respond (the sensor is covered, the lid is closed, or too many tries
+failed), use **Use Password…**, which opens the system sheet for your Mac password or an Apple Watch.
 
 ## A push failed
 
@@ -69,6 +77,12 @@ seconds, the request was denied: run the command again.
   `vercel link` / `railway link`.
 - Fly: values with line breaks can't be pushed with `secrets import`.
 - `pushes run in the Latchkey app`: you're using the development broker; use the app.
+- SSH, `sudo: a password is required`: the host needs a sudoers rule that lets your account run the credential script
+  without a password; a push has no terminal to type one in. See [SSH credential scripts](remote.md#ssh-credential-scripts).
+- SSH, `didn't confirm storing it`: the script exited 0 but didn't print `stored ADAPTER.ACCOUNT`, so Latchkey
+  doesn't count it as pushed. Check the script on the host.
+- SSH, `isn't a credential name (ADAPTER.ACCOUNT)`: rename the item so its last part is `ADAPTER.ACCOUNT`, for
+  example `distribution/production/bluesky.someone.bsky.social`.
 
 ## `latchkey import` skipped some lines
 

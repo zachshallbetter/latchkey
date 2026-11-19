@@ -279,6 +279,7 @@ lk project</pre><a class="more" href="developers/cli.html#environments">Projects
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-shieldcheck"></i></span><h3>Signed app access <span class="avail">In this build</span></h3><p>Only the signed Latchkey app can read its keychain group. The <code>lk</code> tool never touches the keychain; it checks the app's signature before sending anything.</p><a class="more" href="security.html#storage">Storage and sync</a></article>
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-macs"></i></span><h3>Use it from another Mac over SSH <span class="avail">In this build</span></h3><p>Forward the app's socket. Each read without the No Approval setting asks you on your own Mac; local grants don't apply over the connection. Direct download only, for now.</p>
           <pre>export LATCHKEY_SOCKET=/tmp/latchkey-$USER.sock</pre><a class="more" href="developers/agents.html#ssh">From another Mac over SSH</a></article>
+        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-shieldcheck"></i></span><h3>Locks like Passwords <span class="avail">In this build</span></h3><p>The window locks when Latchkey opens, after 5 minutes in the background and when the Mac sleeps; Touch ID unlocks it. Approvals for commands and agents still work while it's locked.</p><a class="more" href="security.html#release">App lock</a></article>
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-laptop"></i></span><h3>Intel Macs <span class="avail pending">Pending</span></h3><p>The app is built for Apple silicon and Intel. The release hasn't been tried on an Intel Mac yet.</p><a class="more" href="index.html#install">Install</a></article>
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-sync"></i></span><h3>Updates itself <span class="avail">In this build</span></h3><p>The direct download checks for updates with Sparkle, or install and upgrade with Homebrew. It sends no system profile; the Mac App Store version updates through the store.</p>
           <pre>brew install --cask latchkey</pre><a class="more" href="developers/quickstart.html#install">Installing</a></article>
@@ -289,7 +290,7 @@ lk project</pre><a class="more" href="developers/cli.html#environments">Projects
       <header class="shead"><p class="eyebrow">Agents and tools</p><h2 id="agents-title">Grant access for the task. Revoke it when the task is done.</h2>
         <p>Agents run commands through <code>lk run</code>. You decide what reaches those commands: agent-safe items, grants for a folder and a time, or an approval each time.</p></header>
       <div class="feature">
-        <div class="copy"><h3>Ask, allow, and ask again when it matters</h3><p>The panel shows the agent, the programs it runs through, the folder and the command, all from macOS. A folder grant until the agent quits covers its next runs; a production item isn't covered, so it asks.</p></div>
+        <div class="copy"><h3>Ask, allow, and ask again when it matters</h3><p>The panel shows the agent, the programs it runs through, the folder and the command, all from macOS, with Touch ID right in it: touch the sensor from whatever app you're in. Several requests from the same agent share one panel and one touch. A folder grant until the agent quits covers its next runs; a production item isn't covered, so it asks.</p></div>
         <div class="scene-wrap" data-scene="agent" style="--w:600;--h:360;--pw:360;--ph:520" aria-hidden="true">
           <div class="canvas">
             <div class="mw tty" style="left:12px;top:12px;width:576px;height:336px">
@@ -356,7 +357,7 @@ lk grant 'shop/development/*' --command "npm test" --for 2h</pre><a class="more"
         </div>
       </div>
       <div class="card-grid g3">
-        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-upload"></i></span><h3>Deployment platforms <span class="avail">In this build</span></h3><p>Link an environment to Vercel, GitHub Actions, Railway or Fly, see names missing on either side, and push with each service's own tool. Every push asks; production needs a second confirmation. Pushes run in the app.</p>
+        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-upload"></i></span><h3>Deployment platforms <span class="avail">In this build</span></h3><p>Link an environment to Vercel, GitHub Actions, Railway or Fly, see names missing on either side, and push with each service's own tool. A service on your own Linux server can take its credentials over ssh, one file each. Every push asks; production needs a second confirmation. Pushes run in the app.</p>
           <pre>lk remote link shop/production fly app=shop-api
 lk remote status shop/production
 lk push shop/production --dry-run</pre><a class="more" href="developers/cli.html#remote">Remote locations</a></article>

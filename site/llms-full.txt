@@ -138,6 +138,7 @@ latchkey_export_referencesWrites an environment’s env file of references and p
 - Commands stop after timeout_seconds: 600 by default, at most 3600. Use it for tests, builds and scripts; run dev servers in a shell with latchkey run. A cancelled request stops its command.
 - Grants an agent asks for cover only the folder it runs in (and that repository’s worktrees), end when the agent quits or after a day at most, and can’t include production environments or a whole project. Grant those yourself with latchkey grant.
 - Approval panels for requests through the MCP server say they come from an agent.
+- Several requests in a row from the same agent in the same folder share one panel while it’s up, and one touch answers them; a grant until the agent quits stops the asking for the rest of the session.
 - Reading values, changing or deleting items, earlier values, remote locations and pushes aren’t offered.
 A latchkey_run result
 ```
@@ -526,7 +527,7 @@ Latchkey can’t make the new key for you: Stripe, GitHub, OpenAI and most servi
 ## Remote locations
 CommandWhat it does
 latchkey remote list [PROJECT/ENV]Links, with when each was last pushed.
-latchkey remote link PROJECT/ENV SERVICE KEY=VALUE...Link an environment. SERVICE is vercel, github, railway or fly. Asks.
+latchkey remote link PROJECT/ENV SERVICE KEY=VALUE...Link an environment. SERVICE is vercel, github, railway, fly or ssh (host= and script=; see a service on a Linux server). Asks.
 latchkey remote unlink LINKRemove a link. Doesn’t ask.
 latchkey remote status PROJECT/ENVNames missing on each side, and values changed since the last push.
 latchkey push PROJECT/ENV [--to LINK] [--only IDS] [--dry-run]Push values with each service’s own tool, values on standard input. Asks every time; production needs its own confirmation in the app. Nothing is deployed.
@@ -766,6 +767,9 @@ Forward the app's socket. Each read without the No Approval setting asks you on 
 export LATCHKEY_SOCKET=/tmp/latchkey-$USER.sock
 ```
 From another Mac over SSH
+### Locks like Passwords In this build
+The window locks when Latchkey opens, after 5 minutes in the background and when the Mac sleeps; Touch ID unlocks it. Approvals for commands and agents still work while it's locked.
+App lock
 ### Intel Macs Pending
 The app is built for Apple silicon and Intel. The release hasn't been tried on an Intel Mac yet.
 Install
@@ -779,7 +783,7 @@ Agents and tools
 ## Grant access for the task. Revoke it when the task is done.
 Agents run commands through lk run. You decide what reaches those commands: agent-safe items, grants for a folder and a time, or an approval each time.
 ### Ask, allow, and ask again when it matters
-The panel shows the agent, the programs it runs through, the folder and the command, all from macOS. A folder grant until the agent quits covers its next runs; a production item isn't covered, so it asks.
+The panel shows the agent, the programs it runs through, the folder and the command, all from macOS, with Touch ID right in it: touch the sensor from whatever app you're in. Several requests from the same agent share one panel and one touch. A folder grant until the agent quits covers its next runs; a production item isn't covered, so it asks.
 ### Grants with limits In this build
 For a folder (and its repository's worktrees), for up to 7 days, until the agent quits, for one command, or for one request. Kept where only Latchkey can change them.
 ```
@@ -815,7 +819,7 @@ Save a new key from the page that shows it, push values to deployment platforms 
 When a provider shows you a new key, Latchkey for Safari can recognize it and offer to save it: a Save to Latchkey button sits on the box that holds it. You choose what to save, where it goes and its name; approve, and the panel gives you the reference to use. Spotting happens in the page and nothing leaves it until you press Save. Detection depends on page permissions and supported patterns.
 What the extension can and can't reach
 ### Deployment platforms In this build
-Link an environment to Vercel, GitHub Actions, Railway or Fly, see names missing on either side, and push with each service's own tool. Every push asks; production needs a second confirmation. Pushes run in the app.
+Link an environment to Vercel, GitHub Actions, Railway or Fly, see names missing on either side, and push with each service's own tool. A service on your own Linux server can take its credentials over ssh, one file each. Every push asks; production needs a second confirmation. Pushes run in the app.
 ```
 lk remote link shop/production fly app=shop-api
 lk remote status shop/production
@@ -1489,9 +1493,18 @@ lk set VERCEL_TOKEN --kind token
 lk remote link shop/vercel.preview vercel project=shop environment=preview token=VERCEL_TOKEN
 ```
 The Mac App Store version can only push this way, and it can't push to GitHub. The CLI reference lists every key each service takes.
+## A service on a Linux server
+A service on your own Linux server can read its credentials from files, for example a systemd unit with LoadCredential=. Give the server a script that stores one credential from standard input, and link the environment to it over ssh. Name each item ADAPTER.ACCOUNT:
+Terminal
+```
+lk set distribution/production/bluesky.someone.bsky.social --kind token
+lk remote link distribution/production ssh host=myserver script=/srv/app/add-credential.sh
+lk push distribution/production
+```
+Latchkey runs sudo -n bash SCRIPT ADAPTER ACCOUNT --stdin on the server once per item, with your SSH keys and the value on standard input, and counts it as pushed only when the script prints stored ADAPTER.ACCOUNT. Your account needs a sudoers rule to run that script without a password. Every push to a server counts as production, since the script restarts the service. The script contract has the details; the direct download only.
 ## What this doesn't do
 - It deploys nothing. Railway and Fly would deploy by default, so Latchkey turns that off. New values take effect on the service's next deploy, which you start.
-- Unlinking stops tracking and pushing. Values already at the service stay there.
+- Unlinking stops tracking and pushing. Values already at the service stay there, on a Linux server too: Latchkey can't remove a credential the script stored.
 - Pushing Fly secrets through flyctl sends one line per value, so multi-line values aren't supported on that route. When you push through an API token, variable names must be letters, digits and underscores, and GitHub refuses names starting with GITHUB_.
 - Latchkey records what it sent, not what a service later does with it. A push always waits for your approval, so a script or agent can start one but can't complete it without you. Agents have no push tool.
 ## Related
@@ -2036,7 +2049,7 @@ M
 ### “Allow for this project” on the approval
 Built
 Gap: the system sheet can only say yes or no, with one line of context.
-Built: a Latchkey panel before Touch ID shows who is asking, from which folder and for which command, with Deny, Allow Once, and Allow from Folder for a set time.
+Built: a Latchkey panel shows who is asking, from which folder and for which command, with Deny, Allow Once, and Allow from Folder for a set time, and reads Touch ID right in the panel. Several requests from the same agent share one panel and one touch.
 - YouAgents
 M
 ### Verify callers by code signature
@@ -2074,7 +2087,7 @@ L
 ### Remote machines and services
 Built
 Gap: values are needed on servers, in CI and in hosted environments, and today they're copied by hand.
-Built: link an environment to Vercel, GitHub Actions, Railway or Fly; names-only status; push with approval every time and an extra confirmation for production; out-of-date tracking. Also built: forward the Latchkey socket over SSH, so a command on another Mac asks you on yours.
+Built: link an environment to Vercel, GitHub Actions, Railway or Fly; names-only status; push with approval every time and an extra confirmation for production; out-of-date tracking. Also built: forward the Latchkey socket over SSH, so a command on another Mac asks you on yours, and push credentials to a script on a Linux server over ssh. Next: agents on a Linux server that ask your Mac for values, with an identity for the server and grants it can use unattended.
 - YouAgents
 M
 ### Version history and recovery
@@ -2254,7 +2267,10 @@ Identity comes from the kernel, not the request.
 ## Releasing values
 Approvals, grants, and items agents may read.
 ### Approvals
-Approvals use macOS LocalAuthentication: Touch ID, a paired Apple Watch, or your account password. Releasing values shows the panel first, with the caller's folder, command and process chain; Touch ID confirms. Changes ask with the system sheet alone, naming the item, the agent and the folder. A request over SSH, or from a program that isn't Latchkey's tool, always shows the panel and its warning first. Nothing unanswered is allowed: either prompt denies after 90 seconds. Allow Once authorizes one request; approvals are never cached.
+Approvals use macOS LocalAuthentication: Touch ID, a paired Apple Watch, or your account password. Every request shows Latchkey's panel with what it covers and the caller's folder, command and process chain, and Touch ID is read inside the panel; Use Password… opens the system sheet. Touch ID runs in the Secure Enclave either way, so a lookalike panel drawn by another app gets a touch that authorizes nothing. Requests from the same process tree in the same folder that arrive while the panel is up are listed in it and answered by one touch, and a request joining restarts Touch ID. Pushes, requests over SSH, from Latchkey for Safari or from a program that isn't identified are always asked on their own. Nothing unanswered is allowed: a request is denied after two minutes. Allow Once authorizes one request; approvals are never cached.
+A request doesn't hold Latchkey while it waits for you. When you answer, it runs again from the start and uses your answer only if it asks the same thing about values that haven't changed; otherwise it asks again.
+### App lock
+Latchkey's window, Settings and menu bar panel lock behind Touch ID or your Mac password when it opens, after time in the background and when the Mac sleeps or the screen locks, and revealed values are hidden. The lock keeps the window private; it doesn't decide what's released. Requests from commands, agents and Safari still go through approval, locked or not.
 ### Grants
 A grant lets commands from one folder (and its repository's worktrees) read named items without asking, for up to 7 days, and can be narrowed to an agent's session, one command or one request. Grants are kept in a keychain item only Latchkey can read or change, on this Mac only. No file holds them, so no other program can write itself one. Grants an agent asks for through the MCP server cover only its own folder, last a day at most, and can't include production.
 ### Agent-safe items

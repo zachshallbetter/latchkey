@@ -69,7 +69,8 @@ turn on **Open Latchkey at login** in Settings to skip that wait.
 
 ## Your first item
 
-In the app, click **+ › New Item…**, or on the command line:
+Latchkey opens locked; touch the sensor, or use your Mac password, to unlock it ([Locking](app.md#locking)). In the
+app, click **+ › New Item…**, or on the command line:
 
 ```bash
 latchkey set GEMINI_API_KEY --kind token

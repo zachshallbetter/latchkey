@@ -60,21 +60,23 @@ still need agent-safe, a grant or your approval.
 
 ## Approvals
 
-Reading an item asks you, unless it's agent-safe or covered by a grant. The approval panel shows, before Touch ID:
+Reading an item asks you, unless it's agent-safe or covered by a grant. The approval panel shows:
 
 - the items,
 - the program asking and its parents (for example `zsh › claude`),
 - the folder it's running in,
 - the command it's about to start.
 
-Choose **Deny**, **Allow Once**, or **Allow from this folder for** 1 hour, 8 hours, 1 day or 7 days. Touch ID, a
-paired Apple Watch or your Mac password then confirms your choice. Requests you make in the Latchkey window go
-straight to Touch ID.
+Choose **Deny**, or allow once, or tick **Allow from this folder** for a time or until the agent quits, then touch
+the sensor: Touch ID listens inside the panel, from whatever app you're in. **Use Password…** opens the system sheet
+for your Mac password or an Apple Watch. Requests you make in the Latchkey window use the same panel.
 
-A panel nobody answers counts as a denial after 90 seconds. **Allow Once** authorizes one read request.
+Requests from the same agent in the same folder that arrive while the panel is up join it as rows, and one touch
+answers them all; each row can be denied on its own. A request nobody answers is denied after two minutes. **Allow
+Once** authorizes one read request.
 Approvals are not cached; repeated access needs an explicit grant or an item set to allow reads without approval.
 
-Changes (saving, deleting, moving, importing) always ask.
+Changes (saving, deleting, moving, importing) always ask, in the same panel.
 
 ## Agent-safe items
 

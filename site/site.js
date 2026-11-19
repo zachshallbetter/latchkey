@@ -23,7 +23,7 @@
     history: "Earlier values of an item: when and by whom. Never values",
     restore: "Put back an earlier value, or a deleted item",
     push: "Send an environment's values to its linked services",
-    remote: "Link environments to Vercel, GitHub Actions, Railway or Fly",
+    remote: "Link environments to Vercel, GitHub Actions, Railway, Fly or a Linux server over ssh",
     mcp: "Serve Latchkey's tools to an agent over MCP",
     log: "The access log: every release, change and refusal",
     status: "Where values are kept, and how you approve"

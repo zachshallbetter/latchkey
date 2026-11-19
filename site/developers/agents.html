@@ -253,6 +253,7 @@ latchkey run --env shop/development -- npm test</code></pre></figure>
 <li>Commands stop after <code>timeout_seconds</code>: 600 by default, at most 3600. Use it for tests, builds and scripts; run dev servers in a shell with <code>latchkey run</code>. A cancelled request stops its command.</li>
 <li>Grants an agent asks for cover only the folder it runs in (and that repository&rsquo;s worktrees), end when the agent quits or after a day at most, and can&rsquo;t include production environments or a whole project. Grant those yourself with <code>latchkey grant</code>.</li>
 <li>Approval panels for requests through the MCP server say they come from an agent.</li>
+<li>Several requests in a row from the same agent in the same folder share one panel while it&rsquo;s up, and one touch answers them; a grant until the agent quits stops the asking for the rest of the session.</li>
 <li>Reading values, changing or deleting items, earlier values, remote locations and pushes aren&rsquo;t offered.</li>
 </ul>
 <figure class="code"><figcaption><span>A latchkey_run result</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="json">{

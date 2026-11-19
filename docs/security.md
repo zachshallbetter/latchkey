@@ -47,6 +47,10 @@ command gets which value. This page says what it protects against, how, and wher
   same question (for releasing values, the same or fewer of the same items) and each item's value is unchanged (a
   SHA-256 of each value, kept in memory only for the wait). Otherwise it asks again, three times at most, then
   refuses. An approver that can show only one question at a time, the system sheet, is still asked one at a time.
+- **The app lock** hides the window, Settings and the menu bar panel behind a lock screen (Touch ID or the Mac
+  password) at launch, after time in the background, and on sleep or screen lock; nothing behind it is drawn, and
+  revealed values are hidden. It's a privacy screen for the window, not an authorization step: requests from
+  commands, agents and Safari go through approval whether it's locked or not, and unlocking releases nothing.
 - **Grants** are kept in a keychain item only Latchkey can read or change, on this Mac only, and last at most 7 days.
   No file holds them, so no other program can write itself one.
 - **The key proxy** (`latchkey run --proxy`) keeps OpenAI and Anthropic keys in the signed `latchkey` process, which
