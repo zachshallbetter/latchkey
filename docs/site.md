@@ -15,6 +15,7 @@ served. It's published at https://latchkey.snackstud.io from a Vercel project th
 | `site.css` | Shared styles: the icon set (`.ic .ic-NAME`, masks drawn in the text colour, after the SF Symbols the app uses; card symbols are `.cico`), colour tokens (light and dark) and section hues (`data-hue` on a section: blue, violet, teal, green, amber, rose, orange for Pro), header, footer, code blocks, the developer docs layout, feature rows, availability labels and the scenes |
 | `app-demo.js` | A working copy of the Latchkey window on the home page and Features, laid out as the app is, with example data: the sidebar (All Items, Review, Activity, projects, services, Grants, Recently Deleted, the iCloud Keychain badge), a flat list of two-line rows with search and Type and Environment filters, and the item's detail as cards (value, reference, type, access, service, project, environment, note, location, history, recent activity). Row icons and colours follow the app's `ItemType` in `App/Latchkey/Style.swift`; keep them in step. It listens for the approval scene's `lk:activity` and `lk:grant` events, and sends `lk:revoke` when a grant is revoked there. Showing or copying a value and changing access go through a Touch ID sheet, as in the app |
 | `site.js` | Copy buttons, and every code block coloured by part with an explanation of each on hover or focus: `lk` commands (action, option, value, the program it runs) and their synopses' placeholders, the other programs beside them (`SHELL`), env files and references, JSON fields (`JSONKEYS`), the agent note and the architecture diagram. Only the scenes and the home page's live demos are left alone. The explanations live in its `ACTIONS`, `FLAGS` and `ACTION_FLAGS`; keep them in step with the CLI and the API. On the home page each code block is one keyboard stop and the arrow keys move between parts; on the developer pages explanations are hover-only, since the tables there cover every option |
+| `changelog.html` | Every released version's notes, newest first, each under `id="vVERSION"`, written from `CHANGELOG.md` by `scripts/changelog-page.py` in the terms page's layout. The same script points every page's Changelog link here and sets the home page's "Latest version" (`<a data-latest-version>`). The update feed links each version's entry here |
 | `privacy.html`, `terms.html`, `support.html` | The privacy policy, terms of use (the App Store EULA for store copies, FSL for the source) and support, linked from every footer. Keep the privacy policy in step with every network request the app or tool makes |
 | `404.html` | The page for a missing path: `noindex`, root-absolute links, what `lk get` prints for a missing name (copied from `failMissing` in `Sources/latchkey/main.swift`), and cards to Features, Pricing, Security and reporting a broken link |
 | `og.png`, `social/` | Social cards, 1200×630: `og.png` for the home page, and one per page in `social/`, all drawn from `scripts/og-image.html` by headless Chrome (`scripts/social-images.py` for the per-page cards) |
@@ -129,8 +130,9 @@ with no build, and turns off Git deployments, so pushes and merges never deploy.
 vercel deploy --prod
 ```
 
-Before publishing, regenerate the social cards if a page's title or description changed, then the discovery files,
-so each page's date is its last change and `llms-full.txt` matches the pages:
+Before publishing, regenerate the changelog page if `CHANGELOG.md` changed (`python3 scripts/changelog-page.py`), the
+social cards if a page's title or description changed, then the discovery files, so each page's date is its last
+change and `llms-full.txt` matches the pages:
 
 ```bash
 python3 scripts/social-images.py

@@ -107,6 +107,7 @@ Add tests in `RemoteTests.swift` with `FakeRunner`; no test should run a real to
 ```bash
 swift test
 node --test App/Safari/*.test.js
+python3 -B -m unittest discover -s scripts/tests -p 'test_*.py'
 ```
 
 The `LatchkeyRunTests` target tests command preparation without contacting the real app: proxy refusal,

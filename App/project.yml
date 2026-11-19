@@ -15,8 +15,8 @@ packages:
 settings:
   base:
     DEVELOPMENT_TEAM: "PKH7G93GGD"
-    MARKETING_VERSION: "0.3.1"
-    CURRENT_PROJECT_VERSION: "6"
+    MARKETING_VERSION: "0.4.0"
+    CURRENT_PROJECT_VERSION: "7"
     # Sparkle's EdDSA public key, from `generate_keys --account latchkey -p` (the private half stays in the owner's
     # login keychain). If it's emptied, the updater doesn't start and builds still work.
     SPARKLE_PUBLIC_KEY: "eJTn6VgMvJ0jEYhutrXtdQPVw9scUNCBPltNl62wpTY="
@@ -25,7 +25,11 @@ targets:
   Latchkey:
     type: application
     platform: macOS
-    sources: [Latchkey]
+    sources:
+      - path: Latchkey
+      # Release notes for the What's New window (WhatsNew.swift).
+      - path: ../CHANGELOG.md
+        buildPhase: resources
     dependencies:
       - package: LatchkeyCore
         product: LatchkeyCore

@@ -205,6 +205,7 @@ struct SettingsView: View {
     @ViewBuilder private var about: some View {
         Section("Latchkey") {
             LabeledContent("Version", value: "\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Development") (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"))")
+            Button("What's New in This Version…") { model.openWhatsNew() }
             #if LATCHKEY_APP_STORE
             LabeledContent("Distribution", value: "Mac App Store")
             SettingsNote("Updates are delivered through the Mac App Store.")

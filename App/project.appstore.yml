@@ -22,6 +22,8 @@ targets:
         excludes: [Info.plist]
       - path: Privacy/App/PrivacyInfo.xcprivacy
         buildPhase: resources
+      - path: ../CHANGELOG.md
+        buildPhase: resources
     entitlements:
       path: AppStore/Latchkey.entitlements
       properties:REPLACE:

@@ -1,23 +1,25 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 (2026-11-18)
 
 ### App
-- The Upgrade sheet describes each Pro group with its planned features, as the site does, and says the core
-  never depends on Pro instead of promising it stays free.
-- A new remote location, **SSH**, pushes to a credential script on a Linux host over your ssh connection, one item
-  per credential (`ADAPTER.ACCOUNT`) with the value on standard input: `latchkey remote link distribution/production
-  ssh host=titan script=/path/to/add-credential.sh`. It always counts as production, its status comes from
-  Latchkey's push record, and the direct download only (#96).
-- Approvals are one small panel with Touch ID inside it, for releases and changes alike; **Use Password…** opens the
-  system sheet. Requests from the same agent in the same folder that arrive while it's up join it as rows, so one
-  touch answers a burst; each row can be denied on its own. Pushes, SSH, Safari and unidentified programs are still
-  asked on their own.
 - Latchkey locks, as Passwords does: when it opens, after 5 minutes in the background (1, 5, 15 or 60 in Settings ›
   Privacy), and when the Mac sleeps or the screen locks. Touch ID is asked for right in the lock screen, with no
   system sheet; **Use Password…** opens the sheet for the Mac password. While locked the
   window, Settings and the menu bar panel show nothing but the lock screen. **Lock Latchkey** (⌃⌘L) and **Lock** in
   the menu bar panel lock it by hand. The lock covers the app only: approvals for commands, agents and Safari still appear while it is locked.
+- Approvals are one small panel with Touch ID inside it, for releases and changes alike; **Use Password…** opens the
+  system sheet. Requests from the same agent in the same folder that arrive while it's up join it as rows, so one
+  touch answers a burst; each row can be denied on its own. Pushes, SSH, Safari and unidentified programs are still
+  asked on their own.
+- A new remote location, **SSH**, pushes to a credential script on a Linux host over your ssh connection, one item
+  per credential (`ADAPTER.ACCOUNT`) with the value on standard input: `latchkey remote link distribution/production
+  ssh host=titan script=/path/to/add-credential.sh`. It always counts as production, its status comes from
+  Latchkey's push record, and the direct download only (#96).
+- **What's New** shows each version's changes once after it updates, and again from **Latchkey › What's New in
+  Latchkey…** or Settings › About. Update notices from the direct download show the same notes.
+- The Upgrade sheet describes each Pro group with its planned features, as the site does, and says the core
+  never depends on Pro instead of promising it stays free.
 - The item list is in sections: by project in All Items (Shared first), by environment in a project, or by service or
   type from **Group By** in the list's menu. Each section is a compact row like the sidebar's, with its icon and count,
   that opens or folds; past eight sections they start folded. Rows no longer repeat what their section says.
@@ -26,6 +28,22 @@
 - The sidebar's project list has a filter field once there are more than a dozen projects.
 - Project and service icons sit on a tile that follows light and dark mode; an icon that is already a filled square
   (an app icon) is drawn without a white frame, and a dark logo keeps a light tile in dark mode so it stays visible.
+
+- Settings has its own window with a tab for each section (General, Privacy, Storage, Developer, Membership,
+  About), instead of a column in the main window that looked like the item list. **Settings…** at the bottom of the
+  sidebar, ⌘, and the menu bar panel open it.
+- Settings › Developer shows the command-line tool when it's installed outside the app (`scripts/install.sh`,
+  Homebrew), instead of saying there isn't one.
+- About shows the copyright, licence and website, and the direct download's About panel has its copyright line.
+- Clicking the menu bar key opens the window; right-clicking (or Control-clicking) it shows the quick panel. The
+  panel's item list is sized to its items instead of collapsing to a sliver, and the key has room around it.
+- Quitting with ⌘Q now leaves Latchkey in the menu bar too, under the same setting as quitting from the Dock (now
+  **Keep running in the menu bar when I quit**). Quit in the menu bar panel, logging out and scripts still quit it.
+- Settings › Developer Tools shows whether Latchkey for Safari is on and opens Safari's Extensions settings with it
+  selected, so it can be turned on from the app.
+- `scripts/install.sh` now forgets every other copy of the app macOS has registered (other worktrees' builds,
+  Xcode archives), not just its own build folder. With stale copies registered, Safari could resolve Latchkey's
+  extension to one of them and **Turn On in Safari…** failed with SFErrorDomain error 1.
 
 ### Security
 - The broker no longer holds its lock while a request waits for approval. The request runs again after the answer
@@ -50,24 +68,6 @@
   the repository's `.git` folder.
 - The grant command suggested after a refused run quotes the folder when its name has anything but ordinary path
   characters, so a folder name can't turn into shell syntax when the command is pasted.
-
-### App
-- Settings has its own window with a tab for each section (General, Privacy, Storage, Developer, Membership,
-  About), instead of a column in the main window that looked like the item list. **Settings…** at the bottom of the
-  sidebar, ⌘, and the menu bar panel open it.
-- Settings › Developer shows the command-line tool when it's installed outside the app (`scripts/install.sh`,
-  Homebrew), instead of saying there isn't one.
-- About shows the copyright, licence and website, and the direct download's About panel has its copyright line.
-- Clicking the menu bar key opens the window; right-clicking (or Control-clicking) it shows the quick panel. The
-  panel's item list is sized to its items instead of collapsing to a sliver, and the key has room around it.
-- Quitting with ⌘Q now leaves Latchkey in the menu bar too, under the same setting as quitting from the Dock (now
-  **Keep running in the menu bar when I quit**). Quit in the menu bar panel, logging out and scripts still quit it.
-- Settings › Developer Tools shows whether Latchkey for Safari is on and opens Safari's Extensions settings with it
-  selected, so it can be turned on from the app.
-- `scripts/install.sh` now forgets every other copy of the app macOS has registered (other worktrees' builds,
-  Xcode archives), not just its own build folder. With stale copies registered, Safari could resolve Latchkey's
-  extension to one of them and **Turn On in Safari…** failed with SFErrorDomain error 1.
-||||||| parent of 80b446f (Upgrade sheet describes Pro with its planned features)
 
 ### Mac App Store
 - The App Store version leaves out GitHub Actions pushes, so it uses only Apple's encryption and needs no export
