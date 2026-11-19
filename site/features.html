@@ -221,9 +221,9 @@ lk scan --install-hook</pre><a class="more" href="developers/cli.html#scan">Scan
               <div class="mw-bar"><i></i><i></i><i></i><span>Terminal — ~/Projects/shop</span></div>
 <pre id="imp-tty"><span class="l"><span class="p">~/Projects/shop $</span> lk import .env.local --rewrite --skip PORT</span><span class="l">recorded shop/development: DATABASE_URL, OPENAI_API_KEY, STRIPE_KEY</span><span class="l">added    shop/development/DATABASE_URL  password</span><span class="l">added    shop/development/OPENAI_API_KEY  token</span><span class="l">added    shop/development/STRIPE_KEY  token</span><span class="l">rewrote .env.local: 3 values now latchkey://ID</span><span class="l"><span class="d">next: lk run --env-file .env.local -- &lt;your command&gt;</span></span></pre>
             </div>
-            <div class="sheet touch off" id="imp-touch" style="left:185px;top:120px">
-              <svg class="fp" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg>
-              <p><b>Latchkey is trying to import 3 items</b></p><p>Touch ID or enter your password.</p>
+            <div class="sheet off" id="imp-touch" style="left:185px;top:120px;width:230px">
+              <div class="sheet-head"><span class="mark"><img src="logo.svg" alt=""></span><div><p class="sh">Terminal wants to import 3 items</p><small>Terminal in ~/Projects/shop</small></div></div>
+              <div class="tid"><svg class="fp" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg><small>Touch ID to allow</small></div>
             </div>
           </div>
         </div>
@@ -279,6 +279,7 @@ lk project</pre><a class="more" href="developers/cli.html#environments">Projects
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-shieldcheck"></i></span><h3>Signed app access <span class="avail">In this build</span></h3><p>Only the signed Latchkey app can read its keychain group. The <code>lk</code> tool never touches the keychain; it checks the app's signature before sending anything.</p><a class="more" href="security.html#storage">Storage and sync</a></article>
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-macs"></i></span><h3>Use it from another Mac over SSH <span class="avail">In this build</span></h3><p>Forward the app's socket. Each read without the No Approval setting asks you on your own Mac; local grants don't apply over the connection. Direct download only, for now.</p>
           <pre>export LATCHKEY_SOCKET=/tmp/latchkey-$USER.sock</pre><a class="more" href="developers/agents.html#ssh">From another Mac over SSH</a></article>
+        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-shieldcheck"></i></span><h3>Locks like Passwords <span class="avail">In this build</span></h3><p>The window locks when Latchkey opens, after 5 minutes in the background and when the Mac sleeps; Touch ID unlocks it. Approvals for commands and agents still work while it's locked.</p><a class="more" href="security.html#release">App lock</a></article>
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-laptop"></i></span><h3>Intel Macs <span class="avail pending">Pending</span></h3><p>The app is built for Apple silicon and Intel. The release hasn't been tried on an Intel Mac yet.</p><a class="more" href="index.html#install">Install</a></article>
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-sync"></i></span><h3>Updates itself <span class="avail">In this build</span></h3><p>The direct download checks for updates with Sparkle, or install and upgrade with Homebrew. It sends no system profile; the Mac App Store version updates through the store.</p>
           <pre>brew install --cask latchkey</pre><a class="more" href="developers/quickstart.html#install">Installing</a></article>
@@ -289,7 +290,7 @@ lk project</pre><a class="more" href="developers/cli.html#environments">Projects
       <header class="shead"><p class="eyebrow">Agents and tools</p><h2 id="agents-title">Grant access for the task. Revoke it when the task is done.</h2>
         <p>Agents run commands through <code>lk run</code>. You decide what reaches those commands: agent-safe items, grants for a folder and a time, or an approval each time.</p></header>
       <div class="feature">
-        <div class="copy"><h3>Ask, allow, and ask again when it matters</h3><p>The panel shows the agent, the programs it runs through, the folder and the command, all from macOS. A folder grant until the agent quits covers its next runs; a production item isn't covered, so it asks.</p></div>
+        <div class="copy"><h3>Ask, allow, and ask again when it matters</h3><p>The panel shows the agent, the programs it runs through, the folder and the command, all from macOS, with Touch ID right in it: touch the sensor from whatever app you're in. Several requests from the same agent share one panel and one touch. A folder grant until the agent quits covers its next runs; a production item isn't covered, so it asks.</p></div>
         <div class="scene-wrap" data-scene="agent" style="--w:600;--h:360;--pw:360;--ph:520" aria-hidden="true">
           <div class="canvas">
             <div class="mw tty" style="left:12px;top:12px;width:576px;height:336px">
@@ -297,10 +298,12 @@ lk project</pre><a class="more" href="developers/cli.html#environments">Projects
 <pre id="agent-tty"><span class="l"><span class="p">~/Projects/shop $</span> lk run --env shop/development -- npm test -- --watch=false</span><span class="l"><span class="d"> Test Files  2 passed (2)</span></span><span class="l"><span class="p">~/Projects/shop $</span> lk run --env shop/production -- npm run migrate</span><span class="l"><span class="err">latchkey: refused: shop/production/DATABASE_URL (not agent-safe, not approved, no grant)</span></span><span class="l"><span class="k">⏺ Claude</span> <span class="d">Latchkey refused that (exit 77), so I'll stop and ask you.</span></span></pre>
             </div>
             <div class="sheet off" id="agent-panel" style="left:132px;top:34px;width:336px">
-              <div class="sheet-head"><span class="mark"><img src="logo.svg" alt=""></span><div><p class="sh" id="agent-title">Claude wants to use 2 items</p><small>Latchkey</small></div></div>
-              <dl><dt>Items</dt><dd id="agent-items">shop/development/DATABASE_URL, shop/development/STRIPE_KEY</dd><dt>Asked by</dt><dd>Claude, via zsh › claude › Terminal</dd><dt>Folder</dt><dd>~/Projects/shop</dd><dt>Command</dt><dd id="agent-cmd">lk run --env shop/development -- npm test</dd></dl>
+              <div class="sheet-head"><span class="mark"><img src="logo.svg" alt=""></span><div><p class="sh" id="agent-title">Claude wants to use 2 items</p><small>Claude in ~/Projects/shop</small></div></div>
+              <p class="items" id="agent-items">shop/development/DATABASE_URL, shop/development/STRIPE_KEY</p>
+              <p class="det">› Details <span hidden id="agent-cmd">lk run --env shop/development -- npm test</span></p>
               <div class="box"><div class="chk" id="agent-grant"><i></i>Allow from this folder <span class="pop">until claude quits ▾</span></div><div class="chk dim" id="agent-only"><i></i><span>Only for npm test</span></div></div>
-              <div class="acts"><small>Touch ID confirms your choice.</small><span class="b" id="agent-deny">Deny</span><span class="b go" id="agent-allow">Allow Once</span></div>
+              <div class="tid" id="agent-tid"><svg class="fp" viewBox="0 0 48 48" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg><small id="agent-tid-label">Touch ID to allow once</small></div>
+              <div class="acts"><span class="b" id="agent-deny">Deny</span><span class="b" id="agent-allow">Use Password…</span></div>
             </div>
             <span class="tagnote off" id="agent-note" style="left:330px;top:250px">No panel: the folder grant covers this run</span>
             <svg class="cursor" viewBox="0 0 18 22" style="transform:translate(470px,300px)"><path d="M1.5 1.5v16.2l4.2-4 2.7 6.3 2.8-1.2-2.7-6.2h5.9z" fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/></svg>
@@ -356,7 +359,7 @@ lk grant 'shop/development/*' --command "npm test" --for 2h</pre><a class="more"
         </div>
       </div>
       <div class="card-grid g3">
-        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-upload"></i></span><h3>Deployment platforms <span class="avail">In this build</span></h3><p>Link an environment to Vercel, GitHub Actions, Railway or Fly, see names missing on either side, and push with each service's own tool. Every push asks; production needs a second confirmation. Pushes run in the app.</p>
+        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-upload"></i></span><h3>Deployment platforms <span class="avail">In this build</span></h3><p>Link an environment to Vercel, GitHub Actions, Railway or Fly, see names missing on either side, and push with each service's own tool. A service on your own Linux server can take its credentials over ssh, one file each. Every push asks; production needs a second confirmation. Pushes run in the app.</p>
           <pre>lk remote link shop/production fly app=shop-api
 lk remote status shop/production
 lk push shop/production --dry-run</pre><a class="more" href="developers/cli.html#remote">Remote locations</a></article>

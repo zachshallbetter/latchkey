@@ -19,7 +19,7 @@ served. It's published at https://latchkey.snackstud.io from a Vercel project th
 | `404.html` | The page for a missing path: `noindex`, root-absolute links, what `lk get` prints for a missing name (copied from `failMissing` in `Sources/latchkey/main.swift`), and cards to Features, Pricing, Security and reporting a broken link |
 | `og.png`, `social/` | Social cards, 1200×630: `og.png` for the home page, and one per page in `social/`, all drawn from `scripts/og-image.html` by headless Chrome (`scripts/social-images.py` for the per-page cards) |
 | `cli.html` | Getting the command-line tool: Homebrew or the signed download for the Mac App Store version, or from inside the direct download |
-| `guides/` | Sixteen task-sized guides in four categories (env files, coding agents, deploying, everyday use) and their index, in the developer docs' layout: the shared sidebar (which links to the categories), breadcrumbs, "On this page", an "In short" answer and a "What this doesn't do" section. Each is a `TechArticle` with a byline; commands and limits come from `docs/`, as on every page. Links start with `../` |
+| `guides/` | Seventeen task-sized guides in four categories (env files, coding agents, deploying, everyday use) and their index, in the developer docs' layout: the shared sidebar (which links to the categories), breadcrumbs, "On this page", an "In short" answer and a "What this doesn't do" section. Each is a `TechArticle` with a byline; commands and limits come from `docs/`, as on every page. Links start with `../` |
 | `humans.txt` | Who makes Latchkey and how the site is built |
 | `favicon.ico`, `favicon-32.png`, `icon-*.png`, `site.webmanifest` | Browser and home-screen icons, rendered from the app icon's own artwork (`App/Latchkey/AppIcon.icon`) |
 | `llms-full.txt` | The text of every page's main content, written by `scripts/discovery.py` |
@@ -31,8 +31,8 @@ served. It's published at https://latchkey.snackstud.io from a Vercel project th
 | `robots.txt` | Crawl policy |
 
 The home page's interactive approval panel ("Try it") follows the real sequence: the panel as the app draws it
-(Allow Once, or Allow from this folder for a time, until the agent quits or only for this command), then the
-system's Touch ID sheet with Latchkey's own wording, then the result, recorded in the menu bar panel above the
+(allow once, or Allow from this folder for a time, until the agent quits or only for this command), with Touch ID
+read in the panel (click the fingerprint to touch the sensor; **Use Password…** does the same), then the result, recorded in the menu bar panel above the
 terminal and in the app window further down. As the command is typed, a completion list appears under it, drawn
 from the same explanations. The visitor plays the person at the Mac: Deny prints the real refusal, Allow Once runs
 the tests with the value concealed, and a grant shows the next run going through or, limited to one command, asking

@@ -2,7 +2,7 @@
 // Activity, projects, services, Grants, Recently Deleted), a flat list of two-line rows with search and filters, and
 // the item's detail as cards. Icons and their colours follow the app's ItemType (App/Latchkey/Style.swift). What the
 // visitor does in the approval scene on the home page arrives here as lk:activity and lk:grant events; elsewhere it
-// starts from the example data. Revealing or copying a value and changing access ask for Touch ID, as the app does.
+// starts from the example data. Revealing or copying a value and changing access ask in the approval panel, as the app does.
 (function () {
   var root = document.getElementById("appwin");
   if (!root) return;
@@ -88,10 +88,12 @@
   }
   function env(e) { return '<span class="env env-' + esc(e) + '">' + esc(e) + "</span>"; }
 
-  // ---- Touch ID inside the window, for reveals, copies and changes made in the app.
+  // ---- The approval panel, for reveals, copies and changes made in the app: the request as a question, and Touch ID
+  // read in the panel. Callers word it as the system sheet did ("Latchkey is trying to …").
   function touchID(text) {
     var sheet = root.querySelector(".touch");
-    sheet.querySelector(".touch-text").textContent = text;
+    var what = text.replace(/^Latchkey is trying to /, "").replace(/\.$/, "");
+    sheet.querySelector(".touch-text").textContent = what.charAt(0).toUpperCase() + what.slice(1) + "?";
     return new Promise(function (resolve) {
       var done = false, timer;
       function end(ok) {
@@ -223,12 +225,12 @@
     }
   }
 
-  // The Touch ID sheet's icon: a fingerprint with Latchkey's mark, as macOS draws it for the app.
+  // The panel's fingerprint, with Latchkey's mark.
   var logo = (document.querySelector('link[rel="icon"]') || { getAttribute: function () { return "logo.svg"; } }).getAttribute("href");
   root.innerHTML = '<div class="chrome"><i></i><i></i><i></i><span class="sb">' + ic("sidebar") + '</span></div><div class="body"></div>' +
     '<div class="touch" hidden role="dialog" aria-label="Touch ID"><div class="touch-icon">' + ic("fingerprint") + '<img src="' + logo + '" alt=""></div>' +
-    '<p class="touch-text"></p><p class="touch-sub">Touch ID or enter your password to continue with Latchkey.</p>' +
-    '<button type="button" class="touch-btn" data-t="pw">Use Password…</button><button type="button" class="touch-btn" data-t="deny">Deny</button></div>';
+    '<p class="touch-text"></p><p class="touch-sub">Touch ID to allow</p>' +
+    '<button type="button" class="touch-btn" data-t="deny">Deny</button><button type="button" class="touch-btn" data-t="pw">Use Password…</button></div>';
   render();
   setInterval(function () { if (!root.contains(document.activeElement) || !document.activeElement.matches(".search input")) render(); }, 60000);
 

@@ -244,7 +244,7 @@
     reset: function (s) {
       s.clear(s.$("#agent-tty")); s.prompt(s.$("#agent-tty"));
       s.hide("#agent-panel"); s.hide("#agent-note"); s.on("#agent-grant", "on", false); s.on("#agent-only", "dim", true);
-      s.$("#agent-allow").textContent = "Allow Once";
+      s.on("#agent-tid", "ok", false); s.$("#agent-tid-label").textContent = "Touch ID to allow once";
       s.$("#agent-title").textContent = "Claude wants to use 2 items";
       s.$("#agent-items").textContent = "shop/development/DATABASE_URL, shop/development/STRIPE_KEY";
       s.$("#agent-cmd").textContent = "lk run --env shop/development -- npm test";
@@ -263,11 +263,11 @@
       await s.pointAt("#agent-grant i", 0, 4);
       await s.click();
       s.on("#agent-grant", "on"); s.on("#agent-only", "dim", false);
-      s.$("#agent-allow").textContent = "Allow from Folder";
-      await s.wait(500);
-      await s.pointAt("#agent-allow", 0, 4, 600);
-      await s.click(s.$("#agent-allow"));
-      await s.wait(300);
+      s.$("#agent-tid-label").textContent = "Touch ID to allow from folder";
+      await s.wait(700);
+      // A finger on the sensor: the fingerprint in the panel reads it.
+      s.on("#agent-tid", "ok");
+      await s.wait(600);
       s.hide("#agent-panel");
       await s.rest(700);
       await s.lines(tty, ['<span class="d"> ✓ db/connect.test.ts (3 tests)</span>', '   connecting to <span class="c">&lt;concealed by latchkey&gt;</span>',
@@ -283,7 +283,8 @@
       s.$("#agent-items").textContent = "shop/production/DATABASE_URL";
       s.$("#agent-cmd").textContent = "lk run --env shop/production -- npm run migrate";
       s.$("#agent-only span").textContent = "Only for npm run migrate";
-      s.on("#agent-grant", "on", false); s.on("#agent-only", "dim", true); s.$("#agent-allow").textContent = "Allow Once";
+      s.on("#agent-grant", "on", false); s.on("#agent-only", "dim", true);
+      s.on("#agent-tid", "ok", false); s.$("#agent-tid-label").textContent = "Touch ID to allow once";
       s.show("#agent-panel");
       await s.wait(900);
       await s.pointAt("#agent-deny", 0, 4, 700);

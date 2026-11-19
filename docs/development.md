@@ -60,6 +60,12 @@ latchkey (CLI) ──JSON over a Unix socket──► Broker (in the app) ──
   (`Approver.groupsRequests`), and keeps the system sheet for Use Password…. `Broker.handle` asks outside its lock in
   two passes: the first records the question (`decide`), the second uses the answer only if `Broker.covers` it and
   no item's value changed.
+- **Inline Touch ID** (`InlineTouchID` in MainWindow.swift) is the system's `LAAuthenticationView` at its small size
+  (32 pt; the sizes are fixed, and a scaled one stops drawing and evaluating). The approval panel is a non-activating
+  `NSPanel` and starts Touch ID as soon as it's on screen (`needsKeyWindow: false`); the lock screen starts only in a
+  key window and stops when its window loses the keyboard, so it can't take a touch meant for a panel. Each start and
+  end is logged under `io.snackstud.latchkey` / `touchid`, with no values or reasons:
+  `log show --last 10m --predicate 'subsystem == "io.snackstud.latchkey" AND category == "touchid"'`.
 - **`PeerInfo`** reads the caller's PID, working folder and command line from the kernel and walks parent processes.
   **`CodeIdentity`** checks code signatures through the socket's audit token: the app recognizes its own tool
   (`io.snackstud.latchkey.cli`), and the tool refuses to talk to anything but the app (`io.snackstud.latchkey`), both

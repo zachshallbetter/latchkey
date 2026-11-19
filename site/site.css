@@ -360,7 +360,14 @@ html:not(.js) .scene-wrap[style*="--ph"] { aspect-ratio: var(--w) / var(--h); }
 .sheet .chk.on i::after { content: ""; width: 6px; height: 3px; border-left: 1.6px solid #fff; border-bottom: 1.6px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
 .sheet .chk.dim { color: var(--muted); }
 .sheet .pop { margin-left: 4px; padding: 0 6px; border-radius: 5px; border: 1px solid var(--line); background: var(--surface); }
-.sheet .acts { display: flex; align-items: center; gap: 6px; }
+.sheet .acts { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+/* The approval panel's own Touch ID: the fingerprint and what a touch does, inside the panel. */
+.sheet .items { margin: 0 0 6px; font: 500 10.5px/1.5 var(--mono); overflow-wrap: anywhere; }
+.sheet .det { margin: 0 0 8px; color: var(--muted); font-size: 10.5px; }
+.sheet .tid { display: flex; flex-direction: column; align-items: center; gap: 3px; margin: 2px 0 8px; }
+.sheet .tid .fp { width: 26px; height: 26px; color: #ff3b30; transition: color .3s; }
+.sheet .tid.ok .fp, .sheet.ok .tid .fp { color: #34c759; }
+.sheet .tid small { color: var(--muted); font-size: 10.5px; }
 .sheet .acts small { margin-right: auto; color: var(--muted); font-size: 10.5px; }
 .sheet .b { white-space: nowrap; padding: 3px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; transition: filter .15s; }
 .sheet .b.go { background: var(--accent); color: var(--accent-ink); border-color: transparent; }

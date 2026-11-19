@@ -151,24 +151,42 @@ and **Add a Location…**. See [Remote locations](remote.md).
 ## The approval panel
 
 Every approval is one small panel titled like "Claude wants to use 2 items", with who and where under it ("Claude in
-~/Projects/shop"), every item it covers, and the Touch ID glyph with what a touch does ("Touch ID to allow once").
-**Details** opens the process chain, the folder and the command that receives the values. **Use Password…** brings up the macOS sheet for your password or
-an Apple Watch; a Mac without Touch ID shows **Allow…**, which does the same.
+~/Projects/shop"), every item it covers, and the Touch ID fingerprint with what a touch does ("Touch ID to allow
+once"). **Details** opens the process chain, the folder and the command that receives the values.
+
+The panel appears over whatever app you're in, without bringing Latchkey's window forward, and Touch ID listens as
+soon as it appears: touch the sensor, with no click first. The fingerprint is grey until there's something to allow
+(a production push waits for its box) and turns red while it reads. **Use Password…** brings up the macOS sheet for
+your password or an Apple Watch; a Mac without Touch ID shows **Allow…**, which does the same.
 
 - **Releasing values to a command:** allow once, or tick **Allow from this folder** (for a time, until the agent
   quits, or only for this command). Earlier values, grants asked for ahead of time and changes (add, change, delete,
   import, move, restore, link) show the same panel. A change that lets agents read an item without approval, or makes
   it a plain value, says so.
 - **Several requests at once:** requests from the same agent in the same folder that come in while the panel is up
-  join it as rows, titled like "Claude is asking for 3 things", so one touch answers them all. Each row names every item it
-  covers (its command is under **Details**), and its ⓧ denies that one alone. A request joining starts Touch ID over, so a touch
-  can't allow one that just appeared. Requests from anyone else wait for the next panel.
+  join it as rows, titled like "Claude is asking for 3 things", so one touch answers them all. Each row names every
+  item it covers (its command is under **Details**), and its ⓧ denies that one alone. A request joining starts Touch
+  ID over, so a touch can't allow one that just appeared. Requests from anyone else wait for the next panel.
 - **Asked on their own:** pushes, where production needs **I mean to change production** ticked first; requests
   from another computer over SSH, from a program that isn't Latchkey's command-line tool (both with a warning), and
   from Latchkey for Safari.
 - A request that waits two minutes without an answer, on the panel or behind another, is denied. A request whose
   items change while it waits (another change was approved meanwhile) asks again instead of using the answer.
 See [Concepts](concepts.md#approvals).
+
+## Locking
+
+Latchkey locks as Passwords does: when it opens, after a time in the background (5 minutes by default; 1, 5, 15 or
+60 in **Settings › Privacy**), and when the Mac sleeps or the screen locks. **Lock Latchkey** (⌃⌘L), **Lock Now** in
+Settings and **Lock** in the menu bar panel lock it by hand, even with automatic locking turned off.
+
+- **What it covers:** the window, Settings and the menu bar panel show only the lock screen, and revealed values are
+  hidden. Nothing behind the lock screen is drawn.
+- **Unlocking:** Touch ID inside the lock screen, with no system sheet; it listens while the window is in front, and
+  lets go when an approval panel takes over, so a touch meant for the approval isn't taken by the lock screen.
+  **Use Password…** (or a Mac without Touch ID) opens the system sheet for your password or an Apple Watch.
+- **What it doesn't cover:** requests from commands, agents and Latchkey for Safari still show the approval panel,
+  locked or not. The lock keeps the window private; approvals decide what's released.
 
 After an import or a new item, Latchkey shows what to do next: the reference to put in your env file and the
 `lk run` command for that folder, ready to copy.
@@ -198,14 +216,9 @@ sidebar, or use **Latchkey › Settings…** or the menu bar panel's **Settings�
 
 - **General**: follow macOS appearance or choose Light/Dark, open at login, and choose whether quitting from the
   Dock or with ⌘Q keeps Latchkey running in the menu bar. Quit in the menu bar panel always exits.
-- **Privacy**: lock Latchkey automatically (on by default) and choose how long it may sit in the background before
-  it locks: 1, 5, 15 or 60 minutes. It also locks when it opens and when the Mac sleeps or the screen locks; **Lock
-  Now**, **Lock Latchkey** (⌃⌘L) in the app menu and **Lock** in the menu bar panel lock it by hand even with
-  automatic locking off. While locked the window, Settings and the menu bar panel show only the lock screen, revealed
-  values are hidden. Touch ID is asked for inside the lock screen itself, with no system sheet, as in Passwords;
-  **Use Password…** (or a Mac without Touch ID) brings up the system sheet for the Mac password or an Apple Watch. The lock is for the app's own window: requests from
-  commands, agents and Safari keep going through approval as before, locked or not. Clear copied values after 15, 30, 60 or 120 seconds; hide revealed values after 10, 30 or
-  60 seconds; hide revealed values when the app loses focus; or hide them immediately. Timer changes apply on
+- **Privacy**: lock Latchkey automatically (on by default) and after how long in the background: 1, 5, 15 or 60
+  minutes (see [Locking](#locking)). Clear copied values after 15, 30, 60 or 120 seconds; hide revealed values after
+  10, 30 or 60 seconds; hide revealed values when the app loses focus; or hide them immediately. Timer changes apply on
   the next copy or reveal. Closing the window also hides values. Clipboard clearing preserves anything copied
   afterward; values stay on this Mac and retain the clipboard-manager concealment markers. This section also
   explains approval and links to active grants. No preference bypasses authorization.

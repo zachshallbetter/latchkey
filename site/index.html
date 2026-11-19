@@ -126,8 +126,18 @@
     .panel .grant div label { margin: 0; }
     .panel select { font: 500 13px var(--sans); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 2px 4px; }
     .panel select:disabled, .panel label:has(input:disabled) { opacity: .55; }
-    .panel .row { display: flex; align-items: center; gap: 8px; }
-    .panel .row small { margin-right: auto; color: var(--muted); font-size: 12px; }
+    .panel .items { margin: 0 0 8px; font: 500 12.5px/1.6 var(--mono); overflow-wrap: anywhere; }
+    .panel .det { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+    .panel .det summary { cursor: pointer; }
+    .panel .det dl { margin: 8px 0 0; }
+    .panel .tid { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; margin: 0 0 10px; padding: 4px;
+                  border: 0; background: none; color: var(--muted); font: 500 13px var(--sans); cursor: pointer; }
+    .panel .tid svg { width: 34px; height: 34px; color: #ff3b30; }
+    .panel .tid:disabled { cursor: default; }
+    .panel .tid:disabled svg { color: var(--muted); opacity: .6; }
+    .panel .tid.reading svg { animation: read 1.2s ease-in-out infinite; }
+    .panel .tid.ok svg { color: #34c759; }
+    .panel .row { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
     .panel .btn { white-space: nowrap; padding: 5px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 13px; }
     .panel .btn.go { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
 
@@ -436,9 +446,9 @@ lk import .env.local --rewrite --skip PORT</code></pre></figure>
               <div class="mw-bar"><i></i><i></i><i></i><span>Terminal — ~/Projects/shop</span></div>
 <pre id="imp-tty"><span class="l"><span class="p">~/Projects/shop $</span> lk import .env.local --rewrite --skip PORT</span><span class="l">recorded shop/development: DATABASE_URL, OPENAI_API_KEY, STRIPE_KEY</span><span class="l">added    shop/development/DATABASE_URL  password</span><span class="l">added    shop/development/OPENAI_API_KEY  token</span><span class="l">added    shop/development/STRIPE_KEY  token</span><span class="l">rewrote .env.local: 3 values now latchkey://ID</span><span class="l"><span class="d">next: lk run --env-file .env.local -- &lt;your command&gt;</span></span></pre>
             </div>
-            <div class="sheet touch off" id="imp-touch" style="left:185px;top:120px">
-              <svg class="fp" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg>
-              <p><b>Latchkey is trying to import 3 items</b></p><p>Touch ID or enter your password.</p>
+            <div class="sheet off" id="imp-touch" style="left:185px;top:120px;width:230px">
+              <div class="sheet-head"><span class="mark"><img src="logo.svg" alt=""></span><div><p class="sh">Terminal wants to import 3 items</p><small>Terminal in ~/Projects/shop</small></div></div>
+              <div class="tid"><svg class="fp" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg><small>Touch ID to allow</small></div>
             </div>
           </div>
         </div>
@@ -515,10 +525,12 @@ lk import .env.local --rewrite --skip PORT</code></pre></figure>
 <pre id="agent-tty"><span class="l"><span class="p">~/Projects/shop $</span> lk run --env shop/development -- npm test -- --watch=false</span><span class="l"><span class="d"> Test Files  2 passed (2)</span></span><span class="l"><span class="p">~/Projects/shop $</span> lk run --env shop/production -- npm run migrate</span><span class="l"><span class="err">latchkey: refused: shop/production/DATABASE_URL (not agent-safe, not approved, no grant)</span></span><span class="l"><span class="k">⏺ Claude</span> <span class="d">Latchkey refused that (exit 77), so I'll stop and ask you.</span></span></pre>
             </div>
             <div class="sheet off" id="agent-panel" style="left:132px;top:34px;width:336px">
-              <div class="sheet-head"><span class="mark"><img src="logo.svg" alt=""></span><div><p class="sh" id="agent-title">Claude wants to use 2 items</p><small>Latchkey</small></div></div>
-              <dl><dt>Items</dt><dd id="agent-items">shop/development/DATABASE_URL, shop/development/STRIPE_KEY</dd><dt>Asked by</dt><dd>Claude, via zsh › claude › Terminal</dd><dt>Folder</dt><dd>~/Projects/shop</dd><dt>Command</dt><dd id="agent-cmd">lk run --env shop/development -- npm test</dd></dl>
+              <div class="sheet-head"><span class="mark"><img src="logo.svg" alt=""></span><div><p class="sh" id="agent-title">Claude wants to use 2 items</p><small>Claude in ~/Projects/shop</small></div></div>
+              <p class="items" id="agent-items">shop/development/DATABASE_URL, shop/development/STRIPE_KEY</p>
+              <p class="det">› Details <span hidden id="agent-cmd">lk run --env shop/development -- npm test</span></p>
               <div class="box"><div class="chk" id="agent-grant"><i></i>Allow from this folder <span class="pop">until claude quits ▾</span></div><div class="chk dim" id="agent-only"><i></i><span>Only for npm test</span></div></div>
-              <div class="acts"><small>Touch ID confirms your choice.</small><span class="b" id="agent-deny">Deny</span><span class="b go" id="agent-allow">Allow Once</span></div>
+              <div class="tid" id="agent-tid"><svg class="fp" viewBox="0 0 48 48" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg><small id="agent-tid-label">Touch ID to allow once</small></div>
+              <div class="acts"><span class="b" id="agent-deny">Deny</span><span class="b" id="agent-allow">Use Password…</span></div>
             </div>
             <span class="tagnote off" id="agent-note" style="left:330px;top:250px">No panel: the folder grant covers this run</span>
             <svg class="cursor" viewBox="0 0 18 22" style="transform:translate(470px,300px)"><path d="M1.5 1.5v16.2l4.2-4 2.7 6.3 2.8-1.2-2.7-6.2h5.9z" fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/></svg>
@@ -562,13 +574,13 @@ lk import .env.local --rewrite --skip PORT</code></pre></figure>
  Test Files  2 passed (2)</pre>
         </div>
         <div class="panel on" id="demo-panel" role="group" aria-labelledby="demo-title">
-          <div class="head"><span class="mark"><img src="logo.svg" alt=""></span><div><b id="demo-title">Claude wants to use 2 items</b><span>Latchkey</span></div></div>
-          <dl>
-            <dt>Items</dt><dd>shop/development/DATABASE_URL, shop/development/STRIPE_KEY</dd>
+          <div class="head"><span class="mark"><img src="logo.svg" alt=""></span><div><b id="demo-title">Claude wants to use 2 items</b><span>Claude in ~/Projects/shop</span></div></div>
+          <p class="items">shop/development/DATABASE_URL, shop/development/STRIPE_KEY</p>
+          <details class="det"><summary>Details</summary><dl>
             <dt>Asked by</dt><dd>Claude, via zsh › claude › Terminal</dd>
             <dt>Folder</dt><dd>~/Projects/shop</dd>
             <dt>Command</dt><dd id="demo-cmd">lk run --env shop/development -- npm test</dd>
-          </dl>
+          </dl></details>
           <div class="grant">
             <div><label><input type="checkbox" id="demo-grant" disabled> Allow from this folder</label>
               <select id="demo-for" aria-label="How long the folder grant lasts" disabled>
@@ -576,16 +588,10 @@ lk import .env.local --rewrite --skip PORT</code></pre></figure>
               </select></div>
             <label><input type="checkbox" id="demo-only" disabled> Only for <span id="demo-only-cmd">npm test</span></label>
           </div>
-          <div class="row"><small>Touch ID confirms your choice.</small><button class="btn" type="button" data-choice="deny" disabled>Deny</button><button class="btn go" type="button" data-choice="allow" id="demo-allow" disabled>Allow Once</button></div>
+          <button class="tid" type="button" data-choice="allow" id="demo-allow" disabled aria-label="Touch ID to allow once (click to touch the sensor)"><svg viewBox="0 0 48 48" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg><span id="demo-tid-label">Touch ID to allow once</span></button>
+          <div class="row"><button class="btn" type="button" data-choice="deny" disabled>Deny</button><button class="btn" type="button" data-choice="allow" disabled>Use Password…</button></div>
         </div>
-        <div class="touch" id="touch" role="dialog" aria-label="Touch ID" hidden>
-          <div class="touch-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg><img src="logo.svg" alt=""></div>
-          <p class="touch-text" id="touch-text"></p>
-          <p class="touch-sub">Touch ID or enter your password to continue with Latchkey.</p>
-          <button type="button" class="touch-btn" data-t="pw">Use Password…</button>
-          <button type="button" class="touch-btn" data-t="deny">Deny</button>
-        </div>
-      </div>
+              </div>
     </section>
 
     <section class="section" id="app" aria-labelledby="app-title" data-hue="blue">
@@ -911,7 +917,8 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
     function syncGrant() {
       only.disabled = grantFor.disabled = !grantBox.checked;
       if (!grantBox.checked) only.checked = false;
-      allowBtn.textContent = grantBox.checked ? "Allow from Folder" : "Allow Once";
+      var label = grantBox.checked ? "Touch ID to allow from folder" : "Touch ID to allow once";
+      $("demo-tid-label").textContent = label; allowBtn.setAttribute("aria-label", label + " (click to touch the sensor)");
     }
     grantBox.addEventListener("change", syncGrant);
     function showPanel(cmd) {
@@ -951,26 +958,17 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
     }
     function finish(text) { status.textContent = text; restart.hidden = false; if (usedKeyboard) restart.focus(); }
 
-    // ---- Touch ID, then what the app records: the menu bar panel here, and the app window (app-demo.js).
-    var touch = $("touch"), touchText = $("touch-text"), mbIcon = $("mb-icon"), mbMenu = $("mb-menu"), mbList = $("mb-activity");
+    // ---- Touch ID in the panel, as the app reads it, then what the app records: the menu bar panel here, and the
+    // app window (app-demo.js).
+    var mbIcon = $("mb-icon"), mbMenu = $("mb-menu"), mbList = $("mb-activity");
     var IDS = ["shop/development/DATABASE_URL", "shop/development/STRIPE_KEY"];
-    function touchID(cmd) {
-      touchText.textContent = "Latchkey is trying to give DATABASE_URL and STRIPE_KEY from shop/development to Claude in ~/Projects/shop.";
+    function touchID() {
       return new Promise(function (resolve) {
-        var done = false, timer;
-        function end(ok) {
-          if (done) return; done = true; clearTimeout(timer);
-          touch.classList.remove("reading");
-          if (!ok) { touch.hidden = true; resolve(false); return; }
-          touch.classList.add("ok");
-          setTimeout(function () { touch.hidden = true; touch.classList.remove("ok"); resolve(true); }, reduce ? 300 : 500);
-        }
-        touch.hidden = false; touch.classList.add("reading");
-        touch.querySelector('[data-t="pw"]').onclick = function () { end(true); };
-        touch.querySelector('[data-t="deny"]').onclick = function () { end(false); };
-        if (usedKeyboard) touch.querySelector('[data-t="deny"]').focus();
-        // The visitor's finger on the sensor, a moment later.
-        timer = setTimeout(function () { end(true); }, reduce ? 900 : 1800);
+        allowBtn.classList.add("reading");
+        setTimeout(function () {
+          allowBtn.classList.remove("reading"); allowBtn.classList.add("ok");
+          setTimeout(function () { allowBtn.classList.remove("ok"); resolve(true); }, reduce ? 200 : 450);
+        }, reduce ? 300 : 700);
       });
     }
     function record(decision, ok) {
@@ -1022,7 +1020,7 @@ lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></p
       } else if (choice === "once") {
         record("approved", true);
         await lines(OUTPUT[cmd], id); write("\n"); await type("", id); caret(true);
-        finish("Released for this run. The same request from the same place won't ask again for 2 minutes.");
+        finish("Released for this run only. The agent's next run asks again, unless a grant covers it.");
       } else {
         var untilQuit = dur === "quit";
         grant = { only: onlyThis ? cmd : null, id: newID(), lasts: untilQuit ? "until claude quits" : "for " + dur,
