@@ -81,6 +81,7 @@ struct LatchkeyApp: App {
         .defaultLaunchBehavior(.presented)
         .commands {
             CommandGroup(after: .appInfo) {
+                Button("What's New in Latchkey…") { model.openWhatsNew() }
                 #if !LATCHKEY_APP_STORE
                 CheckForUpdatesButton(updater: updater)
                 #endif
@@ -110,6 +111,14 @@ struct LatchkeyApp: App {
         }
 
 
+        // Release notes for this version (WhatsNew.swift): opened after an update and from the app menu.
+        Window("What's New in Latchkey", id: "whats-new") {
+            WhatsNewView()
+        }
+        .windowResizability(.contentSize)
+        .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
+
         // Its own window, so it doesn't look like the item list (⌘, and the menus open it).
         Settings {
             Group {
@@ -126,10 +135,16 @@ private struct InstallsMenuBarItem: ViewModifier {
     func body(content: Content) -> some View {
         content.onAppear {
             model.openSettingsWindow = { openSettings(); NSApp.activate() }
+            model.openWhatsNew = { openWindow(id: "whats-new"); NSApp.activate() }
             #if DEBUG
             if Snapshot.requested { return }
             #endif
             MenuBarItem.install(model, openWindow: openWindow)
+            // Once after each update. A Mac with items already in Latchkey was using an earlier version, even one that
+            // didn't record which.
+            if AppPreferences().takeWhatsNew(for: WhatsNewView.version, existingUser: !model.items.isEmpty) {
+                model.openWhatsNew()
+            }
         }
     }
 }
@@ -318,6 +333,8 @@ final class AppModel {
 
     /// Opens the Settings window; set once the main window's scene is up (InstallsMenuBarItem).
     @ObservationIgnored var openSettingsWindow: () -> Void = {}
+    /// Opens the What's New window; set once the main window's scene is up (InstallsMenuBarItem).
+    @ObservationIgnored var openWhatsNew: () -> Void = {}
 
     func openSettings(_ section: SettingsSection? = nil) {
         if let section { settingsSection = section }

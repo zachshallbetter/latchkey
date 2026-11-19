@@ -211,6 +211,10 @@ latchkey.snackstud.io in your browser.
 
 ## Settings
 
+**What's New in Latchkey…** in the app menu (and **What's New in This Version…** in Settings › About) shows the
+current version's notes from the changelog bundled with the app, with earlier versions folded below. It opens once
+by itself after Latchkey updates. In the direct download, the update notice shows the same notes before you install.
+
 Settings has its own window, with a tab for each section: press **⌘,**, choose **Settings…** at the bottom of the
 sidebar, or use **Latchkey › Settings…** or the menu bar panel's **Settings…**. The tabs are:
 

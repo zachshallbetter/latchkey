@@ -42,4 +42,17 @@ final class AppPreferencesTests: XCTestCase {
             XCTAssertEqual(AppPreferences(defaults: defaults).lockAfterMinutes, 5)
         }
     }
+
+    func testWhatsNewShowsOnceAfterEachUpdate() throws {
+        let suite = "latchkey-preferences-test-" + UUID().uuidString
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let p = AppPreferences(defaults: defaults)
+        XCTAssertFalse(p.takeWhatsNew(for: "0.4.0", existingUser: false), "a first install opens to the app")
+        XCTAssertFalse(p.takeWhatsNew(for: "0.4.0", existingUser: true), "already seen")
+        XCTAssertTrue(p.takeWhatsNew(for: "0.5.0", existingUser: true), "an update")
+        XCTAssertFalse(p.takeWhatsNew(for: "0.5.0", existingUser: true))
+        defaults.removeObject(forKey: AppPreferences.Key.lastSeenVersion)
+        XCTAssertTrue(p.takeWhatsNew(for: "0.5.0", existingUser: true), "an update from a version that didn't record one")
+    }
 }

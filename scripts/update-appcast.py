@@ -8,7 +8,11 @@ import argparse
 import email.utils
 import pathlib
 import re
+import sys
 import xml.etree.ElementTree as ET
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import release_notes  # noqa: E402
 
 SPARKLE = "http://www.andymatuschak.org/xml-namespaces/sparkle"
 REPO = "https://github.com/zachshallbetter/latchkey"
@@ -26,7 +30,12 @@ def main():
     parser.add_argument("--build", required=True, help="CURRENT_PROJECT_VERSION")
     parser.add_argument("--min-os", required=True, help="the app's deployment target")
     parser.add_argument("--signature", required=True, help="output of sign_update")
+    parser.add_argument("--changelog", type=pathlib.Path,
+                        default=pathlib.Path(__file__).resolve().parents[1] / "CHANGELOG.md")
     args = parser.parse_args()
+    notes = release_notes.release(args.changelog.read_text(), args.version)
+    if not notes or not any(s["items"] for s in notes["sections"]):
+        parser.error(f"{args.changelog} has no notes under ## {args.version}; the update window would show none")
     signature = re.search(r'sparkle:edSignature="([^"]+)"', args.signature)
     length = re.search(r'length="(\d+)"', args.signature)
     if not signature or not length:
@@ -52,7 +61,9 @@ def main():
     ET.SubElement(item, q("version")).text = args.build
     ET.SubElement(item, q("shortVersionString")).text = args.version
     ET.SubElement(item, q("minimumSystemVersion")).text = args.min_os
-    ET.SubElement(item, q("releaseNotesLink")).text = f"{REPO}/blob/main/CHANGELOG.md"
+    # The update window shows this version's notes, embedded, rather than loading the whole changelog from GitHub.
+    ET.SubElement(item, "description").text = release_notes.release_html(notes)
+    ET.SubElement(item, q("fullReleaseNotesLink")).text = f"https://latchkey.snackstud.io/changelog.html#v{args.version}"
     ET.SubElement(item, "enclosure", {
         "url": f"{REPO}/releases/download/v{args.version}/Latchkey-{args.version}.dmg",
         "length": length.group(1), "type": "application/octet-stream", q("edSignature"): signature.group(1)})

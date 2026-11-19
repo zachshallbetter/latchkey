@@ -10,6 +10,7 @@ public struct AppPreferences {
         public static let keepRunningFromDock = "keepRunningFromDock"
         public static let lockApp = "lockApp"
         public static let lockAfterMinutes = "lockAfterMinutes"
+        public static let lastSeenVersion = "lastSeenVersion"
     }
     public static let clipboardChoices = [15, 30, 60, 120]
     public static let revealChoices = [10, 30, 60]
@@ -40,5 +41,14 @@ public struct AppPreferences {
     public var lockAfterMinutes: Int {
         let value = defaults.integer(forKey: Key.lockAfterMinutes)
         return Self.lockChoices.contains(value) ? value : Self.defaultLockMinutes
+    }
+
+    /// Whether to show What's New for `version`, remembering that it has been: once after each update. A Mac that has
+    /// never recorded a version shows it only if Latchkey was already in use there (`existingUser`), so a first install
+    /// opens to the app, not to release notes.
+    public func takeWhatsNew(for version: String, existingUser: Bool) -> Bool {
+        let last = defaults.string(forKey: Key.lastSeenVersion)
+        defaults.set(version, forKey: Key.lastSeenVersion)
+        return last.map { $0 != version } ?? existingUser
     }
 }

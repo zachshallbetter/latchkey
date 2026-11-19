@@ -40,7 +40,9 @@ signed, notarized and stapled disk image.
 
 1. Set `MARKETING_VERSION` (and raise `CURRENT_PROJECT_VERSION`) in `App/project.yml`, set the same version in
    `App/Safari/Resources/manifest.json` (the script refuses a mismatch), and move the `CHANGELOG.md` entry from
-   "unreleased" to the date.
+   "unreleased" to the date, newest items first: the app bundles the file and shows that version's notes in its What's
+   New window, and the update feed embeds them. Then run `python3 scripts/changelog-page.py` for the site's changelog
+   page and its "Latest version" note.
 2. Check: `swift test`, and the app built and tried with `scripts/install.sh`.
 3. Build:
 
@@ -57,10 +59,12 @@ signed, notarized and stapled disk image.
    keychain has the key, it then signs the disk image and adds this version to `site/appcast.xml` through
    `scripts/update-appcast.py`: the build and version from `App/project.yml`, the GitHub release URL
    (`https://github.com/zachshallbetter/latchkey/releases/download/vVERSION/Latchkey-VERSION.dmg`), length, signature,
-   `minimumSystemVersion` from the deployment target, and a link to the changelog. Otherwise it prints why it skipped
+   `minimumSystemVersion` from the deployment target, this version's notes from `CHANGELOG.md` (embedded, so the update
+window shows them; the script refuses a version with no notes), and a link to the site's full changelog. Otherwise it prints why it skipped
    that step; the release itself never fails for it.
 
-4. Upload the disk image to the GitHub release `vVERSION`, then publish `site/appcast.xml` with the site
+4. Upload the disk image to the GitHub release `vVERSION`, then publish `site/appcast.xml` with the site (which now
+   names the new version as the latest)
    (`https://latchkey.snackstud.io/appcast.xml`). Publish it last: running copies see the new version as soon as the
    file is live. Check that the enclosure URL downloads.
 5. Check the disk image on a Mac that has never had Latchkey: open it, drag Latchkey to Applications, open it, choose
