@@ -5,8 +5,8 @@
   "validityBasis": "aggregate-source-digest",
   "selectedPaths": [],
   "sourceSelection": {
-    "includedCount": 385,
-    "includedBytes": 3460681,
+    "includedCount": 386,
+    "includedBytes": 3484704,
     "excludedCounts": {
       "extension": 124,
       "generated-or-transient-file": 2
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "6e7910f360be0434d05a053901a6ee58074b1270",
+        "commit": "50ae2994583c98f91b5775de2d7eccb31663fcde",
         "branch": "docs-refresh",
-        "dirty": false,
+        "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "f0950a040022701df88f28445f4dcdd4f82d6da9895fccd420fc89b968bef308",
+  "aggregateSourceDigest": "2d324ae80c5f6bee0aca63934a4e7b2bd165680fd1fa4c134da7e877938db5b9",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -1629,8 +1629,8 @@
     },
     {
       "path": "docs/site.md",
-      "bytes": 17185,
-      "sha256": "166276214c765eee683b82f9bcdbbc10c704218ab043f5147a3393f938950a13"
+      "bytes": 17237,
+      "sha256": "565a1d4dec8f9b20c9f451d9618c8d1dffe9e87d1d5323a57d096998216d9ff8"
     },
     {
       "path": "docs/troubleshooting.md",
@@ -1754,8 +1754,8 @@
     },
     {
       "path": "site/app-demo.js",
-      "bytes": 22979,
-      "sha256": "92be25d0713517dd109d0efea8c9ae79a3433876f8b9eca51aff78235d8fcef1"
+      "bytes": 23152,
+      "sha256": "3c5c1f25420c8f18c12fd0a50660c4354b9bfc893e6bfed329ce9373488ef262"
     },
     {
       "path": "site/cd052edf0f35d73aff8be1e0017f88e0.txt",
@@ -1794,8 +1794,8 @@
     },
     {
       "path": "site/features.html",
-      "bytes": 46610,
-      "sha256": "aa10ef11100ebdda75ebab293409871f94e5b217d17139faaa03901f436e06af"
+      "bytes": 47112,
+      "sha256": "918916fb47df7c897be172ad48349276dc2b198c3ef82827b1d3844246229846"
     },
     {
       "path": "site/guides/audit-secret-access.html",
@@ -1804,8 +1804,8 @@
     },
     {
       "path": "site/guides/coding-agents-and-api-keys.html",
-      "bytes": 19157,
-      "sha256": "3db1e4a898730f95335cd8b09d41dc8d3c9526c23ab086a4858897059724b64f"
+      "bytes": 19379,
+      "sha256": "f23487f98a0c1213305e12f8ee981f804e67a9f9920fecd401814d1d463b1e9e"
     },
     {
       "path": "site/guides/duplicate-api-keys.html",
@@ -1824,8 +1824,13 @@
     },
     {
       "path": "site/guides/index.html",
-      "bytes": 17323,
-      "sha256": "186791242b9df89014d070550e888bc23a8ed9aa87baaf6935554deb993e1c56"
+      "bytes": 17576,
+      "sha256": "b63077658ec9db4899f470a1bfa8b84a9338673b1504179cfbf9034d8cafa1c2"
+    },
+    {
+      "path": "site/guides/linux-server-credentials.html",
+      "bytes": 21500,
+      "sha256": "d72bfb4fb4e90a6f29a07255437f51859ee15e9018aeb12d7c33deb07120aeaf"
     },
     {
       "path": "site/guides/mcp-server-api-keys.html",
@@ -1869,8 +1874,8 @@
     },
     {
       "path": "site/guides/secrets-over-ssh.html",
-      "bytes": 19208,
-      "sha256": "295e621e70c87f412a424dfdd77523b8a3a3d941e7dfd040be5a3153bce20e12"
+      "bytes": 19202,
+      "sha256": "3fb6c7bba7455483cdb2f93f13a66b2282ddbdbdf167e456e9bf5643a31ed323"
     },
     {
       "path": "site/guides/short-lived-aws-credentials.html",
@@ -1889,8 +1894,8 @@
     },
     {
       "path": "site/index.html",
-      "bytes": 81079,
-      "sha256": "91717f15050c73211729e96772c4bfd0de9d1073f54dcf89947595eb2dbd84fb"
+      "bytes": 81512,
+      "sha256": "5ee8d7c0a7ce54eb52e3d34693618ce3a01e3097f28c449fb54c7375f4940421"
     },
     {
       "path": "site/pricing.html",
@@ -1914,8 +1919,8 @@
     },
     {
       "path": "site/scenes.js",
-      "bytes": 30841,
-      "sha256": "f265f5416206732d0bcf9611f07c7eb7a9c263d96f24d582d4dd0a5b86151969"
+      "bytes": 30973,
+      "sha256": "52abb565202196474eedb879709eefd2cd503e355d9220640142178b7751fe35"
     },
     {
       "path": "site/security.html",
@@ -1924,8 +1929,8 @@
     },
     {
       "path": "site/site.css",
-      "bytes": 79042,
-      "sha256": "1fa077e1d5c44961b5ef1f05c80f29b9543a1c549b0c260f1746c620785876b6"
+      "bytes": 79646,
+      "sha256": "724b681d955af894d64715666a387a5713bd8b41cacbe56c7de5823b19f4a5c7"
     },
     {
       "path": "site/site.js",
@@ -1939,8 +1944,8 @@
     },
     {
       "path": "site/teams.html",
-      "bytes": 24259,
-      "sha256": "f2e3ee800ed14709d396c24682fb43d88c240a6c2e29958043a015c208c3bee6"
+      "bytes": 24417,
+      "sha256": "5888a32a9dbc5184503dc1f2c94b8caad9c5e541f9b3dcd960ef26e7e022cdd1"
     },
     {
       "path": "site/terms.html",

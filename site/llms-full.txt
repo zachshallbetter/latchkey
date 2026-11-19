@@ -974,7 +974,7 @@ write values in .env files. If latchkey exits with 77 (refused) or 66
 (missing), stop and ask; don't retry.
 ```
 ### Approve when it asks
-When the agent runs latchkey run, the approval panel names the agent, the programs it runs through, the folder and the full command. Choose Allow Once, allow from that folder for a while, or Deny. A refused run exits with 77 and prints the exact latchkey grant command that would allow it.
+When the agent runs latchkey run, the approval panel names the agent, the programs it runs through, the folder and the full command. Choose to allow once, allow from that folder for a while, or Deny, then touch the sensor: Touch ID listens right in the panel, from whatever app you're in. Several requests the agent makes in a row share one panel, so one touch answers them all, and each can be denied on its own. A refused run exits with 77 and prints the exact latchkey grant command that would allow it.
 ### Grant before you step away
 Terminal
 ```
@@ -1174,10 +1174,84 @@ Give agents what a task needs, and nothing they could keep.
 Give coding agents API keys without handing them overApprovals, grants, and keys an agent can use but never read.Hide your OpenAI or Anthropic key from an AI agentLet a command call OpenAI or Anthropic without holding the key.Rotate the keys an AI agent touchedList what an agent was given, then replace each key in one pass.Keep API keys out of MCP server configsStart the server through latchkey run so the config holds references.
 ## Deploying
 Get values to platforms, build tools and cloud accounts.
-Push env vars to your deploy platformsSend one environment's values to Vercel, GitHub, Railway or Fly.Use short-lived AWS credentials locallyGive a command AWS credentials that expire, not your long-lived key.Use an App Store Connect key with fastlaneGive fastlane a .p8 key as a temporary file that is deleted when it exits.
+Push env vars to your deploy platformsSend one environment's values to Vercel, GitHub, Railway or Fly.Push credentials to a Linux serverSend each credential over ssh to a root-only file your service loads.Use short-lived AWS credentials locallyGive a command AWS credentials that expire, not your long-lived key.Use an App Store Connect key with fastlaneGive fastlane a .p8 key as a temporary file that is deleted when it exits.
 ## Everyday use
 Other Macs, Safari, and a record of every read.
 Use your secrets on another Mac over SSHRun commands on another Mac and approve each secret read on yours.Save an API key straight from the provider's pageSave a new key from the provider's page, and fill it back in later.See which programs read your secretsSee which programs read which secrets, and check the log is intact.
+
+---
+
+Page: Push credentials to a Linux server over SSH · Latchkey
+URL: https://latchkey.snackstud.io/guides/linux-server-credentials.html
+
+Guide · Deploy
+# Send credentials to your Linux server
+A service on your own Linux server needs API keys and app passwords. Pasting them into files over ssh leaves no record of what's there, and the copy on your Mac and the one on the server drift apart.
+By Zach ShallbetterPublished 18 November 2026Needs the command-line tool and the direct download
+In shortGive the server a script that stores one credential from standard input, let your account run it with sudo and no password, name each Latchkey item ADAPTER.ACCOUNT, and link the environment with lk remote link ENV ssh host=… script=…. Every lk push asks you with Touch ID, then sends each value over ssh on standard input.
+## How it works
+The values stay in your Mac's keychain, where you can see, rotate and audit them. The server keeps its own copy, one root-only file per credential, which the service loads at start, for example with systemd's LoadCredential=. Latchkey's job is the delivery: it runs your server's script once per item, over your own ssh connection and keys, with the value on standard input, so it never appears in a command line, an environment variable or your shell history.
+The service never talks to Latchkey, and keeps running with its last values while your Mac is off.
+## Set it up
+### Give the server a credential script
+Latchkey runs it as sudo -n bash SCRIPT ADAPTER ACCOUNT --stdin and sends the value followed by one newline. The script must read at most 64 KiB, strip that one newline, store the value, and print stored ADAPTER.ACCOUNT when it has; anything else counts as a failure. A minimal one, with myapp as the example service:
+/srv/myapp/add-credential.sh
+```
+#!/bin/bash
+set -euo pipefail
+[[ $# -eq 3 && $3 == --stdin && ! -t 0 ]] || { echo "usage: add-credential.sh ADAPTER ACCOUNT --stdin" >&2; exit 64; }
+name="$1.$2"
+[[ $name =~ ^[A-Za-z0-9][A-Za-z0-9_-]*\.[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || { echo "bad name" >&2; exit 64; }
+value=$(head -c 65536; printf x); value=${value%x}; value=${value%$'\n'}
+[[ -n $value ]] || { echo "empty value" >&2; exit 1; }
+dir=/etc/myapp/credentials
+umask 077
+tmp=$(mktemp "$dir/.$name.XXXXXX")
+printf %s "$value" > "$tmp" && mv "$tmp" "$dir/$name"
+systemctl restart myapp
+echo "stored $name"
+```
+Point the service at those files, for example with a LoadCredential=NAME:/etc/myapp/credentials/NAME line for each credential in its unit, so it reads them from $CREDENTIALS_DIRECTORY.
+### Let your account run it without a password
+A push has no terminal, so sudo can't ask for one. Allow exactly that script, and check from your Mac:
+/etc/sudoers.d/myapp-credentials
+```
+you ALL=(root) NOPASSWD: /usr/bin/bash /srv/myapp/add-credential.sh *
+```
+Your Mac
+```
+ssh myserver sudo -n -l bash /srv/myapp/add-credential.sh
+```
+It prints the command when the rule is in place. myserver is the host as named in your SSH config.
+### Store each credential under its name
+Name items ADAPTER.ACCOUNT: Latchkey splits at the first dot. Both parts start with a letter or digit and use letters, digits, _ and -; the account may also contain dots.
+Terminal
+```
+lk set myapp/production/bluesky.someone.bsky.social --kind token
+```
+You're asked for the value without it being shown, and saving asks for Touch ID.
+### Link the environment to the server
+Terminal
+```
+lk remote link myapp/production ssh host=myserver script=/srv/myapp/add-credential.sh
+```
+Linking asks once. The host and script may hold only characters a shell reads literally, and a link synced from another Mac is checked again before each push.
+### Push, and approve with Touch ID
+Terminal
+```
+lk push myapp/production --only myapp/production/bluesky.someone.bsky.social
+```
+The approval panel names the server, the script and every item. A server counts as production, because its script restarts the service, so tick I mean to change production, then touch the sensor. Each credential the server confirms prints as pushed.
+## Keep it current
+Change a value in Latchkey and push again; the script replaces the file and restarts the service. lk remote status myapp/production lists items never pushed to the server and items changed since they were. The server can't list what it holds, so that comes from Latchkey's own record of what it pushed, not from the server.
+## What this doesn't do
+- It doesn't remove credentials from the server. Unlinking stops future pushes; deleting a file on the server is yours to do.
+- The server keeps plain-text copies, readable by root. Protect the server as you would any place that holds them.
+- Each push waits for your approval on your Mac, so a script or agent can start one but can't finish it without you. Agents have no push tool.
+- It's in the direct download only: the Mac App Store version can't run ssh. One value is at most 64 KiB, and empty values aren't sent.
+The script contract has every rule in one place, and Push env vars to your deploy platforms covers Vercel, GitHub, Railway and Fly.
+## Related
+Push env vars to your deploy platformsSend one environment's values to Vercel, GitHub, Railway or Fly.Use your secrets on another Mac over SSHApprove on your own Mac what a command on another one asks for.
 
 ---
 
@@ -1635,7 +1709,7 @@ The other Mac
 latchkey run --env shop/development -- npm test
 ```
 ### Approve on your Mac
-The approval panel opens on your own Mac. It says the request came over SSH and shows what the tool on the other computer says it is running, marked as unchecked. Approve with Touch ID, or deny. A panel nobody answers counts as a denial after 90 seconds.
+The approval panel opens on your own Mac. It says the request came over SSH and shows what the tool on the other computer says it is running, marked as unchecked. Approve with Touch ID, or deny. A request nobody answers is denied after two minutes.
 ## What is different from working locally
 - Each read asks, unless the item is set to need no approval. Your Mac sees only your ssh client, not the program on the other computer, so grants don't apply and can't be made over the connection.
 - latchkey status on the other Mac says it can't check the app's signature through a forwarded socket.
@@ -1800,16 +1874,16 @@ Agents, skills and MCP
 An agent's command is asking for two keys. Choose in the panel the way you would in the app: Deny prints the real refusal, Allow Once runs the tests with the values concealed, and a grant shows the next run going through, or, limited to one command, asking again.
 You're the person at the Mac: when the agent's command asks, choose in the panel.
 Everything the panel shows comes from macOS, not from the request: the program and those that started it, the folder it runs in, and its full command line. A script that talks to Latchkey directly instead of through the signed lk tool is named by its path, with a warning. The same limits can be set ahead of time with lk grant 'shop/development/*' --session --for 4h.
-claude in ~/Projects/shop Claude wants to use 2 itemsLatchkey
-Items
+claude in ~/Projects/shop Claude wants to use 2 itemsClaude in ~/Projects/shop
 shop/development/DATABASE_URL, shop/development/STRIPE_KEY
+Details
 Asked by
 Claude, via zsh › claude › Terminal
 Folder
 ~/Projects/shop
 Command
 lk run --env shop/development -- npm test
-Allow from this folder until claude quitsfor 1 hourfor 8 hoursfor 1 dayfor 7 days Only for npm test Touch ID confirms your choice.
+Allow from this folder until claude quitsfor 1 hourfor 8 hoursfor 1 dayfor 7 days Only for npm test
 ## Every item, grant and request in one Mac window
 Items grouped by project and environment, which ones agents may read without asking, where each is used, every request in Activity, and the grants in effect. This window works with example data. What you chose in the panel above is already in its Activity, and a grant you made is under Grants, where Revoke stops future reads through it. Changes ask for Touch ID; revealing a value asks unless its No Approval setting permits it.
 The Latchkey window, with example data. With scripts on, it works: search, filter by type or environment, pick a project or service in the sidebar, and open an item. It lists:

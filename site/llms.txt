@@ -150,6 +150,7 @@ default. https://latchkey.snackstud.io/security.html covers every protection and
 - Rotate the keys an agent touched: https://latchkey.snackstud.io/guides/rotate-after-an-agent-session.html
 - Keep API keys out of MCP server configs: https://latchkey.snackstud.io/guides/mcp-server-api-keys.html
 - Push env vars to deployment platforms: https://latchkey.snackstud.io/guides/push-to-deployment-platforms.html
+- Push credentials to a Linux server over SSH: https://latchkey.snackstud.io/guides/linux-server-credentials.html
 - Short-lived AWS credentials: https://latchkey.snackstud.io/guides/short-lived-aws-credentials.html
 - App Store Connect keys with fastlane: https://latchkey.snackstud.io/guides/fastlane-app-store-connect-key.html
 - Secrets on another Mac over SSH: https://latchkey.snackstud.io/guides/secrets-over-ssh.html
