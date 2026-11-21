@@ -18,8 +18,8 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "75fe0cc5a30c5bb1696bb1c456461b36c8cc0296",
-        "branch": "menu-unlock-docs",
+        "commit": "fde671e694c627d9c77683f037558f365b7783ab",
+        "branch": "appcast-0.4.0",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
