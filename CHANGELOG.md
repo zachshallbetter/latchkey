@@ -3,6 +3,9 @@
 ## 0.4.0 (2026-11-18)
 
 ### App
+- Grants can last until you revoke them: **until revoked** in the approval panel and New Grant, or `latchkey grant
+  … --for always`. The 7-day limit is gone, and so is the one-day limit on grants an agent asks for through MCP (they
+  still end when the agent quits). A grant until the agent quits no longer also ends after a day.
 - Latchkey locks, as Passwords does: when it opens, after 5 minutes in the background (1, 5, 15 or 60 in Settings ›
   Privacy), and when the Mac sleeps or the screen locks. Touch ID is asked for right in the lock screen, with no
   system sheet; **Use Password…** opens the sheet for the Mac password. While locked the
@@ -46,6 +49,8 @@
   extension to one of them and **Turn On in Safari…** failed with SFErrorDomain error 1.
 
 ### Security
+- Grants no longer have a maximum length. A grant until revoked keeps working until you revoke it; Grants and
+  `latchkey grants` show it as "until revoked".
 - The broker no longer holds its lock while a request waits for approval. The request runs again after the answer
   and uses it only for the same question about unchanged values; anything else asks again.
 - Approvals show what they allow. The panel lists every item asked for, with a count, and the whole command a signed

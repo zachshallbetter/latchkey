@@ -13,6 +13,7 @@ Latest: 0.4.0, 18 November 2026. Download.
 ## 0.4.0
 18 November 2026
 ### App
+- Grants can last until you revoke them: until revoked in the approval panel and New Grant, or latchkey grant … --for always. The 7-day limit is gone, and so is the one-day limit on grants an agent asks for through MCP (they still end when the agent quits). A grant until the agent quits no longer also ends after a day.
 - Latchkey locks, as Passwords does: when it opens, after 5 minutes in the background (1, 5, 15 or 60 in Settings › Privacy), and when the Mac sleeps or the screen locks. Touch ID is asked for right in the lock screen, with no system sheet; Use Password… opens the sheet for the Mac password. While locked the window, Settings and the menu bar panel show nothing but the lock screen. Lock Latchkey (⌃⌘L) and Lock in the menu bar panel lock it by hand. The lock covers the app only: approvals for commands, agents and Safari still appear while it is locked.
 - Approvals are one small panel with Touch ID inside it, for releases and changes alike; Use Password… opens the system sheet. Requests from the same agent in the same folder that arrive while it's up join it as rows, so one touch answers a burst; each row can be denied on its own. Pushes, SSH, Safari and unidentified programs are still asked on their own.
 - A new remote location, SSH, pushes to a credential script on a Linux host over your ssh connection, one item per credential (ADAPTER.ACCOUNT) with the value on standard input: latchkey remote link distribution/production ssh host=titan script=/path/to/add-credential.sh. It always counts as production, its status comes from Latchkey's push record, and the direct download only (#96).
@@ -30,6 +31,7 @@ Latest: 0.4.0, 18 November 2026. Download.
 - Settings › Developer Tools shows whether Latchkey for Safari is on and opens Safari's Extensions settings with it selected, so it can be turned on from the app.
 - scripts/install.sh now forgets every other copy of the app macOS has registered (other worktrees' builds, Xcode archives), not just its own build folder. With stale copies registered, Safari could resolve Latchkey's extension to one of them and Turn On in Safari… failed with SFErrorDomain error 1.
 ### Security
+- Grants no longer have a maximum length. A grant until revoked keeps working until you revoke it; Grants and latchkey grants show it as "until revoked".
 - The broker no longer holds its lock while a request waits for approval. The request runs again after the answer and uses it only for the same question about unchanged values; anything else asks again.
 - Approvals show what they allow. The panel lists every item asked for, with a count, and the whole command a signed latchkey run starts, unredacted and never cut off in the middle. Text a caller supplies (a service name, a link label) can no longer end the Touch ID sheet's description early. A caller Latchkey can't identify is named as unidentified, with the warning and the panel first, instead of passing for Latchkey's own tool.
 - Environment approvals name what each variable will resolve to, and link and push approvals name the Railway project, Vercel team and working folder that decide where values go.
@@ -380,7 +382,7 @@ latchkey_projectWhich project the folder’s checkout is, from its Git remotes, 
 latchkey_export_referencesWrites an environment’s env file of references and plain settings, never values, inside its cwd onlyNo
 - Output is always masked, and only the last 64 KB of each stream is returned, with a flag when it was cut. Standard input is empty.
 - Commands stop after timeout_seconds: 600 by default, at most 3600. Use it for tests, builds and scripts; run dev servers in a shell with latchkey run. A cancelled request stops its command.
-- Grants an agent asks for cover only the folder it runs in (and that repository’s worktrees), end when the agent quits or after a day at most, and can’t include production environments or a whole project. Grant those yourself with latchkey grant.
+- Grants an agent asks for cover only the folder it runs in (and that repository’s worktrees), last for the time it asked for (which you see and approve), end when the agent quits, and can’t include production environments or a whole project. Grant those yourself with latchkey grant.
 - Approval panels for requests through the MCP server say they come from an agent.
 - Several requests in a row from the same agent in the same folder share one panel while it’s up, and one touch answers them; a grant until the agent quits stops the asking for the rest of the session.
 - Reading values, changing or deleting items, earlier values, remote locations and pushes aren’t offered.
@@ -480,7 +482,7 @@ linknames: the scope, targetlinks
 unlinknames: the link IDok
 remote-statusnames: the scoperemoteStatus
 pushnames: the scope, link, onlypushResults
-origin: "mcp" marks a request from latchkey mcp: the approval panel says an agent asked, and a grant it asks for must be its own folder, a day at most, and nothing in production or a whole project. The label is the request’s own claim: it adds limits, never permissions. Unknown op values are refused.
+origin: "mcp" marks a request from latchkey mcp: the approval panel says an agent asked, and a grant it asks for must be its own folder, for the agent’s session, and nothing in production or a whole project. The label is the request’s own claim: it adds limits, never permissions. Unknown op values are refused.
 ### Responses
 Every response has ok. When it’s false, error says why: bad input, a change you didn’t approve, a keychain failure. Reads report per item instead: get answers ok: true with denied for items you refused and missing for IDs that don’t exist, and if anything was denied, no values are released at all. The command-line tool maps these to exit codes 77 and 66.
 A refused get
@@ -754,7 +756,7 @@ latchkey deletedItems deleted in the last 30 days, with days left.
 latchkey forget IDSDelete earlier values for good. Asks.
 ## Grants
 CommandWhat it does
-latchkey grant IDS [--folder DIR] [--for TIME] [--session] [--command CMD]... [--once]Let commands run from DIR (default: here), the folders inside it and that repository’s worktrees read these items without asking. TIME is like 30m, 2h, 1d; default 1 hour, at most 7 days. IDS can include patterns. Asks once.
+latchkey grant IDS [--folder DIR] [--for TIME] [--session] [--command CMD]... [--once]Let commands run from DIR (default: here), the folders inside it and that repository’s worktrees read these items without asking. TIME is like 30m, 2h, 1d, or always for a grant that lasts until revoked; default 1 hour, no maximum. IDS can include patterns. Asks once.
 latchkey grantsGrants in effect, with time left and any limits.
 latchkey revoke ID or allEnd a grant, or all of them. Doesn’t ask.
 Narrow a grant with --session (it ends when the agent you run it under quits, and covers only programs started under it), --command "npm test" (only latchkey run of that command, read from the signed tool’s own command line), or --once (one request). The approval panel offers the same: until claude quits and Only for ….
@@ -1029,7 +1031,7 @@ Agents run commands through lk run. You decide what reaches those commands: agen
 ### Ask, allow, and ask again when it matters
 The panel shows the agent, the programs it runs through, the folder and the command, all from macOS, with Touch ID right in it: touch the sensor from whatever app you're in. Several requests from the same agent share one panel and one touch. A folder grant until the agent quits covers its next runs; a production item isn't covered, so it asks.
 ### Grants with limits In this build
-For a folder (and its repository's worktrees), for up to 7 days, until the agent quits, for one command, or for one request. Kept where only Latchkey can change them.
+For a folder (and its repository's worktrees), for any length of time, until the agent quits, until you revoke it, for one command, or for one request. Kept where only Latchkey can change them.
 ```
 lk grant 'shop/development/*' --session --for 4h
 lk grant 'shop/development/*' --command "npm test" --for 2h
@@ -1042,7 +1044,7 @@ lk check --env shop/development
 ```
 lk check
 ### MCP server In this build
-Status, list, check, run, project, export references and request a grant, for clients without a shell. There's no secret-read tool; grants it asks for cover only its own folder, for a day at most, never production.
+Status, list, check, run, project, export references and request a grant, for clients without a shell. There's no secret-read tool; grants it asks for cover only its own folder, end when the agent quits, and never include production.
 ```
 claude mcp add latchkey -- ~/.local/bin/latchkey mcp
 ```
@@ -2071,7 +2073,7 @@ Terminal
 ```
 lk grant 'shop/development/*' --folder ~/Projects/shop --for 2h
 ```
-The grant asks once, lasts two hours here, and can last at most 7 days. See Give coding agents API keys safely.
+The grant asks once, lasts two hours here; --for always makes one that lasts until you revoke it. See Give coding agents API keys safely.
 ## What this doesn't do
 - A project match only names the project. It never releases a value or widens a grant.
 - A match through a remote other than origin, as a fork has, is flagged and never taken as the project.
@@ -2590,7 +2592,7 @@ A request doesn't hold Latchkey while it waits for you. When you answer, it runs
 ### App lock
 Latchkey's window, Settings and menu bar panel lock behind Touch ID or your Mac password when it opens, after time in the background and when the Mac sleeps or the screen locks, and revealed values are hidden. The lock keeps the window private; it doesn't decide what's released. Requests from commands, agents and Safari still go through approval, locked or not.
 ### Grants
-A grant lets commands from one folder (and its repository's worktrees) read named items without asking, for up to 7 days, and can be narrowed to an agent's session, one command or one request. Grants are kept in a keychain item only Latchkey can read or change, on this Mac only. No file holds them, so no other program can write itself one. Grants an agent asks for through the MCP server cover only its own folder, last a day at most, and can't include production.
+A grant lets commands from one folder (and its repository's worktrees) read named items without asking, for as long as the approval says (any length of time, or until you revoke it), and can be narrowed to an agent's session, one command or one request. Grants are kept in a keychain item only Latchkey can read or change, on this Mac only. No file holds them, so no other program can write itself one. Grants an agent asks for through the MCP server cover only its own folder, end with the agent's session, and can't include production.
 ### Agent-safe items
 An item marked agent-safe is released to any program that asks, with no prompt. Use it for values that aren't really secret, such as NEXT_PUBLIC_* settings that ship to browsers anyway.
 ## How a command gets a value

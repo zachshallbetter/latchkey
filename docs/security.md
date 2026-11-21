@@ -51,7 +51,10 @@ command gets which value. This page says what it protects against, how, and wher
   password) at launch, after time in the background, and on sleep or screen lock; nothing behind it is drawn, and
   revealed values are hidden. It's a privacy screen for the window, not an authorization step: requests from
   commands, agents and Safari go through approval whether it's locked or not, and unlocking releases nothing.
-- **Grants** are kept in a keychain item only Latchkey can read or change, on this Mac only, and last at most 7 days.
+- **Grants** are kept in a keychain item only Latchkey can read or change, on this Mac only. They last as long as the
+  approval says: a time of any length, until the agent quits, or until revoked (no end date; stored with the farthest
+  possible end so earlier versions read it as unexpired). There is no maximum: a grant until revoked keeps working
+  until you revoke it in Grants or with `latchkey revoke`, so it's the one to review.
   No file holds them, so no other program can write itself one.
 - **The key proxy** (`latchkey run --proxy`) keeps OpenAI and Anthropic keys in the signed `latchkey` process, which
   other programs can't read. The command gets a random placeholder (122 bits from the system generator, new each

@@ -269,7 +269,7 @@ See [Importing](import.md) for how projects and environments are chosen, and how
 
 | Command | |
 |---|---|
-| `latchkey grant IDS [--folder DIR] [--for TIME] [--session] [--command CMD]... [--once]` | Let commands run from DIR (default: here), the folders inside it and that repository's worktrees read these items without asking. TIME is like `30m`, `2h`, `1d`; default 1 hour, at most 7 days. IDS can include `project/*` and `project/environment/*`. Asks once. |
+| `latchkey grant IDS [--folder DIR] [--for TIME] [--session] [--command CMD]... [--once]` | Let commands run from DIR (default: here), the folders inside it and that repository's worktrees read these items without asking. TIME is like `30m`, `2h`, `1d`, or `always` for a grant that lasts until revoked; default 1 hour, no maximum. IDS can include `project/*` and `project/environment/*`. Asks once. |
 | `latchkey grants` | Grants in effect, with time left and any limits. |
 | `latchkey revoke ID` or `all` | End a grant, or all of them. Doesn't ask. |
 

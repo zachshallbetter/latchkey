@@ -271,7 +271,7 @@ public final class Broker: @unchecked Sendable {
                     let g = grants.add(names: toAsk, folder: cwd, duration: choice.duration, createdBy: Self.who(peer),
                                        session: session, commands: commands)
                     let limits = g.limits.isEmpty ? "" : ", \(g.limits)"
-                    log("get", toAsk, "approved (grant \(g.id) for \(GrantStore.describe(choice.duration))\(limits))", peer, req)
+                    log("get", toAsk, "approved (grant \(g.id) \(GrantStore.span(choice.duration))\(limits))", peer, req)
                 }
             }
         }
@@ -486,17 +486,17 @@ public final class Broker: @unchecked Sendable {
         guard !peer.isSSHForward else { return Response(ok: false, error: "grants can't be made over SSH: make them on the Mac running Latchkey") }
         let folder = Grant.normalize(req.folder ?? peer.cwd)
         guard !folder.isEmpty, folder != "/" else { return Response(ok: false, error: "a grant needs a folder other than /") }
-        var duration = min(req.duration ?? 3600, GrantStore.longest)
+        let duration = req.duration ?? 3600
         guard duration > 0 else { return Response(ok: false, error: "the duration must be positive") }
         if req.origin == "mcp" {
-            // An agent asking for itself: only its own folder, nothing in production or a whole project, a day at most.
+            // An agent asking for itself: only its own folder, nothing in production or a whole project, and only for its
+            // session (the owner sees the duration it asked for and decides).
             if let entry = names.first(where: Self.reachesProduction) {
                 return Response(ok: false, error: "an agent can't ask for \(entry): grants it asks for can't include production or a whole project. The owner can grant it with latchkey grant.")
             }
             guard folder == Grant.normalize(peer.cwd) else {
                 return Response(ok: false, error: "an agent can only ask for a grant on the folder it runs in")
             }
-            duration = min(duration, Self.longestAgentGrant)
             guard req.session == true else {
                 return Response(ok: false, error: "a grant an agent asks for lasts only for its session; ask with session")
             }
@@ -515,14 +515,14 @@ public final class Broker: @unchecked Sendable {
         let worktrees = Repo.commonDir(for: folder) != nil ? " (and its worktrees)" : ""
         let preview = Grant(names: names, folder: folder, expires: Date(), createdBy: "", session: session, commands: req.commands, usesLeft: req.uses)
         let limits = preview.limits.isEmpty ? "" : " (\(preview.limits))"
-        let reason = "let programs in \(Self.tilde(folder))\(worktrees) read \(Self.count(names)) without asking for \(GrantStore.describe(duration))\(limits), asked by \(Self.who(peer))"
+        let reason = "let programs in \(Self.tilde(folder))\(worktrees) read \(Self.count(names)) without asking \(GrantStore.span(duration))\(limits), asked by \(Self.who(peer))"
         guard try ask(.grant, names, peer, req, reason, duration: duration, folder: folder).allowed else {
             log("grant", names, "denied", peer, req)
             return Response(ok: false, error: "the grant was not approved")
         }
         let g = grants.add(names: names, folder: folder, duration: duration, createdBy: Self.who(peer),
                            session: session, commands: req.commands, uses: req.uses)
-        log("grant", names, "approved (grant \(g.id) for \(GrantStore.describe(duration))\(limits))", peer, req)
+        log("grant", names, "approved (grant \(g.id) \(GrantStore.span(duration))\(limits))", peer, req)
         return Response(ok: true, grants: [g])
     }
 
@@ -1395,8 +1395,6 @@ public final class Broker: @unchecked Sendable {
         return request
     }
 
-    /// The longest grant an agent can ask for through `latchkey mcp`.
-    public static let longestAgentGrant: TimeInterval = 24 * 3600
 
     /// A grant entry that reaches a production environment: `project/*` (every environment) or an item or
     /// environment pattern whose environment is production. Shared items don't say, so they don't count.

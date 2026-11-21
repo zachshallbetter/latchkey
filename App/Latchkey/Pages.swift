@@ -380,7 +380,7 @@ struct FindingDetail: View {
                     Card {
                         ForEach(Array(finding.grants.enumerated()), id: \.element.id) { i, g in
                             CardRow(label: Broker.tilde(g.folder), last: i == finding.grants.count - 1) {
-                                Text("ends \(g.expires.formatted(.relative(presentation: .named)))").foregroundStyle(.secondary)
+                                Text(g.untilRevoked ? "until revoked" : "ends \(g.expires.formatted(.relative(presentation: .named)))").foregroundStyle(.secondary)
                             }
                         }
                     }
@@ -811,7 +811,7 @@ struct GrantList: View {
                 TableColumn("Folder") { g in Text(Broker.tilde(g.folder)).font(.callout.monospaced()).lineLimit(1).truncationMode(.head) }
                 TableColumn("Limits") { g in Text(g.limits.isEmpty ? "Any command" : g.limits.prefix(1).capitalized + g.limits.dropFirst()).lineLimit(1) }
                 TableColumn("Status") { g in GrantStatus(grant: g) }.width(min: 90, ideal: 110)
-                TableColumn("Ends") { g in Text(g.expires.formatted(date: .abbreviated, time: .shortened)).lineLimit(1) }
+                TableColumn("Ends") { g in Text(g.untilRevoked ? "Until revoked" : g.expires.formatted(date: .abbreviated, time: .shortened)).lineLimit(1) }
             }
             .scrollContentBackground(.hidden)
             .overlay {
@@ -880,8 +880,12 @@ struct GrantDetail: View {
                     }
                     CardRow(label: "Ends") {
                         VStack(alignment: .trailing, spacing: 2) {
-                            Text(grant.expires.formatted(date: .abbreviated, time: .shortened))
-                            Text(grant.expires.formatted(.relative(presentation: .named))).font(.caption)
+                            if grant.untilRevoked {
+                                Text("Until revoked")
+                            } else {
+                                Text(grant.expires.formatted(date: .abbreviated, time: .shortened))
+                                Text(grant.expires.formatted(.relative(presentation: .named))).font(.caption)
+                            }
                         }
                         .foregroundStyle(.secondary)
                     }

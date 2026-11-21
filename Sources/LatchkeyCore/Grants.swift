@@ -9,6 +9,7 @@ public struct Grant: Codable, Identifiable, Hashable, Sendable {
     public var names: [String]
     /// Absolute path. Covers this folder and everything below it.
     public var folder: String
+    /// `Date.distantFuture` for a grant that lasts until revoked (`GrantStore.untilRevoked`).
     public var expires: Date
     public var created: Date
     /// Who asked for it, as the approval described them ("zsh › claude", "the Latchkey app").
@@ -24,6 +25,16 @@ public struct Grant: Codable, Identifiable, Hashable, Sendable {
     /// How many more requests it covers; nil for no limit.
     public var usesLeft: Int?
 
+
+    /// Lasts until revoked: no end date.
+    public var untilRevoked: Bool { expires.timeIntervalSince(created) >= GrantStore.untilRevoked }
+
+    /// When it ends, as a phrase: "until revoked", "2 hours left", "under 2 minutes left".
+    public func whenItEnds(relativeTo now: Date = Date()) -> String {
+        if untilRevoked { return "until revoked" }
+        let left = expires.timeIntervalSince(now)
+        return left < 90 ? "under 2 minutes left" : "\(GrantStore.describe(left)) left"
+    }
     public init(id: String = Grant.newID(), names: [String], folder: String, expires: Date,
                 created: Date = Date(), createdBy: String, repo: String? = nil, session: GrantSession? = nil,
                 commands: [[String]]? = nil, usesLeft: Int? = nil) {
@@ -155,7 +166,9 @@ public final class MemoryGrantBacking: GrantBacking, @unchecked Sendable {
 
 /// The grants in effect. Expired grants are dropped on every read.
 public final class GrantStore: @unchecked Sendable {
-    public static let longest: TimeInterval = 7 * 24 * 3600
+    /// A duration meaning "until revoked": the grant gets `Date.distantFuture` as its end, so a copy of Latchkey that
+    /// predates it still reads it as a grant that hasn't ended. Any duration this long or longer means the same.
+    public static let untilRevoked: TimeInterval = 100 * 365 * 86400
     private let backing: GrantBacking
     private var cache: [Grant] = []
     private let lock = NSLock()
@@ -199,7 +212,8 @@ public final class GrantStore: @unchecked Sendable {
     @discardableResult
     public func add(names: [String], folder: String, duration: TimeInterval, createdBy: String, now: Date = Date(),
                     session: GrantSession? = nil, commands: [[String]]? = nil, uses: Int? = nil) -> Grant {
-        let g = Grant(names: names, folder: folder, expires: now.addingTimeInterval(min(duration, Self.longest)),
+        let g = Grant(names: names, folder: folder,
+                      expires: duration >= Self.untilRevoked ? .distantFuture : now.addingTimeInterval(duration),
                       created: now, createdBy: createdBy, repo: Repo.commonDir(for: folder), session: session,
                       commands: commands, usesLeft: uses)
         lock.withLock {
@@ -227,6 +241,7 @@ public final class GrantStore: @unchecked Sendable {
 
     /// "30m", "2h", "1d", "90s". Nil for anything else.
     public static func parseDuration(_ s: String) -> TimeInterval? {
+        if ["always", "forever", "until-revoked"].contains(s.lowercased()) { return untilRevoked }
         guard let unit = s.last, let n = Double(s.dropLast()), n > 0 else { return nil }
         switch unit {
         case "s": return n
@@ -237,12 +252,16 @@ public final class GrantStore: @unchecked Sendable {
         }
     }
 
-    /// "1 hour", "45 minutes", "2 days".
+    /// "1 hour", "45 minutes", "2 days", or "until revoked".
     public static func describe(_ t: TimeInterval) -> String {
+        if t >= untilRevoked { return "until revoked" }
         let f = DateComponentsFormatter()
         f.allowedUnits = t >= 86400 ? [.day, .hour] : (t >= 3600 ? [.hour, .minute] : [.minute])
         f.unitsStyle = .full
         f.maximumUnitCount = 2
         return f.string(from: t) ?? "\(Int(t)) seconds"
     }
+
+    /// How long, as a phrase that follows a verb: "for 2 hours", or "until revoked".
+    public static func span(_ t: TimeInterval) -> String { t >= untilRevoked ? "until revoked" : "for \(describe(t))" }
 }

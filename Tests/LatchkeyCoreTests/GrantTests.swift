@@ -16,11 +16,11 @@ final class GrantTests: XCTestCase {
         XCTAssertFalse(g.covers("A", cwd: "/Users/x/site", now: now.addingTimeInterval(3601)))
     }
 
-    func testStorePersistsCapsAndRevokes() throws {
+    func testStorePersistsAndRevokes() throws {
         let backing = MemoryGrantBacking()
         let store = GrantStore(backing: backing)
         let g = store.add(names: ["A"], folder: "/tmp/p", duration: 30 * 86400, createdBy: "t", now: now)
-        XCTAssertEqual(g.expires, now.addingTimeInterval(GrantStore.longest))
+        XCTAssertEqual(g.expires, now.addingTimeInterval(30 * 86400), "no cap on how long a grant lasts")
         store.add(names: ["B"], folder: "/tmp/q", duration: 60, createdBy: "t", now: now)
         let reloaded = GrantStore(backing: backing)
         XCTAssertEqual(reloaded.all(now: now).count, 2)
@@ -347,7 +347,8 @@ final class BrokerGrantTests: XCTestCase {
         let r = ask(["shop/development/*", "SHARED"], duration: 3 * 86400)
         XCTAssertTrue(r.ok, r.error ?? "")
         let g = try XCTUnwrap(r.grants?.first)
-        XCTAssertLessThanOrEqual(g.expires.timeIntervalSince(g.created), Broker.longestAgentGrant + 1)
+        XCTAssertEqual(g.expires.timeIntervalSince(g.created), 3 * 86400, accuracy: 1, "the owner approves the duration the agent asked for")
+        XCTAssertNotNil(g.session, "and it still ends with the agent's session")
         // The owner's own grants keep the usual limits.
         XCTAssertTrue(b.handle(Request(op: "grant", names: ["shop/production/DB"], folder: "/tmp/site", duration: 3 * 86400), peer: peer).ok)
     }
@@ -415,4 +416,43 @@ final class RecordingApprover: Approver, @unchecked Sendable {
 struct GrantsOnlyApprover: Approver {
     var method: String { "test" }
     func approve(_ request: ApprovalRequest) -> ApprovalDecision { request.action == .grant ? .once : .deny }
+}
+
+/// Grants with no end date.
+final class GrantUntilRevokedTests: XCTestCase {
+    let now = Date(timeIntervalSince1970: 1_800_000_000)
+
+    func testAGrantCanLastUntilRevoked() throws {
+        let backing = MemoryGrantBacking()
+        let store = GrantStore(backing: backing)
+        let g = store.add(names: ["A"], folder: "/tmp/p", duration: GrantStore.untilRevoked, createdBy: "t", now: now)
+        XCTAssertEqual(g.expires, .distantFuture)
+        XCTAssertTrue(g.untilRevoked)
+        XCTAssertEqual(g.whenItEnds(relativeTo: now), "until revoked")
+        let reloaded = GrantStore(backing: backing)
+        XCTAssertNotNil(reloaded.covering("A", cwd: "/tmp/p", now: now.addingTimeInterval(50 * 365 * 86400)), "still in effect decades later")
+        XCTAssertTrue(try XCTUnwrap(reloaded.all(now: now).first).untilRevoked, "survives being stored")
+        XCTAssertEqual(reloaded.revoke(g.id), 1)
+        XCTAssertNil(reloaded.covering("A", cwd: "/tmp/p", now: now), "revoking ends it")
+        XCTAssertFalse(store.add(names: ["B"], folder: "/tmp/p", duration: 3600, createdBy: "t", now: now).untilRevoked)
+    }
+
+    func testDurationsParseAndDescribeUntilRevoked() {
+        for s in ["always", "forever", "until-revoked", "Always"] { XCTAssertEqual(GrantStore.parseDuration(s), GrantStore.untilRevoked, s) }
+        XCTAssertEqual(GrantStore.describe(GrantStore.untilRevoked), "until revoked")
+        XCTAssertEqual(GrantStore.span(GrantStore.untilRevoked), "until revoked")
+        XCTAssertEqual(GrantStore.span(3600), "for 1 hour")
+    }
+
+    func testTheOwnerCanGrantUntilRevokedThroughTheBroker() throws {
+        let store = MemoryStore()
+        try store.save(name: "A", value: "a-value-1", kind: .token, agentSafe: false, note: "")
+        let approver = RecordingApprover()
+        let b = Broker(store: store, approver: approver, logURL: nil)
+        let peer = PeerInfo(pid: 1, path: "/usr/local/bin/latchkey", cwd: "/tmp/p", chain: ["zsh"], isLatchkeyTool: true)
+        let r = b.handle(Request(op: "grant", names: ["A"], folder: "/tmp/p", duration: GrantStore.untilRevoked), peer: peer)
+        XCTAssertTrue(r.ok, r.error ?? "")
+        XCTAssertTrue(try XCTUnwrap(r.grants?.first).untilRevoked)
+        XCTAssertTrue(try XCTUnwrap(approver.requests.first).reason.contains("until revoked"), "the approval says so")
+    }
 }

@@ -227,7 +227,7 @@ STRIPE_KEY=latchkey://shop/development/STRIPE_KEY</code></pre></figure>
 <h2 id="let-an-agent-work-in-the-worktree">Let an agent work in the worktree</h2>
 <p>If a coding agent works in the new worktree, a grant for the main repository's folder covers it. Grants cover the folder, the folders inside it and that repository's worktrees.</p>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">lk grant &#x27;shop/development/*&#x27; --folder ~/Projects/shop --for 2h</code></pre></figure>
-<p>The grant asks once, lasts two hours here, and can last at most 7 days. See <a href="coding-agents-and-api-keys.html">Give coding agents API keys safely</a>.</p>
+<p>The grant asks once, lasts two hours here; <code>--for always</code> makes one that lasts until you revoke it. See <a href="coding-agents-and-api-keys.html">Give coding agents API keys safely</a>.</p>
 <h2 id="what-this-doesn-t-do">What this doesn't do</h2>
 <ul>
 <li>A project match only names the project. It never releases a value or widens a grant.</li>

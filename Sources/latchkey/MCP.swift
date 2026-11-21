@@ -208,13 +208,13 @@ final class MCPServer: @unchecked Sendable {
         let ids = Self.strings(args["ids"])
         guard !ids.isEmpty else { throw RunError.usage("ids is required: item IDs or project/environment/* patterns") }
         let duration = args["duration"] as? String ?? "1h"
-        guard GrantStore.parseDuration(duration) != nil else { throw RunError.usage("duration is like 30m, 2h or 1d") }
+        guard GrantStore.parseDuration(duration) != nil else { throw RunError.usage("duration is like 30m, 2h or 1d, or always") }
         let result = try latchkey(["grant", ids.joined(separator: ","), "--for", duration, "--session", "--json"], in: try folder(args),
                                   timeout: Self.longestTimeout, id: nil)
         guard result.code == 0, let data = result.stdout.text.data(using: .utf8),
               let g = try? Wire.decoder().decode(Grant.self, from: data) else { throw Self.failure(result) }
-        let left = GrantStore.describe(g.expires.timeIntervalSince(g.created))
-        let summary = "Granted \(g.names.joined(separator: ", ")) to programs in \(Broker.tilde(g.folder))\(g.repo == nil ? "" : " and its worktrees") for \(left) (grant \(g.id))."
+        let span = g.untilRevoked ? "until your session ends" : "\(GrantStore.span(g.expires.timeIntervalSince(g.created))) or until your session ends"
+        let summary = "Granted \(g.names.joined(separator: ", ")) to programs in \(Broker.tilde(g.folder))\(g.repo == nil ? "" : " and its worktrees") \(span) (grant \(g.id))."
         return Self.toolResult(summary, ["grant": Self.json(g)])
     }
 
@@ -507,7 +507,7 @@ final class MCPServer: @unchecked Sendable {
             "inputSchema": ["type": "object", "required": ["ids"], "properties": [
                 "ids": ["type": "array", "items": ["type": "string"], "minItems": 1,
                         "description": "Item IDs or project/environment/* patterns, such as [\"shop/development/*\"]."],
-                "duration": ["type": "string", "description": "How long, such as 30m, 2h or 1d. Default 1h."],
+                "duration": ["type": "string", "description": "How long, such as 30m, 2h or 1d, or always for no time limit (it still ends with your session). Default 1h."],
                 "cwd": cwdProperty,
             ]],
             "annotations": ["readOnlyHint": false, "destructiveHint": false, "openWorldHint": false],

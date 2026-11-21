@@ -267,7 +267,7 @@
     <h3>App lock</h3>
     <p>Latchkey's window, Settings and menu bar panel lock behind Touch ID or your Mac password when it opens, after time in the background and when the Mac sleeps or the screen locks, and revealed values are hidden. The lock keeps the window private; it doesn't decide what's released. Requests from commands, agents and Safari still go through approval, locked or not.</p>
     <h3>Grants</h3>
-    <p>A grant lets commands from one folder (and its repository's worktrees) read named items without asking, for up to 7 days, and can be narrowed to an agent's session, one command or one request. Grants are kept in a keychain item only Latchkey can read or change, on this Mac only. No file holds them, so no other program can write itself one. Grants an agent asks for through the MCP server cover only its own folder, last a day at most, and can't include production.</p>
+    <p>A grant lets commands from one folder (and its repository's worktrees) read named items without asking, for as long as the approval says (any length of time, or until you revoke it), and can be narrowed to an agent's session, one command or one request. Grants are kept in a keychain item only Latchkey can read or change, on this Mac only. No file holds them, so no other program can write itself one. Grants an agent asks for through the MCP server cover only its own folder, end with the agent's session, and can't include production.</p>
     <h3>Agent-safe items</h3>
     <p>An item marked agent-safe is released to any program that asks, with no prompt. Use it for values that aren't really secret, such as <code>NEXT_PUBLIC_*</code> settings that ship to browsers anyway.</p>
       </div>
