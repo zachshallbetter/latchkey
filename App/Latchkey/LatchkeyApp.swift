@@ -69,6 +69,9 @@ struct LatchkeyApp: App {
                 // Not drawn underneath while locked, so nothing shows through or reaches the accessibility tree.
                 if model.locked { LockScreen(model: model) } else { MainWindow(model: model) }
             }
+                // No keyboard focus rings anywhere in the app: here, in its sheets, Settings, What's New, the menu bar
+                // panel and the approval panel (each sets the same).
+                .focusEffectDisabled()
                 .frame(minWidth: 860, minHeight: 520)
                 // In the Dock while the window is open; closing it (or quitting from the Dock) leaves the menu bar icon.
                 .onAppear { NSApp.setActivationPolicy(.regular) }
@@ -124,6 +127,7 @@ struct LatchkeyApp: App {
             Group {
                 if model.locked { LockScreen(model: model).frame(width: 620, height: 560) } else { SettingsWindow(model: model) }
             }
+            .focusEffectDisabled()
         }
     }
 }
