@@ -463,7 +463,7 @@ func checkCommand(_ input: [String]) -> Never {
             for id in list ?? [] { print("\(label.padding(toLength: 18, withPad: " ", startingAt: 0))\(id)\(detail(id))") }
         }
         show("agent-safe", r.agentSafe)
-        show("granted", r.granted) { id in byID[id].map { "  (grant \($0.id), \(relative($0.expires)) left)" } ?? "" }
+        show("granted", r.granted) { id in byID[id].map { "  (grant \($0.id), \($0.whenItEnds()))" } ?? "" }
         show("asks", r.needsApproval)
         show("missing", r.missing)
     }
@@ -757,16 +757,11 @@ func batchImport(_ paths: [String], project: String?, environment: String?, shar
 
 // MARK: - grants
 
-func relative(_ d: Date) -> String {
-    let left = d.timeIntervalSinceNow
-    return left < 90 ? "under 2 minutes" : GrantStore.describe(left)
-}
-
 func printGrants(_ grants: [Grant]) {
     guard !grants.isEmpty else { print("No grants in effect."); return }
     for g in grants {
         let limits = g.limits.isEmpty ? "" : ", \(g.limits)"
-        print("\(g.id)  \(Broker.tilde(g.folder))  \(g.names.joined(separator: ", "))  (\(relative(g.expires)) left\(limits))")
+        print("\(g.id)  \(Broker.tilde(g.folder))  \(g.names.joined(separator: ", "))  (\(g.whenItEnds())\(limits))")
     }
 }
 
@@ -796,7 +791,7 @@ func grantCommand(_ input: [String]) -> Never {
             folder = URL(fileURLWithPath: rest.removeFirst()).resolvingSymlinksInPath().standardizedFileURL.path
         case "--for":
             guard !rest.isEmpty, let d = GrantStore.parseDuration(rest.removeFirst()) else {
-                fail("--for takes a time such as 30m, 2h or 1d", code: 64)
+                fail("--for takes a time such as 30m, 2h or 1d, or always", code: 64)
             }
             duration = d
         default:
@@ -807,7 +802,6 @@ func grantCommand(_ input: [String]) -> Never {
     guard !names.isEmpty, names.allSatisfy({ Wire.isValidName($0) || Grant.isPattern($0) }) else {
         fail("usage: latchkey grant ID[,ID...] [--folder DIR] [--for 2h] [--session] [--command CMD]... [--once]   (or PROJECT/* or PROJECT/ENV/*)", code: 64)
     }
-    if duration > GrantStore.longest { fail("the longest grant is 7 days", code: 64) }
     let r: Response
     do {
         r = try call(Request(op: "grant", names: names, folder: folder ?? currentDirectory(), duration: duration,
@@ -822,7 +816,7 @@ func grantCommand(_ input: [String]) -> Never {
         exit(0)
     }
     for g in r.grants ?? [] {
-        print("granted \(g.id): \(g.names.joined(separator: ", ")) readable from \(Broker.tilde(g.folder)) for \(GrantStore.describe(duration))\(g.limits.isEmpty ? "" : ", \(g.limits)")")
+        print("granted \(g.id): \(g.names.joined(separator: ", ")) readable from \(Broker.tilde(g.folder)) \(GrantStore.span(duration))\(g.limits.isEmpty ? "" : ", \(g.limits)")")
     }
     exit(0)
 }

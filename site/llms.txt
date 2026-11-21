@@ -67,8 +67,9 @@ latchkey run --file ASC_KEY_PATH=shop/production/ASC_P8 -- fastlane beta   # a k
   `latchkey grant 'shop/development/*' --session --for 4h` (ends when the agent quits),
   `latchkey grant 'shop/development/*' --command "npm test" --for 2h` (only that command), or
   `--folder ~/Projects/shop --for 2h`. A grant for a repository's folder covers its worktrees.
-- Through MCP, `latchkey_request_grant` asks the person for a grant on items in the agent's folder; it ends when the
-  agent quits or after a day at most, and can't include production environments or a whole project.
+- Through MCP, `latchkey_request_grant` asks the person for a grant on items in the agent's folder, for the duration
+  you ask (`always` for no time limit); it ends when the agent quits, and can't include production environments or a
+  whole project.
 
 ## New clones and worktrees
 

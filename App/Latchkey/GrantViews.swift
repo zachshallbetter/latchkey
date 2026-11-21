@@ -47,6 +47,7 @@ struct NewGrantSheet: View {
                         Text("8 hours").tag(28800.0)
                         Text("1 day").tag(86400.0)
                         Text("7 days").tag(604800.0)
+                        Text("Until revoked").tag(GrantStore.untilRevoked)
                     }
                     .labelsHidden().fixedSize()
                     Spacer()

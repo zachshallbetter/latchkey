@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 393,
-    "includedBytes": 3561130,
+    "includedBytes": 3567091,
     "excludedCounts": {
       "extension": 126,
       "generated-or-transient-file": 2
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "38e8d83ba04561c6eb60e290a1d773e6b7e26134",
-        "branch": null,
+        "commit": "c5d9aa15209223b374a34d3e5a38267b7ed19ba0",
+        "branch": "grants-until-revoked",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "5f62f355118af53710b3eef256125b3b68c0f9bf787f801ba9a795c6e123724a",
+  "aggregateSourceDigest": "fa48119789441c4dd9eb49d18a9aa28db1764d3e2a1c53f1af38392bad01d02d",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -734,8 +734,8 @@
     },
     {
       "path": "App/Latchkey/ApprovalPanel.swift",
-      "bytes": 25788,
-      "sha256": "2e618ce5554524d4e07d85447a153bb3ad076ef2456d2ad484d127de5554f230"
+      "bytes": 26023,
+      "sha256": "8736a7ad9db50cff405aaf450cfc9cd00725b8a338707901902b676616a16a29"
     },
     {
       "path": "App/Latchkey/Assets.xcassets/Contents.json",
@@ -949,18 +949,18 @@
     },
     {
       "path": "App/Latchkey/GrantViews.swift",
-      "bytes": 5449,
-      "sha256": "95f7126605af5b524da2e2e8c3c15599511f95e251cf8e329358e881ded308ee"
+      "bytes": 5524,
+      "sha256": "2fbac2b2716c206b57d0723cbcab4b79b38b6c0e8ee1c5c4a152e0760f94dc71"
     },
     {
       "path": "App/Latchkey/ItemDetail.swift",
-      "bytes": 15985,
-      "sha256": "bc802f87ebd057dfd81530d18792478d06bd7927ce171deb76f8cdcc30990679"
+      "bytes": 16020,
+      "sha256": "ec6009035c35e3e7ff56a21d41318f493717b53e573fe44fb180784cc15cc45f"
     },
     {
       "path": "App/Latchkey/LatchkeyApp.swift",
-      "bytes": 65972,
-      "sha256": "9585e57d801455645e4670f4fcd52bd3a98abab65be291dd0139cdacc1b2cfd8"
+      "bytes": 65964,
+      "sha256": "5a25bb7621e182eb9e1c303e5bebfa2dda8ad621f7f581b8ffacdc2bd59e8b09"
     },
     {
       "path": "App/Latchkey/MainWindow.swift",
@@ -974,8 +974,8 @@
     },
     {
       "path": "App/Latchkey/Pages.swift",
-      "bytes": 47600,
-      "sha256": "ffc548380211dfe389a4b453ac1dd06c78139c548a3c3735012cffff681e9db0"
+      "bytes": 47851,
+      "sha256": "6c4a233f1dcce1f21dc6f3793cd4486803fb53b157042209b8008be9455d5bc4"
     },
     {
       "path": "App/Latchkey/ProEntitlement.swift",
@@ -1084,8 +1084,8 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 39187,
-      "sha256": "64b3f517fb51b4011ab0aa341350b95555f2d8ab3803a782032764491589f7db"
+      "bytes": 39678,
+      "sha256": "b4a29b58662dc3c802b7651c31f28892156f0b8ef432730c05ca1f47d59460bb"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1139,8 +1139,8 @@
     },
     {
       "path": "Sources/LatchkeyCore/Broker.swift",
-      "bytes": 100905,
-      "sha256": "a8b0a489d732101980da1bbd9be29d09c09b6067f9cdaf36f75764dfe32d4c4a"
+      "bytes": 100739,
+      "sha256": "c8b6053fd9d8d98423486b243f5d3a47bd6710390e20ae5da9f6f20980f298cd"
     },
     {
       "path": "Sources/LatchkeyCore/BrokerEndpoint.swift",
@@ -1179,8 +1179,8 @@
     },
     {
       "path": "Sources/LatchkeyCore/Grants.swift",
-      "bytes": 11096,
-      "sha256": "0c0652cf913afab27364f579a66487d26a78258e3a9ea296ac1ac46831e87572"
+      "bytes": 12368,
+      "sha256": "2fe6e29c382ef405aa087d0772c1443d0235cc6bd7047d6c46b8748cd59b364c"
     },
     {
       "path": "Sources/LatchkeyCore/KeyProxy.swift",
@@ -1294,8 +1294,8 @@
     },
     {
       "path": "Sources/latchkey/MCP.swift",
-      "bytes": 31814,
-      "sha256": "d9ca159046bcb193398acb89a58dff8b9305183e0ffe86632c84c68c948e1e0a"
+      "bytes": 31957,
+      "sha256": "6718fa37a6769a221c0c493c0018d93ebd7a64d79443e3062de4e10221dc7327"
     },
     {
       "path": "Sources/latchkey/Rotate.swift",
@@ -1309,8 +1309,8 @@
     },
     {
       "path": "Sources/latchkey/main.swift",
-      "bytes": 81034,
-      "sha256": "516808cd72485d78ff392bc9465d8ee3e44b563f97d46ade0e2b94dc31eb4e5b"
+      "bytes": 80783,
+      "sha256": "9a409ec34cc34b35c787a619b637d77874af49b91d6e14c2709f80a189f555aa"
     },
     {
       "path": "Tests/LatchkeyCoreTests/AWSTests.swift",
@@ -1389,8 +1389,8 @@
     },
     {
       "path": "Tests/LatchkeyCoreTests/GrantTests.swift",
-      "bytes": 27726,
-      "sha256": "83a2b914a3a8a9038d005f0ede0bc2b503102de77b3121a41cae16633cb49750"
+      "bytes": 30223,
+      "sha256": "14924626040f0f145ceff4655b816034fa6edecfa83ae5f765095ca6d4542167"
     },
     {
       "path": "Tests/LatchkeyCoreTests/ImportTests.swift",
@@ -1474,8 +1474,8 @@
     },
     {
       "path": "docs/agents.md",
-      "bytes": 10341,
-      "sha256": "af614fd8c1943333fde43a5452e84c1d4b4429dee2a859dc511ea8ee9b2ee547"
+      "bytes": 10426,
+      "sha256": "39f91f79638deaf63674cf8d8890786a7e8cd4c8354707aeea71f3c5e38b486d"
     },
     {
       "path": "docs/app-store.md",
@@ -1484,8 +1484,8 @@
     },
     {
       "path": "docs/app.md",
-      "bytes": 21299,
-      "sha256": "4c2c6d9a7052b3c71a5722367031b7bc82c810ad0800f820c473d5520af4d8cc"
+      "bytes": 21314,
+      "sha256": "63d90a037af3bc814552ed14ebf1e5f392aa9164c55bbd84d2a82bc53b0fa5e4"
     },
     {
       "path": "docs/apple-passwords-and-passkeys.md",
@@ -1554,13 +1554,13 @@
     },
     {
       "path": "docs/cli.md",
-      "bytes": 23448,
-      "sha256": "908bfc0b58018552355079f1f038c778c3f270fcdaf6ef8febbb3ed8c59f96fd"
+      "bytes": 23494,
+      "sha256": "5f9f957e31610a8f55c774c47ba60c550da138d0dc996a7fc8764ecb2e392db0"
     },
     {
       "path": "docs/concepts.md",
-      "bytes": 6793,
-      "sha256": "56326458e7c754f5aeb7c7afc74ff9f7b206a012b993f83fcc1074dcf59b3d21"
+      "bytes": 6917,
+      "sha256": "f4e88fde738e923c0a68d963f2c974d190cf8f5c15ea9faa0a0d46ec641461cd"
     },
     {
       "path": "docs/development.md",
@@ -1639,8 +1639,8 @@
     },
     {
       "path": "docs/security.md",
-      "bytes": 15820,
-      "sha256": "9fd4d107dd1fbad5805554c590d0e9acf76845bc3d1451970a91c0b7855f3bae"
+      "bytes": 16139,
+      "sha256": "85933872a2fa83cb13fd6cb282e78cd262ad1f006ce9c45f7189703688a2f972"
     },
     {
       "path": "docs/site.md",
@@ -1794,8 +1794,8 @@
     },
     {
       "path": "site/changelog.html",
-      "bytes": 52865,
-      "sha256": "405ae21808543c17064e84a5380bb3bfd7621feb881600630ec865356e236d82"
+      "bytes": 53397,
+      "sha256": "7e6220236a66282448db14fa1dae9c0a93e6a50de49ce8fbca86922e6de41ab4"
     },
     {
       "path": "site/cli.html",
@@ -1804,18 +1804,18 @@
     },
     {
       "path": "site/developers/agents.html",
-      "bytes": 31351,
-      "sha256": "46d065f8c98d649479cabcbea3d92d5be66e4585fb82a11db7278bf41fa6f77b"
+      "bytes": 31388,
+      "sha256": "a32745f30a9a52c7490087364baacdd6405d3f0b11d8c1332e3b952f8217d4f6"
     },
     {
       "path": "site/developers/api.html",
-      "bytes": 26420,
-      "sha256": "3dc5570eea8b117650f62e9d06a485f0c8091c836d1ef207f0967717b2b26c10"
+      "bytes": 26436,
+      "sha256": "df6695a9d82af04db7a18d3a9222c96aec17605a75a4407eb90e79be7c369b4c"
     },
     {
       "path": "site/developers/cli.html",
-      "bytes": 51490,
-      "sha256": "c7470f2403d46829e3fc81157f2481d03b1a9444f3d9f252b7e951f70f2dc4e8"
+      "bytes": 51547,
+      "sha256": "81d3fc8d07623693a35e657a5b18e164f9fc4766e396a82646fce67bfa613022"
     },
     {
       "path": "site/developers/index.html",
@@ -1829,8 +1829,8 @@
     },
     {
       "path": "site/features.html",
-      "bytes": 47060,
-      "sha256": "7101f3dc69133dafa36eb8533e8d1d04d18ee42a3242cf6798a5c647212f6608"
+      "bytes": 47106,
+      "sha256": "fc6e532136bc70274270189e523bfb8cbd607dac5ebba1eed084fb7a081dda8c"
     },
     {
       "path": "site/guides/audit-secret-access.html",
@@ -1919,8 +1919,8 @@
     },
     {
       "path": "site/guides/worktrees-and-fresh-clones.html",
-      "bytes": 19944,
-      "sha256": "aeb4476f9b5ae8be9e392038e61cdfdd09968dbedf35ac78f72d409b2c849399"
+      "bytes": 19983,
+      "sha256": "d025f05849052f181f54fbaa545d06843ddd7c34631f21ef4bceca5532edcc41"
     },
     {
       "path": "site/humans.txt",
@@ -1959,8 +1959,8 @@
     },
     {
       "path": "site/security.html",
-      "bytes": 34327,
-      "sha256": "3241c1092b63704653b607172e9197f660c6f187a022ba5a2b7d2ac0375f3ba0"
+      "bytes": 34398,
+      "sha256": "8cd577b49adf9bf4092bf68f06656626bcbf2253ff94501197c238eb7e7ea3b0"
     },
     {
       "path": "site/site.css",

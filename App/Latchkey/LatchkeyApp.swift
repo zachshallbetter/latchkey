@@ -1040,7 +1040,7 @@ final class AppModel {
 
     func createGrant(names: [String], folder: String, duration: TimeInterval) async -> String? {
         let err = await run(Request(op: "grant", names: names, folder: folder, duration: duration))
-        if err == nil { notice = "Programs in \(Broker.tilde(folder)) can read \(names.count == 1 ? names[0] : "\(names.count) items") for \(GrantStore.describe(duration))." }
+        if err == nil { notice = "Programs in \(Broker.tilde(folder)) can read \(names.count == 1 ? names[0] : "\(names.count) items") \(GrantStore.span(duration))." }
         return err
     }
 

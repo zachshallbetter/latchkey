@@ -174,7 +174,9 @@ final class ApprovalChoice: ObservableObject {
     var decision: ApprovalDecision {
         guard grant else { return .once }
         let untilQuit = grantFor == Self.untilQuit
-        return .grant(GrantChoice(duration: untilQuit ? 86400 : grantFor, untilAgentQuits: untilQuit, thisCommandOnly: thisCommandOnly))
+        // Until the agent quits has no time limit of its own: the grant ends with the agent's session.
+        return .grant(GrantChoice(duration: untilQuit ? GrantStore.untilRevoked : grantFor, untilAgentQuits: untilQuit,
+                                  thisCommandOnly: thisCommandOnly))
     }
 }
 
@@ -328,6 +330,7 @@ struct ApprovalView: View {
                             Text("for 8 hours").tag(8 * 3600.0)
                             Text("for 1 day").tag(86400.0)
                             Text("for 7 days").tag(7 * 86400.0)
+                            Text("until revoked").tag(GrantStore.untilRevoked)
                         }
                         .labelsHidden().fixedSize().disabled(!choice.grant)
                     }

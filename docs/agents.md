@@ -156,8 +156,9 @@ claude mcp add latchkey -- ~/.local/bin/latchkey mcp
 - **Output** is always masked, and only the last 64 KB of each stream is returned. Standard input is empty.
 - **Commands stop** after 10 minutes by default, at most 60. Use it for tests, builds and scripts; run dev servers in
   a shell with `latchkey run`.
-- **Grants an agent asks for** cover only the folder it runs in (and that repository's worktrees), end when the
-  agent quits or after a day at most, and can't include production environments or a whole project. Grant those yourself with `latchkey grant`.
+- **Grants an agent asks for** cover only the folder it runs in (and that repository's worktrees), last for the time
+  it asked for (`always` for no time limit), which you see in the panel and approve, and end when the agent quits.
+  They can't include production environments or a whole project. Grant those yourself with `latchkey grant`.
 - **Approval panels** for requests through the MCP server say they come from an agent.
 - **Several requests in a row** from the same agent in the same folder share one panel while it's up, and one touch
   answers them; a grant ("until the agent quits") stops the asking for the rest of the session.

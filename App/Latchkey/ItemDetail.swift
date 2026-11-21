@@ -185,7 +185,7 @@ struct ItemDetail: View {
                 ForEach(Array(itemGrants.enumerated()), id: \.element.id) { i, g in
                     CardRow(label: Broker.tilde(g.folder), last: i == itemGrants.count - 1) {
                         VStack(alignment: .trailing, spacing: 2) {
-                            Text("Until \(g.expires.formatted(date: .omitted, time: .shortened))").foregroundStyle(.secondary)
+                            Text(g.untilRevoked ? "Until revoked" : "Until \(g.expires.formatted(date: .omitted, time: .shortened))").foregroundStyle(.secondary)
                             if !g.limits.isEmpty { Text(g.limits).font(.caption).foregroundStyle(.secondary) }
                         }
                         Button("Revoke") { act { await model.revoke(g.id) } }

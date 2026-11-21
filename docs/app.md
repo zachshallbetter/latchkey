@@ -160,7 +160,7 @@ soon as it appears: touch the sensor, with no click first. The fingerprint is gr
 your password or an Apple Watch; a Mac without Touch ID shows **Allow…**, which does the same.
 
 - **Releasing values to a command:** allow once, or tick **Allow from this folder** (for a time, until the agent
-  quits, or only for this command). Earlier values, grants asked for ahead of time and changes (add, change, delete,
+  quits, until revoked, or only for this command). Earlier values, grants asked for ahead of time and changes (add, change, delete,
   import, move, restore, link) show the same panel. A change that lets agents read an item without approval, or makes
   it a plain value, says so.
 - **Several requests at once:** requests from the same agent in the same folder that come in while the panel is up
