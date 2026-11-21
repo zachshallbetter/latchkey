@@ -1,5 +1,6 @@
 import AppKit
 import LatchkeyCore
+import LocalAuthentication
 import SwiftUI
 
 /// The menu bar icon: a click opens the main window; a right-click (or Control-click) shows the panel below it.
@@ -64,17 +65,33 @@ struct MenuBarPanel: View {
     }
 
     var body: some View {
-        if model.locked { lockedBody } else { unlockedBody }
+        Group {
+            if model.locked { lockedBody } else { unlockedBody }
+        }
+        // No keyboard focus rings, here or anywhere in the app (the scenes in LatchkeyApp set the same).
+        .focusEffectDisabled()
     }
 
-    /// While locked the panel lists nothing: Unlock opens Latchkey, whose lock screen asks for Touch ID.
+    /// While locked the panel lists nothing, and unlocks right here: Touch ID in the panel, as on the lock screen, or
+    /// Use Password… for the system sheet. Unlocking shows the items in place.
     private var lockedBody: some View {
         VStack(alignment: .leading, spacing: 10) {
             Label("Latchkey is locked", systemImage: "lock.fill").font(.headline)
-            Text("Unlock to see your items.").foregroundStyle(.secondary)
+            if let touchID {
+                VStack(spacing: 4) {
+                    InlineTouchID(context: touchID,
+                                  start: { model.unlockWithTouchID(touchID) { if self.touchID === touchID { self.touchID = nil } } },
+                                  stop: { stopTouchID() }, needsKeyWindow: false)
+                    Text("Touch ID to unlock").font(.callout).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 4)
+            } else {
+                Text("Unlock to see your items.").foregroundStyle(.secondary)
+            }
             Divider()
             HStack {
-                Button("Unlock…") { close(); model.openMainWindow() }
+                Button("Use Password…") { stopTouchID(); model.unlock() }.disabled(model.unlocking)
                 Spacer()
                 Button("Quit") { close(); AppDelegate.quitting = true; NSApp.terminate(nil) }
             }
@@ -82,6 +99,22 @@ struct MenuBarPanel: View {
         }
         .padding(12)
         .frame(width: 340)
+        .onAppear(perform: startTouchID)
+        .onDisappear(perform: stopTouchID)
+    }
+
+    /// The Touch ID request the panel shows while locked; nil when this Mac has none or it gave up.
+    @State private var touchID: LAContext?
+
+    private func startTouchID() {
+        guard model.locked, !model.unlocking, touchID == nil else { return }
+        let context = LAContext()
+        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil) { touchID = context }
+    }
+
+    private func stopTouchID() {
+        touchID?.invalidate()
+        touchID = nil
     }
 
     @ViewBuilder private var unlockedBody: some View {
