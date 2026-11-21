@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 393,
-    "includedBytes": 3568824,
+    "includedBytes": 3569315,
     "excludedCounts": {
       "extension": 126,
       "generated-or-transient-file": 2
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "2e6f13bb3b9c2286cb6a28a672f02a0e74e94520",
-        "branch": "menu-unlock",
+        "commit": "75fe0cc5a30c5bb1696bb1c456461b36c8cc0296",
+        "branch": "menu-unlock-docs",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "863edccbf51b0344d6277841bcd7b9e6cac9287ae531348d48e8cfce38dea049",
+  "aggregateSourceDigest": "3def9e2ae098fefbe994149fdeed7c8faddd94d6b16cf6ecd8d382222ee0a6b9",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -1084,8 +1084,8 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 39678,
-      "sha256": "b4a29b58662dc3c802b7651c31f28892156f0b8ef432730c05ca1f47d59460bb"
+      "bytes": 39821,
+      "sha256": "959901d253e5d9a99f485947b68739ea625d54d01bb490b8d7f05bcd32257e97"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1484,8 +1484,8 @@
     },
     {
       "path": "docs/app.md",
-      "bytes": 21314,
-      "sha256": "63d90a037af3bc814552ed14ebf1e5f392aa9164c55bbd84d2a82bc53b0fa5e4"
+      "bytes": 21465,
+      "sha256": "1fcc4fc9405f128d07617879607bcf1b5c1f9c5d7a04e5b816cc1200476a9590"
     },
     {
       "path": "docs/apple-passwords-and-passkeys.md",
@@ -1794,8 +1794,8 @@
     },
     {
       "path": "site/changelog.html",
-      "bytes": 53397,
-      "sha256": "7e6220236a66282448db14fa1dae9c0a93e6a50de49ce8fbca86922e6de41ab4"
+      "bytes": 53544,
+      "sha256": "0c0b7d11fcbfbdaa9f73ff0f1730a5215b2d6e5e4ff608fc300c956f380ce213"
     },
     {
       "path": "site/cli.html",
@@ -1959,8 +1959,8 @@
     },
     {
       "path": "site/security.html",
-      "bytes": 34398,
-      "sha256": "8cd577b49adf9bf4092bf68f06656626bcbf2253ff94501197c238eb7e7ea3b0"
+      "bytes": 34448,
+      "sha256": "c31cef5ab8e7349dae5c2fc83d3c8ca67585f45337ba3b30dfd294c684bfd0cd"
     },
     {
       "path": "site/site.css",
