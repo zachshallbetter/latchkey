@@ -180,11 +180,13 @@ Latchkey locks as Passwords does: when it opens, after a time in the background 
 60 in **Settings › Privacy**), and when the Mac sleeps or the screen locks. **Lock Latchkey** (⌃⌘L), **Lock Now** in
 Settings and **Lock** in the menu bar panel lock it by hand, even with automatic locking turned off.
 
-- **What it covers:** the window, Settings and the menu bar panel show only the lock screen, and revealed values are
-  hidden. Nothing behind the lock screen is drawn.
+- **What it covers:** the window and Settings show only the lock screen, the menu bar panel lists nothing, and revealed
+  values are hidden. Nothing behind the lock screen is drawn.
 - **Unlocking:** Touch ID inside the lock screen, with no system sheet; it listens while the window is in front, and
-  lets go when an approval panel takes over, so a touch meant for the approval isn't taken by the lock screen.
-  **Use Password…** (or a Mac without Touch ID) opens the system sheet for your password or an Apple Watch.
+  lets go when an approval panel takes over, so a touch meant for the approval isn't taken by the lock screen. The
+  locked menu bar panel unlocks too: it shows Touch ID as soon as it opens ("Touch ID to unlock"), and your items
+  appear in place. **Use Password…** (or a Mac without Touch ID) opens the system sheet for your password or an
+  Apple Watch.
 - **What it doesn't cover:** requests from commands, agents and Latchkey for Safari still show the approval panel,
   locked or not. The lock keeps the window private; approvals decide what's released.
 

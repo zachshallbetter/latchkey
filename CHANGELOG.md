@@ -8,9 +8,11 @@
   still end when the agent quits). A grant until the agent quits no longer also ends after a day.
 - Latchkey locks, as Passwords does: when it opens, after 5 minutes in the background (1, 5, 15 or 60 in Settings ›
   Privacy), and when the Mac sleeps or the screen locks. Touch ID is asked for right in the lock screen, with no
-  system sheet; **Use Password…** opens the sheet for the Mac password. While locked the
-  window, Settings and the menu bar panel show nothing but the lock screen. **Lock Latchkey** (⌃⌘L) and **Lock** in
-  the menu bar panel lock it by hand. The lock covers the app only: approvals for commands, agents and Safari still appear while it is locked.
+  system sheet; **Use Password…** opens the sheet for the Mac password. While locked the window and Settings show
+  nothing but the lock screen, and the menu bar panel lists nothing but unlocks with Touch ID right there.
+  **Lock Latchkey** (⌃⌘L) and **Lock** in the menu bar panel lock it by hand. The lock covers the app only:
+  approvals for commands, agents and Safari still appear while it is locked.
+- Keyboard focus rings no longer appear on buttons and controls anywhere in the app.
 - Approvals are one small panel with Touch ID inside it, for releases and changes alike; **Use Password…** opens the
   system sheet. Requests from the same agent in the same folder that arrive while it's up join it as rows, so one
   touch answers a burst; each row can be denied on its own. Pushes, SSH, Safari and unidentified programs are still
