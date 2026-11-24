@@ -436,3 +436,29 @@
     });
   });
 })();
+
+// Appearance is a local browser preference; no account, request or tracking is involved.
+(function () {
+  var footer = document.querySelector('footer .foot-base');
+  if (!footer) return;
+  var button = document.createElement('button');
+  button.type = 'button'; button.className = 'theme-toggle';
+  var choices = ['system', 'light', 'dark'];
+  var current = document.documentElement.dataset.theme || 'system';
+  function label() {
+    button.textContent = 'Appearance: ' + current.charAt(0).toUpperCase() + current.slice(1);
+    button.setAttribute('aria-label', button.textContent + '. Change appearance.');
+  }
+  button.addEventListener('click', function () {
+    current = choices[(choices.indexOf(current) + 1) % choices.length];
+    if (current === 'system') delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = current;
+    try { localStorage.setItem('pistachio-theme', current); } catch (e) { /* Storage may be unavailable. */ }
+    label();
+  });
+  label(); footer.appendChild(button);
+}());
+
+document.querySelectorAll('.mobile-menu a').forEach(function (link) {
+  link.addEventListener('click', function () { link.closest('details').removeAttribute('open'); });
+});

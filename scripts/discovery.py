@@ -102,7 +102,7 @@ lines += [f"  <url><loc>{url(p)}</loc><lastmod>{last_change(p)}</lastmod></url>"
 lines.append("</urlset>")
 (SITE / "sitemap.xml").write_text("\n".join(lines) + "\n")
 
-full = ["# Latchkey: the full text of latchkey.snackstud.io", "",
+full = ["# Pistachio: the full text of latchkey.snackstud.io", "",
         "Every page's main content as plain text. The curated index is llms.txt. Scenes and the app window show example data and are left out.", ""]
 for p in pages:
     title = re.search(r"<title>(.*?)</title>", p.read_text(), re.S).group(1)
