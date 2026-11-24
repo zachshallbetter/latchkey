@@ -58,6 +58,7 @@ struct SettingsView: View {
     @Bindable var model: AppModel
     var section: SettingsSection
     @AppStorage(AppPreferences.Key.appearance) private var appearance = "system"
+    @AppStorage(AppPreferences.Key.icon) private var icon = AppPreferences.Icon.pistachio.rawValue
     @AppStorage(AppPreferences.Key.clipboardSeconds) private var clipboardSeconds = AppPreferences.defaultClipboardSeconds
     @AppStorage(AppPreferences.Key.revealSeconds) private var revealSeconds = AppPreferences.defaultRevealSeconds
     @AppStorage(AppPreferences.Key.hideOnDeactivate) private var hideOnDeactivate = true
@@ -98,6 +99,18 @@ struct SettingsView: View {
                 Text("Light").tag("light")
                 Text("Dark").tag("dark")
             }
+            Picker("Icon", selection: Binding(get: { AppPreferences.Icon(preference: icon).rawValue }, set: { icon = $0 })) {
+                ForEach(AppPreferences.Icon.allCases, id: \.rawValue) { choice in
+                    Label {
+                        Text(choice.title)
+                    } icon: {
+                        Image(nsImage: AppBranding.image(for: choice)).resizable().scaledToFit().frame(width: 28, height: 28)
+                    }
+                    .tag(choice.rawValue)
+                }
+            }
+            .pickerStyle(.radioGroup)
+            SettingsNote("Changes the Dock icon, menu bar symbol and marks inside the app. Finder and Safari keep the bundled Pistachio icon.")
             SettingsNote("Preferences are saved on this Mac. They do not change the settings on your other Macs.")
         }
         Section("Startup & Dock") {

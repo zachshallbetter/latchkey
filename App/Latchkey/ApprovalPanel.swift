@@ -247,7 +247,7 @@ struct ApprovalView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 12) {
-                Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 40, height: 40)
+                BrandAppIcon(size: 40)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title).font(.headline).fixedSize(horizontal: false, vertical: true)
                     Text(subtitle).font(.callout).foregroundStyle(.secondary).lineLimit(1).truncationMode(.head)
