@@ -3,12 +3,12 @@
   "owner": {
     "name": "Zach Shallbetter"
   },
-  "description": "Latchkey for Claude Code: a skill for running commands with keys from Latchkey, and its MCP server.",
+  "description": "Pistachio for Claude Code: a skill for running commands with keys from Pistachio, and its MCP server.",
   "plugins": [
     {
       "name": "latchkey",
       "source": "./plugins/latchkey",
-      "description": "Run commands that need API keys through Latchkey instead of .env values.",
+      "description": "Run commands that need API keys through Pistachio instead of .env values.",
       "version": "0.1.0"
     }
   ]

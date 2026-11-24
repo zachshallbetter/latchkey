@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 404,
-    "includedBytes": 3668839,
+    "includedBytes": 3669024,
     "excludedCounts": {
       "extension": 136,
       "generated-or-transient-file": 2
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "d65846ef17f568cfe2902a3875a15d69928d364d",
-        "branch": "codex/pistachio-pst-command",
+        "commit": "9ce882cd9edb67bc5901dd73d9dcb54935723260",
+        "branch": "rename/pistachio-agent-names",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "63f33cde57eea465c7868c48b48d249f1ca6d3563f2d2e990bf54635e98ea56e",
+  "aggregateSourceDigest": "7c5af004c7e83bb596462e51c01f9cf92005dda043c9a99841f3c94522efb7fd",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -694,8 +694,8 @@
     },
     {
       "path": ".claude-plugin/marketplace.json",
-      "bytes": 412,
-      "sha256": "cab3fd43747dd7975ad7a46032fadb10667e8e9c776901c56e44b3a88c817f23"
+      "bytes": 415,
+      "sha256": "0830a47146f5b09e8d2735acd98ac65f539861278b30e13f8d33ad431a84cd0d"
     },
     {
       "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
@@ -1710,12 +1710,12 @@
     {
       "path": "plugins/latchkey/.mcp.json",
       "bytes": 112,
-      "sha256": "9077e0e673e5abecaaaa4286da4f578d8606c0253df2f7b2953b34cb2b423ee5"
+      "sha256": "4e85155eb44ee10bc8dc05e6c9fa0661a2d750fd511bb8eca928906c618fe16c"
     },
     {
       "path": "plugins/latchkey/skills/latchkey/SKILL.md",
-      "bytes": 5092,
-      "sha256": "fb55bd33eac38e4c2e9d55b868f5dbbb69b553b5072842ab8a195f1f70f6dc93"
+      "bytes": 5274,
+      "sha256": "ec78d80ddedb899a39f0eb173c1a31363f22b5e8ab8b4423e03260d172ebc7c8"
     },
     {
       "path": "scripts/appstore-preflight.py",

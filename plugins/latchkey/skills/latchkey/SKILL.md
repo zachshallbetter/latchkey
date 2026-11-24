@@ -1,7 +1,7 @@
 ---
 name: pistachio
 description: >-
-  Run commands that need API keys, database URLs or other secrets through Pistachio (`pst`, also `pistachio`; legacy `pst` and `pistachio` remain compatible)
+  Run commands that need API keys, database URLs or other secrets through Pistachio (`pst`, also `pistachio`, `lk` or `latchkey`)
   instead of reading or writing .env values. Use whenever a task needs credentials (tests, dev servers, migrations,
   deploy scripts, SDK calls), when an env file holds pistachio:// references, when a command fails for a missing
   key, when asked to create or fill in a .env file, or when the user mentions Pistachio.
@@ -13,9 +13,12 @@ The person keeps their secrets in Pistachio, on their Mac, in iCloud Keychain. Y
 need to. Env files hold references such as `pistachio://shop/development/DATABASE_URL`; `pst run` fills them in when a
 command starts, after the person approves on their Mac or under a grant they made.
 
+`pst`, `pistachio`, `lk` and `latchkey` are the same tool. If `pst` isn't found, the Mac has an older install: use
+`lk` instead, with the same arguments, everywhere below.
+
 ## Rules
 
-- Never run `pst get` or `pst get`. It prints a value.
+- Never run `pst get` (or `lk get`). It prints a value.
 - Never print the environment (`env`, `printenv`, `echo $KEY`) of a command started by `pst run`, and never write a
   value into a file, a commit, a log or a message.
 - Never put a real value in an env file. Put a reference: `NAME=pistachio://ID`.
@@ -30,7 +33,7 @@ pst run --env shop/development -- npm run dev      # a whole environment, no fil
 ```
 
 Everything after `--` is the command. Its exit status becomes `pst run`'s. Values that the command prints appear as
-`<concealed by pistachio>`.
+`<concealed by latchkey>`.
 
 Check first when a run might ask the person, so you can tell them before a slow command waits on an approval:
 
@@ -94,7 +97,7 @@ either unless the person brought it up.
 
 ## MCP
 
-If the `pistachio` MCP server is connected (`pst mcp`), its tools do the same without a shell: `pistachio_check`,
+If the `pistachio` MCP server is connected (`pst mcp`, or `lk mcp`), its tools do the same without a shell: `pistachio_check`,
 `pistachio_run` (output masked, last 64 KB), `pistachio_list`, `pistachio_status`, `pistachio_request_grant`,
 `pistachio_project` and `pistachio_export_references` (an env file of references for a fresh checkout). They never
 return a value.
@@ -106,7 +109,7 @@ return a value.
 | 0 | Done | |
 | 64 | Wrong usage | Fix the command |
 | 66 | No item with that ID | Stop; give the person the `pst set` command |
-| 69 | The Pistachio app can't be reached | Stop; ask the person to open Pistachio |
+| 69 | The app can't be reached | Stop; ask the person to open the app (still named Latchkey on their Mac) |
 | 73 | A file couldn't be rewritten | Stop and report |
 | 77 | Refused | Stop; the person denied it or no grant covers it. Show them the `pst grant` line it printed. Don't retry |
 | 127 | The command couldn't start | Fix the command |
