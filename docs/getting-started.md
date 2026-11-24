@@ -125,7 +125,7 @@ would go; run it without `--dry-run` (and with `--rewrite`) to bring them all in
    ```
 
    ```bash
-   rm -f ~/.local/bin/latchkey ~/.local/bin/lk
+   rm -f ~/.local/bin/latchkey ~/.local/bin/lk ~/.local/bin/pistachio
    ```
 
    ```bash

@@ -3,6 +3,9 @@
 ## Unreleased
 
 ### CLI
+- The command-line tool also answers to `pistachio`, the product's name after the rename: Install Command Line Tool,
+  `scripts/install.sh` and Homebrew link it beside `latchkey` and `lk`. All three are the same signed tool, so grants
+  for `latchkey run` and `lk run` cover `pistachio run` too, and `latchkey` and `lk` keep working.
 - Env files can use `pistachio://ID` and `pistachio-file://ID` as well as `latchkey://ID` and `latchkey-file://ID`,
   ahead of the rename to Pistachio. Both mean the same and always will, so existing files keep working unchanged.
 
