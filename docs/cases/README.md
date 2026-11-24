@@ -1,4 +1,4 @@
-# Latchkey use-case register
+# Pistachio use-case register
 
 These cases preserve the product reasoning captured on 2026-11-11. They are user needs and acceptance criteria, **not claims that every behavior ships today**. "Current evidence" refers to repository documentation on main as reviewed on that date, not independent runtime verification. Never add a real secret to a fixture or documentation.
 
@@ -25,12 +25,12 @@ A second problem arose with coding agents: agents could implement integrations b
 ## Cross-cutting design rules
 
 1. Preserve the environment-variable interface where applications require it; env files may contain references or explicitly delivered values. Never claim env files must disappear.
-2. Prefer stable references (for example `latchkey://shop/production/DATABASE_URL`) over duplicate literal secrets in repositories.
+2. Prefer stable references (for example `pistachio://shop/production/DATABASE_URL`) over duplicate literal secrets in repositories.
 3. A reference is an identifier, **not** proof of permission or validity. Names, dependencies and security classifications need not imply that the underlying provider has confirmed them.
 4. Distinguish **stored**, **synced**, **resolved**, **released**, **proxied**, **rotated**, **revoked** and **actually used at a provider**.
 5. Distinguish human owner, requesting process/agent, delegation, policy decision and executed operation. Approvals must not be presented as constraints the execution path cannot enforce.
 6. Shared references reduce duplicated secret distribution, not the authority shared among consumers.
-7. Treat iCloud Keychain as platform-backed custody and sync, not as the Apple Passwords application's own database. Latchkey has its own access group.
+7. Treat iCloud Keychain as platform-backed custody and sync, not as the Apple Passwords application's own database. Pistachio has its own access group.
 8. Never treat a successful build or documentation claim as proof of cross-device delivery, signed sandbox behavior or resistance to compromise.
 9. When importing, editing, monitoring or scanning, avoid placing literal values in Git, logs, command arguments, reports or agent context.
 

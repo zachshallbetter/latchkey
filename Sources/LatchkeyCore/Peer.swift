@@ -11,7 +11,7 @@ public struct PeerInfo: Codable, Sendable, Hashable {
     /// The caller's command line, as the kernel has it.
     public var arguments: [String]
     /// True when the caller is the `latchkey` tool signed by the same team as this process, whichever name ran it
-    /// (`latchkey`, `lk` or `pistachio`). Anything else talking to the socket is shown by its path.
+    /// (`pst`, `pistachio`, `lk` or `latchkey`). Anything else talking to the socket is shown by its path.
     public var isLatchkeyTool: Bool
     /// The caller's ancestors, nearest first, matching `chain`, each with its start time so a reused process ID
     /// doesn't pass for the original.
@@ -55,7 +55,7 @@ public struct PeerInfo: Codable, Sendable, Hashable {
 
     /// Programs that only pass a command along; a session grant ties itself to the first ancestor that isn't one.
     static let launchers: Set<String> = ["zsh", "bash", "sh", "dash", "fish", "tcsh", "csh", "ksh", "login", "sudo", "env",
-                                         "nohup", "tmux", "screen", "latchkey", "lk", "pistachio", "xargs", "make", "npx", "npm", "pnpm", "yarn", "bun"]
+                                         "nohup", "tmux", "screen", "latchkey", "lk", "pistachio", "pst", "xargs", "make", "npx", "npm", "pnpm", "yarn", "bun"]
 
     /// The process a session grant should last as long as: the nearest ancestor that isn't a shell or launcher,
     /// usually the agent (`claude`, `codex`, `cursor`).

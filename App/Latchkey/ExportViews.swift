@@ -2,7 +2,7 @@ import AppKit
 import LatchkeyCore
 import SwiftUI
 
-/// Writes an environment's env file, as `lk export` does and with the same checks: references or values, a new file, or a
+/// Writes an environment's env file, as `pst export` does and with the same checks: references or values, a new file, or a
 /// merge into an existing one that names what it adds and updates and keeps every other byte.
 struct ExportSheet: View {
     let model: AppModel
@@ -39,7 +39,7 @@ struct ExportSheet: View {
             SheetHeader(symbol: "square.and.arrow.up", tint: .blue, title: "Export \(scope)",
                         subtitle: "Write this environment's env file from its record.")
             if record == nil {
-                Text("\(scope) has no environment record yet. `lk env migrate` makes one from your items.")
+                Text("\(scope) has no environment record yet. `pst env migrate` makes one from your items.")
                     .font(.callout).foregroundStyle(.secondary)
             }
             Card {

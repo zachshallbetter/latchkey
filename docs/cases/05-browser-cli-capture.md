@@ -8,7 +8,7 @@ A provider dashboard displays a key once; a CLI prints a newly generated credent
 
 ## Browser flow
 
-On an allowed Safari page, detect a plausible newly displayed token without broadly scraping passwords. Offer **Save to Latchkey** beside the value or via explicit selection; obtain consent before sending the value to the app. Record provider/environment/project context if established. Do not treat an uncertain DOM guess as a verified credential identity. Allow per-item fill sites under HTTPS and fresh approval.
+On an allowed Safari page, detect a plausible newly displayed token without broadly scraping passwords. Offer **Save to Pistachio** beside the value or via explicit selection; obtain consent before sending the value to the app. Record provider/environment/project context if established. Do not treat an uncertain DOM guess as a verified credential identity. Allow per-item fill sites under HTTPS and fresh approval.
 
 ## CLI flow (proposed beyond current documented import)
 

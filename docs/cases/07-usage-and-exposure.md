@@ -8,10 +8,10 @@ An owner should be able to answer: which local command or agent requested this c
 
 ## Evidence classes
 
-1. **Local Latchkey observation:** broker reads, approvals, grants, changes, imports and pushes. This records access via Latchkey, not every subsequent network request.
+1. **Local Pistachio observation:** broker reads, approvals, grants, changes, imports and pushes. This records access via Pistachio, not every subsequent network request.
 2. **Provider observation (future where APIs permit):** provider-side last-used, token scope, expiration, revocation or activity. Availability and accuracy vary.
 3. **Exposure indicators (future):** known plaintext config files, local Git history, pasted output, accident reports and provider alerts. Scans must not exfiltrate or print secrets.
-4. **Unknown/unobservable:** a value used outside Latchkey, derived/transformed disclosures, copies retained by child processes, or consumption on systems not reporting back.
+4. **Unknown/unobservable:** a value used outside Pistachio, derived/transformed disclosures, copies retained by child processes, or consumption on systems not reporting back.
 
 ## Acceptance / safety
 
@@ -23,4 +23,4 @@ An owner should be able to answer: which local command or agent requested this c
 
 ## Current evidence
 
-`docs/security.md` describes broker logging, HMAC chains, proxy limitations and exact-value masking. `docs/agents.md` describes `latchkey touched`. Neither is comprehensive provider usage monitoring or proof of non-exposure.
+`docs/security.md` describes broker logging, HMAC chains, proxy limitations and exact-value masking. `docs/agents.md` describes `pistachio touched`. Neither is comprehensive provider usage monitoring or proof of non-exposure.

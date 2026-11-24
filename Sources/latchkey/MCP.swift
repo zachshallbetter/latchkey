@@ -1,7 +1,7 @@
 import Foundation
 import LatchkeyCore
 
-/// `latchkey mcp`: Latchkey's tools for agents over the Model Context Protocol, as newline-delimited JSON-RPC 2.0
+/// `pst mcp`: Pistachio's tools for agents over the Model Context Protocol, as newline-delimited JSON-RPC 2.0
 /// on standard input and output (logs go to standard error).
 ///
 /// There is no direct secret-read tool. Child output masks exact values, but transformed values can leak.
@@ -73,7 +73,7 @@ final class MCPServer: @unchecked Sendable {
             return .result([
                 "protocolVersion": Self.protocolVersions.contains(asked) ? asked : Self.protocolVersions[0],
                 "capabilities": ["tools": ["listChanged": false]],
-                "serverInfo": ["name": "pistachio", "title": "Latchkey", "version": Self.version],
+                "serverInfo": ["name": "pistachio", "title": "Pistachio", "version": Self.version],
                 "instructions": Self.instructions,
             ])
         case "ping":
@@ -191,8 +191,8 @@ final class MCPServer: @unchecked Sendable {
         else if args["aws_session"] as? Bool == true { options.append("--aws-session") }
         let cli = ["run"] + options + (try sourceArguments(args)) + ["--"] + command
         let result = try latchkey(cli, in: try folder(args), timeout: timeout, id: id)
-        // latchkey's own refusals end the run before the command starts, with a latchkey: line on standard error.
-        if [64, 66, 69, 77].contains(result.code), result.stderr.text.hasPrefix("latchkey: ") { throw Self.failure(result) }
+        // latchkey's own refusals end the run before the command starts, with a pistachio: line on standard error.
+        if [64, 66, 69, 77].contains(result.code), result.stderr.text.hasPrefix("pistachio: ") { throw Self.failure(result) }
         let out = result.stdout, err = result.stderr
         var text = "exit code \(result.code)"
         if result.timedOut { text += " (stopped after \(Int(timeout)) seconds)" }
@@ -226,7 +226,7 @@ final class MCPServer: @unchecked Sendable {
         return Self.toolResult(result.stdout.text, ["output": result.stdout.text])
     }
 
-    /// Writes an environment's env file with latchkey:// references and plain settings only: never values.
+    /// Writes an environment's env file with pistachio:// references and plain settings only: never values.
     private func exportReferences(_ args: [String: Any]) throws -> Outcome {
         guard let scope = args["environment"] as? String, RemoteLink.isValidScope(scope) else {
             throw RunError.usage("environment is required: PROJECT/ENV, such as shop/development")
@@ -255,7 +255,7 @@ final class MCPServer: @unchecked Sendable {
     }
 
     /// Runs this `latchkey` binary with `arguments` in `folder`, marked as an agent's (PISTACHIO_ORIGIN=mcp). The app
-    /// then judges a real process in the real folder: its own signed tool, its own command line. `latchkey run`
+    /// then judges a real process in the real folder: its own signed tool, its own command line. `pst run`
     /// masks the command's output itself.
     private func latchkey(_ arguments: [String], in folder: String, timeout: TimeInterval, id: String?) throws -> ToolRun {
         guard let me = Bundle.main.executablePath else { throw RunError.failed("can't find the latchkey tool") }
@@ -273,7 +273,7 @@ final class MCPServer: @unchecked Sendable {
         process.standardError = errPipe
         let stdout = Tail(cap: Self.outputCap), stderr = Tail(cap: Self.outputCap)
         let pumps = DispatchGroup()
-        do { try process.run() } catch { throw RunError.failed("cannot start latchkey: \(error.localizedDescription)") }
+        do { try process.run() } catch { throw RunError.failed("cannot start pistachio: \(error.localizedDescription)") }
         if let id { runLock.lock(); running[id] = process; runLock.unlock() }
         defer { if let id { runLock.lock(); running[id] = nil; runLock.unlock() } }
         pumpMasked(outPipe, secrets: [], group: pumps) { stdout.add($0) }
@@ -296,11 +296,11 @@ final class MCPServer: @unchecked Sendable {
         return ToolRun(code: code, stdout: stdout.text, stderr: stderr.text, timedOut: timedOut.isSet)
     }
 
-    /// The error for a latchkey run that stopped on its own account, from its exit code and its `latchkey:` message
+    /// The error for a pst run that stopped on its own account, from its exit code and its `pistachio:` message
     /// (the wording of failMissing and failRefused in main.swift).
     static func failure(_ run: ToolRun) -> RunError {
         let message = run.stderr.text.split(separator: "\n").first.map(String.init) ?? ""
-        let text = message.hasPrefix("latchkey: ") ? String(message.dropFirst(10)) : message
+        let text = message.hasPrefix("pistachio: ") ? String(message.dropFirst(10)) : message
         func ids(after prefix: String, until end: String?) -> [String] {
             guard text.hasPrefix(prefix) else { return [] }
             var rest = text.dropFirst(prefix.count)
@@ -352,7 +352,7 @@ final class MCPServer: @unchecked Sendable {
         return url.path
     }
 
-    /// env_files, environments and files as `latchkey run` / `latchkey check` options.
+    /// env_files, environments and files as `pst run` / `pst check` options.
     private func sourceArguments(_ args: [String: Any]) throws -> [String] {
         var out: [String] = []
         for f in Self.strings(args["env_files"]) { out += ["--env-file", f] }
@@ -394,14 +394,14 @@ final class MCPServer: @unchecked Sendable {
     static func describe(_ error: Error, folder: String) -> (String, [String: Any]) {
         switch error as? RunError {
         case .refused(let ids):
-            let grant = "latchkey grant \(ids.joined(separator: ",")) --folder \(Broker.shellWord(folder)) --for 2h"
-            return ("Refused: \(ids.joined(separator: ", ")) (not agent-safe, not approved, no grant). Ask the owner to approve it when Latchkey asks, or to run `\(grant)`. You can ask once with pistachio_request_grant. Don't retry the same command.",
+            let grant = "pst grant \(ids.joined(separator: ",")) --folder \(Broker.shellWord(folder)) --for 2h"
+            return ("Refused: \(ids.joined(separator: ", ")) (not agent-safe, not approved, no grant). Ask the owner to approve it when Pistachio asks, or to run `\(grant)`. You can ask once with pistachio_request_grant. Don't retry the same command.",
                     ["error": "refused", "ids": ids, "grantCommand": grant])
         case .missing(let ids):
-            return ("No item named: \(ids.joined(separator: ", ")). Ask the owner to add it in Latchkey or check the name. Don't retry.",
+            return ("No item named: \(ids.joined(separator: ", ")). Ask the owner to add it in Pistachio or check the name. Don't retry.",
                     ["error": "missing", "ids": ids])
         case .unreachable(let m):
-            return (m + " Ask the owner to open Latchkey.", ["error": "unreachable"])
+            return (m + " Ask the owner to open Pistachio.", ["error": "unreachable"])
         case .usage(let m): return (m, ["error": "usage"])
         case .unreadable(let m): return (m, ["error": "unreadable"])
         case .failed(let m): return (m, ["error": "failed"])
@@ -410,8 +410,8 @@ final class MCPServer: @unchecked Sendable {
     }
 
     static let instructions = """
-    Latchkey keeps this person's secrets (API keys, database URLs) in iCloud Keychain. There is no direct secret-read tool. Child output masks exact secret values, but transformed values can still leak; never print or encode secrets. \
-    Env files hold latchkey:// references instead of values. To run a command that needs secrets, call \
+    Pistachio keeps this person's secrets (API keys, database URLs) in iCloud Keychain. There is no direct secret-read tool. Child output masks exact secret values, but transformed values can still leak; never print or encode secrets. \
+    Env files hold pistachio:// references instead of values. To run a command that needs secrets, call \
     pistachio_run; the values reach the command, and its output is masked. Call pistachio_check first to see whether \
     it would start without asking. If the owner refuses or an item is missing, stop and tell them; you may ask once \
     with pistachio_request_grant. Never try to read values another way.
@@ -426,9 +426,9 @@ final class MCPServer: @unchecked Sendable {
     private static let sourceProperties: [String: Any] = [
         "cwd": cwdProperty,
         "env_files": ["type": "array", "items": ["type": "string"],
-                      "description": "Env files to load first, relative to cwd, such as [\".env.local\"]. Their latchkey:// references are filled in."],
+                      "description": "Env files to load first, relative to cwd, such as [\".env.local\"]. Their pistachio:// references are filled in."],
         "environments": ["type": "array", "items": ["type": "string"],
-                         "description": "Latchkey environments to load without a file, as project/environment, such as [\"shop/development\"]."],
+                         "description": "Pistachio environments to load without a file, as project/environment, such as [\"shop/development\"]."],
         "files": ["type": "object", "additionalProperties": ["type": "string"],
                   "description": "Variables to set to the path of a temporary file holding an item's value, as {\"NAME\": \"project/environment/ITEM\"}."],
     ]
@@ -454,8 +454,8 @@ final class MCPServer: @unchecked Sendable {
     static let currentTools: [[String: Any]] = [
         [
             "name": "pistachio_status",
-            "title": "Latchkey status",
-            "description": "Where Latchkey keeps values, how the owner approves, and how many items and grants there are.",
+            "title": "Pistachio status",
+            "description": "Where Pistachio keeps values, how the owner approves, and how many items and grants there are.",
             "inputSchema": ["type": "object", "properties": [String: Any]()],
             "annotations": ["readOnlyHint": true, "openWorldHint": false],
         ],
@@ -483,12 +483,12 @@ final class MCPServer: @unchecked Sendable {
         [
             "name": "pistachio_run",
             "title": "Run with secrets",
-            "description": "Run a command with latchkey:// references in its environment filled in. Returns the exit code and the command's output, with secret values replaced by <concealed by latchkey> and only the last 64 KB of each stream kept. Items that aren't agent-safe or granted ask the owner first. For tests, builds and scripts that finish; not for dev servers. Standard input is empty.",
+            "description": "Run a command with pistachio:// references in its environment filled in. Returns the exit code and the command's output, with secret values replaced by <concealed by latchkey> and only the last 64 KB of each stream kept. Items that aren't agent-safe or granted ask the owner first. For tests, builds and scripts that finish; not for dev servers. Standard input is empty.",
             "inputSchema": ["type": "object", "required": ["command"], "properties": sourceProperties.merging([
                 "command": ["type": "array", "items": ["type": "string"], "minItems": 1,
                             "description": "The program and its arguments, such as [\"npm\", \"test\"]. Use [\"sh\", \"-c\", \"...\"] for pipes."],
                 "proxy": ["type": "boolean",
-                          "description": "Keep OPENAI_API_KEY and ANTHROPIC_API_KEY out of the command: it gets a placeholder and a local base URL, and Latchkey adds the real key on requests to the provider. For programs using the OpenAI or Anthropic SDKs."],
+                          "description": "Keep OPENAI_API_KEY and ANTHROPIC_API_KEY out of the command: it gets a placeholder and a local base URL, and Pistachio adds the real key on requests to the provider. For programs using the OpenAI or Anthropic SDKs."],
                 "proxy_models": ["type": "array", "items": ["type": "string"], "minItems": 1,
                                  "description": "With proxy: only let the command use these models. A request that doesn't name one in its JSON body is refused."],
                 "proxy_requests": ["type": "integer", "minimum": 1,
@@ -504,14 +504,14 @@ final class MCPServer: @unchecked Sendable {
         [
             "name": "pistachio_project",
             "title": "Which project is this",
-            "description": "Which Latchkey project this folder's Git checkout is, from its remotes, and that project's environments. A match only names the project; it releases nothing. A match through a remote other than origin (as a fork has) is flagged.",
+            "description": "Which Pistachio project this folder's Git checkout is, from its remotes, and that project's environments. A match only names the project; it releases nothing. A match through a remote other than origin (as a fork has) is flagged.",
             "inputSchema": ["type": "object", "properties": ["cwd": cwdProperty]],
             "annotations": ["readOnlyHint": true, "openWorldHint": false],
         ],
         [
             "name": "pistachio_export_references",
             "title": "Write an env file of references",
-            "description": "Write an environment's env file from its Latchkey record, for a fresh checkout or worktree: latchkey:// references and plain settings such as PORT, never secret values. Run commands with it through pistachio_run (env_files). An existing file is left alone unless replace is true.",
+            "description": "Write an environment's env file from its Pistachio record, for a fresh checkout or worktree: pistachio:// references and plain settings such as PORT, never secret values. Run commands with it through pistachio_run (env_files). An existing file is left alone unless replace is true.",
             "inputSchema": ["type": "object", "required": ["environment"], "properties": [
                 "environment": ["type": "string", "description": "PROJECT/ENV, such as shop/development (see pistachio_project)."],
                 "file": ["type": "string", "description": "Where to write it, relative to cwd and inside it. Default .env.local. cwd must be the folder this server started in, inside it, or a worktree of the same repository."],

@@ -1,13 +1,13 @@
-// Copy buttons, and `lk` commands coloured by part with an explanation of each, shown on hover or focus.
+// Copy buttons, and `pst` commands coloured by part with an explanation of each, shown on hover or focus.
 (function () {
-  // ---- What each part of an lk command means (from the CLI reference).
+  // ---- What each part of an pst command means (from the CLI reference).
   var ACTIONS = {
-    run: "Start a command with its latchkey:// references filled in",
+    run: "Start a command with its pistachio:// references filled in",
     import: "Move an env file's values into iCloud Keychain",
     grant: "Let commands read these items without asking, within limits",
     grants: "Grants in effect, with time left and limits",
     revoke: "End a grant, or all of them",
-    touched: "What Latchkey released in a window of time",
+    touched: "What Pistachio released in a window of time",
     rotate: "Replace items one by one; the old values stay in history",
     check: "What a run would get without asking. Asks nothing, releases nothing",
     get: "Print one value",
@@ -24,7 +24,7 @@
     restore: "Put back an earlier value, or a deleted item",
     push: "Send an environment's values to its linked services",
     remote: "Link environments to Vercel, GitHub Actions, Railway, Fly or a Linux server over ssh",
-    mcp: "Serve Latchkey's tools to an agent over MCP",
+    mcp: "Serve Pistachio's tools to an agent over MCP",
     log: "The access log: every release, change and refusal",
     status: "Where values are kept, and how you approve"
   };
@@ -33,7 +33,7 @@
     "--env-file": ["Load KEY=VALUE lines from this file first", "an env file"],
     "--file": ["Set a variable to the path of a temporary file holding an item", "NAME=ID"],
     "--no-masking": ["Don't hide values in the command's output"],
-    "--proxy": ["Keep OpenAI and Anthropic keys out of the command; Latchkey adds them on the way to the provider"],
+    "--proxy": ["Keep OpenAI and Anthropic keys out of the command; Pistachio adds them on the way to the provider"],
     "--proxy-models": ["With --proxy: refuse requests that don't name one of these models", "models, such as gpt-4o-mini,gpt-4o"],
     "--proxy-requests": ["With --proxy: refuse requests after this many have been forwarded", "a number"],
     "--aws-session": ["Give the command short-lived AWS credentials instead of your key"],
@@ -41,7 +41,7 @@
     "--aws-for": ["How long the AWS credentials last (15 minutes by default)", "a time, such as 1h"],
     "--rewrite": ["Replace each imported value in the file with its reference"],
     "--class": ["Change how an imported line is classed: a secret, a setting left in the file, or a public value", "KEY=secret|setting|public"],
-    "--merge": ["Update the variables Latchkey manages in an existing file and add the missing ones; every other byte stays"],
+    "--merge": ["Update the variables Pistachio manages in an existing file and add the missing ones; every other byte stays"],
     "--replace": ["Overwrite what's already there: the whole env file for export, existing items for import"],
     "--yes": ["Go ahead without asking first"],
     "--out": ["Write to this file instead of standard output", "a file"],
@@ -49,7 +49,7 @@
     "--clipboard": ["Copy the values for this Mac only, hidden from clipboard managers and cleared after 60 seconds. Asks every time"],
     "--staged": ["Scan only the lines a commit would add"],
     "--install-hook": ["Write a Git pre-commit hook that refuses commits with plain values in env files"],
-    "--force": ["Overwrite a pre-commit hook that isn't Latchkey's"],
+    "--force": ["Overwrite a pre-commit hook that isn't Pistachio's"],
     "--into": ["The shared item (or the item in their environment) to combine into", "a name or ID"],
     "--scan": ["Find every .env and .env.* under this folder", "a folder"],
     "--batch": ["Also import the files listed in this file", "a list of paths"],
@@ -58,14 +58,14 @@
     "--agent-safe-pattern": ["Import matching names as values agents may read", "patterns, such as NEXT_PUBLIC_*"],
     "--project": ["Put items in this project", "a project"],
     "--session": ["End the grant when the agent you run this under quits"],
-    "--command": ["Only for this command, run through lk run", "the command"],
+    "--command": ["Only for this command, run through pst run", "the command"],
     "--once": ["End the grant after one use"],
     "--for": ["How long", "a time: 30m, 2h, 1d"],
     "--folder": ["The folder the grant covers (default: here)", "a folder"],
     "--since": ["How far back", "a time: 4h, 2d"],
     "--by": ["Only what went to programs started under this one", "a program name"],
     "--grant": ["Only what one grant released", "a grant ID"],
-    "--touched": ["Rotate what lk touched lists"],
+    "--touched": ["Rotate what pst touched lists"],
     "--open": ["Open each service's page for making a new key"],
     "--push": ["Push the new values to linked environments"],
     "--only": ["Only these", "item IDs or keys"],
@@ -86,10 +86,10 @@
   };
   var POSITIONAL = { import: "The env file", scan: "The folder to scan", export: "project/environment" };
   var TIP = {
-    program: "Latchkey's command-line tool (latchkey, or lk for short)",
-    sep: "Everything after this is the command lk starts",
+    program: "Pistachio's command-line tool (pst or pistachio)",
+    sep: "Everything after this is the command pst starts",
     item: "An item: NAME, project/environment/NAME, or a project/environment/* pattern",
-    child: "The command lk starts, with the values filled in",
+    child: "The command pst starts, with the values filled in",
     options: "Any of the options in the table below",
     comment: ""
   };
@@ -102,27 +102,27 @@
     PATH: "A path", R: "A Git remote"
   };
 
-  // ---- Programs other than lk that appear beside it: [what it is, its subcommands, its options, its arguments].
+  // ---- Programs other than pst that appear beside it: [what it is, its subcommands, its options, its arguments].
   var SHELL = {
     brew: ["Homebrew, the Mac package manager",
       { tap: "Adds a tap: a repository of formulas and casks", trust: "Trusts the tap, so Homebrew installs from it", install: "Installs a package" },
       { "--cask": "A Mac app rather than a command-line formula" },
-      { "zachshallbetter/latchkey": "Latchkey's Homebrew tap", latchkey: "The Latchkey app" }],
+      { "zachshallbetter/latchkey": "Pistachio's Homebrew tap", latchkey: "The Pistachio app" }],
     export: ["Sets a variable for this shell and the programs it starts", {}, {}, {}],
     cd: ["Changes folder", {}, {}, { "~/Projects/shop": "The project's checkout" }],
     ssh: ["Connects to the other Mac over SSH", {},
-      { "-o": "An SSH option; StreamLocalBindUnlink=yes replaces a stale socket", "-R": "Forwards a socket on the other Mac to Latchkey's socket on this one" }, {}],
+      { "-o": "An SSH option; StreamLocalBindUnlink=yes replaces a stale socket", "-R": "Forwards a socket on the other Mac to Pistachio's socket on this one" }, {}],
     claude: ["Claude Code's command-line tool", { mcp: "Manages Claude Code's MCP servers", add: "Adds a server: its name, then the command that starts it" }, {}, { latchkey: "The server's name" }],
     "/plugin": ["A Claude Code command for plugins",
       { marketplace: "Plugin marketplaces", add: "Adds a marketplace from a folder or repository", install: "Installs a plugin" },
-      { "--marketplace": "The marketplace it comes from" }, { latchkey: "The Latchkey plugin" }],
+      { "--marketplace": "The marketplace it comes from" }, { latchkey: "The Pistachio plugin" }],
     printf: ["Prints its arguments exactly, without adding a newline", {}, {}, { "%s": "Print the next argument as it is", '"$TOKEN"': "A value already in a shell variable, so it never appears in your shell history" }]
   };
   var ENVVARS = {
-    LATCHKEY_SOCKET: "Where lk finds Latchkey: a socket forwarded over SSH from the Mac running it",
+    LATCHKEY_SOCKET: "Where pst finds Pistachio: a socket forwarded over SSH from the Mac running it",
     LATCHKEY_NO_LAUNCH: "Don't start the app if it isn't running; fail with exit 69 instead",
     OPENAI_API_KEY: "What the command sees in place of the key: a placeholder only the proxy accepts",
-    OPENAI_BASE_URL: "Points the OpenAI library at Latchkey's local proxy"
+    OPENAI_BASE_URL: "Points the OpenAI library at Pistachio's local proxy"
   };
   // Fields in the JSON the broker, the log, list --json and MCP clients use.
   var JSONKEYS = {
@@ -133,12 +133,12 @@
     agentSafe: "Read without asking", kind: "token, password, key or value", name: "The item ID", note: "Free text", service: "Who issued it, optional",
     updatedAt: "When the value or settings last changed", usedIn: "Files that reference it, recorded on import and move",
     created: "When the grant was made", createdBy: "The program chain that asked for it", expires: "When it ends",
-    folder: "The folder it covers, with its subfolders", id: "The grant's ID, for lk revoke", names: "Item IDs involved",
+    folder: "The folder it covers, with its subfolders", id: "The grant's ID, for pst revoke", names: "Item IDs involved",
     repo: "The repository it covers, so the checkout's worktrees are included",
     chain: "The calling process and its parents, nearest first", command: "The caller's command line, from the kernel",
     cwd: "The folder the caller ran in, from the kernel", decision: "What happened: allowed and why, denied, refused", time: "When",
-    program: "The calling program's path, when it isn't Latchkey's signed command-line tool",
-    mcpServers: "The MCP servers this client starts", args: "Its arguments", env: "Variables for it; latchkey:// references are filled in by lk run",
+    program: "The calling program's path, when it isn't Pistachio's signed command-line tool",
+    mcpServers: "The MCP servers this client starts", args: "Its arguments", env: "Variables for it; pistachio:// references are filled in by pst run",
     content: "What the agent reads", type: "The kind of content", text: "The exit code and masked output, as text",
     structuredContent: "The same result as fields", exitCode: "The command's exit status", timedOut: "Whether it was stopped for running too long",
     stdout: "Standard output, masked", stdoutTruncated: "Whether standard output was cut short", stderr: "Standard error, masked",
@@ -146,15 +146,17 @@
     "some-server": "The server's name in this client", latchkey: "The server's name in this client"
   };
   var REF = {
-    "latchkey://": "A reference: Latchkey fills in this item's value when the command starts",
+    "latchkey://": "A reference: Pistachio fills in this item's value when the command starts",
     "latchkey-file://": "A file reference: the command gets the path of a temporary file holding the item",
     "lk-proxy-": "A placeholder key: the proxy swaps in the real one, and only for the provider's host",
-    "http://127.0.0.1": "Latchkey's local proxy, which forwards requests to the provider"
+    "http://127.0.0.1": "Pistachio's local proxy, which forwards requests to the provider"
   };
+  REF["pistachio://"] = REF["latchkey://"];
+  REF["pistachio-file://"] = REF["latchkey-file://"];
   var CHECK = { "agent-safe": "Read without asking", granted: "Covered by a grant, with its time left", asks: "Will ask you when the command runs", missing: "No item with that ID" };
   // Parts of the architecture diagram on the developer overview.
   var DIAGRAM = [
-    ["latchkey (CLI)", "The command-line tool; it never touches the keychain"],
+    ["pistachio (CLI)", "The command-line tool; it never touches the keychain"],
     ["JSON over a Unix socket", "One request per line, to a socket only your user can open"],
     ["Broker (in the app)", "The signed app, the only thing that reads the keychain"],
     ["iCloud Keychain", "Where items live, synced to your Macs"],
@@ -177,11 +179,11 @@
   function isPlaceholder(w) { return /^[A-Z][A-Z0-9_\/,.=|-]*$/.test(w) && w.length > 0; }
   function placeholderTip(w) { return PLACEHOLDER[w] || PLACEHOLDER[w.split("=")[0]] || "A placeholder: put your own value here"; }
 
-  /// One line of shell as HTML. Only lines that run lk or latchkey are coloured.
+  /// One line of shell as HTML. Only lines that run pst or latchkey are coloured.
   function highlight(line, opts) {
     var focusable = !(opts && opts.inert);
     var syn = !!(opts && opts.synopsis);
-    var m = line.match(/^(\s*(?:\$\s+)?)((?:~|\.)?[\w.\/~-]*\/)?(lk|latchkey)(\s.*)?$/);
+    var m = line.match(/^(\s*(?:\$\s+)?)((?:~|\.)?[\w.\/~-]*\/)?(pst|pistachio|lk|latchkey)(\s.*)?$/);
     if (!m) return esc(line);
     var html = esc(m[1]) + tok("t-prog", (m[2] || "") + m[3], TIP.program, focusable);
     var parts = words(m[4] || "", syn), action = null, expect = null, child = false, first = true;
@@ -206,7 +208,7 @@
         continue;
       }
       if (!action && ACTIONS[w]) { action = w; html += tok("t-act", w, ACTIONS[w], focusable); continue; }
-      // In lk run, the first word that isn't an option starts the command.
+      // In pst run, the first word that isn't an option starts the command.
       if (action === "run") { child = true; first = false; html += tok("t-child", w, TIP.child, focusable); continue; }
       if (syn && isPlaceholder(w)) { html += tok("t-ph", w, placeholderTip(w), focusable); continue; }
       html += tok("t-val", w, POSITIONAL[action] || TIP.item, focusable);
@@ -226,14 +228,14 @@
     return html + tok(tip ? "t-ref" : "t-str", v, tip || "A plain value, kept as written", focusable);
   }
 
-  /// One line of shell: lk lines as above, other programs from SHELL, joined by pipes and the like.
+  /// One line of shell: pst lines as above, other programs from SHELL, joined by pipes and the like.
   function shell(line, opts) {
     var focusable = !(opts && opts.inert);
     var hash = line.search(/\s#\s/), comment = "";
     if (hash >= 0) { comment = line.slice(hash); line = line.slice(0, hash); }
     var html = line.split(/(\s*(?:\||&&|;)\s*)/).map(function (seg, i) {
       if (i % 2) return tok("t-punct", seg);
-      if (/^\s*(?:\$\s+)?(?:(?:~|\.)?[\w.\/~-]*\/)?(lk|latchkey)(\s|$)/.test(seg)) return highlight(seg, opts);
+      if (/^\s*(?:\$\s+)?(?:(?:~|\.)?[\w.\/~-]*\/)?(pst|pistachio|lk|latchkey)(\s|$)/.test(seg)) return highlight(seg, opts);
       if (/^\s*[A-Za-z_][A-Za-z0-9_]*=/.test(seg)) return assign(seg, focusable);
       var parts = words(seg), out = "", prog = null, after = false;
       for (var j = 0; j < parts.length; j++) {
@@ -272,7 +274,7 @@
     var focusable = !(opts && opts.inert);
     return line.split(/(`[^`]*`)/).map(function (part) {
       if (part[0] === "`") return tok("t-punct", "`") + shell(part.slice(1, -1), opts) + tok("t-punct", "`");
-      return esc(part).replace(/latchkey:\/\//g, function (r) { return tok("t-ref", r, REF["latchkey://"], focusable); });
+      return esc(part).replace(/(?:latchkey|pistachio):\/\//g, function (r) { return tok("t-ref", r, REF["latchkey://"], focusable); });
     }).join("");
   }
 
@@ -286,21 +288,21 @@
   /// Plain text: synopses, sample output and env files.
   function textLine(line, opts) {
     var focusable = !(opts && opts.inert);
-    if (/^\s*(\$\s+)?(lk|latchkey)(\s|$)/.test(line)) return highlight(line, { inert: opts.inert, synopsis: true });
+    if (/^\s*(\$\s+)?(pst|pistachio|lk|latchkey)(\s|$)/.test(line)) return highlight(line, { inert: opts.inert, synopsis: true });
     if (SHELL[line.trim().split(/\s+/)[0]]) return shell(line, opts);
     if (/^\s*[A-Za-z_][A-Za-z0-9_]*=/.test(line)) return assign(line, focusable);
     // The line to give an agent: the llms.txt address it should read.
     if (/llms\.txt/.test(line) && /^Read https?:/.test(line)) return esc(line).replace(/https?:\/\/\S+llms\.txt/, function (u) { return tok("t-ref", u, "Plain text for language-model tools: the rules, setup, commands and exit codes", focusable); });
-    // A finding from lk scan: place, variable, and why it was flagged.
+    // A finding from pst scan: place, variable, and why it was flagged.
     var sc = line.match(/^(\S+:\d+)(\s+)(\S+)(\s+)(holds the value of|looks like a secret)(.*)$/);
     if (sc) return tok("t-val", sc[1], "The env file and line", focusable) + sc[2] + tok("t-key", sc[3], "The variable holding a plain value", focusable) + sc[4] +
-      tok("t-act", sc[5], sc[5] === "looks like a secret" ? "Its name and value look like a credential" : "Its value equals an item already stored in Latchkey", focusable) + esc(sc[6]);
+      tok("t-act", sc[5], sc[5] === "looks like a secret" ? "Its name and value look like a credential" : "Its value equals an item already stored in Pistachio", focusable) + esc(sc[6]);
     var m = line.match(/^(\s*)(agent-safe|granted|asks|missing)(\s.*)$/);
     if (m) return esc(m[1]) + tok("t-act", m[2], CHECK[m[2]], focusable) + esc(m[3]);
     return esc(line);
   }
 
-  // ---- Explain every code block: lk and the programs beside it, env files, JSON, synopses, the agent note and the
+  // ---- Explain every code block: pst and the programs beside it, env files, JSON, synopses, the agent note and the
   // diagram. The scenes are drawings that type themselves, and the home page's live demos rewrite their own text, so
   // they're left alone. The developer pages explain every option in their tables, so there the explanations come on
   // hover only and the parts don't add stops to the keyboard's path.
@@ -335,11 +337,11 @@
   // ---- A latchkey:// reference in prose: drawn as a placeholder (site.css), with the same hover explanation.
   document.querySelectorAll(":not(pre) > code").forEach(function (c) {
     var t = c.textContent;
-    if (c.closest(".scene-wrap, .appwin, .mw") || !/^latchkey(-file)?:\/\//.test(t)) return;
+    if (c.closest(".scene-wrap, .appwin, .mw") || !/^(?:latchkey|pistachio)(-file)?:\/\//.test(t)) return;
     c.classList.add("tok", "lk-ref");
-    c.dataset.tip = t.indexOf("latchkey-file://") === 0
+    c.dataset.tip = /^(?:latchkey|pistachio)-file:\/\//.test(t)
       ? "A file reference: when a command starts, it becomes the path of a temporary file holding the value."
-      : "A reference, not a value: Latchkey replaces it with the value from Keychain when a command starts.";
+      : "A reference, not a value: Pistachio replaces it with the value from Keychain when a command starts.";
   });
 
   // ---- One explanation box, shown beside the part under the pointer or in focus.

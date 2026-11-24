@@ -7,7 +7,7 @@ public struct ApprovalRequest: Sendable, Equatable {
         case read, add, change, delete, importItems, grant, move, readVersion, restore, link, push
         /// Compare values inside Latchkey without releasing them (finding duplicates).
         case compare
-        /// Compare values found in files with stored values, without releasing them (lk scan).
+        /// Compare values found in files with stored values, without releasing them (pst scan).
         case scan
     }
     public var action: Action
@@ -25,7 +25,7 @@ public struct ApprovalRequest: Sendable, Equatable {
     public var targets: [String] = []
     /// push: at least one target is production, which needs its own confirmation.
     public var production = false
-    /// Asked through `latchkey mcp`, by an agent rather than a command.
+    /// Asked through `pst mcp`, by an agent rather than a command.
     public var byAgent = false
     /// The asking program's path when it isn't Latchkey's own signed command-line tool.
     public var program: String?
@@ -33,7 +33,7 @@ public struct ApprovalRequest: Sendable, Equatable {
     public var fromApp = false
     /// The agent a grant made here could last as long as ("claude"), if the caller runs under one.
     public var sessionName: String?
-    /// What a signed `latchkey run` is starting, which a grant made here can be limited to.
+    /// What a signed `pst run` is starting, which a grant made here can be limited to.
     public var runCommand: [String]?
     /// From another computer through an SSH forward, and what the tool there says about itself (unverified).
     public var overSSH = false
@@ -112,7 +112,7 @@ public struct GrantChoice: Sendable, Equatable {
 
 /// Asks the person at the Mac to allow something.
 public protocol Approver: Sendable {
-    /// How approval happens, for `latchkey status`.
+    /// How approval happens, for `pst status`.
     var method: String { get }
     /// True when it can take questions from several threads at once and show those from the same caller together.
     /// Otherwise the broker asks it one question at a time.

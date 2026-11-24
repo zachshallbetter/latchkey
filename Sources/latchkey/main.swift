@@ -4,15 +4,17 @@ import Foundation
 import LatchkeyCore
 
 let usage = """
-latchkey: read secrets from the Latchkey app without keeping them in files.
+Pistachio: run commands with secrets from the Mac app.
+
+pst is the short command; pistachio is the full name.
 
 Items are shared (ID = NAME) or belong to a project's environment (ID = project/environment/NAME).
-Files refer to them as latchkey://ID.
+Files refer to them as pistachio://ID.
 
-  latchkey run [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [--no-masking] [--proxy [--proxy-models A,B] [--proxy-requests N]] -- COMMAND [ARGS...]
-      Start COMMAND with every latchkey://ID in its environment replaced by the real value.
+  pst run [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [--no-masking] [--proxy [--proxy-models A,B] [--proxy-requests N]] -- COMMAND [ARGS...]
+      Start COMMAND with every pistachio://ID in its environment replaced by the real value.
       --env loads an environment's items without any file (each as its NAME), plus the shared items that
-      environment's files use. --file NAME=ID (or NAME=latchkey-file://ID in an env file) gives COMMAND the
+      environment's files use. --file NAME=ID (or NAME=pistachio-file://ID in an env file) gives COMMAND the
       path of a temporary file holding the value, readable only by you and deleted when COMMAND exits.
       Secret values printed by COMMAND are concealed unless --no-masking is given.
       --proxy keeps OPENAI_API_KEY and ANTHROPIC_API_KEY out of COMMAND: it gets a placeholder and a local
@@ -21,20 +23,20 @@ Files refer to them as latchkey://ID.
       one of those models; --proxy-requests N stops after N requests.
       --aws-session (or --aws-role ARN) gives COMMAND short-lived AWS credentials from STS instead of the long-lived
       key; --aws-for sets how long they last (default 15m, at most 12h).
-  latchkey check [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [ID,...] [--json] [-- COMMAND...]
-      What `latchkey run` with the same options would get without asking (agent-safe or granted), what would ask, and what's missing. Asks nothing and releases nothing. Give the COMMAND to
+  pst check [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [ID,...] [--json] [-- COMMAND...]
+      What `pst run` with the same options would get without asking (agent-safe or granted), what would ask, and what's missing. Asks nothing and releases nothing. Give the COMMAND to
       count grants limited to it.
-  latchkey mcp                    Serve Latchkey's tools to an agent over MCP (standard input and output).
-  latchkey list [--project P] [--json]   IDs, kinds and whether agents may read them. Never values.
-  latchkey get ID                 Print one value.
-  latchkey set ID [--kind token|password|key|value] [--agent-safe] [--note TEXT] [--service NAME]
+  pst mcp                    Serve Pistachio's tools to an agent over MCP (standard input and output).
+  pst list [--project P] [--json]   IDs, kinds and whether agents may read them. Never values.
+  pst get ID                 Print one value.
+  pst set ID [--kind token|password|key|value] [--agent-safe] [--note TEXT] [--service NAME]
       Value is read from standard input, or prompted for when run in a terminal.
-  latchkey rm ID[,ID...]|PATTERN...
+  pst rm ID[,ID...]|PATTERN...
       Delete items with one approval. PATTERN is PROJECT/* or PROJECT/ENV/*.
-  latchkey update ID[,ID...]|PATTERN... [--agent-safe yes|no] [--kind KIND] [--service NAME] [--note TEXT]
+  pst update ID[,ID...]|PATTERN... [--agent-safe yes|no] [--kind KIND] [--service NAME] [--note TEXT]
                                           [--fill-sites HOST,HOST... | --fill-sites ""]
       Change settings on many items with one approval. Values are untouched.
-  latchkey import FILE... [--batch LIST] [--scan DIR] [--project P] [--env E | --shared] [--share-identical]
+  pst import FILE... [--batch LIST] [--scan DIR] [--project P] [--env E | --shared] [--share-identical]
                   [--rewrite] [--replace] [--dry-run] [--only KEY,...] [--kind KIND | --kind KEY=KIND]...
                   [--agent-safe KEY,...|all] [--agent-safe-pattern PATTERN,...] [--skip PATTERN,...]
                   [--no-default-skip] [--class KEY=secret|setting|public]...
@@ -42,7 +44,7 @@ Files refer to them as latchkey://ID.
       The project defaults to the repository's folder name and the environment to what the file
       name says (.env and .env.local: development; .env.production: production). --shared
       imports them as shared items named after their keys.
-      --rewrite replaces each imported value in FILE with its latchkey://ID.
+      --rewrite replaces each imported value in FILE with its pistachio://ID.
       Existing items are left alone unless --replace is given.
       --scan DIR finds every .env and .env.* under DIR (not examples or templates, not in node_modules, build or
       .git folders) so all your projects come in at once; try it with --dry-run first.
@@ -56,18 +58,18 @@ Files refer to them as latchkey://ID.
       Each line is classed as a secret (saved masked), a setting such as PORT or NODE_ENV (left in the file), a
       public value such as NEXT_PUBLIC_* (saved as a plain value) or an existing reference. --dry-run shows the
       class of every line; --class KEY=secret|setting|public changes one. Anything unclear is a secret.
-  latchkey env [list] | env show PROJECT/ENV [--json] | env migrate [--dry-run]
-  latchkey env set PROJECT/ENV NAME=latchkey://ID|NAME=VALUE... | env unset PROJECT/ENV NAME... | env confirm PROJECT/ENV [NAME...]
-  latchkey env rm PROJECT/ENV     Forget an environment's record (its items stay).
+  pst env [list] | env show PROJECT/ENV [--json] | env migrate [--dry-run]
+  pst env set PROJECT/ENV NAME=pistachio://ID|NAME=VALUE... | env unset PROJECT/ENV NAME... | env confirm PROJECT/ENV [NAME...]
+  pst env rm PROJECT/ENV     Forget an environment's record (its items stay).
       An environment's record: which variables it has, each an item (shared items too) or a plain setting such as
       PORT=3000. Records sync with your items, so `run --env` and `export` work the same on every Mac, wherever the
       checkout is. import, set and mv keep them up to date. `env migrate` makes or completes them from your items and
       the files they were imported from (when those are on this Mac); it only adds, and marks what it found through
       old file locations as unconfirmed until `env confirm`. Plain settings that may be secret are refused.
-  latchkey export PROJECT/ENV [--out FILE [--merge [--yes] | --replace]] [--values [--clipboard]]
-      Write the environment's env file from its record: latchkey:// references and plain settings, to standard
+  pst export PROJECT/ENV [--out FILE [--merge [--yes] | --replace]] [--values [--clipboard]]
+      Write the environment's env file from its record: pistachio:// references and plain settings, to standard
       output or FILE. An existing FILE is left alone (and the differences shown) unless --merge or --replace; a
-      symbolic link is refused. --merge updates the variables Latchkey manages and appends missing ones, and keeps
+      symbolic link is refused. --merge updates the variables Pistachio manages and appends missing ones, and keeps
       every other byte (comments, order, other variables, line endings): it lists the names it adds and updates, and
       asks to go ahead unless --yes. --replace rewrites the whole file.
       --values writes the values themselves, in plain text, readable only by you: it asks every time, naming the
@@ -75,85 +77,85 @@ Files refer to them as latchkey://ID.
       --values --clipboard copies them as an env block instead, for a dashboard that takes a pasted one: it asks
       every time, naming the environment; the copy stays on this Mac, is hidden from clipboard managers and clears
       after 60 seconds if nothing else is copied. The log records "copied to the clipboard", never the values.
-  latchkey project [DIR] | project link [NAME] [DIR] [--remote R] | project unlink NAME [DIR] | project list
+  pst project [DIR] | project link [NAME] [DIR] [--remote R] | project unlink NAME [DIR] | project list
       Which project a checkout is, from its Git remotes: so a fresh clone on another Mac finds its environments.
       link remembers the checkout's origin (or --remote R) as project NAME (default: the folder's name); a remote
       belongs to one project. A match only names the project: it never releases values or widens a grant, and a
       match through a remote other than origin (as a fork has) is flagged.
-  latchkey mv ID[,ID...] | --from-file FILE   --to PROJECT/ENV | --shared   [--file FILE]...
+  pst mv ID[,ID...] | --from-file FILE   --to PROJECT/ENV | --shared   [--file FILE]...
       Move items into a project's environment (or back to shared) with one approval, then point
       references at the new IDs in the files each item was imported from, in --file files, and
       in the --from-file file. --from-file moves the shared items that FILE refers to.
-  latchkey duplicates [--json]   Items holding the same value, and what to do about each group: give production its
+  pst duplicates [--json]   Items holding the same value, and what to do about each group: give production its
       own key, keep one item when one environment has several names for it, combine them into one shared item, or
-      mark identifiers as plain values. Values are compared inside Latchkey and never shown; it asks
+      mark identifiers as plain values. Values are compared inside Pistachio and never shown; it asks
       every time, and agents can't ask.
-  latchkey combine ID[,ID...] --into NAME|ID [--file FILE]...
+  pst combine ID[,ID...] --into NAME|ID [--file FILE]...
       Make items holding one value into one shared item NAME (new, or already holding that value) with one approval,
       or into one item of the environment they're all in (ID), when one value has several names there.
       The others go to Recently Deleted; environments and the files each was imported from (and --file files) follow.
-  latchkey scan [DIR] [--json]    Find env files under DIR (default: here; not examples, not in node_modules, build or
+  pst scan [DIR] [--json]    Find env files under DIR (default: here; not examples, not in node_modules, build or
       .git folders) that still hold plain values: ones that equal a stored item, and ones that look secret (known
       token prefixes, passwords, private keys, long values under names like *_TOKEN). Prints FILE:LINE and the item or
-      the reason, never a value, and exits 1 when anything is found. Values are compared inside Latchkey; it asks every
+      the reason, never a value, and exits 1 when anything is found. Values are compared inside Pistachio; it asks every
       time, and agents can't ask.
-  latchkey scan --staged          The same for lines added to env files in the Git index (what a commit would add).
-  latchkey scan --install-hook [--force]
-      Write a Git pre-commit hook that runs `latchkey scan --staged` and refuses the commit on findings. An existing
+  pst scan --staged          The same for lines added to env files in the Git index (what a commit would add).
+  pst scan --install-hook [--force]
+      Write a Git pre-commit hook that runs `pst scan --staged` and refuses the commit on findings. An existing
       hook not written by this command is left alone unless --force. Skip it once with `git commit --no-verify`.
-  latchkey history ID             Earlier values of an item: when and by whom they were replaced. Never values.
-  latchkey restore ID [--version N]
+  pst history ID             Earlier values of an item: when and by whom they were replaced. Never values.
+  pst restore ID [--version N]
       Put back version N (1 = most recent) of ID, or bring back a deleted item. The current value
       is kept as a version first. Asks for approval.
-  latchkey deleted                Items deleted in the last 30 days, which restore can bring back.
-  latchkey forget ID[,ID...]      Delete the earlier values of items for good. Asks for approval.
-  latchkey remote list [PROJECT/ENV]
-  latchkey remote link PROJECT/ENV vercel|github|railway|fly KEY=VALUE...
+  pst deleted                Items deleted in the last 30 days, which restore can bring back.
+  pst forget ID[,ID...]      Delete the earlier values of items for good. Asks for approval.
+  pst remote list [PROJECT/ENV]
+  pst remote link PROJECT/ENV vercel|github|railway|fly KEY=VALUE...
       Link an environment to a place that holds its values. Keys: project, environment, repo, service, app,
       branch, dir (a folder linked with `vercel link` or `railway link`), token (the item that holds the service's
       access token: pushes then go straight to the service's API, as the App Store build always does), team (Vercel
       team, with a token). For example:
-        latchkey remote link shop/vercel.preview vercel project=shop environment=preview
-        latchkey remote link shop/production github repo=me/shop environment=production
-        latchkey remote link shop/railway.production railway environment=production service=api dir=~/Projects/shop
-        latchkey remote link shop/production fly app=shop-api
-        latchkey remote link shop/vercel.preview vercel project=shop environment=preview token=VERCEL_TOKEN
-  latchkey remote unlink LINK
-  latchkey remote status PROJECT/ENV   Names missing on each side and values changed since the last push.
-  latchkey push PROJECT/ENV [--to LINK] [--only ID,...] [--dry-run]
+        pst remote link shop/vercel.preview vercel project=shop environment=preview
+        pst remote link shop/production github repo=me/shop environment=production
+        pst remote link shop/railway.production railway environment=production service=api dir=~/Projects/shop
+        pst remote link shop/production fly app=shop-api
+        pst remote link shop/vercel.preview vercel project=shop environment=preview token=VERCEL_TOKEN
+  pst remote unlink LINK
+  pst remote status PROJECT/ENV   Names missing on each side and values changed since the last push.
+  pst push PROJECT/ENV [--to LINK] [--only ID,...] [--dry-run]
       Send the environment's values to its links with each service's own tool, signed in as you (or, for a link
       with a token item, through the service's API). Asks every time; production needs its own confirmation in the app. Nothing is deployed: Railway and Fly changes are
       staged until your next deploy.
-  latchkey grant ID[,ID...] [--folder DIR] [--for 2h] [--session] [--command CMD]... [--once]
+  pst grant ID[,ID...] [--folder DIR] [--for 2h] [--session] [--command CMD]... [--once]
       Let commands run from DIR (default: here) and the folders inside it read these items
       without asking, until the time is up (30m, 2h, 1d; at most 7d). Asks for approval once.
       --session ends it when the agent you run this under quits, and covers only programs it starts.
-      --command limits it to `latchkey run` of that command ("npm test" covers "npm test -- --ci").
+      --command limits it to `pst run` of that command ("npm test" covers "npm test -- --ci").
       --once ends it after one use.
       PROJECT/* or PROJECT/ENV/* covers a whole project or environment, including items added later.
-  latchkey log [--limit 20] | latchkey log --verify
+  pst log [--limit 20] | pst log --verify
       Recent entries of the access log (never values), or a check that no entry was changed, removed or
-      added since Latchkey wrote it.
-  latchkey touched [--since 24h] [--by NAME] [--grant ID] [--json]
-      Items Latchkey released in that time (to anything, to programs under NAME such as claude, or under a grant),
+      added since Pistachio wrote it.
+  pst touched [--since 24h] [--by NAME] [--grant ID] [--json]
+      Items Pistachio released in that time (to anything, to programs under NAME such as claude, or under a grant),
       with how often and to whom, from the access log.
-  latchkey rotate IDS|PATTERN... | --touched [--since 24h] [--by NAME] [--grant ID]  [--open] [--push]
+  pst rotate IDS|PATTERN... | --touched [--since 24h] [--by NAME] [--grant ID]  [--open] [--push]
       Replace items: ends grants that cover them, shows where to make each new key (--open opens it), asks for the
       new value (the old one stays in history), then pushes to linked environments with --push.
-  latchkey grants                 Grants that are in effect.
-  latchkey revoke ID|all
-  latchkey status
+  pst grants                 Grants that are in effect.
+  pst revoke ID|all
+  pst status
 
 Items not marked agent-safe need your approval (Touch ID, Apple Watch or your Mac password).
 Changes always do. Values are kept in iCloud Keychain, so they follow you to your other Macs.
 
-Exit codes: 0 done; 64 wrong usage; 66 no item with that ID (ask the owner to add it); 69 the Latchkey app
+Exit codes: 0 done; 64 wrong usage; 66 no item with that ID (ask the owner to add it); 69 the Pistachio app
 can't be reached; 73 a file couldn't be rewritten; 77 refused: not agent-safe, not approved, no grant (ask
 the owner to approve or grant, don't retry); 127 the command couldn't start.
 """
 
 func fail(_ message: String, code: Int32 = 1) -> Never {
-    FileHandle.standardError.write(Data(("latchkey: " + message + "\n").utf8))
+    FileHandle.standardError.write(Data(("pistachio: " + message + "\n").utf8))
     exit(code)
 }
 
@@ -186,7 +188,7 @@ func appAnswers(within seconds: Double) -> Bool {
     return false
 }
 
-/// Starts Latchkey hidden and waits for it to answer. False if it isn't installed or doesn't answer.
+/// Starts Pistachio hidden and waits for it to answer. False if it isn't installed or doesn't answer.
 /// Launching is the last resort: a launch request that lands while the app is already starting ends that
 /// launch, so first give a starting copy a moment, and never launch while one is listed as running.
 func launchApp() -> Bool {
@@ -197,7 +199,7 @@ func launchApp() -> Bool {
         return appAnswers(within: 10)
     }
     guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else { return false }
-    FileHandle.standardError.write(Data("latchkey: starting the Latchkey app…\n".utf8))
+    FileHandle.standardError.write(Data("pistachio: starting the Pistachio app…\n".utf8))
     let config = NSWorkspace.OpenConfiguration()
     config.activates = false
     config.hides = true
@@ -209,7 +211,7 @@ func launchApp() -> Bool {
 }
 
 /// Sends one request to the app, starting it if it isn't running. Returns the response as is, `ok` or not.
-/// Commands `latchkey mcp` starts for an agent carry PISTACHIO_ORIGIN=mcp (and LATCHKEY_ORIGIN=mcp), so their requests
+/// Commands `pst mcp` starts for an agent carry PISTACHIO_ORIGIN=mcp (and LATCHKEY_ORIGIN=mcp), so their requests
 /// say so.
 func call(_ request: Request) throws -> Response {
     var request = request
@@ -234,8 +236,8 @@ func call(_ request: Request) throws -> Response {
                 usleep(500_000)
                 continue
             }
-            throw RunError.unreachable(Paths.forwardedSocket.map { "cannot reach Latchkey through \($0) (\(e)). Is the SSH connection forwarding it?" }
-                                       ?? "cannot reach the Latchkey app (\(e)). Open Latchkey and try again.")
+            throw RunError.unreachable(Paths.forwardedSocket.map { "cannot reach Pistachio through \($0) (\(e)). Is the SSH connection forwarding it?" }
+                                       ?? "cannot reach the Pistachio app (\(e)). Open Pistachio and try again.")
         } catch let error as BrokerEndpoint.ConfigurationError {
             throw RunError.unreachable(error.localizedDescription)
         } catch {
@@ -272,13 +274,13 @@ func currentDirectory() -> String { FileManager.default.currentDirectoryPath }
 
 /// Exit 66 with the missing IDs and what to do, worded for agents as much as people.
 func failMissing(_ ids: [String]) -> Never {
-    fail("no item named: \(ids.joined(separator: ", "))\n  Ask the owner to add it in Latchkey (latchkey set ID) or check the name. Don't retry.", code: 66)
+    fail("no item named: \(ids.joined(separator: ", "))\n  Ask the owner to add it in Pistachio (pst set ID) or check the name. Don't retry.", code: 66)
 }
 
 /// Exit 77 with the refused IDs and what to do.
 func failRefused(_ ids: [String]) -> Never {
     let folder = Broker.shellWord(currentDirectory())
-    fail("refused: \(ids.joined(separator: ", ")) (not agent-safe, not approved, no grant)\n  Ask the owner to approve it in Latchkey, or to grant it: latchkey grant \(ids.joined(separator: ",")) --folder \(folder) --for 2h. Don't retry.", code: 77)
+    fail("refused: \(ids.joined(separator: ", ")) (not agent-safe, not approved, no grant)\n  Ask the owner to approve it in Pistachio, or to grant it: pst grant \(ids.joined(separator: ",")) --folder \(folder) --for 2h. Don't retry.", code: 77)
 }
 
 func readValue(prompt: String) -> String {
@@ -346,7 +348,7 @@ func runCommand(_ input: [String]) -> Never {
             else { cmd = [a] + rest; rest = [] }
         }
     }
-    guard !cmd.isEmpty else { fail("usage: latchkey run [--env-file FILE] [--env PROJECT/ENV] [--file NAME=ID] -- COMMAND [ARGS...]", code: 64) }
+    guard !cmd.isEmpty else { fail("usage: pst run [--env-file FILE] [--env PROJECT/ENV] [--file NAME=ID] -- COMMAND [ARGS...]", code: 64) }
 
     if !proxy && (proxyModels != nil || proxyRequests != nil) { fail("--proxy-models and --proxy-requests need --proxy", code: 64) }
     do { _ = try clientEndpoint() } catch { fail(error.localizedDescription, code: 69) }
@@ -372,7 +374,7 @@ func runCommand(_ input: [String]) -> Never {
             fail("couldn't start the key proxy for \(route.provider.name): \(error)")
         }
     }
-    if limits.isLimited { FileHandle.standardError.write(Data("latchkey: proxy limits enforced: \(limits.summary)\n".utf8)) }
+    if limits.isLimited { FileHandle.standardError.write(Data("pistachio: proxy limits enforced: \(limits.summary)\n".utf8)) }
 
     // Exec in place when there's nothing to mask and nothing to clean up afterwards.
     if secretValues.isEmpty && tempDir == nil && proxies.isEmpty {
@@ -471,7 +473,7 @@ func checkCommand(_ input: [String]) -> Never {
     exit((r.missing ?? []).isEmpty ? 0 : 66)
 }
 
-/// What `latchkey check --json` prints and the MCP check tool returns.
+/// What `pst check --json` prints and the MCP check tool returns.
 struct CheckReport: Encodable {
     var agentSafe: [String]
     var granted: [String]
@@ -489,7 +491,7 @@ struct CheckReport: Encodable {
         grants = r.grants ?? []
     }
 
-    /// True when `latchkey run` would start without asking.
+    /// True when `pst run` would start without asking.
     var runsWithoutAsking: Bool { needsApproval.isEmpty && missing.isEmpty }
 }
 
@@ -541,7 +543,7 @@ func importCommand(_ input: [String]) -> Never {
             let root = URL(fileURLWithPath: (rest.removeFirst() as NSString).expandingTildeInPath)
             let found = EnvScan.files(under: root)
             if found.isEmpty { fail("no env files under \(Broker.tilde(root.path))", code: 66) }
-            FileHandle.standardError.write(Data("latchkey: found \(found.count) env file\(found.count == 1 ? "" : "s") under \(Broker.tilde(root.path))\n".utf8))
+            FileHandle.standardError.write(Data("pistachio: found \(found.count) env file\(found.count == 1 ? "" : "s") under \(Broker.tilde(root.path))\n".utf8))
             files += found
         case "--rewrite": rewrite = true
         case "--replace": replace = true
@@ -572,11 +574,11 @@ func importCommand(_ input: [String]) -> Never {
                 defaultKind = k
             }
         default:
-            if a.hasPrefix("-") { fail("unknown option \(a)   (see latchkey help)", code: 64) }
+            if a.hasPrefix("-") { fail("unknown option \(a)   (see pst help)", code: 64) }
             files.append(a)
         }
     }
-    guard !files.isEmpty else { fail("usage: latchkey import FILE... [options]   (see latchkey help)", code: 64) }
+    guard !files.isEmpty else { fail("usage: pst import FILE... [options]   (see pst help)", code: 64) }
     if shared && (project != nil || environment != nil) { fail("--shared can't be combined with --project or --env", code: 64) }
     if files.count > 1 {
         batchImport(files, project: project, environment: environment, shared: shared, shareIdentical: shareIdentical,
@@ -641,14 +643,14 @@ func importCommand(_ input: [String]) -> Never {
     if rewrite && !saved.isEmpty {
         do {
             try EnvFile.rewriteFile(at: url, original: text, toReferences: plan.references.filter { saved.contains($0.value) })
-            print("rewrote \(file): \(saved.count) value\(saved.count == 1 ? "" : "s") now latchkey://ID")
-            print("next: lk run --env-file \(file) -- <your command>")
+            print("rewrote \(file): \(saved.count) value\(saved.count == 1 ? "" : "s") now references")
+            print("next: pst run --env-file \(file) -- <your command>")
         } catch {
             fail("items were saved, but \(file) could not be rewritten: \(error.localizedDescription)", code: 73)
         }
     } else if !saved.isEmpty {
-        print("next: replace the values in \(file) with latchkey:// references (lk import \(file) --rewrite does it), then:")
-        print("  lk run --env-file \(file) -- <your command>")
+        print("next: replace the values in \(file) with pistachio:// references (pst import \(file) --rewrite does it), then:")
+        print("  pst run --env-file \(file) -- <your command>")
     }
     exit(0)
 }
@@ -725,7 +727,7 @@ func batchImport(_ paths: [String], project: String?, environment: String?, shar
                                     scope: f.project.isEmpty ? fileScope(f.url, linked) : "\(f.project)/\(f.environment)")
     }
     if dryRun {
-        print(rewrite ? "Nothing sent. Without --dry-run: one approval, then each file's imported values become latchkey:// references." : "Nothing sent.")
+        print(rewrite ? "Nothing sent. Without --dry-run: one approval, then each file's imported values become references." : "Nothing sent.")
         exit(0)
     }
     guard !toSend.isEmpty || !records.isEmpty else { print("Nothing new to import."); exit(0) }
@@ -743,15 +745,15 @@ func batchImport(_ paths: [String], project: String?, environment: String?, shar
         do {
             try EnvFile.rewriteFile(at: f.url, original: f.text, toReferences: refs)
             let left = f.references.count - refs.count
-            print("rewrote \(Broker.tilde(f.url.path)): \(refs.count) now latchkey://ID\(left > 0 ? ", \(left) left as they were" : "")")
+            print("rewrote \(Broker.tilde(f.url.path)): \(refs.count) now references\(left > 0 ? ", \(left) left as they were" : "")")
         } catch {
             failed += 1
             print("couldn't rewrite \(Broker.tilde(f.url.path)): \(error.localizedDescription)")
         }
     }
     if failed == 0, !saved.isEmpty {
-        print("next: run each project through Latchkey, from its folder:")
-        print("  lk run --env-file <its env file> -- <your command>")
+        print("next: run each project through Pistachio, from its folder:")
+        print("  pst run --env-file <its env file> -- <your command>")
     }
     exit(failed == 0 ? 0 : 73)
 }
@@ -801,7 +803,7 @@ func grantCommand(_ input: [String]) -> Never {
         }
     }
     guard !names.isEmpty, names.allSatisfy({ Wire.isValidName($0) || Grant.isPattern($0) }) else {
-        fail("usage: latchkey grant ID[,ID...] [--folder DIR] [--for 2h] [--session] [--command CMD]... [--once]   (or PROJECT/* or PROJECT/ENV/*)", code: 64)
+        fail("usage: pst grant ID[,ID...] [--folder DIR] [--for 2h] [--session] [--command CMD]... [--once]   (or PROJECT/* or PROJECT/ENV/*)", code: 64)
     }
     let r: Response
     do {
@@ -825,7 +827,7 @@ func grantCommand(_ input: [String]) -> Never {
 // MARK: - remote locations
 
 func printLinks(_ links: [RemoteLink]) {
-    guard !links.isEmpty else { print("No links. Add one with `latchkey remote link PROJECT/ENV SERVICE KEY=VALUE...`."); return }
+    guard !links.isEmpty else { print("No links. Add one with `pst remote link PROJECT/ENV SERVICE KEY=VALUE...`."); return }
     var scope: String?
     for l in links.sorted(by: { ($0.scope, $0.target.label) < ($1.scope, $1.target.label) }) {
         if l.scope != scope { if scope != nil { print("") }; print(l.scope); scope = l.scope }
@@ -835,14 +837,14 @@ func printLinks(_ links: [RemoteLink]) {
 }
 
 func remoteCommand(_ args: [String]) -> Never {
-    guard let sub = args.first else { fail("usage: latchkey remote list|link|unlink|status ... (see latchkey help)", code: 64) }
+    guard let sub = args.first else { fail("usage: pst remote list|link|unlink|status ... (see pst help)", code: 64) }
     let rest = Array(args.dropFirst())
     switch sub {
     case "list":
         printLinks(send(Request(op: "links", names: rest.first.map { [$0] })).links ?? [])
     case "link":
         guard rest.count >= 2, RemoteLink.isValidScope(rest[0]), let service = RemoteTarget.Service(rawValue: rest[1]) else {
-            fail("usage: latchkey remote link PROJECT/ENV vercel|github|railway|fly|ssh KEY=VALUE...", code: 64)
+            fail("usage: pst remote link PROJECT/ENV vercel|github|railway|fly|ssh KEY=VALUE...", code: 64)
         }
         var t = RemoteTarget(service: service)
         for pair in rest.dropFirst(2) {
@@ -871,12 +873,12 @@ func remoteCommand(_ args: [String]) -> Never {
             print("tip: values that differ by service can live in their own environment, e.g. \(rest[0].split(separator: "/")[0])/\(t.suggestedEnvironment)")
         }
     case "unlink":
-        guard let id = rest.first else { fail("usage: latchkey remote unlink LINK", code: 64) }
+        guard let id = rest.first else { fail("usage: pst remote unlink LINK", code: 64) }
         let r = send(Request(op: "unlink", names: [id]))
         if let m = r.missing, !m.isEmpty { fail("no link \(id)", code: 66) }
         print("unlinked \(id)")
     case "status":
-        guard let scope = rest.first, RemoteLink.isValidScope(scope) else { fail("usage: latchkey remote status PROJECT/ENV", code: 64) }
+        guard let scope = rest.first, RemoteLink.isValidScope(scope) else { fail("usage: pst remote status PROJECT/ENV", code: 64) }
         let statuses = send(Request(op: "remote-status", names: [scope])).remoteStatus ?? []
         if statuses.isEmpty { print("\(scope) isn't linked anywhere.") }
         for s in statuses {
@@ -894,7 +896,7 @@ func remoteCommand(_ args: [String]) -> Never {
 }
 
 func pushCommand(_ args: [String]) -> Never {
-    guard let scope = args.first, RemoteLink.isValidScope(scope) else { fail("usage: latchkey push PROJECT/ENV [--to LINK] [--only ID,...] [--dry-run]", code: 64) }
+    guard let scope = args.first, RemoteLink.isValidScope(scope) else { fail("usage: pst push PROJECT/ENV [--to LINK] [--only ID,...] [--dry-run]", code: 64) }
     var link: String?, only: [String]?, dryRun = false
     var rest = Array(args.dropFirst())
     while !rest.isEmpty {
@@ -919,7 +921,7 @@ func pushCommand(_ args: [String]) -> Never {
     }
     let r: Response
     do { r = try BrokerClient.send(Request(op: "push", names: [scope], link: link, only: only), endpoint: clientEndpoint()) }
-    catch { fail("cannot reach the Latchkey app (\(error))", code: 69) }
+    catch { fail("cannot reach the Pistachio app (\(error))", code: 69) }
     for p in (r.pushResults ?? []).sorted(by: { ($0.link, $0.item) < ($1.link, $1.item) }) {
         print("\(p.ok ? "pushed " : "FAILED ") \(ItemID(p.item)?.name ?? p.item)  → \(p.link)\(p.error.map { "  \($0)" } ?? "")")
     }
@@ -980,7 +982,7 @@ func moveCommand(_ input: [String]) -> Never {
             ids += a.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         }
     }
-    guard let target else { fail("usage: latchkey mv ID[,ID...] | --from-file FILE  --to PROJECT/ENV | --shared  [--file FILE]...", code: 64) }
+    guard let target else { fail("usage: pst mv ID[,ID...] | --from-file FILE  --to PROJECT/ENV | --shared  [--file FILE]...", code: 64) }
     let existing = send(Request(op: "list")).secrets ?? []
     if let fromFile {
         let refs: [String]
@@ -1019,7 +1021,7 @@ func renameReferences(in files: [URL], _ moved: [String: String]) {
 
 // MARK: - duplicates
 
-/// Groups of items holding the same value, with what to do about each. The values are compared inside Latchkey.
+/// Groups of items holding the same value, with what to do about each. The values are compared inside Pistachio.
 func duplicatesCommand(_ input: [String]) -> Never {
     let json = input.contains("--json")
     if let other = input.first(where: { $0 != "--json" }) { fail("unknown option \(other)", code: 64) }
@@ -1049,8 +1051,8 @@ func duplicatesCommand(_ input: [String]) -> Never {
             print("\(g.count) items hold the same value:")
             for id in g { print("  \(id)") }
             print(a.summary)
-            if a == .plain { print("  latchkey update \(g.joined(separator: ",")) --kind value") }
-            if let into = a.into { print("  latchkey combine \(g.filter { $0 != into }.joined(separator: ",")) --into \(into)") }
+            if a == .plain { print("  pst update \(g.joined(separator: ",")) --kind value") }
+            if let into = a.into { print("  pst combine \(g.filter { $0 != into }.joined(separator: ",")) --into \(into)") }
         }
     }
     exit(0)
@@ -1072,7 +1074,7 @@ func git(_ arguments: [String], in folder: String) -> Data? {
     return process.terminationStatus == 0 ? data : nil
 }
 
-/// Finds plain values in env files: those equal to a stored item (compared inside Latchkey, which returns only item IDs)
+/// Finds plain values in env files: those equal to a stored item (compared inside Pistachio, which returns only item IDs)
 /// and those that look secret. Prints positions and reasons, never values.
 func scanCommand(_ input: [String]) -> Never {
     var dir: String?, staged = false, install = false, force = false, json = false
@@ -1101,11 +1103,11 @@ func scanCommand(_ input: [String]) -> Never {
         // Write only inside the repository's .git folder; anywhere else is the owner's call, made by hand.
         let real = URL(fileURLWithPath: hooks).resolvingSymlinksInPath().path
         guard let common = Repo.commonDir(for: root.path), real.hasPrefix(common + "/") else {
-            fail("this repository's hooks folder is \(Broker.tilde(hooks)), outside its .git folder (core.hooksPath); install the hook there yourself: lk scan --staged in a pre-commit hook", code: 1)
+            fail("this repository's hooks folder is \(Broker.tilde(hooks)), outside its .git folder (core.hooksPath); install the hook there yourself: pst scan --staged in a pre-commit hook", code: 1)
         }
         let path = hooks + "/pre-commit"
         if let existing = try? String(contentsOfFile: path, encoding: .utf8), !existing.contains(Scan.hookMarker), !force {
-            fail("\(Broker.tilde(path)) already exists and isn't Latchkey's; --force replaces it", code: 1)
+            fail("\(Broker.tilde(path)) already exists and isn't Pistachio's; --force replaces it", code: 1)
         }
         do {
             try FileManager.default.createDirectory(atPath: hooks, withIntermediateDirectories: true)
@@ -1162,10 +1164,10 @@ func scanCommand(_ input: [String]) -> Never {
             print("\(f.place)  \(f.key)  " + (f.reason == "stored" ? "holds the value of \(f.items.joined(separator: ", "))" : "looks like a secret"))
         }
         if findings.isEmpty && note == nil { print(candidates.isEmpty ? "No plain values in env files." : "No plain values that match a stored item or look secret.") }
-        else if !findings.isEmpty { print("\(findings.count) plain value\(findings.count == 1 ? "" : "s") in env files. `latchkey import --rewrite FILE` moves them into Latchkey.") }
+        else if !findings.isEmpty { print("\(findings.count) plain value\(findings.count == 1 ? "" : "s") in env files. `pst import --rewrite FILE` moves them into Pistachio.") }
     }
     if let note {
-        FileHandle.standardError.write(Data("latchkey: couldn't compare with stored items (\(note)); only values that look secret were checked\n".utf8))
+        FileHandle.standardError.write(Data("pistachio: couldn't compare with stored items (\(note)); only values that look secret were checked\n".utf8))
         exit(1)
     }
     exit(findings.isEmpty ? 0 : 1)
@@ -1192,7 +1194,7 @@ func combineCommand(_ input: [String]) -> Never {
             ids += a.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         }
     }
-    guard let into, !ids.isEmpty else { fail("usage: latchkey combine ID[,ID...] --into NAME|ID [--file FILE]...", code: 64) }
+    guard let into, !ids.isEmpty else { fail("usage: pst combine ID[,ID...] --into NAME|ID [--file FILE]...", code: 64) }
     guard ids.allSatisfy(Wire.isValidName) else { fail("no valid item IDs given", code: 64) }
     let existing = send(Request(op: "list")).secrets ?? []
     let usedIn = existing.filter { ids.contains($0.name) }.flatMap { $0.usedIn ?? [] }
@@ -1202,7 +1204,7 @@ func combineCommand(_ input: [String]) -> Never {
     let moved = r.moved ?? [:]
     for old in moved.keys.sorted() { print("combined \(old) → \(into)") }
     renameReferences(in: files + usedIn.map { URL(fileURLWithPath: $0) }, moved)
-    print("The originals are in Recently Deleted for 30 days (latchkey deleted).")
+    print("The originals are in Recently Deleted for 30 days (pst deleted).")
     exit(0)
 }
 
@@ -1223,7 +1225,7 @@ case "status":
     let r = send(Request(op: "status"))
     var info = r.info ?? [:]
     info["app"] = Paths.forwardedSocket != nil ? "not checked (forwarded over SSH from \(Paths.forwardedSocket!))"
-        : CodeIdentity.ownTeam == nil ? "not checked (this tool is unsigned)" : "the Latchkey app (signature checked)"
+        : CodeIdentity.ownTeam == nil ? "not checked (this tool is unsigned)" : "the Pistachio app (signature checked)"
     for (k, v) in info.sorted(by: { $0.key < $1.key }) { print("\(k): \(v)") }
 
 case "list":
@@ -1239,7 +1241,7 @@ case "list":
         enc.outputFormatting = [.prettyPrinted, .sortedKeys]
         print(String(decoding: try! enc.encode(items), as: UTF8.self))
     } else if items.isEmpty {
-        print(only.map { "No items in project \($0)." } ?? "No items yet. Add one in the app or with `latchkey set NAME`.")
+        print(only.map { "No items in project \($0)." } ?? "No items yet. Add one in the app or with `pst set NAME`.")
     } else {
         // One heading per project and environment, then the items' names under it.
         let width = max(4, items.map(\.ref.name.count).max() ?? 4)
@@ -1259,7 +1261,7 @@ case "list":
     }
 
 case "get":
-    guard let name = args.first, Wire.isValidName(name) else { fail("usage: latchkey get ID", code: 64) }
+    guard let name = args.first, Wire.isValidName(name) else { fail("usage: pst get ID", code: 64) }
     let r = send(Request(op: "get", names: [name]))
     if let m = r.missing, !m.isEmpty { failMissing(m) }
     if let d = r.denied, !d.isEmpty { failRefused(d) }
@@ -1268,7 +1270,7 @@ case "get":
 
 case "set":
     guard let name = args.first, Wire.isValidName(name) else {
-        fail("usage: latchkey set NAME [--kind KIND] [--agent-safe] [--note TEXT]   (letters, digits, _ - . only)", code: 64)
+        fail("usage: pst set NAME [--kind KIND] [--agent-safe] [--note TEXT]   (letters, digits, _ - . only)", code: 64)
     }
     var kind: ItemKind? = nil
     var agentSafe: Bool? = nil
@@ -1299,8 +1301,8 @@ case "set":
     _ = send(Request(op: "set", names: [name], value: value, kind: kind, agentSafe: agentSafe, note: note,
                      service: service))
     print("saved \(name)")
-    print("next: put \(ItemID(name)?.name ?? name)=latchkey://\(name) in your env file, then run your command through Latchkey:")
-    print("  lk run --env-file .env -- <your command>")
+    print("next: put \(ItemID(name)?.name ?? name)=pistachio://\(name) in your env file, then run your command through Pistachio:")
+    print("  pst run --env-file .env -- <your command>")
 
 case "rm":
     let ids = expandIDs(args)
@@ -1415,20 +1417,20 @@ case "project":
     projectCommand(args)
 
 case "history":
-    guard let name = args.first, Wire.isValidName(name) else { fail("usage: latchkey history ID", code: 64) }
+    guard let name = args.first, Wire.isValidName(name) else { fail("usage: pst history ID", code: 64) }
     let versions = send(Request(op: "history", names: [name])).versions ?? []
     if versions.isEmpty { print("No earlier values of \(name).") }
     for (n, v) in versions.enumerated() {
         let when = v.savedAt.formatted(date: .abbreviated, time: .shortened)
         print("\(String(n + 1).padding(toLength: 3, withPad: " ", startingAt: 0)) \(when)  \(v.reason.rawValue.padding(toLength: 8, withPad: " ", startingAt: 0))  by \(v.by)")
     }
-    if !versions.isEmpty { print("Kept: the last \(Versions.keep) per item. `latchkey restore \(name) --version N` puts one back.") }
+    if !versions.isEmpty { print("Kept: the last \(Versions.keep) per item. `pst restore \(name) --version N` puts one back.") }
 
 case "restore":
-    guard let name = args.first, Wire.isValidName(name) else { fail("usage: latchkey restore ID [--version N]", code: 64) }
+    guard let name = args.first, Wire.isValidName(name) else { fail("usage: pst restore ID [--version N]", code: 64) }
     var n = 1
     if let i = args.firstIndex(of: "--version") {
-        guard i + 1 < args.count, let v = Int(args[i + 1]), v >= 1 else { fail("--version takes a number from `latchkey history`", code: 64) }
+        guard i + 1 < args.count, let v = Int(args[i + 1]), v >= 1 else { fail("--version takes a number from `pst history`", code: 64) }
         n = v
     }
     let versions = send(Request(op: "history", names: [name])).versions ?? []
@@ -1454,11 +1456,11 @@ case "grants":
     printGrants(send(Request(op: "grants")).grants ?? [])
 
 case "revoke":
-    guard let id = args.first else { fail("usage: latchkey revoke ID|all", code: 64) }
+    guard let id = args.first else { fail("usage: pst revoke ID|all", code: 64) }
     let r = send(Request(op: "revoke", names: [id]))
     if let m = r.missing, !m.isEmpty { fail("no grant \(id)", code: 66) }
     print("revoked \(r.info?["revoked"] ?? "0") grant(s)")
 
 default:
-    fail("unknown command \(command). Try `latchkey help`.", code: 64)
+    fail("unknown command \(command). Try `pst help`.", code: 64)
 }

@@ -8,11 +8,11 @@ Developers sometimes reuse provider credentials among projects, whether intentio
 
 ## Desired flow
 
-Project A, B and C each have `OPENAI_API_KEY=latchkey://OPENAI_API_KEY` (a shared item; shared IDs have no project or environment part). There is one vault record, multiple configuration references and potentially distinct per-caller approval policies. Rotation updates the vault item, so references need not change.
+Project A, B and C each have `OPENAI_API_KEY=pistachio://OPENAI_API_KEY` (a shared item; shared IDs have no project or environment part). There is one vault record, multiple configuration references and potentially distinct per-caller approval policies. Rotation updates the vault item, so references need not change.
 
 ## Acceptance / tests
 
-- Show known referencing files/projects/environments, including uncertainty about copies that exist outside Latchkey.
+- Show known referencing files/projects/environments, including uncertainty about copies that exist outside Pistachio.
 - Detect identical imported values and **offer or explicitly request** consolidation; never merge credentials with different scopes solely because their displayed names match.
 - Rotation and deletion show affected known consumers before action.
 - A grant to Project A must not automatically allow the same credential to be retrieved by Project B.

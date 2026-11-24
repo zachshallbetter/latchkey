@@ -1,7 +1,7 @@
 import Foundation
 import LatchkeyCore
 
-// Starting a command with values filled in: shared by `latchkey run`, `latchkey check` and the MCP server.
+// Starting a command with values filled in: shared by `pst run`, `pst check` and the MCP server.
 // Nothing here exits; callers turn a RunError into an exit code or a tool error.
 
 /// Why a request or a run couldn't go ahead.
@@ -43,7 +43,7 @@ struct PreparedRun {
 /// An environment with a record loads the record's variables. Until `env migrate` has checked it, what the older
 /// path-based lookup finds is added too, so nothing that worked before stops working; `notes` says what differs.
 func plannedEnvironment(_ spec: RunSpec, base: [String: String], call: (Request) throws -> Response,
-                        notes: (String) -> Void = { FileHandle.standardError.write(Data(("latchkey: " + $0 + "\n").utf8)) }) throws -> [String: String] {
+                        notes: (String) -> Void = { FileHandle.standardError.write(Data(("pistachio: " + $0 + "\n").utf8)) }) throws -> [String: String] {
     var env = base
     for path in spec.envFiles {
         let full = URL(fileURLWithPath: path, relativeTo: URL(fileURLWithPath: spec.cwd, isDirectory: true)).path
@@ -65,7 +65,7 @@ func plannedEnvironment(_ spec: RunSpec, base: [String: String], call: (Request)
             guard let record = recorded.environments?.first(where: { $0.scope == scope }) else {
                 if legacy.isEmpty { throw RunError.missing(["\(scope)/*"]) }
                 loadLegacy(legacy)
-                notes("\(scope) has no environment record yet; `lk env migrate` makes one so it works the same on every Mac")
+                notes("\(scope) has no environment record yet; `pst env migrate` makes one so it works the same on every Mac")
                 continue
             }
             if record.variables.isEmpty && legacy.isEmpty { throw RunError.missing(["\(scope)/*"]) }
@@ -73,10 +73,10 @@ func plannedEnvironment(_ spec: RunSpec, base: [String: String], call: (Request)
             let extra = legacy.filter { record.variables[$0.key] == nil }
             if extra.isEmpty { continue }
             if record.legacyChecked {
-                notes("not loaded, not in \(scope)'s record: \(extra.keys.sorted().joined(separator: ", ")) (add with lk env set \(scope) NAME=ID)")
+                notes("not loaded, not in \(scope)'s record: \(extra.keys.sorted().joined(separator: ", ")) (add with pst env set \(scope) NAME=ID)")
             } else {
                 loadLegacy(extra)
-                notes("loaded from old file locations, not yet in \(scope)'s record: \(extra.keys.sorted().joined(separator: ", ")); run `lk env migrate`")
+                notes("loaded from old file locations, not yet in \(scope)'s record: \(extra.keys.sorted().joined(separator: ", ")); run `pst env migrate`")
             }
         }
     }
@@ -84,7 +84,7 @@ func plannedEnvironment(_ spec: RunSpec, base: [String: String], call: (Request)
     return env
 }
 
-/// The item IDs an environment refers to, as `latchkey://` or `latchkey-file://` references.
+/// The item IDs an environment refers to, as `pistachio://` or `pistachio-file://` references.
 func referencedIDs(_ env: [String: String]) -> [String] {
     Array(Set(References.names(in: env) + References.fileReferences(in: env).values)).sorted()
 }
@@ -136,11 +136,11 @@ func prepareRun(_ spec: RunSpec, env planned: [String: String], masking: Bool, p
     let secrets = masking ? values.filter { masked.contains($0.key) }.map(\.value) : []
     var masks = secrets
     if let aws = spec.aws {
-        // The long-lived key must come from Latchkey, so it never reaches the command.
+        // The long-lived key must come from Pistachio, so it never reaches the command.
         guard let idRef = wholeReferences["AWS_ACCESS_KEY_ID"], let secretRef = wholeReferences["AWS_SECRET_ACCESS_KEY"],
               let id = values[idRef], let secret = values[secretRef] else {
             tempDir.map { try? FileManager.default.removeItem(at: $0) }
-            throw RunError.usage("short-lived AWS credentials need AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY as latchkey:// references")
+            throw RunError.usage("short-lived AWS credentials need AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY as pistachio:// references")
         }
         switch AWSSTS.mint(accessKeyID: id, secret: secret, role: aws.role, duration: aws.duration) {
         case .success(let c):

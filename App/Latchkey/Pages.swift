@@ -73,7 +73,7 @@ extension Broker.LogEntry {
     /// The program asking, in a word: the nearest one in its chain that isn't a shell.
     var actor: String {
         if let p = program { return p }
-        let shells: Set<String> = ["zsh", "bash", "sh", "fish", "login", "sudo", "env", "tmux", "screen", "sshd-session", "latchkey", "lk", "pistachio"]
+        let shells: Set<String> = ["zsh", "bash", "sh", "fish", "login", "sudo", "env", "tmux", "screen", "sshd-session", "latchkey", "lk", "pistachio", "pst"]
         let name = chain.first { !shells.contains($0.lowercased()) } ?? chain.first ?? ""
         return name.prefix(1).uppercased() + name.dropFirst()
     }
@@ -244,7 +244,7 @@ extension AppModel {
             out.append(Finding(id: "unconfirmed", area: .environment, symbol: "questionmark.circle", tint: .purple,
                                title: "Unconfirmed environment variables",
                                summary: "\(count(unconfirmed.count, "variable")) · \(scopes.prefix(2).joined(separator: ", "))",
-                               why: "lk env migrate found these through the files items were imported from. They're used, but nobody has confirmed they belong in the environment.",
+                               why: "pst env migrate found these through the files items were imported from. They're used, but nobody has confirmed they belong in the environment.",
                                variables: unconfirmed))
         }
         let soon = grants.filter { $0.expires.timeIntervalSinceNow < 86400 }
@@ -439,7 +439,7 @@ struct FindingDetail: View {
                     .buttonStyle(.borderedProminent).disabled(scope.isEmpty)
             }
         case "unconfirmed":
-            recommended("Confirm them if they belong; remove any that don't with lk env unset.") {
+            recommended("Confirm them if they belong; remove any that don't with pst env unset.") {
                 Button { act { await model.confirmVariables(finding.variables) } } label: { Label("Confirm All…", systemImage: "checkmark") }
                     .buttonStyle(.borderedProminent)
             }

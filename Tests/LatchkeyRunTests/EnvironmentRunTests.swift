@@ -78,7 +78,7 @@ final class EnvironmentRunTests: XCTestCase {
                                                                                     "PORT": .literal("3000")]))
         let early = try planned()
         XCTAssertEqual(early.env, expected.merging(["PORT": "3000"]) { a, _ in a })
-        XCTAssertTrue(early.notes.joined().contains("OPENAI_API_KEY; run `lk env migrate`"), early.notes.joined())
+        XCTAssertTrue(early.notes.joined().contains("OPENAI_API_KEY; run `pst env migrate`"), early.notes.joined())
 
         // Checked: the record decides. Something removed from it stays out, and that's said.
         var checked = try XCTUnwrap(records.environments().first)
@@ -188,7 +188,7 @@ final class FreshCheckoutTests: XCTestCase {
         let b = try checkout("new/Code/shop-app", origin: "https://github.com/acme/shop")
         let found = try lk(["project"], in: b)
         XCTAssertTrue(found.contains("project shop (through origin)"), found)
-        XCTAssertTrue(found.contains("lk export shop/development"), found)
+        XCTAssertTrue(found.contains("pst export shop/development"), found)
 
         try lk(["export", "shop/development", "--out", ".env.local"], in: b)
         let refs = try String(contentsOf: b.appendingPathComponent(".env.local"), encoding: .utf8)

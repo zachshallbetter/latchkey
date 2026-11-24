@@ -1,7 +1,7 @@
 # Mac App Store preparation
 
 The App Store version is the sandboxed build of the same app (`App/project.appstore.yml`, compiled with
-`LATCHKEY_APP_STORE`), with the Safari extension, sold as **free with no in-app purchase in its first version**. The
+`PISTACHIO_APP_STORE`), with the Safari extension, sold as **free with no in-app purchase in its first version**. The
 command-line tool is a separate, Developer ID-signed download for App Store users. "Submitting" below is the path to
 App Store Connect; the gates further down record what has been proved.
 
@@ -17,14 +17,14 @@ Decided for the first version (2026-11-13):
   standalone `latchkey-cli-VERSION.zip` and Homebrew formula (`packaging/homebrew/latchkey-cli.rb.template`);
   the store app's menu and Settings link to https://latchkey.snackstud.io/cli.html.
 - **No GitHub pushes, no non-exempt encryption:** GitHub's API needs secrets in a sealed box (standard
-  X25519/XSalsa20-Poly1305), the only encryption Latchkey does beyond the system's. It lives in the `LatchkeySeal`
+  X25519/XSalsa20-Poly1305), the only encryption Pistachio does beyond the system's. It lives in the `LatchkeySeal`
   library, which the store build doesn't link, so `ITSAppUsesNonExemptEncryption` is NO and no export documents or
   annual report are needed. The store app pushes to Vercel, Railway and Fly; the direct download keeps GitHub.
   Bringing GitHub to the store means linking `LatchkeySeal`, setting the key to YES and filing the export documents.
 - **Quitting means quitting:** the store build registers `keepRunningFromDock = false`, so quitting from the Dock
   or with ⌘Q quits unless the person turns it on in Settings (2.4.5(iii)). Launch at login is off until turned on.
 - **Entitlements are the minimum:** sandbox, the App Group, user-selected files, app-scoped bookmarks, outbound
-  network and Latchkey's keychain group. The app listens only on Unix sockets in its App Group container, so it
+  network and Pistachio's keychain group. The app listens only on Unix sockets in its App Group container, so it
   doesn't claim `network.server`; the 2026-11-13 probes passed without it.
 
 Steps, in order:
@@ -32,7 +32,7 @@ Steps, in order:
 1. Merge the pending work, set `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`, and release the direct build with
    `scripts/release.sh` so the standalone tool and its formula exist (the store app links to them).
 2. In App Store Connect (Account Holder or Admin): accept the agreements, set the EU trader status, create the app
-   record (bundle ID io.snackstud.latchkey, SKU latchkey-mac), and fill in everything in `listing.md`: app
+   record (bundle ID io.snackstud.latchkey, SKU pistachio-mac), and fill in everything in `listing.md`: app
    information, description, keywords, URLs, screenshots, App Review notes and contact, App Privacy ("Data Not
    Collected"), age rating answers and price (free).
 3. Build the submission: `python3 scripts/release-appstore.py --output build/appstore/VERSION`. It archives a Release
@@ -42,14 +42,14 @@ Steps, in order:
    `--distribution`, the distribution-signed app inside it. It lists the submission gates still open in
    `readiness.json` without failing on them, so a package for TestFlight can be built first.
 4. Upload the package with Transporter or Xcode's Organizer, signed in as yourself.
-5. TestFlight it on a Mac that has never had Latchkey (the `cleanMacTestFlightReviewFlow` gate), then submit for
+5. TestFlight it on a Mac that has never had Pistachio (the `cleanMacTestFlightReviewFlow` gate), then submit for
    review.
 
 Screenshots come from the app's own views with example data: render the parts from a development-signed store Debug
 build into its container (it can't write elsewhere), then compose them:
 
 ```bash
-APP=build/.../Debug/Latchkey.app/Contents/MacOS/Latchkey; C=~/Library/Containers/io.snackstud.latchkey/Data/tmp
+APP=build/.../Debug/Latchkey.app/Contents/MacOS/Pistachio; C=~/Library/Containers/io.snackstud.latchkey/Data/tmp
 $APP --snapshot $C/window.png --sample --select shop/development/DATABASE_URL --part window -ApplePersistenceIgnoreState YES
 $APP --snapshot $C/sidebar.png --sample --part sidebar --height 900 -ApplePersistenceIgnoreState YES
 swift scripts/compose-screenshot.swift packaging/app-store/screenshots/1-items.jpg $C/window.png $C/sidebar.png
@@ -59,8 +59,8 @@ swift scripts/compose-screenshot.swift packaging/app-store/screenshots/1-items.j
 
 Peel is the local implementation reference: its `app/Peel/FolderAccess.swift`, separate store target and helper
 entitlements, static preflight, signed-bundle verification, and sandbox self-test. Its release/account actions and
-feature exclusions are not instructions for Latchkey. Do not reuse Peel's bundle IDs, product IDs, credentials,
-export-compliance answer, or claims that its tests passed as evidence about Latchkey.
+feature exclusions are not instructions for Pistachio. Do not reuse Peel's bundle IDs, product IDs, credentials,
+export-compliance answer, or claims that its tests passed as evidence about Pistachio.
 
 | Boundary | Apple SDK / implementation | Current status |
 | --- | --- | --- |
@@ -72,14 +72,14 @@ export-compliance answer, or claims that its tests passed as evidence about Latc
 | External CLI / MCP connection | App Group UNIX socket; Security audit-token dynamic code identity | Signed terminal CLI probes pass; packaging, MCP and full acceptance remain pending |
 | Network / service APIs | Foundation `URLSession`; Network framework where a listener is needed | Existing proxy/STS code; remote pushes now call the services' APIs (see Remote pushes below) |
 | Login/background service | ServiceManagement `SMAppService`, with explicit user consent | Current login setting exists; a broker service design needs separate validation |
-| Optional paid features | StoreKit 2: `Transaction.currentEntitlements`, `Transaction.updates`, `AppStore.sync()` | Implemented for Latchkey Pro (see Latchkey Pro purchase); real purchases need App Store Connect |
+| Optional paid features | StoreKit 2: `Transaction.currentEntitlements`, `Transaction.updates`, `AppStore.sync()` | Implemented for Pistachio Pro (see Pistachio Pro purchase); real purchases need App Store Connect |
 
 ## What this slice implements
 
 - `App/project.appstore.yml` overlays the current project with a sandboxed experimental configuration. It preserves
   the app's existing vault identity and Safari dependency. No shipping target or Safari source is changed.
 - `App/AppStore/Latchkey.entitlements` names the exact permissions: selected-file read/write, app-scoped bookmarks,
-  outbound network access, the App Group and Latchkey's keychain group.
+  outbound network access, the App Group and Pistachio's keychain group.
   No temporary exception, unrestricted home-folder entitlement, Apple Events or sandbox escape is added.
 - `SecurityScopedAccess` retains the **original** scoped URL, refreshes stale bookmarks, keeps unavailable volumes
   remembered, deduplicates repeated selections, and stops the corresponding scope when access is removed.
@@ -93,23 +93,23 @@ export-compliance answer, or claims that its tests passed as evidence about Latc
 The store app runs no CLI installer: writing links under `~/.local/bin` would be a write outside its container. It
 links to the separate download instead (see Submitting).
 
-## Latchkey Pro purchase
+## Pistachio Pro purchase
 
-Not on sale in the first version (`ProEntitlement.onSale` is false; see Submitting). When it is: Latchkey Pro is one
+Not on sale in the first version (`ProEntitlement.onSale` is false; see Submitting). When it is: Pistachio Pro is one
 non-consumable in-app purchase, `io.snackstud.latchkey.pro`, in this build only. The direct
-build compiles no purchase code (`LATCHKEY_APP_STORE`) and its Settings shows a link to the App Store version.
+build compiles no purchase code (`PISTACHIO_APP_STORE`) and its Settings shows a link to the App Store version.
 
 - `ProEntitlement` (`App/Latchkey/ProEntitlement.swift`) is the one resolver: `Transaction.currentEntitlements`,
   accepting only `.verified` transactions for the product that aren't revoked. A `Transaction.updates` listener
   picks up refunds and purchases made elsewhere. A failed or unverified lookup means not Pro and never throws into a
-  caller. Nothing about the purchase is stored by Latchkey.
+  caller. Nothing about the purchase is stored by Pistachio.
 - The broker enforces Pro in one place, `Broker.handle`, through `ProGate.features` (op name to feature name) and its
   injected `hasPro` check, which the app wires to `ProEntitlement`. `ProGate.features` is empty: duplicates, combine
   and everything else shipped stays free, and storing, reading, approving, granting, running, importing, exporting,
   deleting, history and restore can never be gated (`ProGateTests`). A gated op without Pro returns `ok: false` with
-  an error naming Latchkey Pro and the feature; the app shows the Upgrade sheet.
-- Settings › Latchkey Pro: status, Buy (price from `Product.displayPrice`), Restore Purchases, purchase date.
-- `App/AppStore/Latchkey.storekit` holds the product (USD 79.99) for local testing; the overlay's `Latchkey` scheme
+  an error naming Pistachio Pro and the feature; the app shows the Upgrade sheet.
+- Settings › Pistachio Pro: status, Buy (price from `Product.displayPrice`), Restore Purchases, purchase date.
+- `App/AppStore/Latchkey.storekit` holds the product (USD 79.99) for local testing; the overlay's `Pistachio` scheme
   runs with it. In Xcode, run the store scheme and use Debug > StoreKit > Manage Transactions.
 
 Not verified without App Store Connect: a real purchase, Restore Purchases against a real account, refunds and
@@ -120,7 +120,7 @@ Family Sharing (off). Create the product, price and review screenshot there befo
 ```bash
 python3 scripts/appstore-preflight.py
 python3 -B -m unittest discover -s scripts/tests -p 'test_appstore_*.py'
-python3 scripts/build-appstore-sandbox.py --output /private/tmp/latchkey-sandbox-build-1
+python3 scripts/build-appstore-sandbox.py --output /private/tmp/pistachio-sandbox-build-1
 ```
 
 Choose a new output directory each time. The builder snapshots App, Sources, Tests and Package.swift, then runs
@@ -148,7 +148,7 @@ artifact. Static checks and evidence-file existence are not substitutes for revi
 After building with existing development signing, run:
 
 ```bash
-python3 scripts/test-appstore-sandbox.py --app /path/to/Debug/Latchkey.app --report /private/tmp/latchkey-sandbox-report.json
+python3 scripts/test-appstore-sandbox.py --app /path/to/Debug/Latchkey.app --report /private/tmp/pistachio-sandbox-report.json
 ```
 
 The Debug-only `--sandbox-self-test` entry runs before the normal app model, single-instance handling, Keychain,
@@ -182,11 +182,11 @@ Only `vaultAndHistory` is recorded as passed; the other two probes passed but le
 | CLI adversarial cases | Passed 18 of 18 (14 transport plus 4 new); PID reuse, MCP and SSH remain. | [report](evidence/app-store/2026-11-13-cli-adversarial.json) |
 
 ```bash
-python3 scripts/test-appstore-vault.py --app /path/to/Debug/Latchkey.app --report /private/tmp/latchkey-vault-report.json
-python3 scripts/test-appstore-files.py --app /path/to/Debug/Latchkey.app --report /private/tmp/latchkey-files-report.json
+python3 scripts/test-appstore-vault.py --app /path/to/Debug/Latchkey.app --report /private/tmp/pistachio-vault-report.json
+python3 scripts/test-appstore-files.py --app /path/to/Debug/Latchkey.app --report /private/tmp/pistachio-files-report.json
 ```
 
-The vault probe never queries the real `latchkey` or `latchkey.history` services and never synchronizes. It does not
+The vault probe never queries the production item or history services and never synchronizes. It does not
 cover real items, iCloud sync, migration or the approval UI. The history store keeps dates to one-second resolution,
 so two versions saved in the same second tie for "latest"; the probe waits between them. Existing behavior, not changed.
 
@@ -202,7 +202,7 @@ Open panel's own extension may behave differently, so only the next-launch resul
 Manual test (Debug sandbox build, a scratch folder with a `.env` file, no real secrets):
 
 1. Settings, File permissions: choose the `.env` file. Expect it listed, and Import to read it.
-2. Move or import so Latchkey rewrites the file. Expect the Allow prompt for its folder; Cancel must leave the
+2. Move or import so Pistachio rewrites the file. Expect the Allow prompt for its folder; Cancel must leave the
    file and vault unchanged, Allow must rewrite it with the same permissions (`ls -l`).
 3. Quit and reopen. Expect the file permissions still listed and a second rewrite to work without a prompt.
 4. Disconnect the volume (or a disk image) holding the file, reopen, reconnect. Expect it remembered and usable again.
@@ -224,9 +224,9 @@ full functionality until that boundary has been reviewed and the complete workfl
 The experiment listens on `cli.sock` in its App Group and requires the CLI's exact signing identifier and the same
 Apple-issued signing team. It does not open the old private-container socket as a fallback. The Safari listener
 retains its separate identity and operation restrictions. The CLI authenticates the app before writing any request
-bytes. `LATCHKEY_BROKER=auto|direct|app-store` selects a channel; automatic store selection verifies the installed
-app's signature before trusting its distribution metadata. `LATCHKEY_LOCAL_SOCKET` overrides only the local path,
-with authentication retained. It cannot be combined with the explicit SSH-forwarding `LATCHKEY_SOCKET` setting.
+bytes. `PISTACHIO_BROKER=auto|direct|app-store` selects a channel; automatic store selection verifies the installed
+app's signature before trusting its distribution metadata. `PISTACHIO_LOCAL_SOCKET` overrides only the local path,
+with authentication retained. It cannot be combined with the explicit SSH-forwarding `PISTACHIO_SOCKET` setting.
 Store forwarding is deliberately unavailable until an authenticated forwarding boundary is designed; the direct
 broker's existing SSH behavior is preserved.
 
@@ -235,7 +235,7 @@ peer lookup fails with EPERM when the sandbox cannot read an external terminal C
 representation fixes that access requirement without replacing signature validation with a claimed path or PID.
 Caller cwd, argv and ancestry still come from kernel APIs. Process start times bracket PID-based context reads;
 unavailable or unstable context cannot qualify for a grant. No new caller-supplied context fields are trusted.
-`latchkey log` now requests entries from the selected broker instead of reading the CLI's local Application Support
+`pistachio log` now requests entries from the selected broker instead of reading the CLI's local Application Support
 path, which would show the wrong log for the sandbox container or an SSH-forwarded broker. Entry limits are bounded.
 The run-command parser recognizes AWS option values and `--env-file=...`; unknown options cannot masquerade as a
 command for a restricted grant.
@@ -243,7 +243,7 @@ command for a restricted grant.
 Run the fixture suite against an already development-signed Debug app and independently signed same-team CLI:
 
 ```bash
-python3 scripts/test-appstore-cli.py --app /path/to/Latchkey.app --cli /path/to/signed/latchkey --report /private/tmp/latchkey-cli-report.json
+python3 scripts/test-appstore-cli.py --app /path/to/Latchkey.app --cli /path/to/signed/pistachio --report /private/tmp/pistachio-cli-report.json
 ```
 
 The script requires installed Node/npm, uses a random App Group socket and in-memory store, never opens the real
@@ -285,7 +285,7 @@ reviewer notes, App Privacy, age rating and export answers) are in `packaging/ap
 preflight checks its lengths against Apple's limits. `scripts/release-appstore.py` builds the package; uploading is
 done by the owner.
 
-The privacy inventory is specific to Latchkey:
+The privacy inventory is specific to Pistachio:
 
 - `CA92.1`: the app's own preferences and local bookmark records.
 - `C617.1`: metadata for files within the app's own storage.

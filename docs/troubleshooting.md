@@ -1,25 +1,25 @@
 # Troubleshooting
 
-## "cannot reach the Latchkey app" (exit 69)
+## "cannot reach the Pistachio app" (exit 69)
 
 The command-line tool starts the app when it isn't running. If that fails:
 
 - Check the app is installed: `ls /Applications/Latchkey.app`.
 - Open it once by hand, then try again.
 - If `latchkey-broker` (the development broker) is running, stop it: it uses the same socket.
-- `LATCHKEY_NO_LAUNCH=1` is set? Unset it, or start the app yourself.
-- `connection refused` or `connection closed` right after installing or updating Latchkey: the app was restarting.
+- `PISTACHIO_NO_LAUNCH=1` is set? Unset it, or start the app yourself.
+- `connection refused` or `connection closed` right after installing or updating Pistachio: the app was restarting.
   Run the command again.
 
-## "the program answering on Latchkey's socket isn't the Latchkey app"
+## "the program answering on Pistachio's socket isn't the Pistachio app"
 
-`latchkey` checks the app's signature before sending anything. Another program is listening where the app should be:
-quit it (the message names it), then open Latchkey. A development build of the app, signed by a different team than
+`pistachio` checks the app's signature before sending anything. Another program is listening where the app should be:
+quit it (the message names it), then open Pistachio. A development build of the app, signed by a different team than
 the tool, causes this too; install both from the same build.
 
-## "Asked by a program that isn't Latchkey's command-line tool"
+## "Asked by a program that isn't Pistachio's command-line tool"
 
-The approval panel shows this when something other than the signed `latchkey` tool asks, such as a script talking
+The approval panel shows this when something other than the signed `pistachio` tool asks, such as a script talking
 to the socket directly, or an unsigned development build of the tool. Deny it unless you know what it is.
 
 ## "refused" (exit 77)
@@ -30,13 +30,13 @@ secret. A request nobody answers is denied after two minutes.
 
 ## "no item named" (exit 66)
 
-Check the ID with `latchkey list`. IDs are case-sensitive, and a project item's ID includes its project and
-environment (`shop/production/DATABASE_URL`, not `DATABASE_URL`). If you deleted it in the last 30 days, `latchkey
-deleted` lists it and `latchkey restore ID` brings it back.
+Check the ID with `pst list`. IDs are case-sensitive, and a project item's ID includes its project and
+environment (`shop/production/DATABASE_URL`, not `DATABASE_URL`). If you deleted it in the last 30 days, `pistachio
+deleted` lists it and `pst restore ID` brings it back.
 
 ## Values aren't syncing
 
-`latchkey status` should say `storage: iCloud Keychain storage (sync status not verified)`.
+`pst status` should say `storage: iCloud Keychain storage (sync status not verified)`.
 
 - **It says "login keychain on this Mac only"**: the app isn't signed with a developer team. Set `DEVELOPMENT_TEAM`
   in `App/project.yml` and run `scripts/install.sh` again ([Getting started](getting-started.md#install-from-source)).
@@ -53,12 +53,12 @@ rebuild is a new identity. Choose **Always Allow**, or sign the app with your te
 
 ## The window doesn't appear
 
-Latchkey runs one copy at a time; opening it again brings the running copy forward. If it was started in the
+Pistachio runs one copy at a time; opening it again brings the running copy forward. If it was started in the
 background by the command-line tool, click its Dock icon or the key in the menu bar.
 
 ## An approval panel didn't show up
 
-It appears over whatever app you're in, without bringing Latchkey's window forward. If the screen was locked or nobody
+It appears over whatever app you're in, without bringing Pistachio's window forward. If the screen was locked or nobody
 answered for two minutes, the request was denied: run the command again.
 
 ## Touch ID in the panel doesn't respond
@@ -69,38 +69,38 @@ failed), use **Use Password…**, which opens the system sheet for your Mac pass
 
 ## A push failed
 
-- `isn't installed`: install the service's tool (`vercel`, `gh`, `railway`, `flyctl`). Latchkey looks in
+- `isn't installed`: install the service's tool (`vercel`, `gh`, `railway`, `flyctl`). Pistachio looks in
   `~/.local/bin`, `/opt/homebrew/bin`, `/usr/local/bin`, mise shims and `~/.fly/bin`.
 - Signed-out or permission errors: sign in to the tool (`vercel login`, `gh auth login`, `railway login`,
   `flyctl auth login`) and check it can reach the project.
 - Vercel or Railway "no linked project": link with `project=` or `dir=` pointing at a folder linked with
   `vercel link` / `railway link`.
 - Fly: values with line breaks can't be pushed with `secrets import`.
-- `pushes run in the Latchkey app`: you're using the development broker; use the app.
+- `pushes run in the Pistachio app`: you're using the development broker; use the app.
 - SSH, `sudo: a password is required`: the host needs a sudoers rule that lets your account run the credential script
   without a password; a push has no terminal to type one in. See [SSH credential scripts](remote.md#ssh-credential-scripts).
-- SSH, `didn't confirm storing it`: the script exited 0 but didn't print `stored ADAPTER.ACCOUNT`, so Latchkey
+- SSH, `didn't confirm storing it`: the script exited 0 but didn't print `stored ADAPTER.ACCOUNT`, so Pistachio
   doesn't count it as pushed. Check the script on the host.
 - SSH, `isn't a credential name (ADAPTER.ACCOUNT)`: rename the item so its last part is `ADAPTER.ACCOUNT`, for
   example `distribution/production/bluesky.someone.bsky.social`.
 
-## `latchkey import` skipped some lines
+## `pst import` skipped some lines
 
 The dry run says why for each: empty, already a reference, an expiring Vercel or Turbo token, a name matched by
 `--skip`, an item that already exists (use `--replace`), or a conflict between two files.
 
 ## I deleted items, and my `.env` file only has references
 
-Open **Recently Deleted** in the app, or run `latchkey deleted`, and restore them within 30 days. After that, the
-values are gone from Latchkey; check your version control or the service that issued them.
+Open **Recently Deleted** in the app, or run `pst deleted`, and restore them within 30 days. After that, the
+values are gone from Pistachio; check your version control or the service that issued them.
 
-## Latchkey for Safari shows two panels, or Save does nothing
+## Pistachio for Safari shows two panels, or Save does nothing
 
-A tab that was open when Latchkey was updated keeps the old extension's script alongside the new one. Reload the tab.
-If Save then says it couldn't reach Latchkey, open the app and try again.
+A tab that was open when Pistachio was updated keeps the old extension's script alongside the new one. Reload the tab.
+If Save then says it couldn't reach Pistachio, open the app and try again.
 
 ## Where are the logs?
 
 The activity log is `~/Library/Application Support/Latchkey/access.jsonl`: one JSON line per read, change, grant,
 move, import or push, with the program chain and folder, never values. Settings › **Show in Finder** opens it.
-`latchkey log` shows recent entries; `latchkey log --verify` checks that none was changed, removed or added.
+`pistachio log` shows recent entries; `pistachio log --verify` checks that none was changed, removed or added.

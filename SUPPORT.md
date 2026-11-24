@@ -1,6 +1,6 @@
 # Support
 
-Latchkey has a solo maintainer, so support is best-effort with no SLA.
+Pistachio has a solo maintainer, so support is best-effort with no SLA.
 
 - **Questions and bugs:** open a [GitHub issue](https://github.com/zachshallbetter/latchkey/issues/new/choose). For
   common problems, check [Troubleshooting](docs/troubleshooting.md) first.

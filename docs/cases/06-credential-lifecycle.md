@@ -17,7 +17,7 @@ A name/value pair alone cannot express purpose, owner, provider, environment, pr
 
 ## Example acceptance
 
-A key named "Payments staging" is due to expire. Latchkey can identify known consumers, alert the owner, propose rotation and assist replacement/push only under appropriate authority. If the provider exposes no reliable expiry API, status remains unknown rather than inventing one.
+A key named "Payments staging" is due to expire. Pistachio can identify known consumers, alert the owner, propose rotation and assist replacement/push only under appropriate authority. If the provider exposes no reliable expiry API, status remains unknown rather than inventing one.
 
 ## Current evidence
 

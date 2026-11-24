@@ -1,29 +1,33 @@
-# Homebrew formula for the standalone Latchkey command-line tool, for people who use the Mac App Store version.
+# Homebrew formula for the standalone Pistachio command-line tool, for people who use the Mac App Store version.
 # scripts/release.sh fills in the version, checksum, download repository and homepage and writes
 # build/release/<version>/latchkey-cli.rb, for the tap repository's Formula/ folder.
 class LatchkeyCli < Formula
-  desc "Run commands with secrets from the Latchkey app and your keychain"
+  desc "Run commands with secrets from the Pistachio app and your keychain"
   homepage "@HOMEPAGE@"
   url "https://github.com/@RELEASES_REPO@/releases/download/v@VERSION@/latchkey-cli-@VERSION@.zip"
   sha256 "@SHA256@"
 
   depends_on :macos
 
-  conflicts_with cask: "latchkey", because: "the Latchkey cask already installs this tool"
+  conflicts_with cask: "latchkey", because: "the Pistachio cask already installs this tool"
 
   def install
     bin.install "latchkey"
     bin.install_symlink "latchkey" => "lk"
     bin.install_symlink "latchkey" => "pistachio"
+    bin.install_symlink "latchkey" => "pst"
   end
 
   def caveats
     <<~EOS
-      latchkey asks the Latchkey app for every value. Install the app from the Mac App Store and open it once.
+      latchkey asks the Pistachio app for every value. Install the app from the Mac App Store and open it once.
     EOS
   end
 
   test do
-    assert_match "Latchkey", shell_output("#{bin}/latchkey help")
+    assert_match "Pistachio", shell_output("#{bin}/pst help")
+    assert_match "Pistachio", shell_output("#{bin}/pistachio help")
+    assert_match "Pistachio", shell_output("#{bin}/lk help")
+    assert_match "Pistachio", shell_output("#{bin}/latchkey help")
   end
 end

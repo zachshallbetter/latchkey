@@ -16,10 +16,10 @@ signed, notarized and stapled disk image.
    App-Specific Passwords, then save it in your keychain:
 
    ```bash
-   xcrun notarytool store-credentials latchkey-notary --apple-id YOUR_APPLE_ID --team-id YOUR_TEAM_ID
+   xcrun notarytool store-credentials pistachio-notary --apple-id YOUR_APPLE_ID --team-id YOUR_TEAM_ID
    ```
 
-   The script uses the profile `latchkey-notary`; set `LATCHKEY_NOTARY_PROFILE` to use another.
+   The script uses the profile `pistachio-notary`; set `LATCHKEY_NOTARY_PROFILE` to use another.
 3. **Xcode signed in to the team.** Exporting creates the Developer ID provisioning profile that the keychain
    entitlement needs.
 4. **Update signing key** (once, ever). The direct download updates itself with Sparkle, which checks each update
@@ -27,14 +27,14 @@ signed, notarized and stapled disk image.
    -resolvePackageDependencies -project Latchkey.xcodeproj -scheme Latchkey`), then run Sparkle's tool:
 
    ```bash
-   ~/Library/Developer/Xcode/DerivedData/Latchkey-*/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys --account latchkey
+   ~/Library/Developer/Xcode/DerivedData/Pistachio-*/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys --account pistachio
    ```
 
-   It stores the private key in your login keychain under the `latchkey` account, which `release.sh` signs with
-   (back it up: `generate_keys --account latchkey -x file`; a lost key means users
+   It stores the private key in your login keychain under the `pistachio` account, which `release.sh` signs with
+   (back it up: `generate_keys --account pistachio -x file`; a lost key means users
    can't update without reinstalling) and prints the public key. Put that in `SPARKLE_PUBLIC_KEY` in
    `App/project.yml`. While it is empty the updater doesn't start and builds still work. Never commit the private key.
-   The key was made on 2026-11-13; `generate_keys --account latchkey -p` prints its public half.
+   The key was made on 2026-11-13; `generate_keys --account pistachio -p` prints its public half.
 
 ## Making a release
 
@@ -67,18 +67,18 @@ window shows them; the script refuses a version with no notes), and a link to th
    names the new version as the latest)
    (`https://latchkey.snackstud.io/appcast.xml`). Publish it last: running copies see the new version as soon as the
    file is live. Check that the enclosure URL downloads.
-5. Check the disk image on a Mac that has never had Latchkey: open it, drag Latchkey to Applications, open it, choose
-   **Latchkey › Install Command Line Tool…**, and run `latchkey status`. Gatekeeper should open it without warnings.
+5. Check the disk image on a Mac that has never had Pistachio: open it, drag Pistachio to Applications, open it, choose
+   **Install Command Line Tool…** in the app menu, and run `pst status`. Gatekeeper should open it without warnings.
 
 ## Homebrew
 
 The script writes `build/release/VERSION/latchkey.rb` from `packaging/homebrew/latchkey.rb.template`: the app,
-`latchkey`, `lk` and `pistachio` on the PATH, and a `zap` that removes Latchkey's folder and settings (not keychain items). The
+`pistachio`, `pst` and `pistachio` on the PATH, and a `zap` that removes Pistachio's folder and settings (not keychain items). The
 download repository and homepage default to `zachshallbetter/latchkey` and https://latchkey.snackstud.io/
 (override with `LATCHKEY_RELEASES_REPO` and `LATCHKEY_HOMEPAGE`).
 
 After the GitHub release is published, copy it to the tap,
-[zachshallbetter/homebrew-latchkey](https://github.com/zachshallbetter/homebrew-latchkey), as `Casks/latchkey.rb`,
+[zachshallbetter/homebrew-pistachio](https://github.com/zachshallbetter/homebrew-latchkey), as `Casks/latchkey.rb`,
 commit and push. People install with `brew tap zachshallbetter/latchkey`, `brew trust zachshallbetter/latchkey` and
 `brew install --cask latchkey`.
 
@@ -102,7 +102,7 @@ The Mac App Store build has no updater: it excludes Sparkle (`App/project.appsto
 `scripts/appstore-preflight.py`) and updates through the App Store.
 
 If notarization fails, the JSON for each submission is in `build/release/VERSION/`, and `xcrun notarytool log
-SUBMISSION_ID --keychain-profile latchkey-notary` shows Apple's reasons.
+SUBMISSION_ID --keychain-profile pistachio-notary` shows Apple's reasons.
 
 ## Identity that must not change
 

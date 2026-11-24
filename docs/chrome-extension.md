@@ -1,12 +1,12 @@
-# Latchkey for Chrome (proposal)
+# Pistachio for Chrome (proposal)
 
-Status: **proposed, not built.** Latchkey has a Safari extension only. This page describes how a Chrome extension
-would work and what it would add to Latchkey's trust boundary, so the decision can be made before any code. It adds
+Status: **proposed, not built.** Pistachio has a Safari extension only. This page describes how a Chrome extension
+would work and what it would add to Pistachio's trust boundary, so the decision can be made before any code. It adds
 a new caller identity and a new way into the broker, so it needs the owner's approval first.
 
 ## What it would do
 
-The same thing as Latchkey for Safari ([app.md](app.md#latchkey-for-safari)): spot a new key on the page where it was
+The same thing as Pistachio for Safari ([app.md](app.md#pistachio-for-safari)): spot a new key on the page where it was
 made and save it when you say so, and fill a saved key into a field on a site the app allows. Nothing new is allowed:
 the same four broker operations (`status`, `list`, `set`, `fill`), the same approvals (every save and every fill asks),
 and the same fill rules, decided by the app from the page's origin.
@@ -34,7 +34,7 @@ Chrome reads from its own folder, talking to it over standard input and output (
 the calling extension's origin as its first argument.
 
 ```
-content.js ─► background.js ─► Chrome ─► latchkey-chrome-host (in Latchkey.app/Contents/Helpers)
+content.js ─► background.js ─► Chrome ─► pistachio-chrome-host (in Latchkey.app/Contents/Helpers)
                                                │ JSON line over a Unix socket
                                                ▼
                                    Broker, gate .chromeExtension (code signature io.snackstud.latchkey.chrome;
@@ -47,7 +47,7 @@ content.js ─► background.js ─► Chrome ─► latchkey-chrome-host (in La
    get a one-line shim (`globalThis.browser ??= chrome`), because Chrome's MV3 API is `chrome.*` and returns
    promises the same way. The manifest is Safari's plus a pinned `key` so the development build's extension ID is
    stable. The two copies come from one source folder at build time; no fork.
-2. **The host, `latchkey-chrome-host`.** A small Swift executable in the package (beside `latchkey` and
+2. **The host, `pistachio-chrome-host`.** A small Swift executable in the package (beside `pistachio` and
    `latchkey-broker`), embedded in `Contents/Helpers` and signed with the identifier `io.snackstud.latchkey.chrome`.
    It does what `SafariWebExtensionHandler.answer` does today. That function moves into `LatchkeyCore` so both
    hosts share one implementation; it is the canonical translator from extension messages to broker requests.
@@ -55,11 +55,11 @@ content.js ─► background.js ─► Chrome ─► latchkey-chrome-host (in La
    and exits.
 3. **The host manifest.** `io.snackstud.latchkey.json`, written to each installed browser's `NativeMessagingHosts`
    folder (for example `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/`). Its `path` points at the
-   host inside `/Applications/Latchkey.app`, and `allowed_origins` lists only Latchkey's extension IDs (the Chrome Web
+   host inside `/Applications/Latchkey.app`, and `allowed_origins` lists only Pistachio's extension IDs (the Chrome Web
    Store ID, and the pinned development ID in development builds only).
 4. **The gate.** `Broker.Gate.chromeExtension`, with the same four operations as Safari's. The app admits a
-   connection only when the peer's code signature says `io.snackstud.latchkey.chrome` from Latchkey's team, checked
-   through the audit token as it is for the CLI and the Safari extension. Approval panels say "Asked by Latchkey for
+   connection only when the peer's code signature says `io.snackstud.latchkey.chrome` from Pistachio's team, checked
+   through the audit token as it is for the CLI and the Safari extension. Approval panels say "Asked by Pistachio for
    Chrome" (or Edge, Brave… from the parent process) and show the page's site.
 
 ### Where the socket lives
@@ -115,7 +115,7 @@ Web Store listing.
 
 1. Move the message translator out of `SafariWebExtensionHandler` into `LatchkeyCore`, with tests; Safari keeps
    working unchanged.
-2. Add `latchkey-chrome-host` and `Broker.Gate.chromeExtension`, with tests for framing, size limits, protocol version,
+2. Add `pistachio-chrome-host` and `Broker.Gate.chromeExtension`, with tests for framing, size limits, protocol version,
    and the gate refusing other operations and other signatures.
 3. Build the Chrome extension from the shared sources; run the existing detector and content tests against it.
 4. Settings › Developer › Browser Extensions, and `scripts/install.sh` support.

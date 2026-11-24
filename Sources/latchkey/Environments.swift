@@ -2,7 +2,7 @@ import Darwin
 import Foundation
 import LatchkeyCore
 
-// `latchkey env`, `latchkey export` and `latchkey project`: environment records, writing env files from them, and
+// `pst env`, `pst export` and `pst project`: environment records, writing env files from them, and
 // matching checkouts to projects.
 
 func absolutePath(_ path: String) -> String {
@@ -37,7 +37,7 @@ func envCommand(_ input: [String]) -> Never {
     switch sub {
     case "list":
         let records = send(Request(op: "environments")).environments ?? []
-        if records.isEmpty { print("No environment records yet. `lk env migrate` makes them from your items."); exit(0) }
+        if records.isEmpty { print("No environment records yet. `pst env migrate` makes them from your items."); exit(0) }
         for r in records {
             let literals = r.variables.values.filter { $0.item == nil }.count
             var notes: [String] = []
@@ -50,7 +50,7 @@ func envCommand(_ input: [String]) -> Never {
 
     case "show":
         let scope = scopeArg()
-        guard let r = environmentRecord(scope) else { fail("\(scope) has no environment record; `lk env migrate` makes one", code: 66) }
+        guard let r = environmentRecord(scope) else { fail("\(scope) has no environment record; `pst env migrate` makes one", code: 66) }
         if args.contains("--json") {
             let enc = Wire.encoder()
             enc.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -69,15 +69,15 @@ func envCommand(_ input: [String]) -> Never {
             if r.inferred.contains(name) { line += "  (unconfirmed: found through old file locations)" }
             print(line)
         }
-        if !r.inferred.isEmpty { print("`lk env confirm \(scope)` confirms them; `lk env unset \(scope) NAME` removes one.") }
+        if !r.inferred.isEmpty { print("`pst env confirm \(scope)` confirms them; `pst env unset \(scope) NAME` removes one.") }
         exit(0)
 
     case "set":
         let scope = scopeArg()
-        guard !args.isEmpty else { fail("usage: latchkey env set PROJECT/ENV NAME=latchkey://ID|NAME=VALUE...", code: 64) }
+        guard !args.isEmpty else { fail("usage: pst env set PROJECT/ENV NAME=pistachio://ID|NAME=VALUE...", code: 64) }
         var vars: [String: EnvironmentEntry] = [:]
         for a in args {
-            guard let eq = a.firstIndex(of: "=") else { fail("\(a): give NAME=latchkey://ID or NAME=VALUE", code: 64) }
+            guard let eq = a.firstIndex(of: "=") else { fail("\(a): give NAME=pistachio://ID or NAME=VALUE", code: 64) }
             let name = String(a[..<eq]), value = String(a[a.index(after: eq)...])
             guard EnvironmentRecord.isValidVariable(name) else { fail("\(name) is not a valid variable name", code: 64) }
             if let id = References.referenceID(value) {
@@ -85,7 +85,7 @@ func envCommand(_ input: [String]) -> Never {
                 vars[name] = .credential(id)
             } else {
                 if !EnvironmentMigration.isPlainSetting(value) && EnvironmentRecord.mayBeSecret(name: name, value: value) {
-                    fail("\(name) looks like a secret. Save it as an item (lk set \(scope)/\(name)), then: lk env set \(scope) \(name)=latchkey://\(scope)/\(name)", code: 64)
+                    fail("\(name) looks like a secret. Save it as an item (pst set \(scope)/\(name)), then: pst env set \(scope) \(name)=pistachio://\(scope)/\(name)", code: 64)
                 }
                 vars[name] = .literal(value)
             }
@@ -96,7 +96,7 @@ func envCommand(_ input: [String]) -> Never {
     case "unset", "confirm":
         let scope = scopeArg()
         var names = args
-        if sub == "unset" && names.isEmpty { fail("usage: latchkey env unset PROJECT/ENV NAME...", code: 64) }
+        if sub == "unset" && names.isEmpty { fail("usage: pst env unset PROJECT/ENV NAME...", code: 64) }
         if sub == "confirm" && names.isEmpty {
             guard let r = environmentRecord(scope) else { fail("\(scope) has no environment record", code: 66) }
             names = r.inferred
@@ -116,19 +116,19 @@ func envCommand(_ input: [String]) -> Never {
         exit(0)
 
     default:
-        fail("unknown: latchkey env \(sub). Try list, show, set, unset, confirm, migrate or rm.", code: 64)
+        fail("unknown: pst env \(sub). Try list, show, set, unset, confirm, migrate or rm.", code: 64)
     }
 }
 
 func finishEnvChange(_ r: Response?, _ scope: String) -> Never {
-    guard let r else { fail("cannot reach the Latchkey app", code: 69) }
+    guard let r else { fail("cannot reach the Pistachio app", code: 69) }
     if let m = r.missing, !m.isEmpty { failMissing(m) }
     guard r.ok else { fail(r.error ?? "the app refused the request", code: 77) }
     print("updated \(scope)")
     exit(0)
 }
 
-/// Makes or completes records from what Latchkey already knows, reading the files recorded on items where they're on
+/// Makes or completes records from what Pistachio already knows, reading the files recorded on items where they're on
 /// this Mac. Adds only; reports what it can't settle.
 func migrateCommand(dryRun: Bool) -> Never {
     let items = send(Request(op: "list")).secrets ?? []
@@ -158,13 +158,13 @@ func migrateCommand(dryRun: Bool) -> Never {
     let changed = r.environments ?? []
     if changed.isEmpty { print("Records already up to date.") }
     else { print("recorded \(total) variable\(total == 1 ? "" : "s") in \(changed.count) environment\(changed.count == 1 ? "" : "s")") }
-    if changed.contains(where: { !$0.inferred.isEmpty }) { print("next: check with lk env show PROJECT/ENV, then lk env confirm PROJECT/ENV") }
+    if changed.contains(where: { !$0.inferred.isEmpty }) { print("next: check with pst env show PROJECT/ENV, then pst env confirm PROJECT/ENV") }
     exit(0)
 }
 
 // MARK: - export
 
-let exportUsage = "usage: latchkey export PROJECT/ENV [--out FILE [--merge | --replace] [--yes]] [--values [--clipboard]]"
+let exportUsage = "usage: pst export PROJECT/ENV [--out FILE [--merge | --replace] [--yes]] [--values [--clipboard]]"
 
 func exportCommand(_ input: [String]) -> Never {
     var scope: String?
@@ -193,7 +193,7 @@ func exportCommand(_ input: [String]) -> Never {
     }
     guard let scope else { fail(exportUsage, code: 64) }
     guard let record = environmentRecord(scope) else {
-        fail("\(scope) has no environment record. `lk env migrate` makes one from your items (lk run --env \(scope) still works).", code: 66)
+        fail("\(scope) has no environment record. `pst env migrate` makes one from your items (pst run --env \(scope) still works).", code: 66)
     }
     if clipboard {
         if !values { fail("--clipboard needs --values: references aren't worth a clipboard that clears", code: 64) }
@@ -206,8 +206,8 @@ func exportCommand(_ input: [String]) -> Never {
     let ids = Set((send(Request(op: "list")).secrets ?? []).map(\.name))
     let credentials = Array(Set(record.variables.values.compactMap(\.item))).sorted()
     let missing = credentials.filter { !ids.contains($0) }
-    func note(_ s: String) { FileHandle.standardError.write(Data(("latchkey: " + s + "\n").utf8)) }
-    if !record.inferred.isEmpty { note("unconfirmed in \(scope): \(record.inferred.joined(separator: ", ")) (lk env show \(scope))") }
+    func note(_ s: String) { FileHandle.standardError.write(Data(("pistachio: " + s + "\n").utf8)) }
+    if !record.inferred.isEmpty { note("unconfirmed in \(scope): \(record.inferred.joined(separator: ", ")) (pst env show \(scope))") }
 
     if clipboard {
         if !missing.isEmpty { failMissing(missing) }
@@ -227,12 +227,12 @@ func exportCommand(_ input: [String]) -> Never {
     }
 
     guard let path = out else {
-        if !missing.isEmpty { note("not in Latchkey: \(missing.joined(separator: ", "))") }
+        if !missing.isEmpty { note("not in Pistachio: \(missing.joined(separator: ", "))") }
         print(record.envFile(), terminator: "")
         exit(0)
     }
     if values && !missing.isEmpty { failMissing(missing) }
-    if !missing.isEmpty { note("not in Latchkey, written as references anyway: \(missing.joined(separator: ", "))") }
+    if !missing.isEmpty { note("not in Pistachio, written as references anyway: \(missing.joined(separator: ", "))") }
 
     // Checked before anything is asked or written: a link or a folder is refused, an existing file needs --merge or
     // --replace, a merge needs a file of KEY=VALUE lines.
@@ -249,7 +249,7 @@ func exportCommand(_ input: [String]) -> Never {
         if !added.isEmpty { diff.append("adds \(added.joined(separator: ", "))") }
         if !gone.isEmpty { diff.append("drops \(gone.joined(separator: ", "))") }
         if !changed.isEmpty { diff.append("changes \(changed.joined(separator: ", "))") }
-        fail("\(Broker.tilde(path)) already exists\(diff.isEmpty ? " (same variables)" : "; exporting \(diff.joined(separator: "; "))"). Nothing written; --merge updates just the variables Latchkey manages and keeps the rest, --replace replaces the file.", code: 73)
+        fail("\(Broker.tilde(path)) already exists\(diff.isEmpty ? " (same variables)" : "; exporting \(diff.joined(separator: "; "))"). Nothing written; --merge updates just the variables Pistachio manages and keeps the rest, --replace replaces the file.", code: 73)
     } catch { fail(error.localizedDescription, code: 73) }
 
     // A merge names what it changes, then asks, before the values are asked for.
@@ -287,11 +287,11 @@ func exportCommand(_ input: [String]) -> Never {
     } else {
         print("wrote \(Broker.tilde(path)): \(record.variables.count - literals) reference\(record.variables.count - literals == 1 ? "" : "s")\(literals > 0 ? ", \(literals) plain setting\(literals == 1 ? "" : "s")" : "")")
     }
-    if !values { print("next: lk run --env-file \(Broker.tilde(path)) -- <your command>") }
+    if !values { print("next: pst run --env-file \(Broker.tilde(path)) -- <your command>") }
     exit(0)
 }
 
-/// Starts a detached copy of this tool that empties the clipboard in a minute if nothing else was copied (`lk
+/// Starts a detached copy of this tool that empties the clipboard in a minute if nothing else was copied (`pst
 /// clipboard-clear`, not for typing): this process exits first, and the clipboard has to clear anyway.
 func clearClipboardLater(_ stamp: Int) {
     let p = Process()
@@ -300,7 +300,7 @@ func clearClipboardLater(_ stamp: Int) {
     p.standardInput = FileHandle.nullDevice
     p.standardOutput = FileHandle.nullDevice
     p.standardError = FileHandle.nullDevice
-    do { try p.run() } catch { FileHandle.standardError.write(Data("latchkey: couldn't schedule clearing the clipboard; clear it yourself\n".utf8)) }
+    do { try p.run() } catch { FileHandle.standardError.write(Data("pistachio: couldn't schedule clearing the clipboard; clear it yourself\n".utf8)) }
 }
 
 func clipboardClearCommand(_ args: [String]) -> Never {
@@ -320,7 +320,7 @@ func projectCommand(_ input: [String]) -> Never {
     switch sub {
     case "list":
         let projects = send(Request(op: "projects")).projects ?? []
-        if projects.isEmpty { print("No linked projects. In a checkout: lk project link [NAME]"); exit(0) }
+        if projects.isEmpty { print("No linked projects. In a checkout: pst project link [NAME]"); exit(0) }
         for p in projects { print("\(p.name)  \(p.origins.isEmpty ? "(no remotes)" : p.origins.joined(separator: ", "))") }
         exit(0)
 
@@ -333,7 +333,7 @@ func projectCommand(_ input: [String]) -> Never {
         for (name, url) in remotes.sorted(by: { $0.key < $1.key }) { print("remote \(name): \(url)") }
         guard !matches.isEmpty else {
             let suggested = EnvImport.project(forFile: URL(fileURLWithPath: dir + "/.env"))
-            print("Not linked to a project. If this is \(suggested): lk project link \(suggested)")
+            print("Not linked to a project. If this is \(suggested): pst project link \(suggested)")
             exit(0)
         }
         let records = send(Request(op: "environments")).environments ?? []
@@ -346,9 +346,9 @@ func projectCommand(_ input: [String]) -> Never {
                 .union(items.filter { $0.ref.project == m.project.name }.map { "\($0.ref.project)/\($0.ref.environment)" })
             for s in scopes.sorted() {
                 let has = records.contains { $0.scope == s }
-                print("  \(s)\(has ? "" : "  (no record yet: lk env migrate)")")
+                print("  \(s)\(has ? "" : "  (no record yet: pst env migrate)")")
             }
-            if let first = scopes.sorted().first { print("next: lk export \(first) --out .env.local") }
+            if let first = scopes.sorted().first { print("next: pst export \(first) --out .env.local") }
         }
         if matches.filter(\.throughOrigin).count > 1 { print("More than one project claims this checkout's origin; unlink the wrong one.") }
         exit(0)
@@ -374,6 +374,6 @@ func projectCommand(_ input: [String]) -> Never {
         exit(0)
 
     default:
-        fail("unknown: latchkey project \(sub)", code: 64)
+        fail("unknown: pst project \(sub)", code: 64)
     }
 }

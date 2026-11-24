@@ -70,8 +70,8 @@ struct AddItemSheet: View {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                                 model.nextSteps = NextSteps(
                                     title: "Added \(added)",
-                                    body: "Put this reference in an env file in place of the value, then run your project through lk run. Replace npm run dev with your own command.",
-                                    commands: ["\(ItemID(added)?.name ?? added)=latchkey://\(added)", "lk run --env-file .env -- npm run dev"],
+                                    body: "Put this reference in an env file in place of the value, then run your project through pst run. Replace npm run dev with your own command.",
+                                    commands: ["\(ItemID(added)?.name ?? added)=latchkey://\(added)", "pst run --env-file .env -- npm run dev"],
                                     agents: true)
                             }
                         }
@@ -331,7 +331,7 @@ struct NextSteps: Identifiable {
     static func agentPrompt(envFile: String?) -> String {
         let file = envFile ?? ".env.local"
         return """
-        Secrets are in Latchkey. \(file) holds latchkey:// references, not values. Run anything that needs them with `lk run --env-file \(file) -- <command>`. In a fresh checkout or worktree, write the file first with `lk project` and `lk export <project>/<environment> --out \(file)`. Never run `lk get`, print the environment, or put real values in env files. If lk exits 77 (refused) or 66 (missing), stop and ask me; don't retry.
+        Secrets are in Latchkey. \(file) holds latchkey:// references, not values. Run anything that needs them with `pst run --env-file \(file) -- <command>`. In a fresh checkout or worktree, write the file first with `pst project` and `pst export <project>/<environment> --out \(file)`. Never run `pst get`, print the environment, or put real values in env files. If pst exits 77 (refused) or 66 (missing), stop and ask me; don't retry.
         """
     }
 }

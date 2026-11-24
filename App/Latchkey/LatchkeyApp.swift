@@ -804,16 +804,20 @@ final class AppModel {
     /// copies of Latchkey without one inside.
     var installedTool: URL? {
         let home = URL(fileURLWithPath: NSHomeDirectory())
-        let places = [home.appendingPathComponent(".local/bin/latchkey"), URL(fileURLWithPath: "/opt/homebrew/bin/latchkey"),
-                      URL(fileURLWithPath: "/usr/local/bin/latchkey")]
+        let places = [".local/bin", "/opt/homebrew/bin", "/usr/local/bin"].flatMap { folder in
+            ["pst", "pistachio", "lk", "latchkey"].map { name in
+                folder.hasPrefix("/") ? URL(fileURLWithPath: folder).appendingPathComponent(name)
+                    : home.appendingPathComponent(folder).appendingPathComponent(name)
+            }
+        }
         return places.first { FileManager.default.isExecutableFile(atPath: $0.path) }
     }
 
     static var toolLinks: [URL] {
-        ["latchkey", "lk", "pistachio"].map { URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".local/bin/\($0)") }
+        ["pst", "pistachio", "lk", "latchkey"].map { URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".local/bin/\($0)") }
     }
 
-    /// Links ~/.local/bin/latchkey, ~/.local/bin/lk and ~/.local/bin/pistachio to the tool inside the app, so they update
+    /// Links pst, pistachio and compatibility aliases lk/latchkey in ~/.local/bin to the bundled tool, so they update
     /// with the app. Replaces only links; a file of any of those names is left alone and reported.
     func installCommandLineTool() {
         #if LATCHKEY_APP_STORE
@@ -1114,7 +1118,7 @@ final class AppModel {
     /// naming the environment and the clipboard; a record with no items to release copies without asking.
     func copyAsEnv(_ scope: String) async {
         guard let record = records.first(where: { $0.scope == scope }) else {
-            notice = "\(scope) has no environment record. lk env migrate makes one."
+            notice = "\(scope) has no environment record. pst env migrate makes one."
             return
         }
         let credentials = Array(Set(record.variables.values.compactMap(\.item))).sorted()
@@ -1132,7 +1136,7 @@ final class AppModel {
         copyToClipboard(record.envFile(values: released, header: false), notice: "Copied \(scope) as .env.")
     }
 
-    /// Writes the environment's env file through the same checks as `lk export`. Returns an error, or nil when written.
+    /// Writes the environment's env file through the same checks as `pst export`. Returns an error, or nil when written.
     func exportEnvironment(_ plan: EnvExport.Plan, scope: String, values: Bool) async -> String? {
         guard let record = records.first(where: { $0.scope == scope }) else { return "\(scope) has no environment record." }
         let credentials = Array(Set(record.variables.values.compactMap(\.item))).sorted()
@@ -1242,9 +1246,9 @@ final class AppModel {
         nextSteps = NextSteps(
             title: "Imported \(saved.count) item\(saved.count == 1 ? "" : "s")",
             body: rewritten
-                ? "\(file) now holds latchkey:// references instead of values. Run your project through lk run, and the values are filled in as it starts. Replace npm run dev with your own command."
-                : "The values are in Latchkey. Put latchkey:// references in your env file in their place, then run your project through lk run. Replace npm run dev with your own command.",
-            commands: ["cd \(Broker.tilde(folder))", "lk run --env-file \(file) -- npm run dev"],
+                ? "\(file) now holds latchkey:// references instead of values. Run your project through pst run, and the values are filled in as it starts. Replace npm run dev with your own command."
+                : "The values are in Latchkey. Put latchkey:// references in your env file in their place, then run your project through pst run. Replace npm run dev with your own command.",
+            commands: ["cd \(Broker.tilde(folder))", "pst run --env-file \(file) -- npm run dev"],
             agents: true)
         return nil
     }

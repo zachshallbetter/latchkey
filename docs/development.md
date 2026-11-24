@@ -3,14 +3,14 @@
 ## Layout
 
 ```
-Package.swift              LatchkeyCore (library), latchkey (CLI), latchkey-broker (broker without a window), tests
+Package.swift              LatchkeyCore (library), pistachio (CLI), latchkey-broker (broker without a window), tests
 Sources/LatchkeyCore/      everything both the CLI and the app use
 Sources/latchkey/          the command-line tool
 Sources/latchkey-broker/   the broker without a window, for development
 Tests/LatchkeyCoreTests/   unit tests
 App/project.yml            the app's XcodeGen project (the .xcodeproj is generated, not committed)
 App/Latchkey/              the SwiftUI app
-App/Safari/                Latchkey for Safari: the native handler and the extension's manifest and scripts
+App/Safari/                Pistachio for Safari: the native handler and the extension's manifest and scripts
 App/Branding/logo.svg      the logo source: a key on a ring
 scripts/install.sh         build and install the app and CLI (development)
 scripts/release.sh         Developer ID build, notarized, in a disk image (see docs/releasing.md)
@@ -40,17 +40,17 @@ both: they use the same socket. It refuses pushes.
 ## How it fits together
 
 ```
-latchkey (CLI) ──JSON over a Unix socket──► Broker (in the app) ──► SecretStore ──► keychain
-                                              │                    VersionStore     (latchkey, latchkey.history,
-                                              ├─ Approver           RemoteStore      latchkey.remote services)
-                                              ├─ GrantStore ──► keychain (latchkey.grants, this Mac)
+pistachio (CLI) ──JSON over a Unix socket──► Broker (in the app) ──► SecretStore ──► keychain
+                                              │                    VersionStore     (items, history,
+                                              ├─ Approver           RemoteStore      remote services)
+                                              ├─ GrantStore ──► keychain (grants, this Mac)
                                               ├─ access log ──► access.jsonl (HMAC chain; key and head in the keychain)
                                               └─ RemoteRunner ──► vercel / gh / railway / flyctl
 ```
 
 - **`Broker`** handles every request: one at a time, so approval panels never stack. It decides what's released,
   asks for approval, writes the log, and keeps versions.
-- **`KeychainStore`** keeps items as generic passwords (service `latchkey`, account = item ID). Kind, agent-safe,
+- **`KeychainStore`** keeps items as generic passwords (service `pistachio`, account = item ID). Kind, agent-safe,
   service and "used in" are JSON in `kSecAttrGeneric`; the note is `kSecAttrComment`. `.iCloud` mode uses the
   data-protection keychain with `kSecAttrSynchronizable` in the app's access group; `.thisMac` uses the login
   keychain. `KeychainStore.automatic` picks by trying a write (reads from an unentitled process just say "not
@@ -69,7 +69,7 @@ latchkey (CLI) ──JSON over a Unix socket──► Broker (in the app) ──
 - **`PeerInfo`** reads the caller's PID, working folder and command line from the kernel and walks parent processes.
   **`CodeIdentity`** checks code signatures through the socket's audit token: the app recognizes its own tool
   (`io.snackstud.latchkey.cli`), and the tool refuses to talk to anything but the app (`io.snackstud.latchkey`), both
-  signed by the same team. `latchkey status` shows what each side saw. Requests carry no folder or command of their
+  signed by the same team. `pst status` shows what each side saw. Requests carry no folder or command of their
   own; the broker never trusts what a request says about its caller.
 - **`EnvFile`**, **`References`**, **`EnvImport`** parse, resolve, rewrite and plan imports.
 - **`Masker`** replaces values in streamed output, holding back a partial match across chunk boundaries.
@@ -91,30 +91,21 @@ keys). `op` is one of:
 | `links`, `link`, `unlink`, `remote-status`, `push` | Remote locations |
 
 New fields are optional so older CLIs keep working. Unknown `op` values are refused. `origin: "mcp"` marks requests
-from `latchkey mcp`: approval panels say an agent asked, and grants it asks for are limited (`Broker.grant`).
+from `pst mcp`: approval panels say an agent asked, and grants it asks for are limited (`Broker.grant`).
 
 The CLI target holds `main.swift` (commands), `Run.swift` (filling in an environment and masking output, shared by
-`run`, `check` and the MCP server) and `MCP.swift` (`latchkey mcp`: JSON-RPC over standard input and output).
+`run`, `check` and the MCP server) and `MCP.swift` (`pst mcp`: JSON-RPC over standard input and output).
 
 ## Stored identifiers
 
-These names find what earlier builds stored, so they never change, including when the product is renamed (decided
-in #121 for the rename to Pistachio). A build with different values can't read existing items, grants, history,
-logs or purchases, and App Store Connect can't rename a bundle or product ID. Only display names change.
+Signing identities, access groups, keychain services, container locations and purchase IDs are persistent
+contracts. Display-name changes must not change them: doing so can orphan existing items, grants, history,
+logs or purchases. The broker verifies callers against the same signed identities.
 
-- **Keychain services:** `latchkey` (items), `latchkey.history`, `latchkey.grants`, `latchkey.remote`,
-  `latchkey.environment`, `latchkey.project`, `latchkey.logkey` and `latchkey.loghead`.
-- **Access groups:** `$(AppIdentifierPrefix)io.snackstud.latchkey`, and `$(AppIdentifierPrefix)io.latchkey.shared`,
-  which 0.1.0 development builds used and the app still reads (`LatchkeyPreviousAccessGroup`).
-- **App Group:** `$(TeamIdentifierPrefix)io.snackstud.latchkey`, which holds the Safari extension's socket and, in the
-  App Store build, `cli.sock`. The Info.plist keys `LatchkeyAccessGroup`, `LatchkeyPreviousAccessGroup` and
-  `LatchkeyAppGroup` keep their names too.
-- **Bundle and signing identifiers:** `io.snackstud.latchkey` (app, preferences domain, log subsystem and Safari
-  native-messaging name), `.safari`, `.cli` and `.chrome`. The broker checks callers' signatures by these.
-- **In-app purchase:** `io.snackstud.latchkey.pro`.
-- **Files:** `~/Library/Application Support/Latchkey/` with `broker.sock` and `access.jsonl`.
-
-`StoredIdentifierTests` and `scripts/tests/test_stored_identifiers.py` fail if any of these changes.
+The exact values are defined in the [project configuration](../App/project.yml),
+[stored-identifier checks](../Tests/LatchkeyCoreTests/StoredIdentifierTests.swift), and
+[packaging checks](../scripts/tests/test_stored_identifiers.py). Those checks fail on accidental changes.
+Use these source definitions for diagnostics and release configuration; do not derive identifiers from display names.
 
 ## Adding a remote service
 
@@ -138,7 +129,7 @@ The loopback proxy test needs permission to bind a local listener; real-keychain
 opt-in. App compilation and these tests do not replace signed-app, real-Safari or cross-device sync verification.
 
 The wire response keeps the optional legacy `remembered` field for older clients; new brokers never return it.
-The old read-approval preference and `LATCHKEY_APPROVAL_WINDOW` have no effect. Explicit grants provide repeat access.
+The old read-approval preference and `PISTACHIO_APPROVAL_WINDOW` have no effect. Explicit grants provide repeat access.
 
 ## Sandbox development
 
@@ -151,7 +142,7 @@ compile does not establish runtime sandbox compatibility.
 Debug builds can draw their own UI to a PNG:
 
 ```bash
-build/DerivedData/Build/Products/Debug/Latchkey.app/Contents/MacOS/Latchkey \
+build/DerivedData/Build/Products/Debug/Latchkey.app/Contents/MacOS/Pistachio \
   --snapshot out.png [--sample] [--select ID,...] [--filter all|activity|grants|project:NAME] \
   [--part sidebar|menubar|approval|list|bulk|move|grant|detail|deleted|remote|pushapproval] -ApplePersistenceIgnoreState YES
 ```
@@ -183,8 +174,15 @@ Applications folder). The menu bar icon and in-app mark are template copies of t
 
 ## Conventions
 
-- Never deliberately write stored values to logs, errors or test output. `latchkey get` prints values; child
+- Never deliberately write stored values to logs, errors or test output. `pst get` prints values; child
   output masks exact copies only. Command arguments use heuristic redaction, so keep values out of arguments.
 - Every change to items goes through the broker, so it's approved and logged.
 - Tests use `MemoryStore`, `MemoryVersionStore`, `MemoryRemoteStore`, `FixedApprover` and `FakeRunner`; nothing
   touches the real keychain unless `LATCHKEY_KEYCHAIN_TESTS=1`.
+
+## CLI command names
+
+`pst` is the short command; `pistachio` is the full name. The app installer, development installer, standalone
+archive and both Homebrew packages provide them. SwiftPM exposes both products from the same executable target.
+See [cli.md](cli.md) for command behavior. Signing, storage and protocol details follow the checked-in source;
+branding edits do not change those boundaries.

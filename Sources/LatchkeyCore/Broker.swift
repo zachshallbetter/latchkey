@@ -492,7 +492,7 @@ public final class Broker: @unchecked Sendable {
             // An agent asking for itself: only its own folder, nothing in production or a whole project, and only for its
             // session (the owner sees the duration it asked for and decides).
             if let entry = names.first(where: Self.reachesProduction) {
-                return Response(ok: false, error: "an agent can't ask for \(entry): grants it asks for can't include production or a whole project. The owner can grant it with latchkey grant.")
+                return Response(ok: false, error: "an agent can't ask for \(entry): grants it asks for can't include production or a whole project. The owner can grant it with pst grant.")
             }
             guard folder == Grant.normalize(peer.cwd) else {
                 return Response(ok: false, error: "an agent can only ask for a grant on the folder it runs in")
@@ -615,7 +615,7 @@ public final class Broker: @unchecked Sendable {
                     }
                     if v.utf8.count > 4096 { return "\(name): plain values are limited to 4 KB" }
                     if !EnvironmentMigration.isPlainSetting(v) && EnvironmentRecord.mayBeSecret(name: name, value: v) {
-                        return "\(name) looks like a secret; save it as an item (lk set) and point the variable at it"
+                        return "\(name) looks like a secret; save it as an item (pst set) and point the variable at it"
                     }
                 }
             }
@@ -742,13 +742,13 @@ public final class Broker: @unchecked Sendable {
         return Response(ok: true)
     }
 
-    /// Values for `lk export --values`, which writes them to a file in plain text, or with `clipboard` puts them on the
+    /// Values for `pst export --values`, which writes them to a file in plain text, or with `clipboard` puts them on the
     /// clipboard. Always asks, naming the file or the environment: no grant, agent-safe setting or earlier approval
     /// stands in, because the values leave Latchkey for good (a file can at least be found again; a copy can't). The
-    /// file is the caller's claim, shown as such; an agent through `latchkey mcp` can't ask at all.
+    /// file is the caller's claim, shown as such; an agent through `pst mcp` can't ask at all.
     func export(_ req: Request, peer: PeerInfo) throws -> Response {
         guard req.origin != "mcp" else {
-            return Response(ok: false, error: "an agent can't export values in plain text; it can export references (lk export without --values)")
+            return Response(ok: false, error: "an agent can't export values in plain text; it can export references (pst export without --values)")
         }
         guard !peer.isSafariExtension else { return Response(ok: false, error: "export isn't available to Safari") }
         let clipboard = req.clipboard == true
@@ -756,7 +756,7 @@ public final class Broker: @unchecked Sendable {
         guard !names.isEmpty else { return Response(ok: false, error: "no names given") }
         if clipboard {
             guard req.project != nil else { return Response(ok: false, error: "copying to the clipboard needs the environment") }
-            guard !peer.isSSHForward else { return Response(ok: false, error: "the clipboard is on the other computer; copy there, or write a file with lk export --values --out") }
+            guard !peer.isSSHForward else { return Response(ok: false, error: "the clipboard is on the other computer; copy there, or write a file with pst export --values --out") }
         } else {
             guard let dest = req.destination, dest.hasPrefix("/") else { return Response(ok: false, error: "export needs the full path of the file it writes") }
         }
@@ -790,7 +790,7 @@ public final class Broker: @unchecked Sendable {
         let all = try records.projects()
         if let other = all.first(where: { $0.name != name && !Set($0.origins).isDisjoint(with: origins) }) {
             let shared = origins.filter(other.origins.contains)
-            return Response(ok: false, error: "\(shared.joined(separator: ", ")) belongs to project \(other.name); unlink it there first (lk project unlink \(other.name) \(shared[0]))")
+            return Response(ok: false, error: "\(shared.joined(separator: ", ")) belongs to project \(other.name); unlink it there first (pst project unlink \(other.name) \(shared[0]))")
         }
         var project = all.first { $0.name == name } ?? ProjectRecord(name: name, origins: [])
         let new = origins.filter { !project.origins.contains($0) }
@@ -829,7 +829,7 @@ public final class Broker: @unchecked Sendable {
     /// reading them, so this asks every time (no grant or agent-safe setting stands in), and agents can't ask at all:
     /// which keys are shared is itself worth knowing.
     func duplicates(_ req: Request, peer: PeerInfo) throws -> Response {
-        guard req.origin != "mcp" else { return Response(ok: false, error: "an agent can't compare values; ask the owner to run lk duplicates") }
+        guard req.origin != "mcp" else { return Response(ok: false, error: "an agent can't compare values; ask the owner to run pst duplicates") }
         guard !peer.isSafariExtension else { return Response(ok: false, error: "finding duplicates isn't available to Safari") }
         let items = try store.list().filter { $0.kind.isSecret }
         guard !items.isEmpty else { return Response(ok: true, groups: []) }
@@ -851,7 +851,7 @@ public final class Broker: @unchecked Sendable {
     /// the values it found (`items`, each named by its position) and gets back only the IDs of the items they equal,
     /// never a stored value. It asks every time, and agents can't ask.
     func scan(_ req: Request, peer: PeerInfo) throws -> Response {
-        guard req.origin != "mcp" else { return Response(ok: false, error: "an agent can't compare values; ask the owner to run lk scan") }
+        guard req.origin != "mcp" else { return Response(ok: false, error: "an agent can't compare values; ask the owner to run pst scan") }
         guard !peer.isSafariExtension else { return Response(ok: false, error: "scanning files isn't available to Safari") }
         let found = (req.items ?? []).filter { $0.value.count >= Duplicates.shortest && !References.containsReference($0.value) }
         let items = try store.list().filter { $0.kind.isSecret }
@@ -873,7 +873,7 @@ public final class Broker: @unchecked Sendable {
     /// value), the others are deleted (kept in Recently Deleted), and environment records follow. Files are the caller's
     /// to update, from `moved` and each item's `usedIn`, as after a move.
     func combine(_ req: Request, peer: PeerInfo) throws -> Response {
-        guard req.origin != "mcp" else { return Response(ok: false, error: "an agent can't combine items; ask the owner to run lk combine") }
+        guard req.origin != "mcp" else { return Response(ok: false, error: "an agent can't combine items; ask the owner to run pst combine") }
         let ids = Array(Set(req.names ?? [])).sorted()
         guard ids.count >= 2 || (ids.count == 1 && req.into != ids.first) else { return Response(ok: false, error: "give the items to combine") }
         // Into a shared item, or into one item of the environment they're all in (two names for one value there).
@@ -1158,7 +1158,7 @@ public final class Broker: @unchecked Sendable {
         entries = entries.filter { !$0.unconfirmed }
         guard !entries.isEmpty else {
             return Response(ok: false, error: held.isEmpty ? "nothing to push in \(scope)"
-                            : "\(scope) has only unconfirmed variables: \(held.map(\.name).joined(separator: ", ")) (lk env confirm \(scope))")
+                            : "\(scope) has only unconfirmed variables: \(held.map(\.name).joined(separator: ", ")) (pst env confirm \(scope))")
         }
         // A link synced from another Mac is only checked where it was made, so each is checked again before it's used.
         for link in links { if let problem = link.target.problem { return Response(ok: false, error: "\(link.target.label): \(problem); nothing was pushed") } }
@@ -1198,7 +1198,7 @@ public final class Broker: @unchecked Sendable {
             var batch: [(name: String, value: String, secret: Bool)] = []
             var ids: [String] = []
             for e in held {
-                results.append(PushResult(link: link.id, item: e.key, ok: false, error: "not sent: unconfirmed in the environment's record (lk env confirm \(scope) \(e.name))"))
+                results.append(PushResult(link: link.id, item: e.key, ok: false, error: "not sent: unconfirmed in the environment's record (pst env confirm \(scope) \(e.name))"))
             }
             for e in entries {
                 guard let value = values[e.key] else { results.append(PushResult(link: link.id, item: e.key, ok: false, error: "no value")); continue }

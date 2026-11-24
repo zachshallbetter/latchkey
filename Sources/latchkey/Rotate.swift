@@ -2,9 +2,9 @@ import AppKit
 import Foundation
 import LatchkeyCore
 
-// `latchkey touched` and `latchkey rotate`: find the keys a session was given, and replace them.
+// `pst touched` and `pst rotate`: find the keys a session was given, and replace them.
 
-/// Items released by Latchkey (to commands, agents, grants) in a window, from the access log.
+/// Items released by Pistachio (to commands, agents, grants) in a window, from the access log.
 struct Touched {
     var id: String
     var times: Int
@@ -71,7 +71,7 @@ func touchedCommand(_ input: [String]) -> Never {
     for t in items {
         print("\(t.id)  \(t.times)×, last \(t.last.formatted(date: .abbreviated, time: .shortened))  (\(t.by.sorted().joined(separator: "; ")))")
     }
-    print("\nReplace them with: latchkey rotate --touched\(f.by.map { " --by \($0)" } ?? "")\(f.grant.map { " --grant \($0)" } ?? "")")
+    print("\nReplace them with: pst rotate --touched\(f.by.map { " --by \($0)" } ?? "")\(f.grant.map { " --grant \($0)" } ?? "")")
     exit(0)
 }
 
@@ -97,7 +97,7 @@ func rotateCommand(_ input: [String]) -> Never {
     if fromTouched { ids += touchedItems(since: f.since, by: f.by, grant: f.grant).map(\.id) }
     let all = Dictionary(uniqueKeysWithValues: (send(Request(op: "list")).secrets ?? []).map { ($0.name, $0) })
     ids = Array(Set(ids)).filter { all[$0] != nil }.sorted()
-    guard !ids.isEmpty else { fail(fromTouched ? "nothing was released in that time" : "usage: latchkey rotate IDS|PATTERN... | --touched [--since 24h] [--by NAME] [--grant ID] [--open] [--push]", code: fromTouched ? 0 : 64) }
+    guard !ids.isEmpty else { fail(fromTouched ? "nothing was released in that time" : "usage: pst rotate IDS|PATTERN... | --touched [--since 24h] [--by NAME] [--grant ID] [--open] [--push]", code: fromTouched ? 0 : 64) }
     if isatty(STDIN_FILENO) != 1 && ids.count > 1 { fail("rotating several items needs a terminal, to ask for each new value", code: 64) }
 
     // End grants that would keep handing out these items.
@@ -135,7 +135,7 @@ func rotateCommand(_ input: [String]) -> Never {
             for p in r.pushResults ?? [] { print("\(p.ok ? "pushed" : "FAILED") \(ItemID(p.item)?.name ?? p.item) → \(p.link)\(p.error.map { "  \($0)" } ?? "")") }
             if !r.ok { print("push to \(scope) didn't finish: \(r.error ?? "not approved")") }
         } else {
-            print("\(scope) is linked elsewhere; push the new values: latchkey push \(scope) --only \(items.joined(separator: ","))")
+            print("\(scope) is linked elsewhere; push the new values: pst push \(scope) --only \(items.joined(separator: ","))")
         }
     }
     exit(0)

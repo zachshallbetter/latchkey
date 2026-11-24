@@ -14,21 +14,21 @@ environment are stored, so grouping always matches what files refer to.
 
 ## References
 
-Files and environment variables refer to items with `latchkey://` followed by the ID:
+Files and environment variables refer to items with `pistachio://` followed by the ID:
 
 ```
-DATABASE_URL=latchkey://shop/production/DATABASE_URL
-GEMINI_API_KEY=latchkey://GEMINI_API_KEY
-REDIS_URL=redis://default:latchkey://shop/production/REDIS_PASSWORD@cache.example.com:6379
+DATABASE_URL=pistachio://shop/production/DATABASE_URL
+GEMINI_API_KEY=pistachio://GEMINI_API_KEY
+REDIS_URL=redis://default:pistachio://shop/production/REDIS_PASSWORD@cache.example.com:6379
 ```
 
-A reference can be the whole value or part of one. `latchkey run` fills them in when the command starts. A value of
-the form `latchkey-file://ID` is different: the command gets the path of a temporary file holding the value (see
+A reference can be the whole value or part of one. `pst run` fills them in when the command starts. A value of
+the form `pistachio-file://ID` is different: the command gets the path of a temporary file holding the value (see
 [key files](#key-files)).
 
-`pistachio://ID` and `pistachio-file://ID` mean the same as `latchkey://ID` and `latchkey-file://ID`, ahead of the
-rename to Pistachio. Both schemes keep working permanently, so env files never need rewriting. Latchkey still writes
-`latchkey://` until the other tools that read env files accept the new scheme too.
+`pistachio://ID` and `pistachio-file://ID` mean the same as `pistachio://ID` and `pistachio-file://ID`, ahead of the
+rename to Pistachio. Both schemes keep working permanently, so env files never need rewriting. Pistachio still writes
+`pistachio://` until the other tools that read env files accept the new scheme too.
 
 ## Projects, environments and services
 
@@ -45,12 +45,12 @@ rename to Pistachio. Both schemes keep working permanently, so env files never n
 ## Environment records
 
 An environment's **record** says which variables it has: each one points at an item, shared or the environment's
-own, or holds a plain, non-secret setting such as `PORT=3000`. It syncs with your items, so `latchkey run --env` and
-`latchkey export` give the same variables on every Mac, wherever the checkout is. The files an item was imported from
+own, or holds a plain, non-secret setting such as `PORT=3000`. It syncs with your items, so `pst run --env` and
+`pst export` give the same variables on every Mac, wherever the checkout is. The files an item was imported from
 are kept as history, not used to decide what an environment has.
 
 A **project link** remembers which Git remote a project's checkouts use, so a fresh clone on another Mac can find its
-project (`latchkey project`) and write its env file (`latchkey export`). Finding a project grants nothing: values
+project (`pst project`) and write its env file (`pst export`). Finding a project grants nothing: values
 still need agent-safe, a grant or your approval.
 
 ## Kinds
@@ -73,7 +73,7 @@ Reading an item asks you, unless it's agent-safe or covered by a grant. The appr
 
 Choose **Deny**, or allow once, or tick **Allow from this folder** for a time or until the agent quits, then touch
 the sensor: Touch ID listens inside the panel, from whatever app you're in. **Use Password…** opens the system sheet
-for your Mac password or an Apple Watch. Requests you make in the Latchkey window use the same panel.
+for your Mac password or an Apple Watch. Requests you make in the Pistachio window use the same panel.
 
 Requests from the same agent in the same folder that arrive while the panel is up join it as rows, and one touch
 answers them all; each row can be denied on its own. A request nobody answers is denied after two minutes. **Allow
@@ -102,7 +102,7 @@ A **grant** lets commands run from one folder read some items without asking, un
 - It's kept on this Mac only.
 
 Make one from the approval panel (**Allow from this folder for…**), from **Grants** in the app, or with
-`latchkey grant`. Grants are how you leave an agent working without being at your Mac.
+`pst grant`. Grants are how you leave an agent working without being at your Mac.
 
 ## History
 
@@ -113,24 +113,24 @@ one always asks; grants and agent-safe don't cover history.
 ## Remote locations
 
 An environment can be linked to the places that hold its values outside your Mac: a Vercel project's environment,
-a repository's GitHub Actions secrets, a Railway service, a Fly app. Latchkey can compare names with them and push
+a repository's GitHub Actions secrets, a Railway service, a Fly app. Pistachio can compare names with them and push
 values to them. See [Remote locations](remote.md).
 
 ## Key files
 
-Some tools want a file, not a value: App Store Connect `.p8` keys, a gcloud service-account JSON. `latchkey run --file
-NAME=ID` (or `NAME=latchkey-file://ID` in an env file) writes the value to a temporary file only you can read, sets
+Some tools want a file, not a value: App Store Connect `.p8` keys, a gcloud service-account JSON. `pst run --file
+NAME=ID` (or `NAME=pistachio-file://ID` in an env file) writes the value to a temporary file only you can read, sets
 `NAME` to its path, and deletes the file when the command exits.
 
 ## Where things live
 
 | What | Where |
 |---|---|
-| Values, versions, links | iCloud Keychain (in Latchkey's own access group), synced to your Macs |
+| Values, versions, links | iCloud Keychain (in Pistachio's own access group), synced to your Macs |
 | Kind, agent-safe, service, note, the files an item was imported from | With the item, synced |
-| Grants | A keychain item only Latchkey can change ("Latchkey grants"), this Mac only |
+| Grants | A keychain item only Pistachio can change ("Pistachio grants"), this Mac only |
 | Activity log (never values) | `~/Library/Application Support/Latchkey/access.jsonl`, this Mac only |
 | The connection between the command-line tool and the app | `~/Library/Application Support/Latchkey/broker.sock` |
 
-Latchkey's items don't appear in the Passwords app, and it can't read the Passwords app's entries; see
+Pistachio's items don't appear in the Passwords app, and it can't read the Passwords app's entries; see
 [Apple Passwords and passkeys](apple-passwords-and-passkeys.md).

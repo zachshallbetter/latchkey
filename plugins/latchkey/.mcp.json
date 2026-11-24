@@ -1,8 +1,10 @@
 {
   "mcpServers": {
     "latchkey": {
-      "command": "lk",
-      "args": ["mcp"]
+      "command": "pst",
+      "args": [
+        "mcp"
+      ]
     }
   }
 }

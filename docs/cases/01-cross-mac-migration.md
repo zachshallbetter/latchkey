@@ -8,10 +8,10 @@ An owner moves development work to a new Mac. Pulling Git repositories is easy, 
 
 ## Desired behavior
 
-1. On the original Mac, import project credentials into Latchkey and replace the relevant literals with references.
-2. Store secret values in Latchkey's own iCloud Keychain access group, preserving service/project/environment identity.
-3. On the other Mac, install a compatible signed Latchkey app, sign in to the appropriate Apple Account and allow keychain sync.
-4. Clone repositories, use references or `latchkey run --env PROJECT/ENV`, and resolve keys under local approvals/grants.
+1. On the original Mac, import project credentials into Pistachio and replace the relevant literals with references.
+2. Store secret values in Pistachio's own iCloud Keychain access group, preserving service/project/environment identity.
+3. On the other Mac, install a compatible signed Pistachio app, sign in to the appropriate Apple Account and allow keychain sync.
+4. Clone repositories, use references or `pistachio run --env PROJECT/ENV`, and resolve keys under local approvals/grants.
 5. Report missing, conflicting, expired-known and unverified values instead of guessing or silently defaulting.
 
 ## Acceptance / tests

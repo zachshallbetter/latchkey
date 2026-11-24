@@ -66,12 +66,12 @@ public enum Scan {
     public static let hook = """
     #!/bin/sh
     \(hookMarker)
-    lk=$(command -v lk || command -v latchkey)
-    if [ -z "$lk" ]; then
-        echo "latchkey: not found on PATH; staged env files were not scanned" >&2
+    tool=$(command -v pst || command -v pistachio || command -v lk || command -v latchkey)
+    if [ -z "$tool" ]; then
+        echo "pistachio: not found on PATH; staged env files were not scanned" >&2
         exit 0
     fi
-    exec "$lk" scan --staged
+    exec "$tool" scan --staged
 
     """
 }

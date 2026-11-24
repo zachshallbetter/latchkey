@@ -21,7 +21,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 SITE = ROOT / "site"
 GITHUB_CHANGELOG = "https://github.com/zachshallbetter/latchkey/blob/main/CHANGELOG.md"
 TITLE = "Changelog"
-DESCRIPTION = "What changed in each version of Latchkey, newest first. The app shows the same notes after it updates."
+DESCRIPTION = "What changed in each version of Pistachio, newest first. The app shows the same notes after it updates."
 
 
 def long_date(iso):
@@ -36,8 +36,8 @@ def article(releases):
     parts = [
         "    <article class=\"doc\">",
         f"      <h1>{TITLE}</h1>",
-        "      <p class=\"lede\">What changed in each version of Latchkey, newest first. The app shows the same notes once "
-        "after it updates, and again from <b>Latchkey › What's New in Latchkey…</b>.</p>",
+        "      <p class=\"lede\">What changed in each version of Pistachio, newest first. The app shows the same notes once "
+        "after it updates, and again from <b>What's New…</b> in the app menu.</p>",
         f"      <p class=\"fine\">Latest: <a href=\"#v{html.escape(latest['version'])}\">{html.escape(latest['version'])}</a>, "
         f"{html.escape(long_date(latest['date']))}. <a href=\"https://github.com/zachshallbetter/latchkey/releases/latest\">Download</a>.</p>",
     ]

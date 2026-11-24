@@ -1,6 +1,6 @@
 # Remote locations
 
-Link an environment to the places that hold its values outside your Mac, then check and push from Latchkey instead
+Link an environment to the places that hold its values outside your Mac, then check and push from Pistachio instead
 of pasting into each dashboard.
 
 | Service | Target | Tool used |
@@ -11,22 +11,22 @@ of pasting into each dashboard.
 | Fly | an app's secrets | `flyctl` |
 | SSH | a credential script on a Linux host, one credential per item (direct download only) | `ssh` |
 
-Latchkey reaches each service one of two ways:
+Pistachio reaches each service one of two ways:
 
-- **Its command-line tool**, signed in as you (the default in the direct download). Latchkey stores no service tokens.
+- **Its command-line tool**, signed in as you (the default in the direct download). Pistachio stores no service tokens.
   Install and sign in to the tools you use (`vercel login`, `gh auth login`, `railway login`, `flyctl auth login`).
-- **Its API, with an access token you keep as an ordinary Latchkey item.** The link names that item. This is the only
+- **Its API, with an access token you keep as an ordinary Pistachio item.** The link names that item. This is the only
   way in the Mac App Store version, whose sandbox can't run those tools, and you can choose it per link in the direct
   download. See [Pushing through an API](#pushing-through-an-api).
 
 ## Linking
 
 ```bash
-latchkey remote link shop/vercel.preview vercel project=shop environment=preview
-latchkey remote link shop/production github repo=me/shop environment=production
-latchkey remote link shop/railway.production railway environment=production service=api dir=~/Projects/shop
-latchkey remote link shop/production fly app=shop-api
-latchkey remote link distribution/production ssh host=titan script=/ai/projects/distribution-mcp/current/deploy/titan/add-credential.sh
+pst remote link shop/vercel.preview vercel project=shop environment=preview
+pst remote link shop/production github repo=me/shop environment=production
+pst remote link shop/railway.production railway environment=production service=api dir=~/Projects/shop
+pst remote link shop/production fly app=shop-api
+pst remote link distribution/production ssh host=titan script=/ai/projects/distribution-mcp/current/deploy/titan/add-credential.sh
 ```
 
 | Key | Used by | Meaning |
@@ -55,20 +55,20 @@ When a service needs different values from your laptop, give it its own environm
 ## Checking
 
 ```bash
-latchkey remote status shop/production
+pst remote status shop/production
 ```
 
 For each link: names missing there, names only there, and items whose value changed since they were last pushed.
-Status reads names only. (Railway's listing includes values; Latchkey keeps the names and discards the rest.) An SSH
-credential script can't list what it holds, so its status comes from Latchkey's own record: items never pushed there,
+Status reads names only. (Railway's listing includes values; Pistachio keeps the names and discards the rest.) An SSH
+credential script can't list what it holds, so its status comes from Pistachio's own record: items never pushed there,
 and items changed since they were.
 
 ## Pushing
 
 ```bash
-latchkey push shop/production --dry-run
-latchkey push shop/production
-latchkey push shop/production --to <link> --only shop/production/DATABASE_URL
+pst push shop/production --dry-run
+pst push shop/production
+pst push shop/production --to <link> --only shop/production/DATABASE_URL
 ```
 
 - Every push asks, every time. No grant covers a push.
@@ -91,7 +91,7 @@ latchkey push shop/production --to <link> --only shop/production/DATABASE_URL
   on the service's next deploy, which you start.
 - **What's sent:** with an [environment record](cli.md#environments), its variables. Shared items go under the
   variable's name, and plain settings such as `PORT` go as non-secret values. Unconfirmed variables are listed but
-  not sent until `lk env confirm`. Until `env migrate` has checked the environment, its own items the record doesn't
+  not sent until `pst env confirm`. Until `env migrate` has checked the environment, its own items the record doesn't
   name yet are sent too. Without a record, the environment's own items are sent, each named after the last part of
   its ID (`shop/production/DATABASE_URL` is pushed as `DATABASE_URL`). `remote status` compares the same list.
 - Error messages from the tools are shortened, and any value in them is replaced with `<value>`.
@@ -99,8 +99,8 @@ latchkey push shop/production --to <link> --only shop/production/DATABASE_URL
 ### SSH credential scripts
 
 For a service on a Linux host that reads its credentials from files, such as a systemd unit with `LoadCredential=`.
-Latchkey runs the host's own script once per item, over your ssh connection, with your SSH keys; it stores no SSH
-credentials and the service never talks to Latchkey.
+Pistachio runs the host's own script once per item, over your ssh connection, with your SSH keys; it stores no SSH
+credentials and the service never talks to Pistachio.
 
 - **Item names are credential names:** `ADAPTER.ACCOUNT`, split at the first dot.
   `distribution/production/bluesky.someone.bsky.social` is sent as adapter `bluesky`, account
@@ -114,14 +114,14 @@ credentials and the service never talks to Latchkey.
 - **Nothing a link holds reaches the remote shell as code.** ssh joins everything after the host into one command
   line, so the host, script path and both name parts are limited to characters a shell reads literally, and a link
   synced from another Mac is checked again before each push.
-- **Status is Latchkey's record** (see Checking), and unlinking doesn't remove anything from the host.
+- **Status is Pistachio's record** (see Checking), and unlinking doesn't remove anything from the host.
 
 ### Pushing through an API
 
 ```bash
-latchkey set VERCEL_TOKEN --kind token   # a shared item holding a Vercel access token (the value is prompted for)
-latchkey remote link shop/vercel.preview vercel project=shop environment=preview token=VERCEL_TOKEN
-latchkey remote link shop/production fly app=shop-api token=FLY_TOKEN
+pst set VERCEL_TOKEN --kind token   # a shared item holding a Vercel access token (the value is prompted for)
+pst remote link shop/vercel.preview vercel project=shop environment=preview token=VERCEL_TOKEN
+pst remote link shop/production fly app=shop-api token=FLY_TOKEN
 ```
 
 A link with `token=ITEM` is pushed with direct HTTPS requests, not a tool. In the Mac App Store version every link must
@@ -153,13 +153,13 @@ so it uses only the system's encryption.
 - **Link records:** `token` and `team` are optional fields added to the link; links made before them are unchanged and
   keep using the tool.
 
-After a push, Latchkey records when each item was pushed to each link. An item changed since then shows an orange badge
+After a push, Pistachio records when each item was pushed to each link. An item changed since then shows an orange badge
 in the list and "Changed since last push" in its detail.
 
 ## Unlinking
 
 ```bash
-latchkey remote unlink <link>
+pst remote unlink <link>
 ```
 
-Values already at the service stay there; Latchkey stops tracking and pushing. Unlinking doesn't ask.
+Values already at the service stay there; Pistachio stops tracking and pushing. Unlinking doesn't ask.

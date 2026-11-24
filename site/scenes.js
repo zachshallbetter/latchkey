@@ -1,6 +1,6 @@
-// Scenes: small drawings of Latchkey in use that play by themselves while they're on screen, then start over.
+// Scenes: small drawings of Pistachio in use that play by themselves while they're on screen, then start over.
 // Each .scene-wrap[data-scene] names a script below; its HTML is the drawing at its last frame, so a page without
-// scripts, or a visitor who prefers reduced motion, sees how the scene ends. Commands and output are what Latchkey
+// scripts, or a visitor who prefers reduced motion, sees how the scene ends. Commands and output are what Pistachio
 // prints (from Sources/latchkey); project output and values are examples.
 (function () {
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -100,7 +100,7 @@
   var SCENES = {};
 
   // ---------------------------------------------------------------------------------------------------------------
-  // Hero: a reference in an env file, Latchkey asking, the value reaching the command and never its output.
+  // Hero: a reference in an env file, Pistachio asking, the value reaching the command and never its output.
   SCENES.flow = {
     reset: function (s) {
       s.$$(".ln").forEach(function (l) { s.on(l, "hl", false); });
@@ -112,7 +112,7 @@
       var tty = s.$("#flow-tty"), st = s.$("#flow-state"), label = st.querySelector("span");
       s.clear(tty);
       await s.wait(500);
-      await s.type(tty, "lk run --env-file .env.local -- npm run dev");
+      await s.type(tty, "pst run --env-file .env.local -- npm run dev");
       var lines = s.$$("#flow-env .ln.r"), chips = s.$$("#flow .chip.ref"), vals = s.$$("#flow .chip.val");
       label.textContent = "Reading references";
       for (var i = 0; i < lines.length; i++) {
@@ -137,7 +137,7 @@
   };
 
   // ---------------------------------------------------------------------------------------------------------------
-  // 01: a fresh clone has no env file; Latchkey knows the project from its remote and writes one of references.
+  // 01: a fresh clone has no env file; Pistachio knows the project from its remote and writes one of references.
   SCENES.clone = {
     reset: function (s) { s.clear(s.$("#clone-tty")); s.prompt(s.$("#clone-tty"), "~/Projects"); s.hide("#clone-env"); },
     play: async function (s) {
@@ -149,15 +149,15 @@
       await s.type(tty, "npm run dev");
       await s.lines(tty, ['<span class="d">&gt; next dev</span>', '<span class="err">Error: DATABASE_URL is not set</span>']);
       await s.wait(900);
-      await s.type(tty, "lk project");
+      await s.type(tty, "pst project");
       await s.lines(tty, ["remote origin: github.com/acme/shop", "project shop (through origin)", "  shop/development", "  shop/production",
-                          '<span class="d">next: lk export shop/development --out .env.local</span>']);
+                          '<span class="d">next: pst export shop/development --out .env.local</span>']);
       await s.wait(900);
-      await s.type(tty, "lk export shop/development --out .env.local");
-      await s.lines(tty, ["wrote .env.local: 3 references, 1 plain setting", '<span class="d">next: lk run --env-file .env.local -- &lt;your command&gt;</span>']);
+      await s.type(tty, "pst export shop/development --out .env.local");
+      await s.lines(tty, ["wrote .env.local: 3 references, 1 plain setting", '<span class="d">next: pst run --env-file .env.local -- &lt;your command&gt;</span>']);
       s.show("#clone-env");
       await s.wait(1400);
-      await s.type(tty, "lk run --env-file .env.local -- npm run dev");
+      await s.type(tty, "pst run --env-file .env.local -- npm run dev");
       await s.lines(tty, ['<span class="d">&gt; next dev</span>', '  <span class="ok">✓ Ready</span> on http://localhost:3000']);
     }
   };
@@ -177,14 +177,14 @@
       var tty = s.$("#imp-tty");
       s.clear(tty);
       await s.wait(600);
-      await s.type(tty, "lk import .env.local --dry-run --skip PORT");
+      await s.type(tty, "pst import .env.local --dry-run --skip PORT");
       await s.lines(tty, ["into project shop, environment development",
                           '<span class="d">ignore   PORT  (skipped: expires, or excluded by --skip)</span>',
                           "add      shop/development/DATABASE_URL  password",
                           "add      shop/development/OPENAI_API_KEY  token",
                           "add      shop/development/STRIPE_KEY  token"], 140);
       await s.wait(1300);
-      await s.type(tty, "lk import .env.local --rewrite --skip PORT");
+      await s.type(tty, "pst import .env.local --rewrite --skip PORT");
       s.show("#imp-touch");
       await s.wait(1300);
       s.on("#imp-touch", "ok");
@@ -203,7 +203,7 @@
         await s.wait(260);
         s.on(l, "hl", false);
       }
-      await s.lines(tty, ["rewrote .env.local: 3 values now latchkey://ID", '<span class="d">next: lk run --env-file .env.local -- &lt;your command&gt;</span>']);
+      await s.lines(tty, ["rewrote .env.local: 3 values now pistachio://ID", '<span class="d">next: pst run --env-file .env.local -- &lt;your command&gt;</span>']);
     }
   };
 
@@ -227,12 +227,12 @@
       s.on("#macs-arc", "on", false);
       s.clear(tty);
       await s.type(tty, "git clone git@github.com:acme/shop.git && cd shop", "~/Code");
-      await s.type(tty, "lk project", "~/Code/shop");
+      await s.type(tty, "pst project", "~/Code/shop");
       await s.lines(tty, ["remote origin: github.com/acme/shop", "project shop (through origin)", "  shop/development",
-                          '<span class="d">next: lk export shop/development --out .env.local</span>']);
-      await s.type(tty, "lk export shop/development --out .env.local", "~/Code/shop");
+                          '<span class="d">next: pst export shop/development --out .env.local</span>']);
+      await s.type(tty, "pst export shop/development --out .env.local", "~/Code/shop");
       await s.lines(tty, ["wrote .env.local: 3 references, 1 plain setting"]);
-      await s.type(tty, "lk run --env-file .env.local -- npm test", "~/Code/shop");
+      await s.type(tty, "pst run --env-file .env.local -- npm test", "~/Code/shop");
       await s.lines(tty, ['<span class="d"> Test Files  2 passed (2)</span>']);
     }
   };
@@ -247,7 +247,7 @@
       s.on("#agent-tid", "ok", false); s.$("#agent-tid-label").textContent = "Touch ID to allow once";
       s.$("#agent-title").textContent = "Claude wants to use 2 items";
       s.$("#agent-items").textContent = "shop/development/DATABASE_URL, shop/development/STRIPE_KEY";
-      s.$("#agent-cmd").textContent = "lk run --env shop/development -- npm test";
+      s.$("#agent-cmd").textContent = "pst run --env shop/development -- npm test";
       s.$("#agent-only span").textContent = "Only for npm test";
       s.rest(1);
     },
@@ -255,9 +255,9 @@
       var tty = s.$("#agent-tty");
       s.clear(tty);
       await s.wait(500);
-      s.line(tty, '<span class="k">⏺ Claude</span> <span class="d">I\'ll run the tests with Latchkey.</span>');
+      s.line(tty, '<span class="k">⏺ Claude</span> <span class="d">I\'ll run the tests with Pistachio.</span>');
       await s.wait(500);
-      await s.type(tty, "lk run --env shop/development -- npm test");
+      await s.type(tty, "pst run --env shop/development -- npm test");
       s.show("#agent-panel");
       await s.wait(700);
       await s.pointAt("#agent-grant i", 0, 4);
@@ -273,15 +273,15 @@
       await s.lines(tty, ['<span class="d"> ✓ db/connect.test.ts (3 tests)</span>', '   connecting to <span class="c">&lt;concealed by latchkey&gt;</span>',
                           '<span class="d"> Test Files  2 passed (2)</span>']);
       await s.wait(900);
-      await s.type(tty, "lk run --env shop/development -- npm test -- --watch=false");
+      await s.type(tty, "pst run --env shop/development -- npm test -- --watch=false");
       s.show("#agent-note");
       await s.lines(tty, ['<span class="d"> Test Files  2 passed (2)</span>']);
       await s.wait(1400);
       s.hide("#agent-note");
-      await s.type(tty, "lk run --env shop/production -- npm run migrate");
+      await s.type(tty, "pst run --env shop/production -- npm run migrate");
       s.$("#agent-title").textContent = "Claude wants to use shop/production/DATABASE_URL";
       s.$("#agent-items").textContent = "shop/production/DATABASE_URL";
-      s.$("#agent-cmd").textContent = "lk run --env shop/production -- npm run migrate";
+      s.$("#agent-cmd").textContent = "pst run --env shop/production -- npm run migrate";
       s.$("#agent-only span").textContent = "Only for npm run migrate";
       s.on("#agent-grant", "on", false); s.on("#agent-only", "dim", true);
       s.on("#agent-tid", "ok", false); s.$("#agent-tid-label").textContent = "Touch ID to allow once";
@@ -292,7 +292,7 @@
       s.hide("#agent-panel");
       await s.rest(600);
       await s.lines(tty, ['<span class="err">latchkey: refused: shop/production/DATABASE_URL (not agent-safe, not approved, no grant)</span>',
-                          '<span class="k">⏺ Claude</span> <span class="d">Latchkey refused that (exit 77), so I\'ll stop and ask you.</span>'], 220);
+                          '<span class="k">⏺ Claude</span> <span class="d">Pistachio refused that (exit 77), so I\'ll stop and ask you.</span>'], 220);
     }
   };
 
@@ -307,12 +307,12 @@
       var tty = s.$("#rot-tty");
       s.clear(tty);
       await s.wait(500);
-      await s.type(tty, "lk touched --since 4h --by claude");
+      await s.type(tty, "pst touched --since 4h --by claude");
       await s.lines(tty, ["shop/development/DATABASE_URL  4×, last Nov 11, 2026 at 3:12 PM  (zsh › claude › Terminal)",
                           "shop/development/STRIPE_KEY  2×, last Nov 11, 2026 at 3:12 PM  (zsh › claude › Terminal)", "",
-                          '<span class="d">Replace them with: latchkey rotate --touched --by claude</span>']);
+                          '<span class="d">Replace them with: pst rotate --touched --by claude</span>']);
       await s.wait(1000);
-      await s.type(tty, "lk rotate shop/development/STRIPE_KEY --open");
+      await s.type(tty, "pst rotate shop/development/STRIPE_KEY --open");
       await s.lines(tty, ["ended grant 7c41e9 (shop/development/*)", "",
                           "[1/1] shop/development/STRIPE_KEY  (Stripe)",
                           "  Make a new key at https://dashboard.stripe.com/apikeys, then revoke the old one there.",
@@ -327,7 +327,7 @@
   };
 
   // ---------------------------------------------------------------------------------------------------------------
-  // Latchkey for Safari: a new key on the page where it was made, saved to a project's environment.
+  // Pistachio for Safari: a new key on the page where it was made, saved to a project's environment.
   SCENES.safari = {
     reset: function (s) { s.hide("#saf-save"); s.hide("#saf-touch"); s.on("#saf-touch", "ok", false); s.hide("#saf-done"); s.rest(1); },
     play: async function (s) {
@@ -357,18 +357,18 @@
       var tty = s.$("#log-tty");
       s.clear(tty);
       await s.wait(500);
-      await s.type(tty, "lk history shop/development/STRIPE_KEY");
+      await s.type(tty, "pst history shop/development/STRIPE_KEY");
       await s.lines(tty, ["1   Nov 11, 2026 at 3:20 PM  replaced  by zsh › Terminal",
-                          '<span class="d">Kept: the last 10 per item. `latchkey restore shop/development/STRIPE_KEY --version N` puts one back.</span>']);
+                          '<span class="d">Kept: the last 10 per item. `pst restore shop/development/STRIPE_KEY --version N` puts one back.</span>']);
       await s.wait(900);
-      await s.type(tty, "lk log --verify");
+      await s.type(tty, "pst log --verify");
       await s.lines(tty, ['<span class="ok">intact: 412 signed entries</span>']);
     }
   };
 
   // ---------------------------------------------------------------------------------------------------------------
-  // Security: a committed reference shows only a name; a script that asks Latchkey directly, not through the signed
-  // lk tool, gets the panel with its warning, and is denied.
+  // Security: a committed reference shows only a name; a script that asks Pistachio directly, not through the signed
+  // pst tool, gets the panel with its warning, and is denied.
   SCENES.direct = {
     reset: function (s) { s.clear(s.$("#dir-tty")); s.prompt(s.$("#dir-tty")); s.hide("#dir-panel"); s.hide("#dir-note"); s.rest(1); },
     play: async function (s) {
@@ -376,7 +376,7 @@
       s.clear(tty);
       await s.wait(500);
       await s.type(tty, "git show HEAD:.env.local");
-      await s.lines(tty, ["DATABASE_URL=latchkey://shop/development/DATABASE_URL", "STRIPE_KEY=latchkey://shop/development/STRIPE_KEY"]);
+      await s.lines(tty, ["DATABASE_URL=pistachio://shop/development/DATABASE_URL", "STRIPE_KEY=pistachio://shop/development/STRIPE_KEY"]);
       s.show("#dir-note");
       await s.wait(1800);
       s.hide("#dir-note");
@@ -400,7 +400,7 @@
       var tty = s.$("#inv-tty");
       s.clear(tty);
       await s.wait(500);
-      await s.type(tty, "lk import --scan ~/Projects --share-identical --dry-run", "~");
+      await s.type(tty, "pst import --scan ~/Projects --share-identical --dry-run", "~");
       await s.lines(tty, ["~/Projects/api/.env  →  api/development: 3 to import, 1 shared, 1 in conflict",
                           "~/Projects/api/.env.local  →  api/development: 4 to import, 1 shared, 1 in conflict",
                           "~/Projects/blog/.env  →  blog/development: 2 to import, 1 shared",
@@ -411,12 +411,12 @@
                           '<span class="w">conflict: api/development/DATABASE_URL differs between ~/Projects/api/.env and ~/Projects/api/.env.local; not imported</span>',
                           "Nothing sent."], 160);
       await s.wait(1800);
-      await s.type(tty, "lk import --scan ~/Projects --share-identical --rewrite", "~");
+      await s.type(tty, "pst import --scan ~/Projects --share-identical --rewrite", "~");
       await s.lines(tty, ["recorded api/development, blog/development, shop/development", "imported 10 new",
-                          "rewrote ~/Projects/api/.env: 3 now latchkey://ID",
-                          "rewrote ~/Projects/api/.env.local: 4 now latchkey://ID",
-                          "rewrote ~/Projects/blog/.env: 2 now latchkey://ID",
-                          "rewrote ~/Projects/shop/.env.local: 4 now latchkey://ID"], 140);
+                          "rewrote ~/Projects/api/.env: 3 now pistachio://ID",
+                          "rewrote ~/Projects/api/.env.local: 4 now pistachio://ID",
+                          "rewrote ~/Projects/blog/.env: 2 now pistachio://ID",
+                          "rewrote ~/Projects/shop/.env.local: 4 now pistachio://ID"], 140);
     }
   };
 

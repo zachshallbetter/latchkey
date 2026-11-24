@@ -5,30 +5,30 @@ served. It's published at https://latchkey.snackstud.io from a Vercel project th
 
 | File | What it is |
 |---|---|
-| `index.html` | The home page, led by "Your projects move. Your secrets don't.": a hero scene of a reference reaching a command, then four numbered movements (importing an env file, bringing the environment to a fresh clone, a second Mac, an agent asking), each beside a scene; the interactive approval panel; the app window; rotation; the key proxy; integrations; security in brief; Latchkey Pro's planned pricing; three ways in; and the closing band with install. Its CSS is inline |
+| `index.html` | The home page, led by "Your projects move. Your secrets don't.": a hero scene of a reference reaching a command, then four numbered movements (importing an env file, bringing the environment to a fresh clone, a second Mac, an agent asking), each beside a scene; the interactive approval panel; the app window; rotation; the key proxy; integrations; security in brief; Pistachio Pro's planned pricing; three ways in; and the closing band with install. Its CSS is inline |
 | `features.html` | Capabilities in six groups (credentials, environments, devices, agents and tools, integrations, visibility), each with one example, an availability label and a link to its docs. Credentials opens with the working app window (`app-demo.js`); the other groups with scenes |
 | `roadmap.html` | What's built, what's next and what's out of scope, by tier. The items are written in the HTML (the script only filters them); mark one **Built** only when the docs describe it as shipped |
-| `pricing.html` | Plans modelled on Peel's: what stays free (storage, references, import, run, approvals, export), Latchkey Pro as a planned one-time in-app purchase in the Mac App Store ($79, updates included, no subscription), Latchkey Teams ($15 per user a month, planned), a comparison marking planned rows, the purchase policy and short answers. Nothing is on sale; early-access requests go to latchkey@snackstud.io |
-| `teams.html` | Developer Credential Migration from Snack Studio (from $2,500, fixed scope) beside the inventory scene: deliverables, steps, credential handling beside the import scene, and limits; Latchkey Teams, looking for design partners |
+| `pricing.html` | Plans modelled on Peel's: what stays free (storage, references, import, run, approvals, export), Pistachio Pro as a planned one-time in-app purchase in the Mac App Store ($79, updates included, no subscription), Pistachio Teams ($15 per user a month, planned), a comparison marking planned rows, the purchase policy and short answers. Nothing is on sale; early-access requests go to latchkey@snackstud.io |
+| `teams.html` | Developer Credential Migration from Snack Studio (from $2,500, fixed scope) beside the inventory scene: deliverables, steps, credential handling beside the import scene, and limits; Pistachio Teams, looking for design partners |
 | `security.html` | What each mechanism protects and doesn't, from `docs/security.md` and `SECURITY.md`: a scene of a script asking directly (the panel's warning), the six distinctions, each topic beside its heading, and the delivery-path and guarantees tables, which become one block per row on phones |
-| `scenes.js` | The self-playing scenes: small drawings of Latchkey in use that play while on screen and start over. Each `.scene-wrap[data-scene]` names a script there; its HTML is the last frame in the landscape layout, which is what shows without scripts or with reduced motion. In a column narrower than 480px (a phone) each scene switches to its portrait layout in `PORTRAIT`, the same windows stacked in a canvas 360 wide so terminal text stays about 12px; motion is placed relative to the windows, so it works in both. Each has a pause button |
+| `scenes.js` | The self-playing scenes: small drawings of Pistachio in use that play while on screen and start over. Each `.scene-wrap[data-scene]` names a script there; its HTML is the last frame in the landscape layout, which is what shows without scripts or with reduced motion. In a column narrower than 480px (a phone) each scene switches to its portrait layout in `PORTRAIT`, the same windows stacked in a canvas 360 wide so terminal text stays about 12px; motion is placed relative to the windows, so it works in both. Each has a pause button |
 | `site.css` | Shared styles: the icon set (`.ic .ic-NAME`, masks drawn in the text colour, after the SF Symbols the app uses; card symbols are `.cico`), colour tokens (light and dark) and section hues (`data-hue` on a section: blue, violet, teal, green, amber, rose, orange for Pro), header, footer, code blocks, the developer docs layout, feature rows, availability labels and the scenes |
-| `app-demo.js` | A working copy of the Latchkey window on the home page and Features, laid out as the app is, with example data: the sidebar (All Items, Review, Activity, projects, services, Grants, Recently Deleted, the iCloud Keychain badge), a flat list of two-line rows with search and Type and Environment filters, and the item's detail as cards (value, reference, type, access, service, project, environment, note, location, history, recent activity). Row icons and colours follow the app's `ItemType` in `App/Latchkey/Style.swift`; keep them in step. It listens for the approval scene's `lk:activity` and `lk:grant` events, and sends `lk:revoke` when a grant is revoked there. Showing or copying a value and changing access go through a Touch ID sheet, as in the app |
-| `site.js` | Copy buttons, and every code block coloured by part with an explanation of each on hover or focus: `lk` commands (action, option, value, the program it runs) and their synopses' placeholders, the other programs beside them (`SHELL`), env files and references, JSON fields (`JSONKEYS`), the agent note and the architecture diagram. Only the scenes and the home page's live demos are left alone. The explanations live in its `ACTIONS`, `FLAGS` and `ACTION_FLAGS`; keep them in step with the CLI and the API. On the home page each code block is one keyboard stop and the arrow keys move between parts; on the developer pages explanations are hover-only, since the tables there cover every option |
+| `app-demo.js` | A working copy of the Pistachio window on the home page and Features, laid out as the app is, with example data: the sidebar (All Items, Review, Activity, projects, services, Grants, Recently Deleted, the iCloud Keychain badge), a flat list of two-line rows with search and Type and Environment filters, and the item's detail as cards (value, reference, type, access, service, project, environment, note, location, history, recent activity). Row icons and colours follow the app's `ItemType` in `App/Latchkey/Style.swift`; keep them in step. It listens for the approval scene's `lk:activity` and `lk:grant` events, and sends `lk:revoke` when a grant is revoked there. Showing or copying a value and changing access go through a Touch ID sheet, as in the app |
+| `site.js` | Copy buttons, and every code block coloured by part with an explanation of each on hover or focus: `pst` commands (action, option, value, the program it runs) and their synopses' placeholders, the other programs beside them (`SHELL`), env files and references, JSON fields (`JSONKEYS`), the agent note and the architecture diagram. Only the scenes and the home page's live demos are left alone. The explanations live in its `ACTIONS`, `FLAGS` and `ACTION_FLAGS`; keep them in step with the CLI and the API. On the home page each code block is one keyboard stop and the arrow keys move between parts; on the developer pages explanations are hover-only, since the tables there cover every option |
 | `changelog.html` | Every released version's notes, newest first, each under `id="vVERSION"`, written from `CHANGELOG.md` by `scripts/changelog-page.py` in the terms page's layout. The same script points every page's Changelog link here and sets the home page's "Latest version" (`<a data-latest-version>`). The update feed links each version's entry here |
 | `privacy.html`, `terms.html`, `support.html` | The privacy policy, terms of use (the App Store EULA for store copies, FSL for the source) and support, linked from every footer. Keep the privacy policy in step with every network request the app or tool makes |
-| `404.html` | The page for a missing path: `noindex`, root-absolute links, what `lk get` prints for a missing name (copied from `failMissing` in `Sources/latchkey/main.swift`), and cards to Features, Pricing, Security and reporting a broken link |
+| `404.html` | The page for a missing path: `noindex`, root-absolute links, what `pst get` prints for a missing name (copied from `failMissing` in `Sources/latchkey/main.swift`), and cards to Features, Pricing, Security and reporting a broken link |
 | `og.png`, `social/` | Social cards, 1200×630: `og.png` for the home page, and one per page in `social/`, all drawn from `scripts/og-image.html` by headless Chrome (`scripts/social-images.py` for the per-page cards) |
 | `cli.html` | Getting the command-line tool: Homebrew or the signed download for the Mac App Store version, or from inside the direct download |
 | `guides/` | Seventeen task-sized guides in four categories (env files, coding agents, deploying, everyday use) and their index, in the developer docs' layout: the shared sidebar (which links to the categories), breadcrumbs, "On this page", an "In short" answer and a "What this doesn't do" section. Each is a `TechArticle` with a byline; commands and limits come from `docs/`, as on every page. Links start with `../` |
-| `humans.txt` | Who makes Latchkey and how the site is built |
+| `humans.txt` | Who makes Pistachio and how the site is built |
 | `favicon.ico`, `favicon-32.png`, `icon-*.png`, `site.webmanifest` | Browser and home-screen icons, rendered from the app icon's own artwork (`App/Latchkey/AppIcon.icon`) |
 | `llms-full.txt` | The text of every page's main content, written by `scripts/discovery.py` |
 | `<key>.txt` | The IndexNow key, so search engines that take IndexNow accept URLs submitted for this host |
 | `logo.svg` | The mark, used in the header, the drawn approval panel and the favicon. Replace this one file to change the logo |
 | `apple-touch-icon.png` | 180×180, rendered from the app icon (`sips -s format png -z 180 180 …/AppIcon.icns`) |
 | `developers/` | Developer docs: overview, quickstart, CLI reference, agents and MCP, references and API. The Quickstart plays the import and run scenes, Agents and MCP the agent scene. Code wraps instead of scrolling, and tables become one labelled block per row on phones (each `td` carries `data-th`) |
-| `llms.txt` | Everything an agent needs in one file: the facts, the rules to follow, whether Latchkey is installed and how to get it, running commands, exit codes, approvals and grants, new clones, the proxy and AWS, MCP, keeping values out of files, the limits, and absolute links to every page and guide. Keep it in step with `docs/agents.md` and `docs/cli.md`. The home page's **For humans / For agents** switch, under the buttons, shows the line to give an agent (pointing at this file), remembers the choice on the device, and opens with `#agents`; every footer links here as **For agents (llms.txt)** |
+| `llms.txt` | Everything an agent needs in one file: the facts, the rules to follow, whether Pistachio is installed and how to get it, running commands, exit codes, approvals and grants, new clones, the proxy and AWS, MCP, keeping values out of files, the limits, and absolute links to every page and guide. Keep it in step with `docs/agents.md` and `docs/cli.md`. The home page's **For humans / For agents** switch, under the buttons, shows the line to give an agent (pointing at this file), remembers the choice on the device, and opens with `#agents`; every footer links here as **For agents (llms.txt)** |
 | `robots.txt` | Crawl policy |
 
 The home page's interactive approval panel ("Try it") follows the real sequence: the panel as the app draws it
@@ -49,7 +49,7 @@ Every page keeps to these; they're what the layout passes checked, page by page,
 light and dark:
 
 - One header (Features, How it works, Pricing, Security, Developers, Guides, and **Download free**) and one footer on every
-  page. The footer has the mark, a line on what Latchkey does and the download, then Product, Developers and Trust and
+  page. The footer has the mark, a line on what Pistachio does and the download, then Product, Developers and Trust and
   help columns, and a base line with the publisher and license; generate it for every page at once, since docs pages
   link with `../` and the 404 with `/`. Product pages end with the closing call-to-action band (`.cta-band`): **Download free** first, **See what Pro adds** second. Free leads every primary button; Pro is shown as planned until it is on sale.
 - On phones: every link or button outside running text is at least 32px tall (most 44), inline code breaks at
@@ -76,7 +76,7 @@ light and dark:
   labelled block per row on phones, and the app window hides its pane scrollbars.
 - A section opens with its heading and a wide example (a scene, the app window, a demo or a grid of cards) before
   longer text; text-only topics put their heading beside the text.
-- Scenes float on the page's wash, use the app's own layouts, say they replay Latchkey's output with example data,
+- Scenes float on the page's wash, use the app's own layouts, say they replay Pistachio's output with example data,
   and have captions at their width.
 - "Read more" links are small and quiet (`.more`), and a card that goes somewhere is one link (`.card-link`, `.tool`),
   not an underlined title.
@@ -102,10 +102,10 @@ and `rel="author"` and `meta name="author"` for Zach Shallbetter. Each page's JS
 (`https://zachshallbetter.com/#person`) and the `Organization` (`https://www.snackstud.io/#organization`). Those two
 IDs are the ones Snack Studio's other sites use, so search engines can tell it's the same person and studio; the home
 page adds the website and the app, whose author and creator is the person. The visible credit is the footer byline
-on every page, the "Who makes Latchkey" section on the home page, the guides' bylines and `humans.txt`; it's worded
-for Latchkey, not copied from the other sites. Support has the route for reporting a mistake on the site.
+on every page, the "Who makes Pistachio" section on the home page, the guides' bylines and `humans.txt`; it's worded
+for Pistachio, not copied from the other sites. Support has the route for reporting a mistake on the site.
 
-Scenes and demos show only what Latchkey prints and shows. Terminal output in `scenes.js` and the home page's script
+Scenes and demos show only what Pistachio prints and shows. Terminal output in `scenes.js` and the home page's script
 is copied from the `print` calls in `Sources/latchkey` (and panel wording from `App/Latchkey/ApprovalPanel.swift`);
 when one changes, change the scene. Example data (project `shop`, values, dates, counts) is illustrative. A capability
 that isn't verified for release carries a **Pending** label (`.avail.pending`) until it is.
@@ -159,3 +159,11 @@ paths at any depth, so unlike every other page its links start at `/`.
 ```bash
 cd site && python3 -m http.server 8000
 ```
+
+## Brand language
+
+Public copy uses **Pistachio**, the short command **pst**, and `pistachio://` / `pistachio-file://` examples.
+Use the current `PISTACHIO_*` environment names and `pistachio_*` MCP tools. Omit rename and migration messaging.
+The brand line is “Your secrets. In a shell.” and the intended public domain is `secretsinashell.com`.
+Repository destinations, published canonical URLs and working package identifiers remain accurate to their
+configured targets; change them only with the corresponding repository, hosting or packaging change.

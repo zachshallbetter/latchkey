@@ -1,22 +1,36 @@
 # Command line
 
-`latchkey` (or `lk` for short, or `pistachio`, its name after the rename) talks to the Latchkey app, starting it in the background if it isn't running. It has no direct value-printing command
-except `latchkey get`; child output uses exact-value masking, which transformed secrets can bypass. `latchkey help` prints a summary.
+`pst` is the short command for Pistachio; `pistachio` is the full command. Both run the same tool.
+Installers, Homebrew and standalone releases provide these names. Source builds support `swift run pst`
+and `swift run pistachio`.
+
+The tool talks to the app, starting it in the background if needed. `pst get` prints a value, so agents must not
+use it. Child output uses exact-value masking, which transformed secrets can bypass. `pst help` prints a summary.
+Generated pre-commit hooks find an installed command on your PATH.
+
+| Surface | Name |
+|---|---|
+| Shell command | `pst` or `pistachio` |
+| Environment configuration | `PISTACHIO_*` |
+| Credential references | `pistachio://`, `pistachio-file://` |
+| MCP tool names | `pistachio_*` |
+
+`pst` abbreviates the shell command only.
 
 IDs are `NAME` (shared) or `project/environment/NAME`. Where a command takes several, separate them with commas, and
 where it says PATTERN you can use `project/*` or `project/environment/*`.
 
 ## Running commands
 
-### `latchkey run [options] -- COMMAND [ARGS...]`
+### `pst run [options] -- COMMAND [ARGS...]`
 
-Starts COMMAND with every `latchkey://ID` in its environment replaced by the item's value.
+Starts COMMAND with every `pistachio://ID` in its environment replaced by the item's value.
 
 | Option | |
 |---|---|
 | `--env-file FILE` | Load `KEY=VALUE` lines from FILE first. Repeatable. |
 | `--env PROJECT/ENV` | Set the environment's variables from its record (see [Environments](#environments)). Without a record, or before `env migrate` has run, it also loads what the older lookup finds: each item in the environment as its name, plus the shared items in the same checkout as its files (as recorded on import), and says so. Repeatable. |
-| `--file NAME=ID` | Set NAME to the path of a temporary file holding the value. `NAME=latchkey-file://ID` in an env file does the same. The file is readable only by you and deleted when COMMAND exits. |
+| `--file NAME=ID` | Set NAME to the path of a temporary file holding the value. `NAME=pistachio-file://ID` in an env file does the same. The file is readable only by you and deleted when COMMAND exits. |
 | `--no-masking` | Don't hide values in COMMAND's output, and start it directly. |
 | `--proxy` | Keep `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` out of COMMAND entirely (see below). |
 | `--proxy-models A,B` | With `--proxy`: refuse requests that don't name one of these models in their JSON body. |
@@ -24,31 +38,31 @@ Starts COMMAND with every `latchkey://ID` in its environment replaced by the ite
 | `--aws-session`, `--aws-role ARN`, `--aws-for TIME` | Give COMMAND short-lived AWS credentials instead of the long-lived key (see below). |
 
 Items that aren't agent-safe or covered by a grant ask for approval first. Values of secret kinds that are 6
-characters or longer are replaced with `<concealed by latchkey>` in COMMAND's output, including values split across
+characters or longer are replaced with a concealment marker in COMMAND's output, including values split across
 two chunks of output; multi-line values are hidden line by line.
 
-COMMAND's exit status becomes `latchkey run`'s. If COMMAND is killed by a signal, the status is 128 plus the signal.
+COMMAND's exit status becomes `pst run`'s. If COMMAND is killed by a signal, the status is 128 plus the signal.
 
-### `latchkey check [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [IDS] [--json]`
+### `pst check [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [IDS] [--json]`
 
-What `latchkey run` with the same options would get without asking (agent-safe or covered by a grant), what would ask you, and what's missing. Asks nothing and releases nothing. Exits 66 if an
+What `pst run` with the same options would get without asking (agent-safe or covered by a grant), what would ask you, and what's missing. Asks nothing and releases nothing. Exits 66 if an
 item is missing, otherwise 0.
 
-### `latchkey mcp`
+### `pst mcp`
 
-Serves Latchkey's tools to an agent over MCP, on standard input and output. See
-[Latchkey's MCP server](agents.md#latchkeys-mcp-server).
+Serves Pistachio's tools to an agent over MCP, on standard input and output. See
+[Pistachio's MCP server](agents.md#pistachios-mcp-server).
 
 ### Keys that never reach the command (`--proxy`)
 
 With `--proxy`, a variable that is exactly a reference to an OpenAI or Anthropic key gets a placeholder instead, and
-`OPENAI_BASE_URL` or `ANTHROPIC_BASE_URL` points at a port on this Mac that `latchkey run` listens on. Requests there
+`OPENAI_BASE_URL` or `ANTHROPIC_BASE_URL` points at a port on this Mac that `pst run` listens on. Requests there
 that carry the placeholder go to `api.openai.com` or `api.anthropic.com` with the real key in its place; anything
-else is refused. The real key stays in `latchkey run`, so COMMAND can use it but can't read, print or send it
+else is refused. The real key stays in `pst run`, so COMMAND can use it but can't read, print or send it
 anywhere else.
 
 ```bash
-latchkey run --proxy --env shop/development -- npm test
+pst run --proxy --env shop/development -- npm test
 ```
 
 It works with programs that use the OpenAI or Anthropic SDKs (or read those base URL variables). Proxy mode
@@ -60,58 +74,58 @@ Only COMMAND and the processes it starts can use the proxy: a request from any o
 the placeholder, gets a 403, and the proxy stops when COMMAND exits. A process that detaches from COMMAND (so
 launchd adopts it) is refused too. `--proxy-models` and `--proxy-requests` narrow what COMMAND may do with the key;
 with `--proxy-models`, only requests with a JSON body naming a listed model are forwarded (so `GET /v1/models`,
-multipart uploads and compressed bodies are refused). When either is set, `latchkey run` prints
-`latchkey: proxy limits enforced: ...` on standard error. Both need `--proxy`. See [Security](security.md) for
+multipart uploads and compressed bodies are refused). When either is set, `pst run` prints
+a proxy-limits notice on standard error. Both need `--proxy`. See [Security](security.md) for
 what this does and doesn't protect.
 
 ### Short-lived AWS credentials
 
-With `--aws-session`, `latchkey run` signs a request to AWS STS with your long-lived access key (`AWS_ACCESS_KEY_ID`
-and `AWS_SECRET_ACCESS_KEY`, both `latchkey://` references) and gives COMMAND the temporary credentials STS returns:
+With `--aws-session`, `pst run` signs a request to AWS STS with your long-lived access key (`AWS_ACCESS_KEY_ID`
+and `AWS_SECRET_ACCESS_KEY`, both `pistachio://` references) and gives COMMAND the temporary credentials STS returns:
 `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN` and `AWS_CREDENTIAL_EXPIRATION`. `--aws-role ARN`
 assumes that role instead. They last 15 minutes unless `--aws-for` says otherwise (at most 12 hours), so a leaked
 value soon stops working. The long-lived key never reaches COMMAND. No AWS CLI is needed. MFA isn't supported yet.
 
 ```bash
-latchkey run --aws-role arn:aws:iam::123456789012:role/dev --aws-for 1h --env shop/development -- terraform plan
+pst run --aws-role arn:aws:iam::123456789012:role/dev --aws-for 1h --env shop/development -- terraform plan
 ```
 
-### `latchkey get ID`
+### `pst get ID`
 
 Prints one value. Asks unless the item is agent-safe or covered by a grant.
 
 ## Items
 
-### `latchkey list [--project P] [--json]`
+### `pst list [--project P] [--json]`
 
 IDs grouped by project and environment, with kind, service, whether agents may read them, and the note. `--json` prints
 the same as JSON. Never values.
 
-### `latchkey set ID [--kind KIND] [--agent-safe] [--note TEXT] [--service NAME]`
+### `pst set ID [--kind KIND] [--agent-safe] [--note TEXT] [--service NAME]`
 
 Adds or changes an item. The value is read from standard input, or prompted for (hidden) in a terminal. Kinds:
 `token`, `password`, `key`, `value`. Asks for approval. Replacing a value keeps the old one as a version.
 
-### `latchkey update IDS|PATTERN... [--agent-safe yes|no] [--kind KIND] [--service NAME] [--note TEXT] [--fill-sites HOSTS]`
+### `pst update IDS|PATTERN... [--agent-safe yes|no] [--kind KIND] [--service NAME] [--note TEXT] [--fill-sites HOSTS]`
 
 Changes settings on many items with one approval. Values are untouched. `--service ""` clears the service.
-`--fill-sites vercel.com,app.netlify.com` sets the only sites Latchkey for Safari may fill the items on (each covers
+`--fill-sites vercel.com,app.netlify.com` sets the only sites Pistachio for Safari may fill the items on (each covers
 its subdomains; up to 20); `--fill-sites ""` goes back to the default, the item's service's own key page host and
 the deployment platforms' dashboards.
 
-### `latchkey rm IDS|PATTERN...`
+### `pst rm IDS|PATTERN...`
 
 Deletes items with one approval. They go to Recently Deleted for 30 days. If any named item doesn't exist, nothing
 is deleted.
 
-### `latchkey mv IDS | --from-file FILE  --to PROJECT/ENV | --shared  [--file FILE]...`
+### `pst mv IDS | --from-file FILE  --to PROJECT/ENV | --shared  [--file FILE]...`
 
 Moves items into a project's environment, or back to shared, with one approval. Values, settings and history move with
 them. References are then updated in the files the items were imported from, in each `--file`, and in the
 `--from-file` file. `--from-file FILE` moves every shared item FILE refers to. If any target ID already exists,
 nothing moves.
 
-### `latchkey duplicates [--json]`
+### `pst duplicates [--json]`
 
 Lists groups of items holding the same value, counted by kind at the top, and what to do about each, with the
 command to run:
@@ -123,37 +137,37 @@ command to run:
   that a shared item already has, gets the first project as a prefix (`MANAGER_DATABASE_URL`);
 - identifiers rather than secrets (IDs, hosts, public keys, web addresses without credentials): mark them plain values.
 
-Values are compared inside Latchkey and never shown; plain values and values shorter than 8 characters are left out.
+Values are compared inside Pistachio and never shown; plain values and values shorter than 8 characters are left out.
 It asks for approval every time (grants and agent-safe settings don't stand in), and agents can't ask. `--json` gives
 `items`, `advice`, `summary` and `into` for each group.
 
-### `latchkey scan [DIR] [--json]` | `scan --staged` | `scan --install-hook [--force]`
+### `pst scan [DIR] [--json]` | `scan --staged` | `scan --install-hook [--force]`
 
 Finds env files under DIR (default: the current folder; `.env`, `.env.*` and `*.env`, not examples, templates or
 backups, not in `node_modules`, build or `.git` folders) that still hold plain values, and prints each as
 `FILE:LINE  NAME` with the reason, never a value:
 
-- the value equals a stored item: the line names the item(s). The values are compared inside Latchkey, which receives
+- the value equals a stored item: the line names the item(s). The values are compared inside Pistachio, which receives
   the values found in the files and returns only item IDs. Like `duplicates`, it asks every time (grants and
   agent-safe settings don't stand in), and agents can't ask. Plain items and values shorter than 8 characters are
   left out;
 - the value looks secret: a private key, a password or a connection string with credentials, a token with a known
   prefix (`sk_live_`, `ghp_`, `AKIA`...), or a long value under a name such as `*_TOKEN`, `*_SECRET` or `*_API_KEY`.
-  Identifiers (IDs, hosts, public addresses) and `latchkey://` references are not findings. This check is local.
+  Identifiers (IDs, hosts, public addresses) and `pistachio://` references are not findings. This check is local.
 
-Exits 1 when anything is found, so it works in scripts; if Latchkey can't compare (not approved, not running), the
+Exits 1 when anything is found, so it works in scripts; if Pistachio can't compare (not approved, not running), the
 values that look secret are still reported, and it exits 1. `--json` gives `place`, `key`, `reason` (`stored` or
 `looks-secret`) and `items` for each finding.
 
 `--staged` scans only the lines a commit would add, from the Git index, in env files that are staged.
 
 `--install-hook` writes a Git pre-commit hook (in the repository's `.git` hooks folder, shared by its worktrees) that runs
-`latchkey scan --staged` and refuses the commit on findings. A hook that isn't Latchkey's is left alone unless
+`pst scan --staged` and refuses the commit on findings. A hook that isn't Pistachio's is left alone unless
 `--force`. A repository whose `core.hooksPath` points outside its `.git` folder gets no hook written; the message
-names that folder so you can add `lk scan --staged` to a hook there yourself. If neither `lk` nor `latchkey` is on the PATH, the hook says so and lets the commit through. Skip it for one
+names that folder so you can add `pst scan --staged` to a hook there yourself. If neither `pst` nor `pistachio` is on the PATH, the hook says so and lets the commit through. Skip it for one
 commit with `git commit --no-verify`.
 
-### `latchkey combine IDS --into NAME|ID [--file FILE]...`
+### `pst combine IDS --into NAME|ID [--file FILE]...`
 
 Makes items holding one value into one shared item NAME, or into one item ID of the environment they're all in, with
 one approval. NAME is created from them (agent-safe only
@@ -167,13 +181,13 @@ Each environment has a record: its variables, each pointing at an item (shared i
 such as `PORT=3000`. Records sync with your items, so an environment works the same on every Mac, wherever its
 checkout is. Import, `set` and `mv` keep them current; an item's `usedIn` paths are kept only as history.
 
-### `latchkey env [list]`, `latchkey env show PROJECT/ENV [--json]`
+### `pst env [list]`, `pst env show PROJECT/ENV [--json]`
 
 Records, and one record's variables. Unconfirmed variables are marked.
 
-### `latchkey env migrate [--dry-run]`
+### `pst env migrate [--dry-run]`
 
-Makes or completes records from what Latchkey already knows: each environment's own items, the shared items the older
+Makes or completes records from what Pistachio already knows: each environment's own items, the shared items the older
 lookup would load, and, from the files its items were imported from (when they're on this Mac), the references and
 plain settings those files hold. It only adds: a stored variable is never changed, and running it again is safe.
 What it found through file locations is unconfirmed until `env confirm`. It reports instead of choosing: two
@@ -181,27 +195,27 @@ sources that disagree, a reference to an item that doesn't exist, a file that is
 that may be secret. Only numbers up to six digits and `true`/`false` are recorded from files without asking you.
 One approval.
 
-### `latchkey env set PROJECT/ENV NAME=latchkey://ID|NAME=VALUE...`, `env unset PROJECT/ENV NAME...`, `env confirm PROJECT/ENV [NAME...]`
+### `pst env set PROJECT/ENV NAME=pistachio://ID|NAME=VALUE...`, `env unset PROJECT/ENV NAME...`, `env confirm PROJECT/ENV [NAME...]`
 
-Change one record with one approval. `NAME=latchkey://ID` points a variable at an item (it must exist);
+Change one record with one approval. `NAME=pistachio://ID` points a variable at an item (it must exist);
 `NAME=VALUE` is a plain setting. A plain setting that looks secret (by its name or value) is refused: save it as an
 item and point the variable at it. `env confirm` with no names confirms everything unconfirmed.
 
-### `latchkey env rm PROJECT/ENV`
+### `pst env rm PROJECT/ENV`
 
 Forgets an environment's record, with one approval. Its items stay, and `run --env` goes back to finding them by ID
 until a record is made again.
 
-### `latchkey export PROJECT/ENV [--out FILE [--merge [--yes] | --replace]] [--values [--clipboard]]`
+### `pst export PROJECT/ENV [--out FILE [--merge [--yes] | --replace]] [--values [--clipboard]]`
 
-Writes the environment's env file from its record: `latchkey://` references and plain settings, sorted by name, to
+Writes the environment's env file from its record: `pistachio://` references and plain settings, sorted by name, to
 standard output or FILE.
 
 - An existing FILE is left alone, and the variables that would change are named, unless `--merge` or `--replace`. A
   symbolic link or anything but a regular file is refused. The file is written beside its destination and renamed into
   place, so it's never half-written.
 - `--merge` updates the variables the record has, appends the ones missing, and leaves every other byte of the file as
-  it is: comments, blank lines, order, variables Latchkey doesn't manage, line endings, a last line without one. A
+  it is: comments, blank lines, order, variables Pistachio doesn't manage, line endings, a last line without one. A
   variable already holding the value is left as written; an updated line keeps its indentation and `export` and loses
   an inline comment. It lists the names it will `add` and `update`, then asks to go ahead (`--yes` skips that; without
   a terminal `--yes` is required). The file must be UTF-8 `KEY=VALUE` lines, and it's refused if it changes while
@@ -217,13 +231,13 @@ standard output or FILE.
 - `--values --clipboard` copies the environment as an env block (no header comment) for a dashboard that takes a
   pasted one, instead of writing a file. It asks every time, naming the environment and that the values go to the
   clipboard. The copy is for this Mac only (not Universal Clipboard), marked concealed and transient so clipboard
-  managers skip it, and cleared after 60 seconds if nothing else was copied meanwhile (a detached `latchkey
+  managers skip it, and cleared after 60 seconds if nothing else was copied meanwhile (a detached `pistachio
   clipboard-clear` does it, so the command can exit). Agents and Safari can't copy, nor can a request forwarded over
   SSH (the clipboard would be on the other computer). The log records "copied to the clipboard", never the values;
   unlike a file, a copy can't be traced afterwards.
 - Unconfirmed variables and references to missing items are noted on standard error.
 
-### `latchkey project [DIR]`, `project link [NAME] [DIR] [--remote R]`, `project unlink NAME [DIR]`, `project list`
+### `pst project [DIR]`, `project link [NAME] [DIR] [--remote R]`, `project unlink NAME [DIR]`, `project list`
 
 Which project a checkout is, from its Git remotes (read from git's config, normalized to `host/owner/repo`, never
 with credentials). `project` shows the matching project and its environments, and the `export` command to run.
@@ -235,7 +249,7 @@ and never taken as the project.
 
 ## Importing
 
-### `latchkey import FILE... [options]`
+### `pst import FILE... [options]`
 
 | Option | |
 |---|---|
@@ -260,25 +274,25 @@ See [Importing](import.md) for how projects and environments are chosen, and how
 
 | Command | |
 |---|---|
-| `latchkey history ID` | Earlier values: when, why (replaced, deleted, replaced by a restore) and by whom. Never values. |
-| `latchkey restore ID [--version N]` | Put back version N (1 is the most recent), or bring back a deleted item with its settings. Restoring an item that still exists changes only its value; its agent-safe, kind and fill-site settings stay as they are now. The current value is kept as a version first. Asks. |
-| `latchkey deleted` | Items deleted in the last 30 days, with days left. |
-| `latchkey forget IDS` | Delete earlier values for good. Asks. |
+| `pst history ID` | Earlier values: when, why (replaced, deleted, replaced by a restore) and by whom. Never values. |
+| `pst restore ID [--version N]` | Put back version N (1 is the most recent), or bring back a deleted item with its settings. Restoring an item that still exists changes only its value; its agent-safe, kind and fill-site settings stay as they are now. The current value is kept as a version first. Asks. |
+| `pst deleted` | Items deleted in the last 30 days, with days left. |
+| `pst forget IDS` | Delete earlier values for good. Asks. |
 
 ## Grants
 
 | Command | |
 |---|---|
-| `latchkey grant IDS [--folder DIR] [--for TIME] [--session] [--command CMD]... [--once]` | Let commands run from DIR (default: here), the folders inside it and that repository's worktrees read these items without asking. TIME is like `30m`, `2h`, `1d`, or `always` for a grant that lasts until revoked; default 1 hour, no maximum. IDS can include `project/*` and `project/environment/*`. Asks once. |
-| `latchkey grants` | Grants in effect, with time left and any limits. |
-| `latchkey revoke ID` or `all` | End a grant, or all of them. Doesn't ask. |
+| `pst grant IDS [--folder DIR] [--for TIME] [--session] [--command CMD]... [--once]` | Let commands run from DIR (default: here), the folders inside it and that repository's worktrees read these items without asking. TIME is like `30m`, `2h`, `1d`, or `always` for a grant that lasts until revoked; default 1 hour, no maximum. IDS can include `project/*` and `project/environment/*`. Asks once. |
+| `pst grants` | Grants in effect, with time left and any limits. |
+| `pst revoke ID` or `all` | End a grant, or all of them. Doesn't ask. |
 
 Narrow a grant further with any of:
 
-- `--session`: it ends when the agent you run `latchkey grant` under quits (the nearest program that isn't a shell,
+- `--session`: it ends when the agent you run `pst grant` under quits (the nearest program that isn't a shell,
   such as `claude`), and covers only programs started under it.
-- `--command CMD`: only `latchkey run` of that command. `--command "npm test"` covers `npm test -- --ci`, not
-  `npm run dev`. Repeat it for several commands. Only Latchkey's own signed tool can use it, since the app reads the
+- `--command CMD`: only `pst run` of that command. `--command "npm test"` covers `npm test -- --ci`, not
+  `npm run dev`. Repeat it for several commands. Only Pistachio's own signed tool can use it, since the app reads the
   command from its command line.
 - `--once`: it ends after one request.
 
@@ -288,28 +302,28 @@ The approval panel offers the same: **until claude quits** in the list, and **On
 
 | Command | |
 |---|---|
-| `latchkey touched [--since 24h] [--by NAME] [--grant ID] [--json]` | Items Latchkey released in that time: to anything, to programs under NAME (such as `claude`), or under one grant. From the access log; never values. |
-| `latchkey rotate IDS\|PATTERN... \| --touched [...] [--open] [--push]` | Replace items one by one: ends grants that cover them, shows where to make each new key (`--open` opens the page), asks for the new value (the old one stays in history), then pushes to linked environments with `--push`. |
+| `pst touched [--since 24h] [--by NAME] [--grant ID] [--json]` | Items Pistachio released in that time: to anything, to programs under NAME (such as `claude`), or under one grant. From the access log; never values. |
+| `pst rotate IDS\|PATTERN... \| --touched [...] [--open] [--push]` | Replace items one by one: ends grants that cover them, shows where to make each new key (`--open` opens the page), asks for the new value (the old one stays in history), then pushes to linked environments with `--push`. |
 
 After an agent session:
 
 ```bash
-latchkey touched --since 4h --by claude
-latchkey rotate --touched --since 4h --by claude --open --push
+pst touched --since 4h --by claude
+pst rotate --touched --since 4h --by claude --open --push
 ```
 
-Latchkey can't make the new key for you: Stripe, GitHub, OpenAI and most services only issue keys in their
+Pistachio can't make the new key for you: Stripe, GitHub, OpenAI and most services only issue keys in their
 dashboards. It takes you to the page, saves what you paste, and puts it everywhere it's linked.
 
 ## Remote locations
 
 | Command | |
 |---|---|
-| `latchkey remote list [PROJECT/ENV]` | Links, with when each was last pushed. |
-| `latchkey remote link PROJECT/ENV SERVICE KEY=VALUE...` | Link an environment. SERVICE is `vercel`, `github`, `railway`, `fly` or `ssh`. Asks. |
-| `latchkey remote unlink LINK` | Remove a link. Doesn't ask. |
-| `latchkey remote status PROJECT/ENV` | Names missing on each side, and values changed since the last push. |
-| `latchkey push PROJECT/ENV [--to LINK] [--only IDS] [--dry-run]` | Push values. Asks every time; production needs its own confirmation in the app. |
+| `pst remote list [PROJECT/ENV]` | Links, with when each was last pushed. |
+| `pst remote link PROJECT/ENV SERVICE KEY=VALUE...` | Link an environment. SERVICE is `vercel`, `github`, `railway`, `fly` or `ssh`. Asks. |
+| `pst remote unlink LINK` | Remove a link. Doesn't ask. |
+| `pst remote status PROJECT/ENV` | Names missing on each side, and values changed since the last push. |
+| `pst push PROJECT/ENV [--to LINK] [--only IDS] [--dry-run]` | Push values. Asks every time; production needs its own confirmation in the app. |
 
 See [Remote locations](remote.md) for the keys each service takes.
 
@@ -317,12 +331,12 @@ See [Remote locations](remote.md) for the keys each service takes.
 
 | Command | |
 |---|---|
-| `latchkey log [--limit 20]` | Recent access log entries: time, what, decision, items, who, folder and command. Never values. |
-| `latchkey log --verify` | Checks the log's chain: exits 0 if every entry is as Latchkey wrote it, 1 with the first line that isn't. |
+| `pistachio log [--limit 20]` | Recent access log entries: time, what, decision, items, who, folder and command. Never values. |
+| `pistachio log --verify` | Checks the log's chain: exits 0 if every entry is as Pistachio wrote it, 1 with the first line that isn't. |
 
 ## Status
 
-### `latchkey status`
+### `pst status`
 
 Where values are kept, how you approve, how many items and grants, and the socket path.
 
@@ -330,12 +344,10 @@ Where values are kept, how you approve, how many items and grants, and the socke
 
 | Variable | |
 |---|---|
-| `LATCHKEY_NO_LAUNCH=1` | Don't start the app if it isn't running; fail with exit 69 instead. |
-| `LATCHKEY_SOCKET=PATH` | Connect to a socket forwarded over SSH from the Mac running Latchkey (see [From another Mac over SSH](agents.md#from-another-mac-over-ssh)). |
+| `PISTACHIO_NO_LAUNCH=1` | Don't start the app if it isn't running; fail with exit 69 instead. |
+| `PISTACHIO_SOCKET=PATH` | Connect to a socket forwarded over SSH from the Mac running Pistachio (see [From another Mac over SSH](agents.md#from-another-mac-over-ssh)). |
 
-Each `LATCHKEY_` variable here and below can also be set under its new name, `PISTACHIO_NO_LAUNCH`,
-`PISTACHIO_SOCKET` and so on. When both are set, the `PISTACHIO_` one wins, even if it's empty. The `LATCHKEY_` names
-keep working.
+Use the `PISTACHIO_` variables to configure the tool on this Mac.
 
 ## Exit codes
 
@@ -344,12 +356,12 @@ keep working.
 | 0 | Done |
 | 64 | Wrong usage |
 | 66 | No item with that ID |
-| 69 | The Latchkey app can't be reached |
+| 69 | The Pistachio app can't be reached |
 | 73 | A file couldn't be rewritten |
 | 77 | Refused: not agent-safe, not approved, no grant |
 | 127 | The command couldn't start |
 
-On 66 and 77, Latchkey prints the item IDs and what to do, including the `latchkey grant` command that would allow
+On 66 and 77, Pistachio prints the item IDs and what to do, including the `pst grant` command that would allow
 the refused items.
 
 ## Choosing the broker
@@ -358,15 +370,15 @@ The direct download and experimental App Store build use the same terminal CLI. 
 terminal context; the app supplies approved credentials and never launches those commands on the CLI's behalf.
 The store integration currently requires a separately signed CLI; its final distribution and review are pending.
 
-`LATCHKEY_BROKER=auto` (the default) uses the registered Latchkey app's distribution metadata. Store metadata must
+`PISTACHIO_BROKER=auto` (the default) uses the registered Pistachio app's distribution metadata. Store metadata must
 come from an app whose signature matches the CLI's developer team and application ID. `direct` explicitly selects
-the existing Application Support socket; `app-store` selects the dedicated `cli.sock` in Latchkey's App Group.
+the existing Application Support socket; `app-store` selects the dedicated `cli.sock` in Pistachio's App Group.
 There is no fallback to another broker after a connection or authentication failure.
 
-`LATCHKEY_LOCAL_SOCKET=/absolute/path` overrides a **local** endpoint for development and diagnostics while retaining
-its signature checks. It cannot be combined with `LATCHKEY_SOCKET`, which explicitly selects SSH forwarding.
+`PISTACHIO_LOCAL_SOCKET=/absolute/path` overrides a **local** endpoint for development and diagnostics while retaining
+its signature checks. It cannot be combined with `PISTACHIO_SOCKET`, which explicitly selects SSH forwarding.
 Forwarding to the App Store endpoint is not yet supported: its listener admits only the same-team signed CLI,
-not an SSH process. Existing forwarding to the direct broker remains available with `LATCHKEY_BROKER=direct`.
+not an SSH process. Existing forwarding to the direct broker remains available with `PISTACHIO_BROKER=direct`.
 
-`latchkey log` reads the selected broker's log through this connection, including when the broker uses a sandbox
+`pistachio log` reads the selected broker's log through this connection, including when the broker uses a sandbox
 container or is forwarded over SSH. It requires an updated broker. `--limit` accepts 0 through 1000 entries.

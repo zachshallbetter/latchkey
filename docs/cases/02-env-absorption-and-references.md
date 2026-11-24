@@ -16,19 +16,19 @@ STRIPE_SECRET_KEY=example-not-a-real-key
 
 Import with a reviewed plan:
 ```sh
-latchkey import .env.local --dry-run
-latchkey import .env.local --rewrite
+pistachio import .env.local --dry-run
+pistachio import .env.local --rewrite
 ```
 
 Afterward:
 ```dotenv
-DATABASE_URL=latchkey://shop/development/DATABASE_URL
-STRIPE_SECRET_KEY=latchkey://shop/development/STRIPE_SECRET_KEY
+DATABASE_URL=pistachio://shop/development/DATABASE_URL
+STRIPE_SECRET_KEY=pistachio://shop/development/STRIPE_SECRET_KEY
 ```
 
 Launch:
 ```sh
-latchkey run --env-file .env.local -- npm test
+pistachio run --env-file .env.local -- npm test
 ```
 
 The file expresses which credentials the application requires. The vault holds values; the launcher resolves them for the consumer when approved. An agent may maintain these **references and other nonsecret configuration** in an env file. Explicit plaintext delivery is still possible when a target has no reference-aware entry point, with its exposure made clear.

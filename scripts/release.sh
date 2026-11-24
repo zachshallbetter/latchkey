@@ -115,6 +115,8 @@ step "Packaging the standalone command-line tool"
 CLI_ZIP="$OUT/latchkey-cli-$VERSION.zip"
 mkdir -p "$OUT/cli"
 ditto "$APP/Contents/Helpers/latchkey" "$OUT/cli/latchkey"
+# Archive all command names as relative links to the same signed executable.
+for name in pst pistachio lk; do ln -sf latchkey "$OUT/cli/$name"; done
 ditto -c -k "$OUT/cli" "$CLI_ZIP"
 (( NOTARIZE )) && notarize "$CLI_ZIP"
 (cd "${CLI_ZIP:h}" && shasum -a 256 "${CLI_ZIP:t}") | tee "$CLI_ZIP.sha256"

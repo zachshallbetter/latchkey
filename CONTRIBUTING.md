@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping. Latchkey is a macOS secrets manager, so changes are held to one rule above the rest: a stored
+Thanks for helping. Pistachio is a macOS secrets manager, so changes are held to one rule above the rest: a stored
 value never reaches a log, an error, test output or a command argument. [docs/development.md](docs/development.md)
 is the canonical guide to the layout, the wire protocol, building and testing; this page is the short version.
 

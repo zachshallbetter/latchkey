@@ -8,6 +8,8 @@ let package = Package(
         .library(name: "LatchkeyCore", targets: ["LatchkeyCore"]),
         // GitHub's sealed box, kept out of LatchkeyCore so the App Store build carries no encryption of its own.
         .library(name: "LatchkeySeal", targets: ["LatchkeySeal"]),
+        .executable(name: "pistachio", targets: ["latchkey"]),
+        .executable(name: "pst", targets: ["latchkey"]),
         .executable(name: "latchkey", targets: ["latchkey"]),
         .executable(name: "latchkey-broker", targets: ["latchkey-broker"]),
     ],

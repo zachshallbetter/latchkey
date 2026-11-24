@@ -1,12 +1,12 @@
 # Importing
 
-`latchkey import` moves values from `.env` files into Latchkey. It prints IDs and counts, never values.
+`pst import` moves values from `.env` files into Pistachio. It prints IDs and counts, never values.
 
 ## One file
 
 ```bash
-latchkey import .env.local --dry-run
-latchkey import .env.local --rewrite
+pst import .env.local --dry-run
+pst import .env.local --rewrite
 ```
 
 - **Project**: the repository's folder name (from a worktree, the main checkout's), lowercased, with anything other
@@ -24,21 +24,21 @@ latchkey import .env.local --rewrite
   | `.env.qa` and other names | the name itself (`qa`) |
 
 - `--shared` imports every key as a shared item named after the key, with no project.
-- `--rewrite` replaces each imported value in the file with its `latchkey://` reference. Comments, order, blank lines,
+- `--rewrite` replaces each imported value in the file with its `pistachio://` reference. Comments, order, blank lines,
   `export`, indentation and line endings on untouched lines are kept, as are file permissions. Replaced assignments
   lose their inline comments. A quoted multiline value is replaced in full.
 
 Import also records the file's variables in its environment's record (see [Environments](cli.md#environments)):
-each imported key, and lines that already hold a `latchkey://` reference. A record that doesn't exist yet starts with
+each imported key, and lines that already hold a `pistachio://` reference. A record that doesn't exist yet starts with
 the environment's items. The whole import asks for approval once. Quoted multiline values are supported; double quotes decode `\n`,
 `\r`, `\t`, `\"` and `\\`, while single quotes keep escapes literally. Values are literal: no shell
 interpolation or command substitution runs. Malformed syntax refuses the entire plan before values are saved.
-If a file changes while approval is pending, its saved values remain in Latchkey, but rewriting stops so your
+If a file changes while approval is pending, its saved values remain in Pistachio, but rewriting stops so your
 new edits are preserved; review and import the file again.
 
 ## What's left alone
 
-- Empty values, and values that are already `latchkey://` references.
+- Empty values, and values that are already `pistachio://` references.
 - `VERCEL_OIDC_TOKEN`, `VERCEL_*` and `TURBO_*`, which `vercel env pull` writes and which expire. `--no-default-skip`
   imports them; `--skip PATTERN,...` adds your own patterns.
 - Items that already exist, unless you pass `--replace` (the old value is kept as a version).
@@ -52,7 +52,7 @@ Each line is classed before anything is saved:
 | Secret | tokens, passwords, connection strings with credentials, key blocks | Saved masked |
 | Setting | `PORT`, `NODE_ENV`, `LOG_LEVEL`, `*_ENABLED`, `*_PORT`, `true`/`false` values | Left in the file |
 | Public | `NEXT_PUBLIC_*`, `VITE_*`, `PUBLIC_*`, `EXPO_PUBLIC_*`, `REACT_APP_*`, publishable and public keys, IDs and hosts, web addresses with no credentials | Saved as a plain value (not masked, not agent-safe unless you say so) |
-| Reference | `latchkey://...` | Left alone |
+| Reference | `pistachio://...` | Left alone |
 
 A value that carries credentials (a key block, a URL with a user or password) is a secret whatever its name says,
 and anything unclear is a secret. `--dry-run` prints a count per class and each setting it would leave. Change a line
@@ -66,7 +66,7 @@ aren't remembered between imports yet.
   are passwords, and so are URL and DSN names whose value carries credentials. Everything else defaults to token.
   Set them with `--kind KIND` (all) or `--kind KEY=KIND` (one).
 - **Service** is guessed from token prefixes (`sk_live_` is Stripe, `ghp_` is GitHub), hosts in connection strings
-  (`neon.tech` is Neon) and key names (`STRIPE_`). Edit it later in the app or with `latchkey update`.
+  (`neon.tech` is Neon) and key names (`STRIPE_`). Edit it later in the app or with `pst update`.
 - **Agent-safe**: nothing is, unless you say so. `--agent-safe KEY,...` (or `all`) marks keys; `--agent-safe-pattern
   'NEXT_PUBLIC_*,VITE_*,PUBLIC_*,EXPO_PUBLIC_*'` imports matching names as agent-safe plain values, since they ship
   to browsers anyway.
@@ -74,8 +74,8 @@ aren't remembered between imports yet.
 ## Many files at once
 
 ```bash
-latchkey import --scan ~/Projects --share-identical --agent-safe-pattern 'NEXT_PUBLIC_*,VITE_*' --dry-run
-latchkey import --scan ~/Projects --share-identical --agent-safe-pattern 'NEXT_PUBLIC_*,VITE_*' --rewrite
+pst import --scan ~/Projects --share-identical --agent-safe-pattern 'NEXT_PUBLIC_*,VITE_*' --dry-run
+pst import --scan ~/Projects --share-identical --agent-safe-pattern 'NEXT_PUBLIC_*,VITE_*' --rewrite
 ```
 
 `--scan` finds every `.env` and `.env.*` under the folder, four levels deep, and skips examples and templates
@@ -84,7 +84,7 @@ latchkey import --scan ~/Projects --share-identical --agent-safe-pattern 'NEXT_P
 folders inside one repository that use the same environment show up as conflicts, and nothing conflicting is
 imported; give those files their own `--project` in separate imports.
 
-To choose the files yourself, list them (`latchkey import a/.env b/.env.local`) or put them in a file, one per line,
+To choose the files yourself, list them (`pst import a/.env b/.env.local`) or put them in a file, one per line,
 and pass `--batch envs.txt`.
 
 - Each file goes into its own project and environment.
@@ -108,4 +108,4 @@ project, environment, classes, kinds and agent-safe settings editable before you
 - An import that was interrupted can be run again: items that already exist are skipped, and only saved values are
   rewritten.
 - To undo an import, delete the items (they go to Recently Deleted) and put the file back from your editor or version
-  control. Latchkey doesn't keep a copy of the file.
+  control. Pistachio doesn't keep a copy of the file.

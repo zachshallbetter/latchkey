@@ -1,12 +1,18 @@
 {
   "name": "latchkey",
-  "displayName": "Latchkey",
+  "displayName": "Pistachio",
   "version": "0.1.0",
-  "description": "Run commands that need API keys through Latchkey instead of .env values: a skill that teaches the agent to use lk, and Latchkey's MCP server.",
+  "description": "Run commands that need API keys through Pistachio instead of .env values: a skill that teaches the agent to use pst, and Pistachio’s MCP server.",
   "author": {
     "name": "Zach Shallbetter"
   },
-  "keywords": ["secrets", "api-keys", "env", "keychain", "mcp"],
+  "keywords": [
+    "secrets",
+    "api-keys",
+    "env",
+    "keychain",
+    "mcp"
+  ],
   "homepage": "https://github.com/zachshallbetter/latchkey",
   "repository": "https://github.com/zachshallbetter/latchkey"
 }
