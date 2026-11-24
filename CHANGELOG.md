@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 (2026-11-23)
+
+### App
+- Added a local Pistachio/Key icon choice in General settings for the Dock, menu bar and in-app marks.
+- Updated the bundled app and Safari icons to the supplied Pistachio mark. Finder and Safari keep the bundled
+  icon; switching styles does not modify the signed app. Existing command aliases are retained.
 
 ### CLI
 - Every `LATCHKEY_` environment variable can also be set as `PISTACHIO_` (`PISTACHIO_SOCKET`, `PISTACHIO_BROKER`,
