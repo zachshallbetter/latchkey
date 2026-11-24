@@ -58,6 +58,7 @@ struct SettingsView: View {
     @Bindable var model: AppModel
     var section: SettingsSection
     @AppStorage(AppPreferences.Key.appearance) private var appearance = "system"
+    @AppStorage(AppPreferences.Key.icon) private var icon = AppPreferences.Icon.pistachio.rawValue
     @AppStorage(AppPreferences.Key.clipboardSeconds) private var clipboardSeconds = AppPreferences.defaultClipboardSeconds
     @AppStorage(AppPreferences.Key.revealSeconds) private var revealSeconds = AppPreferences.defaultRevealSeconds
     @AppStorage(AppPreferences.Key.hideOnDeactivate) private var hideOnDeactivate = true
@@ -98,6 +99,18 @@ struct SettingsView: View {
                 Text("Light").tag("light")
                 Text("Dark").tag("dark")
             }
+            Picker("Icon", selection: Binding(get: { AppPreferences.Icon(preference: icon).rawValue }, set: { icon = $0 })) {
+                ForEach(AppPreferences.Icon.allCases, id: \.rawValue) { choice in
+                    Label {
+                        Text(choice.title)
+                    } icon: {
+                        Image(nsImage: AppBranding.image(for: choice)).resizable().scaledToFit().frame(width: 28, height: 28)
+                    }
+                    .tag(choice.rawValue)
+                }
+            }
+            .pickerStyle(.radioGroup)
+            SettingsNote("Changes the Dock icon, menu bar symbol and marks inside the app. Finder and Safari keep the bundled Pistachio icon.")
             SettingsNote("Preferences are saved on this Mac. They do not change the settings on your other Macs.")
         }
         Section("Startup & Dock") {
@@ -177,13 +190,13 @@ struct SettingsView: View {
     @ViewBuilder private var developer: some View {
         Section("Command Line") {
             #if LATCHKEY_APP_STORE
-            SettingsNote("The command-line tool, pistachio (pst for short; pst and latchkey remain compatible), is a separate, signed download. It connects to this app through an authenticated App Group endpoint, and every value it asks for is approved here.")
+            SettingsNote("The command-line tool, pistachio (pst for short), is a separate, signed download. It connects to this app through an authenticated App Group endpoint, and every value it asks for is approved here.")
             Link("Get the Command-Line Tool", destination: AppModel.commandLineToolPage)
             #else
             if let tool = model.bundledTool {
                 LabeledContent("Bundled CLI", value: tool.lastPathComponent)
                 Button("Install Command Line Tool…") { model.installCommandLineTool() }
-                SettingsNote("Links ~/.local/bin/pst, pistachio, pst and latchkey to the copy inside Latchkey, so they update with the app. Existing files are left alone.")
+                SettingsNote("Links pst and pistachio in ~/.local/bin to the copy inside the app, so they update with it. Existing files are left alone.")
             } else if let tool = model.installedTool {
                 LabeledContent("Installed", value: (tool.path as NSString).abbreviatingWithTildeInPath)
                 SettingsNote("Installed separately from this copy of Latchkey (by scripts/install.sh, Homebrew or the download), so update it the same way.")

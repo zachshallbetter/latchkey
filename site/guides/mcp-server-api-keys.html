@@ -1,10 +1,11 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>try{var savedTheme=localStorage.getItem("pistachio-theme");if(savedTheme==="light"||savedTheme==="dark")document.documentElement.dataset.theme=savedTheme}catch(e){}</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>How to keep API keys out of MCP server configs · Pistachio</title>
-  <meta name="description" content="Start an MCP server through pst run so its config holds a pistachio:// reference instead of the API key, and the key stays in iCloud Keychain.">
+  <meta name="description" content="Start an MCP server through pistachio run so its config holds a pistachio:// reference instead of the API key, and the key stays in iCloud Keychain.">
   <link rel="canonical" href="https://latchkey.snackstud.io/guides/mcp-server-api-keys.html">
   <meta property="og:url" content="https://latchkey.snackstud.io/guides/mcp-server-api-keys.html">
   <meta property="og:type" content="article">
@@ -14,10 +15,10 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="How to keep API keys out of MCP server configs. Pistachio, a Mac app from Snack Studio.">
   <meta property="og:title" content="How to keep API keys out of MCP server configs · Pistachio">
-  <meta property="og:description" content="Start an MCP server through pst run so its config holds a pistachio:// reference instead of the API key, and the key stays in iCloud Keychain.">
+  <meta property="og:description" content="Start an MCP server through pistachio run so its config holds a pistachio:// reference instead of the API key, and the key stays in iCloud Keychain.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fafaf6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151b17" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="../logo.svg" type="image/svg+xml">
   <link rel="author" href="https://zachshallbetter.com/">
   <link rel="icon" href="../favicon.ico" sizes="48x48">
@@ -33,7 +34,7 @@
   <meta property="og:locale" content="en_US">
   <meta property="og:image:type" content="image/jpeg">
   <meta name="twitter:title" content="How to keep API keys out of MCP server configs · Pistachio">
-  <meta name="twitter:description" content="Start an MCP server through pst run so its config holds a pistachio:// reference instead of the API key, and the key stays in iCloud Keychain.">
+  <meta name="twitter:description" content="Start an MCP server through pistachio run so its config holds a pistachio:// reference instead of the API key, and the key stays in iCloud Keychain.">
   <meta name="twitter:image" content="https://latchkey.snackstud.io/social/guides-mcp-server-api-keys.jpg">
   <meta name="twitter:image:alt" content="How to keep API keys out of MCP server configs. Pistachio, a Mac app from Snack Studio.">
   <meta property="article:author" content="https://zachshallbetter.com/">
@@ -60,7 +61,7 @@
       "@id": "https://latchkey.snackstud.io/guides/mcp-server-api-keys.html#webpage",
       "url": "https://latchkey.snackstud.io/guides/mcp-server-api-keys.html",
       "name": "How to keep API keys out of MCP server configs · Pistachio",
-      "description": "Start an MCP server through pst run so its config holds a pistachio:// reference instead of the API key, and the key stays in iCloud Keychain.",
+      "description": "Start an MCP server through pistachio run so its config holds a pistachio:// reference instead of the API key, and the key stays in iCloud Keychain.",
       "inLanguage": "en",
       "isPartOf": {
         "@id": "https://latchkey.snackstud.io/#website"
@@ -113,7 +114,7 @@
       "@type": "TechArticle",
       "@id": "https://latchkey.snackstud.io/guides/mcp-server-api-keys.html#article",
       "headline": "Keep API keys out of MCP server configs",
-      "description": "Start an MCP server through pst run so its config holds a pistachio:// reference instead of the API key, and the key stays in iCloud Keychain.",
+      "description": "Start an MCP server through pistachio run so its config holds a pistachio:// reference instead of the API key, and the key stays in iCloud Keychain.",
       "url": "https://latchkey.snackstud.io/guides/mcp-server-api-keys.html",
       "datePublished": "2026-11-14",
       "author": {
@@ -165,6 +166,7 @@
   ]
 }
   </script>
+  <link rel="stylesheet" href="../pistachio.css?v=20261123-depth">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -178,12 +180,21 @@
         <li><a href="../security.html">Security</a></li>
         <li><a href="../developers/index.html">Developers</a></li>
         <li><a href="index.html" aria-current="page">Guides</a></li>
-        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a></li>
       </ul>
-    </nav>
+    <details class="mobile-menu"><summary><i class="ic ic-menu" aria-hidden="true"></i>Menu</summary><div class="mobile-menu-links">
+        <a href="../features.html">Features</a>
+        <a href="../index.html#how">How it works</a>
+        <a href="../pricing.html">Pricing</a>
+        <a href="../security.html">Security</a>
+        <a href="../developers/index.html">Developers</a>
+        <a href="index.html" aria-current="page">Guides</a>
+        <a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+      </div></details></nav>
   </header>
 
   <main id="main" class="wrap docs guides">
+    <aside class="brand-transition" aria-label="Product name update">Pistachio is the new name for Pistachio. The current download, <code>pst</code> commands and <code>pistachio://</code> references still use the original names.</aside>
     <nav class="side" aria-label="Developers and guides"><div class="side-group"><p class="side-title">Developers</p><ul><li><a href="../developers/index.html"><i class="ic ic-book" aria-hidden="true"></i>Overview</a></li><li><a href="../developers/quickstart.html"><i class="ic ic-bolt" aria-hidden="true"></i>Quickstart</a></li><li><a href="../developers/cli.html"><i class="ic ic-terminal" aria-hidden="true"></i>CLI reference</a></li><li><a href="../developers/agents.html"><i class="ic ic-agent" aria-hidden="true"></i>Agents and MCP</a></li><li><a href="../developers/api.html"><i class="ic ic-code" aria-hidden="true"></i>References and API</a></li></ul></div><div class="side-group current"><p class="side-title">Guides</p><ul><li><a href="index.html"><i class="ic ic-grid" aria-hidden="true"></i>All guides</a></li><li><a href="index.html#env"><i class="ic ic-fileenv" aria-hidden="true"></i>Env files</a></li><li><a href="index.html#agents" class="here"><i class="ic ic-sparkles" aria-hidden="true"></i>Coding agents</a></li><li><a href="index.html#deploy"><i class="ic ic-upload" aria-hidden="true"></i>Deploying</a></li><li><a href="index.html#everyday"><i class="ic ic-macs" aria-hidden="true"></i>Everyday use</a></li></ul></div></nav>
     <article class="doc">
       <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Pistachio</a></li><li><a href="index.html">Guides</a></li><li><span aria-current="page">MCP servers</span></li></ol></nav>
@@ -192,7 +203,7 @@
       <p class="lede">MCP clients start servers from a JSON config, and the usual way to give a server its key is to type the key into that file. Pistachio lets the config hold a reference instead.</p>
       <p class="byline"><span>By <a href="https://zachshallbetter.com/" rel="author">Zach Shallbetter</a></span><span>Published 14 November 2026</span><span>Needs <a href="../cli.html">the command-line tool</a></span></p>
       <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#why-the-config-is-a-problem">Why the config is a problem</a></li><li><a href="#wrap-the-server">Wrap the server</a></li><li><a href="#pistachio-s-own-mcp-server">Pistachio's own MCP server</a></li><li><a href="#what-this-doesn-t-do">What this doesn't do</a></li></ul></nav>
-      <div class="short"><p><b>In short</b>Save the key in Pistachio, then change the server's command to <code>pst run --no-masking -- …</code> and put <code>pistachio://NAME</code> in its <code>env</code>. The client starts the server as before; Pistachio fills the key in for that process.</p></div>
+      <div class="short"><p><b>In short</b>Save the key in Pistachio, then change the server's command to <code>pistachio run --no-masking -- …</code> and put <code>pistachio://NAME</code> in its <code>env</code>. The client starts the server as before; Pistachio fills the key in for that process.</p></div>
 <h2 id="why-the-config-is-a-problem">Why the config is a problem</h2>
     <p>A config such as <code>.mcp.json</code> or Claude Desktop's settings file holds every server's keys in plain text. It gets shared to set up a teammate, checked into a repository for a project's tools, or synced between Macs, and every key in it goes along.</p>
 
@@ -204,7 +215,7 @@
         <p>The value is read from a hidden prompt or standard input, so it never appears in your shell history.</p>
       </li>
       <li>
-        <h3>Start the server through <code>pst run</code></h3>
+        <h3>Start the server through <code>pistachio run</code></h3>
         <figure class="code"><figcaption><span>MCP server config</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="json">{
   &quot;command&quot;: &quot;pistachio&quot;,
   &quot;args&quot;: [&quot;run&quot;, &quot;--no-masking&quot;, &quot;--&quot;, &quot;npx&quot;, &quot;-y&quot;, &quot;some-mcp-server&quot;],
@@ -220,7 +231,7 @@
     </ol>
 
     <h2 id="pistachio-s-own-mcp-server">Pistachio's own MCP server</h2>
-    <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">claude mcp add pistachio -- ~/.local/bin/pst mcp</code></pre></figure>
+    <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">claude mcp add pistachio -- ~/.local/bin/pistachio mcp</code></pre></figure>
     <p>For clients without a shell, Pistachio's server offers status, listing, checking, running commands with references filled in, and asking you for a grant. It has no tool that reads a value, and the output it returns is masked.</p>
 
     <h2 id="what-this-doesn-t-do">What this doesn't do</h2>

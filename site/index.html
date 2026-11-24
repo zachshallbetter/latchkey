@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Pistachio: free Mac secrets manager for .env files and agents</title>
-  <meta name="description" content="Pistachio keeps API keys, database URLs and key files in your Mac's iCloud Keychain and fills them in when a command starts. Free to download.">
+  <title>Pistachio: Your secrets. In a shell.</title>
+  <meta name="description" content="API keys, database credentials and key files in your Mac’s Keychain. Pistachio fills them in for the commands and coding agents you approve.">
   <link rel="canonical" href="https://latchkey.snackstud.io/">
   <meta property="og:url" content="https://latchkey.snackstud.io/">
   <meta property="og:type" content="website">
@@ -13,8 +13,8 @@
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Your secrets. In a shell. Pistachio, a Mac app from Snack Studio.">
-  <meta property="og:title" content="Pistachio: free Mac secrets manager for .env files and agents">
-  <meta property="og:description" content="Pistachio keeps API keys, database URLs and key files in your Mac's iCloud Keychain and fills them in when a command starts. Free to download.">
+  <meta property="og:title" content="Pistachio: Your secrets. In a shell.">
+  <meta property="og:description" content="API keys, database credentials and key files in your Mac’s Keychain. Pistachio fills them in for the commands and coding agents you approve.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="author" content="Zach Shallbetter">
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
@@ -22,13 +22,13 @@
   <meta name="apple-mobile-web-app-title" content="Pistachio">
   <meta property="og:locale" content="en_US">
   <meta property="og:image:type" content="image/png">
-  <meta name="twitter:title" content="Pistachio: free Mac secrets manager for .env files and agents">
-  <meta name="twitter:description" content="Pistachio keeps API keys, database URLs and key files in your Mac&#x27;s iCloud Keychain and fills them in when a command starts. Free to download.">
+  <meta name="twitter:title" content="Pistachio: Your secrets. In a shell.">
+  <meta name="twitter:description" content="API keys, database credentials and key files in your Mac’s Keychain. Pistachio fills them in for the commands and coding agents you approve.">
   <meta name="twitter:image" content="https://latchkey.snackstud.io/og.png">
   <meta name="twitter:image:alt" content="Your secrets. In a shell. Pistachio, a Mac app from Snack Studio.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fafaf6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151b17" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="logo.svg" type="image/svg+xml">
   <link rel="author" href="https://zachshallbetter.com/">
   <link rel="icon" href="favicon.ico" sizes="48x48">
@@ -37,7 +37,7 @@
   <link rel="alternate" type="text/plain" href="llms.txt" title="Pistachio for language models">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="stylesheet" href="site.css">
-  <script>document.documentElement.classList.add("js")</script>
+  <script>document.documentElement.classList.add("js");try{var savedTheme=localStorage.getItem("pistachio-theme");if(savedTheme==="light"||savedTheme==="dark")document.documentElement.dataset.theme=savedTheme}catch(e){}</script>
   <style>
     /* Home page. The shop project from a fresh clone to rotation: a hero scene, four numbered movements beside
        scenes (scenes.js), then the interactive approval panel, the app window and the key proxy. Text sections keep
@@ -359,6 +359,7 @@
   ]
 }
   </script>
+  <link rel="stylesheet" href="pistachio.css?v=20261123-depth">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -372,21 +373,30 @@
         <li><a href="security.html">Security</a></li>
         <li><a href="developers/index.html">Developers</a></li>
         <li><a href="guides/index.html">Guides</a></li>
-        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a></li>
       </ul>
-    </nav>
+    <details class="mobile-menu"><summary><i class="ic ic-menu" aria-hidden="true"></i>Menu</summary><div class="mobile-menu-links">
+        <a href="features.html">Features</a>
+        <a href="index.html#how">How it works</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="security.html">Security</a>
+        <a href="developers/index.html">Developers</a>
+        <a href="guides/index.html">Guides</a>
+        <a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+      </div></details></nav>
   </header>
 
   <main id="main" class="wrap home">
-    <section class="hero" aria-labelledby="title" data-hue="blue">
+    <section class="hero pistachio-hero" aria-labelledby="title" data-hue="green">
       <div class="hero-copy">
-      <p class="eyebrow">A native Mac tool for developers</p>
-      <h1 id="title">Your projects <span class="moves">move.</span> <span class="soft">Your secrets <span class="stays">don't.</span></span></h1>
-      <p class="lede">Development credentials live in your Mac's iCloud Keychain. Pistachio fills them in when a command starts.</p>
+      <p class="eyebrow pistachio-eyebrow"><span class="brand-seed" aria-hidden="true"></span>A native Mac app by Snack Studio</p>
+      <h1 id="title">Your secrets.<br><span>In a shell.</span></h1>
+      <p class="lede">API keys and credentials, kept in Keychain. Ready for the commands and coding agents you approve.</p>
       <div class="cta">
-        <a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
-        <a class="button secondary" href="#how">See how it works</a>
+        <a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+        <a class="hero-secondary" href="#how">See how it works <span aria-hidden="true">↗</span></a>
       </div>
+      <p class="hero-facts">Free to use · macOS 15 or later</p>
       <div class="audience" role="group" aria-label="Show this page for">
         <button type="button" data-aud="humans" aria-pressed="true">For humans</button>
         <button type="button" data-aud="agents" aria-pressed="false" aria-controls="for-agents">For agents</button>
@@ -395,36 +405,57 @@
         <p>Give your coding agent this line. <a href="llms.txt">llms.txt</a> has the rules, setup, commands, MCP and exit codes in one file; <a href="llms-full.txt">llms-full.txt</a> has every page as text.</p>
         <figure class="code"><figcaption><span>For your agent</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">Read https://latchkey.snackstud.io/llms.txt and follow it whenever you need secrets in this project.</code></pre></figure>
       </div>
-      <p class="hero-facts">Free · Notarized by Apple · macOS 15 or later</p>
       </div>
 
-      <div class="hero-art">
-      <div class="scene-wrap hero-scene" data-scene="flow" style="--w:600;--h:340;--pw:360;--ph:494" aria-hidden="true">
-        <div class="canvas" id="flow">
-          <div class="mw ed" id="flow-env" style="left:12px;top:16px;width:400px;height:142px">
-            <div class="mw-bar"><i></i><i></i><i></i><span>shop/.env.local</span></div>
-<pre><span class="ln r"><span class="key">DATABASE_URL</span>=<span class="ref">pistachio://shop/development/DATABASE_URL</span></span><span class="ln r"><span class="key">STRIPE_KEY</span>=<span class="ref">pistachio://shop/development/STRIPE_KEY</span></span><span class="ln r"><span class="key">OPENAI_API_KEY</span>=<span class="ref">pistachio://OPENAI_API_KEY</span></span><span class="ln kept"><span class="key">PORT</span>=<span class="lit">3000</span></span></pre>
+      <figure class="hero-art product-preview" aria-label="Illustrated Pistachio design preview, with example data">
+        <div class="product-window" aria-hidden="true">
+          <div class="pw-sidebar">
+            <span class="pw-traffic"><i></i><i></i><i></i></span>
+            <div class="pw-nav selected"><i class="ic ic-grid"></i>All Items</div>
+            <div class="pw-group">PROJECTS</div>
+            <div class="pw-nav"><i class="ic ic-folder"></i>shop</div>
+            <div class="pw-nav"><i class="ic ic-folder"></i>api</div>
+            <div class="pw-divider"></div>
+            <div class="pw-nav"><i class="ic ic-pulse"></i>Activity</div>
+            <div class="pw-nav"><i class="ic ic-shield"></i>Grants</div>
+            <div class="pw-storage"><i class="ic ic-cloud"></i>iCloud Keychain</div>
           </div>
-          <div class="lk-card" style="left:424px;top:24px;width:164px">
-            <div class="head"><span class="mark"><img src="logo.svg" alt=""></span><div><b>Pistachio</b><small>iCloud Keychain</small></div></div>
-            <div class="state done" id="flow-state"><svg class="fp" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg><span>Values stay out of the file and the output</span></div>
+          <div class="pw-main">
+            <div class="pw-title"><b><img src="logo.svg" width="17" height="20" alt="">Pistachio</b><span><i class="ic ic-search"></i><i class="ic ic-plus"></i></span></div>
+            <div class="pw-panes">
+              <div class="pw-list"><b class="pw-list-title">All Items</b>
+                <div class="pw-item selected"><i class="ic ic-db"></i><div><b>DATABASE_URL</b><small>shop / production</small></div></div>
+                <div class="pw-item"><i class="ic ic-key"></i><div><b>STRIPE_KEY</b><small>shop / production</small></div></div>
+                <div class="pw-item"><i class="ic ic-key"></i><div><b>GITHUB_TOKEN</b><small>blog / development</small></div></div>
+                <div class="pw-item"><i class="ic ic-key"></i><div><b>OPENAI_API_KEY</b><small>Shared</small></div></div>
+              </div>
+              <div class="pw-detail"><div class="pw-detail-head"><span class="pw-keytile"><i class="ic ic-key"></i></span><div><b>DATABASE_URL</b><small>shop / production</small></div></div>
+                <div class="pw-field"><span>Value</span><div class="pw-value">••••••••••••••<i class="ic ic-eye"></i></div></div>
+                <div class="pw-field"><span>Reference</span><code>pistachio://shop/production/DATABASE_URL</code></div>
+                <div class="pw-field"><span>Access</span><div class="pw-value">Ask first<i class="ic ic-shield"></i></div></div>
+              </div>
+            </div>
           </div>
-          <div class="mw tty" style="left:12px;top:172px;width:576px;height:156px">
-            <div class="mw-bar"><i></i><i></i><i></i><span>Terminal — ~/Projects/shop</span></div>
-<pre id="flow-tty"><span class="l"><span class="p">~/Projects/shop $</span> pst run --env-file .env.local -- npm run dev</span><span class="l"><span class="d">&gt; shop@1.0.0 dev</span></span><span class="l"><span class="d">&gt; next dev</span></span><span class="l"></span><span class="l">  ▲ Next.js</span><span class="l">  - Local:   http://localhost:3000</span><span class="l">  <span class="ok">✓ Ready</span></span></pre>
-          </div>
-          <span class="chip ref">DATABASE_URL</span><span class="chip ref">STRIPE_KEY</span><span class="chip ref">OPENAI_API_KEY</span>
-          <span class="chip val">••••••••</span><span class="chip val">••••••••</span><span class="chip val">••••••••</span>
         </div>
-      </div>
-      <p class="fine scene-cap">Your app gets the variables it expects; nothing is rewritten around a new secrets API. Example data.</p>
-      </div>
+        <div class="pw-supporting" aria-hidden="true">
+          <div class="pw-terminal"><div class="pw-traffic"><i></i><i></i><i></i></div><pre><span>$</span> pst run --env shop/development -- npm test
+<span class="pw-concealed">&lt;concealed by pistachio&gt;</span>
+<span class="pw-passed">Test Files  2 passed (2)</span></pre></div>
+          <div class="pw-approval"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12M18 34c0-6 2-10 6-10s6 4 6 10M24 30v8M10 26c1-9 7-15 14-15s13 6 14 15M12 16c3-4 7-6 12-6s9 2 12 6"/></svg><div><b>Claude wants to use 2 items</b><div class="pw-choices"><span>Deny</span><span>Allow Once</span></div></div></div>
+        </div>
+        <figcaption>Design preview with example data. <a href="#app">Try the working app demo</a>.</figcaption>
+      </figure>
     </section>
 
+    <div class="pistachio-principles" aria-label="The essentials">
+      <div><i class="ic ic-key" aria-hidden="true"></i><b>Kept in Keychain.</b></div>
+      <div><i class="ic ic-code" aria-hidden="true"></i><b>References in your files.</b></div>
+      <div><i class="ic ic-shield" aria-hidden="true"></i><b>Access you approve.</b></div>
+    </div>
     <section class="section" id="how" aria-labelledby="how-title" data-hue="blue">
       <div class="shead">
-        <h2 id="how-title">From scattered .env files to a working project.</h2>
-        <p class="intro">Import the environment you already have. Pistachio stores the credentials and replaces their values with references. On another Mac, restore the project's environment and get back to work. The environment travels with the project; the credential stays in your vault.</p>
+        <h2 id="how-title">Less copying. More building.</h2>
+        <p class="intro">Import your environment once. Keep your workflow. Pistachio keeps the values in Keychain and leaves references in your project. Your commands get the credentials you approve when they start.</p>
       </div>
 
       <div class="feature">
@@ -643,12 +674,13 @@ pst import .env.local --rewrite --skip PORT</code></pre></figure>
       <p class="intro">For OpenAI and Anthropic, Pistachio's local proxy keeps the upstream key out of the command while forwarding its API requests. The process can still use the provider; it never receives the original key. Try what a command could do with it:</p>
       </div>
       <div class="scene proxy" id="proxy-demo">
+        <div class="proxy-demo-heading"><h3>Try a command</h3><span>Interactive example · no real keys</span></div>
         <div class="lanes">
           <div class="lane"><p class="label">In the command's environment</p><pre>OPENAI_API_KEY=lk-proxy-3f9c…8e4a
 OPENAI_BASE_URL=http://127.0.0.1:52817/v1</pre></div>
           <div class="wire" aria-hidden="true"><span class="hop">pst run</span><i class="packet"></i></div>
-          <div class="lane"><p class="label">Arriving at <span id="proxy-host">api.openai.com</span></p><pre>POST /v1/chat/completions
-Authorization: Bearer <span id="proxy-auth">lk-proxy-3f9c…8e4a</span></pre></div>
+          <div class="lane"><p class="label">Destination: <span id="proxy-host">api.openai.com</span></p><pre>POST /v1/chat/completions
+Authorization: Bearer <span id="proxy-auth">— (no request yet)</span></pre></div>
         </div>
         <div class="actions" role="group" aria-label="Things the command can try">
           <button class="button secondary small" type="button" data-try="call">Call the API</button>
@@ -659,7 +691,7 @@ Authorization: Bearer <span id="proxy-auth">lk-proxy-3f9c…8e4a</span></pre></d
         <div class="term mini"><pre id="proxy-out"><span class="d">Choose something for the command to try.</span></pre></div>
         <p class="fine" id="proxy-status" aria-live="polite"></p>
       </div>
-      <div class="col after">
+      <div class="col after proxy-details">
         <p>The command gets a placeholder and a base URL on your Mac; Pistachio adds the real key to requests bound for <code>api.openai.com</code> or <code>api.anthropic.com</code> and refuses unauthenticated ones. Other credentials are still delivered normally. For AWS, <code>pst run --aws-session</code> gives the command STS credentials that expire after 15 minutes, while your long-lived key stays in Pistachio.</p>
         <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code>pst run --proxy --env shop/development -- npm test
 pst run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></pre></figure>
@@ -729,13 +761,13 @@ pst run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></
       <div class="shead">
       <h2 id="paths-title">Start from what you came to do</h2>
       </div>
-      <div class="card-grid g3">
+      <div class="card-grid g3 audience-paths">
         <div class="card" data-hue="blue"><span class="cico" aria-hidden="true"><i class="ic ic-terminal"></i></span><b>For developers</b><span>Pistachio is free to download and use. Start there, and see what Pistachio Pro will add when it's ready.</span>
-          <p class="links"><a class="more" href="#install">Download free</a><br><a class="more" href="pricing.html">Free and Pro</a><br><a class="more" href="guides/index.html">Guides</a></p></div>
+          <p class="links"><a class="more" href="#install">Download free</a><a class="more" href="pricing.html">Free and Pro</a><a class="more" href="guides/index.html">Guides</a></p></div>
         <div class="card" data-hue="green"><span class="cico" aria-hidden="true"><i class="ic ic-people"></i></span><b>For teams</b><span>Move a small team's credentials out of scattered env files with a fixed-scope migration from Snack Studio, and help shape Pistachio Teams.</span>
-          <p class="links"><a class="more" href="teams.html">Developer Credential Migration</a><br><a class="more" href="teams.html#teams">Pistachio Teams</a></p></div>
+          <p class="links"><a class="more" href="teams.html">Developer Credential Migration</a><a class="more" href="teams.html#teams">Pistachio Teams</a></p></div>
         <div class="card" data-hue="violet"><span class="cico" aria-hidden="true"><i class="ic ic-shieldcheck"></i></span><b>For technical evaluators</b><span>Inspect how values are stored and released, where protection ends, every command, and what's built and what isn't.</span>
-          <p class="links"><a class="more" href="security.html">Security model</a><br><a class="more" href="developers/index.html">Developer docs</a><br><a class="more" href="roadmap.html">Roadmap</a></p></div>
+          <p class="links"><a class="more" href="security.html">Security model</a><a class="more" href="developers/index.html">Developer docs</a><a class="more" href="roadmap.html">Roadmap</a></p></div>
       </div>
     </section>
 
@@ -752,17 +784,17 @@ pst run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></
     <section class="section" id="install" aria-labelledby="install-title" data-hue="blue">
       <div class="cta-band">
         <div>
-          <h2 id="install-title">Stop being the credential courier.</h2>
-          <p><span class="cta-lead">Keep your projects, credentials and coding agents working together, with access you can inspect and control. </span>Pistachio is free to download and use, and the core is meant to stay free. Pro will add more for a one-time price in the Mac App Store.</p>
+          <h2 id="install-title">A safer home for your secrets.</h2>
+          <p><span class="cta-lead">Keep the project moving. Keep access in your hands. </span>Pistachio is free to download and use, and the core is meant to stay free. Pro will add more for a one-time price in the Mac App Store.</p>
         </div>
         <div class="cta-actions"><a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a><a class="button secondary" href="pricing.html#pro"><i class="ic ic-star" aria-hidden="true"></i>See what Pro adds</a></div>
       </div>
       <ol class="card-grid g3" style="margin-top:16px">
         <li class="card"><span class="step">1</span><b>Download and install</b><span>Open the <a href="https://github.com/zachshallbetter/latchkey/releases/latest">latest disk image</a> and drag Pistachio to Applications, or run <code>brew tap zachshallbetter/latchkey</code>, <code>brew trust zachshallbetter/latchkey</code> and <code>brew install --cask latchkey</code>.</span></li>
-        <li class="card"><span class="step">2</span><b>Add the command-line tool</b><span>The Homebrew cask adds the command aliases for you. With the disk image, open Pistachio and choose <b>Install Command Line Tool…</b> in the app menu to add <code>pst</code>, <code>pistachio</code>  to <code>~/.local/bin</code>. They link to the tool inside the app, so they update with it.</span></li>
+        <li class="card"><span class="step">2</span><b>Add the command-line tool</b><span>The Homebrew cask adds both for you. With the disk image, open Pistachio and choose <b>Pistachio › Install Command Line Tool…</b> to add <code>pistachio</code> and <code>pst</code> to <code>~/.local/bin</code>. They link to the tool inside the app, so they update with it.</span></li>
         <li class="card"><span class="step">3</span><b>Check it</b><span>Run <code>pst status</code>. Beside how you approve, your item and grant counts and the socket, it should say <code>storage: iCloud Keychain</code> and that the app's signature was checked.</span></li>
       </ol>
-      <p class="note-card" style="margin-top:16px"><span class="avail pending">Development preview</span><span>Latest version <a data-latest-version href="changelog.html#v0.4.0">0.4.0</a> (<a href="changelog.html">what's new</a>). Notarized by Apple and free. macOS 15 or later; Intel verification is pending; iCloud Keychain on for sync between Macs. <a href="developers/quickstart.html#install">Installation steps</a> · <a href="https://github.com/zachshallbetter/latchkey">Source</a> · <a href="developers/cli.html">Command reference</a></span></p>
+      <p class="note-card" style="margin-top:16px"><span class="avail pending">Development preview</span><span>Latest version <a data-latest-version href="changelog.html#v0.5.0">0.5.0</a> (<a href="changelog.html">what's new</a>). Notarized by Apple and free. macOS 15 or later; Intel verification is pending; iCloud Keychain on for sync between Macs. <a href="developers/quickstart.html#install">Installation steps</a> · <a href="https://github.com/zachshallbetter/latchkey">Source</a> · <a href="developers/cli.html">Command reference</a></span></p>
     </section>
   </main>
 
@@ -849,7 +881,7 @@ pst run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></
                       "  ▲ Next.js", "  - Local:   http://localhost:3000", "  ✓ Ready"]
     };
     var REFUSED = ['<span class="err">pistachio: refused: shop/development/DATABASE_URL, shop/development/STRIPE_KEY (not agent-safe, not approved, no grant)</span>',
-                   '<span class="err">  Ask the owner to approve it in Pistachio, or to grant it: pst grant shop/development/DATABASE_URL,shop/development/STRIPE_KEY --folder ~/Projects/shop --for 2h. Don\'t retry.</span>'];
+                   '<span class="err">  Ask the owner to approve it in Pistachio, or to grant it: pistachio grant shop/development/DATABASE_URL,shop/development/STRIPE_KEY --folder ~/Projects/shop --for 2h. Don\'t retry.</span>'];
     var run = 0, grant = null, current = null, usedKeyboard = false;
 
     function write(html) { out.innerHTML += html; out.scrollTop = out.scrollHeight; }

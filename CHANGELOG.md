@@ -5,25 +5,34 @@
 ### Command names
 
 - Added `pst` as the preferred short command alongside `pistachio`. App/development installers, Homebrew,
-  standalone archives and SwiftPM expose the new names; `pst` and `pistachio` remain compatible.
+  standalone archives and SwiftPM expose the new names; existing command aliases remain compatible.
 - Updated current help, app suggestions, agent guidance and website examples. Generated pre-commit hooks prefer
   current names and fall back to older aliases. Stored identifiers and historical release notes are unchanged.
 
 
-## Unreleased
+## 0.5.0 (2026-11-23)
+
+### App
+- Added a local Pistachio/Key icon choice in General settings for the Dock, menu bar and in-app marks.
+- Updated the bundled app and Safari icons to the supplied Pistachio mark. Finder and Safari keep the bundled
+  icon; switching styles does not modify the signed app. Existing command aliases are retained.
 
 ### CLI
-- Every `LATCHKEY_` environment variable can also be set as `PISTACHIO_` (`PISTACHIO_SOCKET`, `PISTACHIO_BROKER`,
-  `PISTACHIO_NO_LAUNCH` and the rest), which wins when both are set. The old names keep working.
-- The MCP tools are renamed `pistachio_run`, `pistachio_check`, `pistachio_list`, `pistachio_status`,
-  `pistachio_project`, `pistachio_request_grant` and `pistachio_export_references`. The `latchkey_` names are listed
-  beside them and work the same until the next release. `pistachio_request_grant` no longer says requests are
-  limited to a day, which stopped being true in 0.4.0.
-- The command-line tool also answers to `pistachio`, the product's name after the rename: Install Command Line Tool,
-  `scripts/install.sh` and Homebrew link it beside `pistachio` and `pst`. All three are the same signed tool, so grants
-  for `pistachio run` and `pst run` cover `pistachio run` too, and `pistachio` and `pst` keep working.
-- Env files can use `pistachio://ID` and `pistachio-file://ID` as well as `pistachio://ID` and `pistachio-file://ID`,
-  ahead of the rename to Pistachio. Both mean the same and always will, so existing files keep working unchanged.
+- Added `PISTACHIO_*` environment configuration, with priority over existing configuration names.
+- Added the current `pistachio_*` MCP tool names while preserving compatible clients. Grant requests describe
+  the duration limits implemented by the app.
+- Added the full `pistachio` command to the app installer, development installer and Homebrew packages.
+- Added the current credential and key-file reference schemes alongside existing references; projects keep working.
+
+### Website
+- Rebranded the website as Pistachio with the supplied mark and “Your secrets. In a shell.” brand line.
+  Updated supporting pages, browser icons, social cards and discovery files.
+- Refined the product-led hero, compact audience navigation and interactive proxy panel. Added a mobile menu
+  and a browser-local appearance preference that persists across pages.
+- Used neutral page and code surfaces with restrained green accents, plus independent neutral/blue app
+  depictions. Added layered container shadows and subtle scroll-entry motion that respects reduced motion.
+- Documented `secretsinashell.com` as the intended future domain. Existing downloads, commands, reference
+  scheme, signing identities and published URLs retain their current names; this change does not deploy the site.
 
 ## 0.4.0 (2026-11-18)
 

@@ -310,7 +310,7 @@
       await s.type(tty, "pst touched --since 4h --by claude");
       await s.lines(tty, ["shop/development/DATABASE_URL  4×, last Nov 11, 2026 at 3:12 PM  (zsh › claude › Terminal)",
                           "shop/development/STRIPE_KEY  2×, last Nov 11, 2026 at 3:12 PM  (zsh › claude › Terminal)", "",
-                          '<span class="d">Replace them with: pst rotate --touched --by claude</span>']);
+                          '<span class="d">Replace them with: latchkey rotate --touched --by claude</span>']);
       await s.wait(1000);
       await s.type(tty, "pst rotate shop/development/STRIPE_KEY --open");
       await s.lines(tty, ["ended grant 7c41e9 (shop/development/*)", "",
@@ -359,7 +359,7 @@
       await s.wait(500);
       await s.type(tty, "pst history shop/development/STRIPE_KEY");
       await s.lines(tty, ["1   Nov 11, 2026 at 3:20 PM  replaced  by zsh › Terminal",
-                          '<span class="d">Kept: the last 10 per item. `pst restore shop/development/STRIPE_KEY --version N` puts one back.</span>']);
+                          '<span class="d">Kept: the last 10 per item. `latchkey restore shop/development/STRIPE_KEY --version N` puts one back.</span>']);
       await s.wait(900);
       await s.type(tty, "pst log --verify");
       await s.lines(tty, ['<span class="ok">intact: 412 signed entries</span>']);

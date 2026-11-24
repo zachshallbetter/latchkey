@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <script>document.documentElement.classList.add("js")</script>
+  <script>document.documentElement.classList.add("js");try{var savedTheme=localStorage.getItem("pistachio-theme");if(savedTheme==="light"||savedTheme==="dark")document.documentElement.dataset.theme=savedTheme}catch(e){}</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Features: env references, Keychain and agent access · Pistachio</title>
   <meta name="description" content="What Pistachio does today: stable credential IDs, env files of references, environments that rebuild on any Mac, grants for agents and a verifiable access log.">
@@ -28,8 +28,8 @@
   <meta name="twitter:image" content="https://latchkey.snackstud.io/social/features.jpg">
   <meta name="twitter:image:alt" content="Features: env references, Keychain and agent access. Pistachio, a Mac app from Snack Studio.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fafaf6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151b17" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="logo.svg" type="image/svg+xml">
   <link rel="author" href="https://zachshallbetter.com/">
   <link rel="icon" href="favicon.ico" sizes="48x48">
@@ -144,6 +144,7 @@
   ]
 }
   </script>
+  <link rel="stylesheet" href="pistachio.css?v=20261123-depth">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -157,12 +158,21 @@
         <li><a href="security.html">Security</a></li>
         <li><a href="developers/index.html">Developers</a></li>
         <li><a href="guides/index.html">Guides</a></li>
-        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a></li>
       </ul>
-    </nav>
+    <details class="mobile-menu"><summary><i class="ic ic-menu" aria-hidden="true"></i>Menu</summary><div class="mobile-menu-links">
+        <a href="features.html" aria-current="page">Features</a>
+        <a href="index.html#how">How it works</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="security.html">Security</a>
+        <a href="developers/index.html">Developers</a>
+        <a href="guides/index.html">Guides</a>
+        <a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+      </div></details></nav>
   </header>
 
   <main id="main" class="wrap">
+    <aside class="brand-transition" aria-label="Product name update">Pistachio is the new name for Pistachio. The current download, <code>pst</code> commands and <code>pistachio://</code> references still use the original names.</aside>
     <section class="page-hero" aria-labelledby="title">
       <h1 id="title">Credentials kept by name in Keychain, and <span class="fills">filled in</span> when a command starts.</h1>
       <p class="lede">Credentials that have IDs, history and a home outside any one project. Env files that hold references. Environments that rebuild on another Mac. Commands and agents that use values only when you've said so, and a record of every time they did.</p>
@@ -317,10 +327,10 @@ pst grant 'shop/development/*' --command "npm test" --for 2h</pre><a class="more
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-check"></i></span><h3>Check before a slow run <span class="avail">In this build</span></h3><p>What a run would get without asking, what would ask you, and what's missing. Asks nothing, releases nothing.</p>
           <pre>pst check --env shop/development</pre><a class="more" href="developers/cli.html#check">pst check</a></article>
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-plug"></i></span><h3>MCP server <span class="avail">In this build</span></h3><p>Status, list, check, run, project, export references and request a grant, for clients without a shell. There's no secret-read tool; grants it asks for cover only its own folder, end when the agent quits, and never include production.</p>
-          <pre>claude mcp add pistachio -- ~/.local/bin/pst mcp</pre><a class="more" href="developers/agents.html#mcp">Pistachio's MCP server</a></article>
+          <pre>claude mcp add pistachio -- ~/.local/bin/pistachio mcp</pre><a class="more" href="developers/agents.html#mcp">Pistachio's MCP server</a></article>
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-sparkles"></i></span><h3>Skill and plugin <span class="avail pending">Pending</span></h3><p>The Pistachio skill tells an agent to run through <code>pst run</code>, never print values, and stop on 77 or 66. It works from a local checkout. The repository is public, so the marketplace install should work, though it hasn't been tried end to end yet.</p>
           <pre>/plugin marketplace add /path/to/pistachio</pre><a class="more" href="developers/agents.html#skills">Skills and plugins</a></article>
-        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-eyeoff"></i></span><h3>Masked output <span class="avail">In this build</span></h3><p>A value of a secret kind, 6 characters or longer, that the command prints becomes a concealment marker, even split across chunks. Transformed values aren't caught.</p><a class="more" href="security.html#limits">Where protection ends</a></article>
+        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-eyeoff"></i></span><h3>Masked output <span class="avail">In this build</span></h3><p>A value of a secret kind, 6 characters or longer, that the command prints becomes <code>&lt;concealed by pistachio&gt;</code>, even split across chunks. Transformed values aren't caught.</p><a class="more" href="security.html#limits">Where protection ends</a></article>
       </div>
     </section>
 
@@ -384,7 +394,7 @@ pst push shop/production --dry-run</pre><a class="more" href="developers/cli.htm
           <div class="canvas">
             <div class="mw tty" style="left:12px;top:12px;width:576px;height:236px">
               <div class="mw-bar"><i></i><i></i><i></i><span>Terminal — ~/Projects/shop</span></div>
-<pre id="log-tty"><span class="l"><span class="p">~/Projects/shop $</span> pst history shop/development/STRIPE_KEY</span><span class="l">1   Nov 11, 2026 at 3:20 PM  replaced  by zsh › Terminal</span><span class="l"><span class="d">Kept: the last 10 per item. `pst restore shop/development/STRIPE_KEY --version N` puts one back.</span></span><span class="l"><span class="p">~/Projects/shop $</span> pst log --verify</span><span class="l"><span class="ok">intact: 412 signed entries</span></span></pre>
+<pre id="log-tty"><span class="l"><span class="p">~/Projects/shop $</span> pst history shop/development/STRIPE_KEY</span><span class="l">1   Nov 11, 2026 at 3:20 PM  replaced  by zsh › Terminal</span><span class="l"><span class="d">Kept: the last 10 per item. `pistachio restore shop/development/STRIPE_KEY --version N` puts one back.</span></span><span class="l"><span class="p">~/Projects/shop $</span> pst log --verify</span><span class="l"><span class="ok">intact: 412 signed entries</span></span></pre>
             </div>
           </div>
         </div>

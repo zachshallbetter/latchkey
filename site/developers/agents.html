@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <script>document.documentElement.classList.add("js")</script>
+  <script>document.documentElement.classList.add("js");try{var savedTheme=localStorage.getItem("pistachio-theme");if(savedTheme==="light"||savedTheme==="dark")document.documentElement.dataset.theme=savedTheme}catch(e){}</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Coding agents and MCP: grants and exit codes · Pistachio</title>
   <meta name="description" content="Use Pistachio with coding agents: what to tell an agent, grants for unattended work, exit codes, Pistachio&#x27;s MCP server and other MCP servers.">
@@ -17,8 +17,8 @@
   <meta property="og:title" content="Coding agents and MCP: grants and exit codes · Pistachio">
   <meta property="og:description" content="Use Pistachio with coding agents: what to tell an agent, grants for unattended work, exit codes, Pistachio&#x27;s MCP server and other MCP servers.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fafaf6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151b17" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="../logo.svg" type="image/svg+xml">
   <link rel="author" href="https://zachshallbetter.com/">
   <link rel="icon" href="../favicon.ico" sizes="48x48">
@@ -136,6 +136,7 @@
   ]
 }
   </script>
+  <link rel="stylesheet" href="../pistachio.css?v=20261123-depth">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -149,25 +150,34 @@
         <li><a href="../security.html">Security</a></li>
         <li><a href="index.html" aria-current="page">Developers</a></li>
         <li><a href="../guides/index.html">Guides</a></li>
-        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a></li>
       </ul>
-    </nav>
+    <details class="mobile-menu"><summary><i class="ic ic-menu" aria-hidden="true"></i>Menu</summary><div class="mobile-menu-links">
+        <a href="../features.html">Features</a>
+        <a href="../index.html#how">How it works</a>
+        <a href="../pricing.html">Pricing</a>
+        <a href="../security.html">Security</a>
+        <a href="index.html" aria-current="page">Developers</a>
+        <a href="../guides/index.html">Guides</a>
+        <a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+      </div></details></nav>
   </header>
   <main id="main" class="wrap docs">
+    <aside class="brand-transition" aria-label="Product name update">Pistachio is the new name for Pistachio. The current download, <code>pst</code> commands and <code>pistachio://</code> references still use the original names.</aside>
     <nav class="side" aria-label="Developers and guides"><div class="side-group current"><p class="side-title">Developers</p><ul><li><a href="index.html"><i class="ic ic-book" aria-hidden="true"></i>Overview</a></li><li><a href="quickstart.html"><i class="ic ic-bolt" aria-hidden="true"></i>Quickstart</a></li><li><a href="cli.html"><i class="ic ic-terminal" aria-hidden="true"></i>CLI reference</a></li><li><a href="agents.html" aria-current="page"><i class="ic ic-agent" aria-hidden="true"></i>Agents and MCP</a></li><li><a href="api.html"><i class="ic ic-code" aria-hidden="true"></i>References and API</a></li></ul></div><div class="side-group"><p class="side-title">Guides</p><ul><li><a href="../guides/index.html"><i class="ic ic-grid" aria-hidden="true"></i>All guides</a></li><li><a href="../guides/index.html#env"><i class="ic ic-fileenv" aria-hidden="true"></i>Env files</a></li><li><a href="../guides/index.html#agents"><i class="ic ic-sparkles" aria-hidden="true"></i>Coding agents</a></li><li><a href="../guides/index.html#deploy"><i class="ic ic-upload" aria-hidden="true"></i>Deploying</a></li><li><a href="../guides/index.html#everyday"><i class="ic ic-macs" aria-hidden="true"></i>Everyday use</a></li></ul></div></nav>
     <article class="doc">
       <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Pistachio</a></li><li><a href="index.html">Developers</a></li><li><span aria-current="page">Agents and MCP</span></li></ol></nav>
       <h1><span class="fills">Agents</span> and MCP</h1>
-      <p class="lede">Coding agents need your keys to run tests and dev servers. With Pistachio they get them through <code>pst run</code>: the values reach the command, not the agent&rsquo;s files, and you decide what an agent may use without asking.</p>
+      <p class="lede">Coding agents need your keys to run tests and dev servers. With Pistachio they get them through <code>pistachio run</code>: the values reach the command, not the agent&rsquo;s files, and you decide what an agent may use without asking.</p>
       <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#pattern">The pattern</a></li><li><a href="#skills">Skills and plugins</a></li><li><a href="#instructions">Instructions for agents</a></li><li><a href="#exit-codes">Exit codes to act on</a></li><li><a href="#unattended">Leaving an agent working</a></li><li><a href="#proxy">Keys an agent can use but never read</a></li><li><a href="#after">After an agent session</a></li><li><a href="#ssh">From another Mac over SSH</a></li><li><a href="#mcp">Pistachio&rsquo;s MCP server</a></li><li><a href="#other-mcp">Other MCP servers</a></li><li><a href="#key-files">Key files</a></li><li><a href="#limits">What Pistachio can&rsquo;t do for you</a></li></ul></nav>
 
 <h2 id="pattern">The pattern</h2>
 <ol>
-<li>Keep references in env files: <code>pst import .env.local --rewrite</code>.</li>
-<li>Run anything that needs secrets through <code>pst run</code>.</li>
+<li>Keep references in env files: <code>pistachio import .env.local --rewrite</code>.</li>
+<li>Run anything that needs secrets through <code>pistachio run</code>.</li>
 <li>Decide what an agent may read without you: <strong>agent-safe</strong> items for values that aren&rsquo;t secret, <strong>grants</strong> for a folder and a time. Everything else asks you, showing the agent&rsquo;s process chain, folder and command.</li>
 </ol>
-<p>Fresh git worktrees don&rsquo;t have your <code>.env</code> (it&rsquo;s gitignored). <code>pst run --env PROJECT/ENV</code> loads an environment&rsquo;s items directly, and a grant for a repository&rsquo;s folder covers its worktrees.</p>
+<p>Fresh git worktrees don&rsquo;t have your <code>.env</code> (it&rsquo;s gitignored). <code>pistachio run --env PROJECT/ENV</code> loads an environment&rsquo;s items directly, and a grant for a repository&rsquo;s folder covers its worktrees.</p>
 
 <figure class="doc-scene"><div class="scene-wrap" data-scene="agent" style="--w:600;--h:360;--pw:360;--ph:520" aria-hidden="true">
           <div class="canvas">
@@ -200,48 +210,48 @@
 <p>Without the skill, put this in <code>CLAUDE.md</code>, <code>AGENTS.md</code> or your agent&rsquo;s equivalent:</p>
 <figure class="code"><figcaption><span>CLAUDE.md / AGENTS.md</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="markdown">Secrets are in Pistachio. Env files hold pistachio:// references, not values.
 Run anything that needs secrets as
-`pst run --env-file .env.local -- &lt;command&gt;` or
-`pst run --env &lt;project&gt;/&lt;environment&gt; -- &lt;command&gt;`.
-Never run `pst get`, never print the environment, and never read or
+`pistachio run --env-file .env.local -- &lt;command&gt;` or
+`pistachio run --env &lt;project&gt;/&lt;environment&gt; -- &lt;command&gt;`.
+Never run `pistachio get`, never print the environment, and never read or
 write values in .env files. If pistachio exits with 77 (refused) or 66
 (missing), stop and ask; don&#x27;t retry.</code></pre></figure>
 
 <h2 id="exit-codes">Exit codes to act on</h2>
 <table><thead><tr><th>Code</th><th>Meaning</th><th>What an agent should do</th></tr></thead><tbody><tr><td data-th="Code">0</td><td data-th="Meaning">Done</td><td data-th="What an agent should do"></td></tr><tr><td data-th="Code">64</td><td data-th="Meaning">Wrong usage</td><td data-th="What an agent should do">Fix the command</td></tr><tr><td data-th="Code">66</td><td data-th="Meaning">No item with that ID</td><td data-th="What an agent should do">Stop; ask the person to add it</td></tr><tr><td data-th="Code">69</td><td data-th="Meaning">The Pistachio app can&rsquo;t be reached</td><td data-th="What an agent should do">Stop; ask the person to open Pistachio</td></tr><tr><td data-th="Code">73</td><td data-th="Meaning">A file couldn&rsquo;t be rewritten</td><td data-th="What an agent should do">Stop and report</td></tr><tr><td data-th="Code">77</td><td data-th="Meaning">Refused: not agent-safe, not approved, no grant</td><td data-th="What an agent should do">Stop; ask the person to approve or grant. Don&rsquo;t retry</td></tr><tr><td data-th="Code">127</td><td data-th="Meaning">The command couldn&rsquo;t start</td><td data-th="What an agent should do">Fix the command</td></tr></tbody></table>
-<p>On 77 and 66 the message names the items and, for 77, the exact <code>pst grant</code> command that would allow them, for the person to run.</p>
+<p>On 77 and 66 the message names the items and, for 77, the exact <code>pistachio grant</code> command that would allow them, for the person to run.</p>
 
 <h2 id="unattended">Leaving an agent working</h2>
-<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">pst grant &#x27;shop/development/*&#x27; --session --for 4h                  # ends when the agent quits
-pst grant &#x27;shop/development/*&#x27; --command &quot;npm test&quot; --for 2h       # only this command
-pst grant &#x27;shop/development/*&#x27; --folder ~/Projects/shop --for 2h   # the folder, for a time</code></pre></figure>
-<p>Run them inside the agent&rsquo;s session (in Claude Code, start the line with <code>!</code>) so <code>--session</code> ties to the agent. The agent&rsquo;s reads go through without asking until the grant ends, and each one is in the app&rsquo;s Activity. End it early from <strong>Grants</strong> in the app or with <code>pst revoke ID</code>.</p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">pistachio grant &#x27;shop/development/*&#x27; --session --for 4h                  # ends when the agent quits
+pistachio grant &#x27;shop/development/*&#x27; --command &quot;npm test&quot; --for 2h       # only this command
+pistachio grant &#x27;shop/development/*&#x27; --folder ~/Projects/shop --for 2h   # the folder, for a time</code></pre></figure>
+<p>Run them inside the agent&rsquo;s session (in Claude Code, start the line with <code>!</code>) so <code>--session</code> ties to the agent. The agent&rsquo;s reads go through without asking until the grant ends, and each one is in the app&rsquo;s Activity. End it early from <strong>Grants</strong> in the app or with <code>pistachio revoke ID</code>.</p>
 
 <h2 id="proxy">Keys an agent can use but never read</h2>
-<p>For OpenAI and Anthropic keys, <code>pst run --proxy</code> (or <code>proxy: true</code> on <code>pistachio_run</code>) gives the command a placeholder and a local base URL, and adds the real key only to requests to the provider. An agent&rsquo;s command can call the API but can&rsquo;t print, encode or send the key anywhere else. See <a href="cli.html#proxy"><code>--proxy</code></a>.</p>
+<p>For OpenAI and Anthropic keys, <code>pistachio run --proxy</code> (or <code>proxy: true</code> on <code>pistachio_run</code>) gives the command a placeholder and a local base URL, and adds the real key only to requests to the provider. An agent&rsquo;s command can call the API but can&rsquo;t print, encode or send the key anywhere else. See <a href="cli.html#proxy"><code>--proxy</code></a>.</p>
 <p>Only the command and the processes it starts can use the proxy; a request from any other program gets a 403, and the proxy stops when the command exits. To narrow what the command may do with the key, add <code>--proxy-models A,B</code> (only requests naming a listed model are forwarded) and <code>--proxy-requests N</code> (refuse requests after N). On <code>pistachio_run</code> these are <code>proxy_models</code>, an array of model names, and <code>proxy_requests</code>, a number; both need <code>proxy: true</code>. Pistachio says on standard error that the limits are enforced.</p>
-<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">pst run --proxy --proxy-models gpt-4o-mini --proxy-requests 100 --env shop/development -- npm test</code></pre></figure>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">pistachio run --proxy --proxy-models gpt-4o-mini --proxy-requests 100 --env shop/development -- npm test</code></pre></figure>
 
 <h2 id="after">After an agent session</h2>
 <p>See what the agent was given, and replace anything you&rsquo;d rather it no longer knew:</p>
-<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">pst touched --since 4h --by claude
-pst rotate --touched --since 4h --by claude --open --push</code></pre></figure>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">pistachio touched --since 4h --by claude
+pistachio rotate --touched --since 4h --by claude --open --push</code></pre></figure>
 
 <h2 id="ssh">From another Mac over SSH</h2>
 <p>Forward Pistachio&rsquo;s socket when you connect, then point <code>pistachio</code> on the other Mac at it:</p>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">ssh -o StreamLocalBindUnlink=yes -R /tmp/pistachio-$USER.sock:&quot;$HOME/Library/Application Support/Latchkey/broker.sock&quot; devmac</code></pre></figure>
 <figure class="code"><figcaption><span>On the other Mac</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">export PISTACHIO_SOCKET=/tmp/pistachio-$USER.sock
-pst run --env shop/development -- npm test</code></pre></figure>
+pistachio run --env shop/development -- npm test</code></pre></figure>
 <p><code>$USER</code> expands to your login name on each Mac: use the same name on both, or put a fixed name in both commands. Forwarding needs the direct-download app on your Mac; the Mac App Store version doesn&rsquo;t support it yet, and if the other Mac has the App Store version installed, set <code>PISTACHIO_BROKER=direct</code> there.</p>
 <ul>
 <li>Each read that is not agent-safe asks. Your Mac sees only your <code>ssh</code> client, so grants don&rsquo;t apply and can&rsquo;t be made over the connection.</li>
 <li>The approval panel says so, and shows what the tool on the other computer says it&rsquo;s running, marked as unchecked.</li>
-<li>The tool there can&rsquo;t check the app&rsquo;s signature through a forwarded socket; <code>pst status</code> says so.</li>
+<li>The tool there can&rsquo;t check the app&rsquo;s signature through a forwarded socket; <code>pistachio status</code> says so.</li>
 <li>The other computer needs <code>pistachio</code> too; the tool is macOS only.</li>
 </ul>
 
 <h2 id="mcp">Pistachio&rsquo;s MCP server</h2>
-<p><code>pst mcp</code> gives agents Pistachio&rsquo;s tools over MCP: for clients without a shell, like Claude Desktop, and for structured refusals instead of exit codes. <strong>It has no direct secret-read tool. Child output masks exact secret values; transformed secrets can still leak.</strong></p>
-<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">claude mcp add pistachio -- ~/.local/bin/pst mcp</code></pre></figure>
+<p><code>pistachio mcp</code> gives agents Pistachio&rsquo;s tools over MCP: for clients without a shell, like Claude Desktop, and for structured refusals instead of exit codes. <strong>It has no direct secret-read tool. Child output masks exact secret values; transformed secrets can still leak.</strong></p>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">claude mcp add pistachio -- ~/.local/bin/pistachio mcp</code></pre></figure>
 <figure class="code"><figcaption><span>Other clients</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="json">{
   &quot;mcpServers&quot;: {
     &quot;pistachio&quot;: { &quot;command&quot;: &quot;/Users/you/.local/bin/pistachio&quot;, &quot;args&quot;: [&quot;mcp&quot;] }
@@ -250,8 +260,8 @@ pst run --env shop/development -- npm test</code></pre></figure>
 <table><thead><tr><th>Tool</th><th>What it does</th><th>Asks you?</th></tr></thead><tbody><tr><td data-th="Tool"><code>pistachio_status</code></td><td data-th="What it does">Where values are kept, how you approve, item and grant counts</td><td data-th="Asks you?">No</td></tr><tr><td data-th="Tool"><code>pistachio_list</code></td><td data-th="What it does">Item IDs with kind, service and agent-safe, by <code>project</code> or <code>environment</code>. Never values</td><td data-th="Asks you?">No</td></tr><tr><td data-th="Tool"><code>pistachio_check</code></td><td data-th="What it does">What a run would get without asking, what would ask, and what&rsquo;s missing, for <code>env_files</code>, <code>environments</code>, <code>files</code> or <code>ids</code></td><td data-th="Asks you?">No</td></tr><tr><td data-th="Tool"><code>pistachio_run</code></td><td data-th="What it does">Runs <code>command</code> (an argument array) in <code>cwd</code> with references filled in. Returns the exit code and the output, masked. With <code>proxy</code>, <code>proxy_models</code> and <code>proxy_requests</code> limit what the command may do with the key (see <a href="#proxy">above</a>)</td><td data-th="Asks you?">When an item isn&rsquo;t agent-safe or granted</td></tr><tr><td data-th="Tool"><code>pistachio_request_grant</code></td><td data-th="What it does">Asks you for a grant on <code>ids</code> in the agent&rsquo;s folder for <code>duration</code></td><td data-th="Asks you?">Always</td></tr><tr><td data-th="Tool"><code>pistachio_project</code></td><td data-th="What it does">Which project the folder&rsquo;s checkout is, from its Git remotes, and its environments</td><td data-th="Asks you?">No</td></tr><tr><td data-th="Tool"><code>pistachio_export_references</code></td><td data-th="What it does">Writes an environment&rsquo;s env file of references and plain settings, never values, inside its <code>cwd</code> only</td><td data-th="Asks you?">No</td></tr></tbody></table>
 <ul>
 <li>Output is always masked, and only the last 64 KB of each stream is returned, with a flag when it was cut. Standard input is empty.</li>
-<li>Commands stop after <code>timeout_seconds</code>: 600 by default, at most 3600. Use it for tests, builds and scripts; run dev servers in a shell with <code>pst run</code>. A cancelled request stops its command.</li>
-<li>Grants an agent asks for cover only the folder it runs in (and that repository&rsquo;s worktrees), last for the time it asked for (which you see and approve), end when the agent quits, and can&rsquo;t include production environments or a whole project. Grant those yourself with <code>pst grant</code>.</li>
+<li>Commands stop after <code>timeout_seconds</code>: 600 by default, at most 3600. Use it for tests, builds and scripts; run dev servers in a shell with <code>pistachio run</code>. A cancelled request stops its command.</li>
+<li>Grants an agent asks for cover only the folder it runs in (and that repository&rsquo;s worktrees), last for the time it asked for (which you see and approve), end when the agent quits, and can&rsquo;t include production environments or a whole project. Grant those yourself with <code>pistachio grant</code>.</li>
 <li>Approval panels for requests through the MCP server say they come from an agent.</li>
 <li>Several requests in a row from the same agent in the same folder share one panel while it&rsquo;s up, and one touch answers them; a grant until the agent quits stops the asking for the rest of the session.</li>
 <li>Reading values, changing or deleting items, earlier values, remote locations and pushes aren&rsquo;t offered.</li>
@@ -288,7 +298,7 @@ pst run --env shop/development -- npm test</code></pre></figure>
 <div class="note"><p>Agents need the absolute path when <code>~/.local/bin</code> isn&rsquo;t on their <code>PATH</code>: use <code>"command": "/Users/you/.local/bin/pistachio"</code>.</p></div>
 
 <h2 id="key-files">Key files</h2>
-<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">pst run --file ASC_KEY_PATH=shop/production/ASC_P8 -- fastlane beta</code></pre></figure>
+<figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">pistachio run --file ASC_KEY_PATH=shop/production/ASC_P8 -- fastlane beta</code></pre></figure>
 <p>The command gets the path of a temporary file only you can read, deleted when it exits. In an env file, <code>ASC_KEY_PATH=pistachio-file://shop/production/ASC_P8</code> does the same.</p>
 
 <h2 id="limits">What Pistachio can&rsquo;t do for you</h2>

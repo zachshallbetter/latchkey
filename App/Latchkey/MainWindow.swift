@@ -201,11 +201,14 @@ struct InlineTouchID: NSViewRepresentable {
     }
 }
 
-/// The Latchkey key, tinted like an SF Symbol so it follows the context it sits in.
+/// The locally selected brand mark; the key remains a template, while Pistachio retains its colors.
 struct LogoMark: View {
+    @AppStorage(AppPreferences.Key.icon) private var icon = AppPreferences.Icon.pistachio.rawValue
     var size: CGFloat = 44
     var body: some View {
-        Image("Logo").resizable().renderingMode(.template).scaledToFit().frame(width: size, height: size)
+        Image(AppPreferences.Icon(preference: icon) == .key ? "Logo" : "PistachioLogo")
+            .resizable().renderingMode(AppPreferences.Icon(preference: icon) == .key ? .template : .original)
+            .scaledToFit().frame(width: size, height: size)
     }
 }
 

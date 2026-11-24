@@ -43,6 +43,22 @@ final class AppPreferencesTests: XCTestCase {
         }
     }
 
+    func testIconChoicePersistsAndInvalidValuesUsePistachio() throws {
+        let suite = "pistachio-icon-test-" + UUID().uuidString
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        XCTAssertEqual(AppPreferences(defaults: defaults).icon, .pistachio)
+        defaults.set("key", forKey: AppPreferences.Key.icon)
+        let reloaded = try XCTUnwrap(UserDefaults(suiteName: suite))
+        XCTAssertEqual(AppPreferences(defaults: reloaded).icon, .key)
+        defaults.set("pistachio", forKey: AppPreferences.Key.icon)
+        XCTAssertEqual(AppPreferences(defaults: reloaded).icon, .pistachio)
+        for invalid: Any in ["unknown", "", 42, false] {
+            defaults.set(invalid, forKey: AppPreferences.Key.icon)
+            XCTAssertEqual(AppPreferences(defaults: defaults).icon, .pistachio)
+        }
+    }
+
     func testWhatsNewShowsOnceAfterEachUpdate() throws {
         let suite = "latchkey-preferences-test-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))

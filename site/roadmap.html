@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>try{var savedTheme=localStorage.getItem("pistachio-theme");if(savedTheme==="light"||savedTheme==="dark")document.documentElement.dataset.theme=savedTheme}catch(e){}</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Roadmap: what's built and what's next · Pistachio</title>
@@ -27,8 +28,8 @@
   <meta name="twitter:image" content="https://latchkey.snackstud.io/social/roadmap.jpg">
   <meta name="twitter:image:alt" content="Roadmap: what&#x27;s built and what&#x27;s next. Pistachio, a Mac app from Snack Studio.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fafaf6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151b17" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="logo.svg" type="image/svg+xml">
   <link rel="author" href="https://zachshallbetter.com/">
   <link rel="icon" href="favicon.ico" sizes="48x48">
@@ -177,6 +178,7 @@
   ]
 }
   </script>
+  <link rel="stylesheet" href="pistachio.css?v=20261123-depth">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -190,12 +192,21 @@
         <li><a href="security.html">Security</a></li>
         <li><a href="developers/index.html">Developers</a></li>
         <li><a href="guides/index.html">Guides</a></li>
-        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a></li>
       </ul>
-    </nav>
+    <details class="mobile-menu"><summary><i class="ic ic-menu" aria-hidden="true"></i>Menu</summary><div class="mobile-menu-links">
+        <a href="features.html">Features</a>
+        <a href="index.html#how">How it works</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="security.html">Security</a>
+        <a href="developers/index.html">Developers</a>
+        <a href="guides/index.html">Guides</a>
+        <a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+      </div></details></nav>
   </header>
 
   <main id="main" class="wrap rm">
+    <aside class="brand-transition" aria-label="Product name update">Pistachio is the new name for Pistachio. The current download, <code>pst</code> commands and <code>pistachio://</code> references still use the original names.</aside>
     <section class="page-hero" aria-labelledby="title">
       <div>
         <p class="eyebrow">Roadmap · November 2026</p>
@@ -345,7 +356,7 @@
             <div class="ibody">
               <div class="title-row"><h3>Duplicates and combine</h3><span class="pill built">Built</span></div>
               <p class="gap"><b>Gap:</b> the same key copied into many projects meant many places to rotate it, and production sharing a key with development.</p>
-              <p class="plan"><b>Built:</b> <code>pst duplicates</code> compares values inside Pistachio with one approval and recommends what to do; <code>pst combine</code> makes them one shared item, and the files follow.</p>
+              <p class="plan"><b>Built:</b> <code>pistachio duplicates</code> compares values inside Pistachio with one approval and recommends what to do; <code>pistachio combine</code> makes them one shared item, and the files follow.</p>
             </div>
             <div class="who"><span class="pill">You</span></div>
           </li>
@@ -363,7 +374,7 @@
             <span class="size" title="Medium">M</span>
             <div class="ibody">
               <div class="title-row"><h3>Use a value without holding it</h3></div>
-              <p class="gap"><b>Gap:</b> “agent-safe” means the agent can hold the value: it can call <code>pst get</code>, and masking only catches exact copies.</p>
+              <p class="gap"><b>Gap:</b> “agent-safe” means the agent can hold the value: it can call <code>pistachio get</code>, and masking only catches exact copies.</p>
               <p class="plan"><b>Plan:</b> refuse <code>get</code> to agent callers, and mask base64, URL-encoded and JSON-escaped copies too.</p>
             </div>
             <div class="who"><span class="pill">Agents</span></div>
@@ -373,7 +384,7 @@
             <div class="ibody">
               <div class="title-row"><h3>MCP server</h3><span class="pill built">Built</span></div>
               <p class="gap"><b>Gap:</b> agents learn Pistachio from instructions and shell commands.</p>
-              <p class="plan"><b>Built:</b> <code>pst mcp</code> with tools for status, listing items, checking and running a command with references filled in, the checkout's project, writing an env file of references, and asking for a grant. No tool returns a value.</p>
+              <p class="plan"><b>Built:</b> <code>pistachio mcp</code> with tools for status, listing items, checking and running a command with references filled in, the checkout's project, writing an env file of references, and asking for a grant. No tool returns a value.</p>
             </div>
             <div class="who"><span class="pill">Agents</span></div>
           </li>
@@ -437,7 +448,7 @@
             <div class="ibody">
               <div class="title-row"><h3>Project commands</h3></div>
               <p class="gap"><b>Gap:</b> there's no standard way to set up a project or check it in CI.</p>
-              <p class="plan"><b>Built:</b> <code>pst check</code> confirms what a run would get without reading values, and <code>pst export</code> writes an env file of references from the environment's record. <b>Next:</b> <code>pst init</code> and a shell hook.</p>
+              <p class="plan"><b>Built:</b> <code>pistachio check</code> confirms what a run would get without reading values, and <code>pistachio export</code> writes an env file of references from the environment's record. <b>Next:</b> <code>pistachio init</code> and a shell hook.</p>
             </div>
             <div class="who"><span class="pill">You</span><span class="pill">Agents</span></div>
           </li>
@@ -464,7 +475,7 @@
             <div class="ibody">
               <div class="title-row"><h3>Scan for plain-text secrets</h3><span class="pill built">Built</span></div>
               <p class="gap"><b>Gap:</b> secrets already sitting in repos and old .env files stay there.</p>
-              <p class="plan"><b>Built:</b> <code>pst scan</code> finds env files holding a stored value or one that looks secret, naming file, line and item but never the value, and a pre-commit hook refuses those commits.</p>
+              <p class="plan"><b>Built:</b> <code>pistachio scan</code> finds env files holding a stored value or one that looks secret, naming file, line and item but never the value, and a pre-commit hook refuses those commits.</p>
             </div>
             <div class="who"><span class="pill">You</span><span class="pill">Agents</span></div>
           </li>
@@ -555,7 +566,7 @@
             <span class="size" title="Medium">M</span>
             <div class="ibody">
               <div class="title-row"><h3>Test coverage</h3></div>
-              <p class="gap"><b>Gap:</b> there are no end-to-end tests for <code>pst run</code> or the socket server, and no UI tests.</p>
+              <p class="gap"><b>Gap:</b> there are no end-to-end tests for <code>pistachio run</code> or the socket server, and no UI tests.</p>
               <p class="plan"><b>Plan:</b> tests that run the CLI against a broker with a test approver, plus a few UI tests for the window.</p>
             </div>
             <div class="who"><span class="pill">You</span></div>

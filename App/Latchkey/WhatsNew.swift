@@ -22,7 +22,7 @@ struct WhatsNewView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 12) {
-                Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 44, height: 44)
+                BrandAppIcon(size: 44)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("What's New in Latchkey \(current?.version ?? Self.version)").font(.title3.weight(.semibold))
                     if let date = current?.date { Text(date).font(.callout).foregroundStyle(.secondary) }

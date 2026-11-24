@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>try{var savedTheme=localStorage.getItem("pistachio-theme");if(savedTheme==="light"||savedTheme==="dark")document.documentElement.dataset.theme=savedTheme}catch(e){}</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Terms of use · Pistachio</title>
@@ -27,8 +28,8 @@
   <meta name="twitter:image" content="https://latchkey.snackstud.io/social/terms.jpg">
   <meta name="twitter:image:alt" content="Terms of use. Pistachio, a Mac app from Snack Studio.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fafaf6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151b17" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="logo.svg" type="image/svg+xml">
   <link rel="author" href="https://zachshallbetter.com/">
   <link rel="icon" href="favicon.ico" sizes="48x48">
@@ -126,6 +127,7 @@
   ]
 }
   </script>
+  <link rel="stylesheet" href="pistachio.css?v=20261123-depth">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -139,12 +141,21 @@
         <li><a href="security.html">Security</a></li>
         <li><a href="developers/index.html">Developers</a></li>
         <li><a href="guides/index.html">Guides</a></li>
-        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a></li>
       </ul>
-    </nav>
+    <details class="mobile-menu"><summary><i class="ic ic-menu" aria-hidden="true"></i>Menu</summary><div class="mobile-menu-links">
+        <a href="features.html">Features</a>
+        <a href="index.html#how">How it works</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="security.html">Security</a>
+        <a href="developers/index.html">Developers</a>
+        <a href="guides/index.html">Guides</a>
+        <a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+      </div></details></nav>
   </header>
 
   <main id="main" class="wrap">
+    <aside class="brand-transition" aria-label="Product name update">Pistachio is the new name for Pistachio. The current download, <code>pst</code> commands and <code>pistachio://</code> references still use the original names.</aside>
     <article class="doc">
       <h1>Terms of use</h1>
       <p class="lede">Pistachio is made by Snack Studio. These terms cover the app, its command-line tool, MCP server and Safari extension, and this website.</p>

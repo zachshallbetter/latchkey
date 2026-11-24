@@ -4,8 +4,8 @@
   "description": "A free Mac app that keeps development credentials in iCloud Keychain and fills them in when a command starts.",
   "start_url": "/",
   "display": "browser",
-  "background_color": "#0d1014",
-  "theme_color": "#0d1014",
+  "background_color": "#fafaf6",
+  "theme_color": "#315842",
   "icons": [
     {
       "src": "/icon-192.png",

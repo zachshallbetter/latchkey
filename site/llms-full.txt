@@ -1,4 +1,4 @@
-# Latchkey: the full text of latchkey.snackstud.io
+# Pistachio: the full text of latchkey.snackstud.io
 
 Every page's main content as plain text. The curated index is llms.txt. Scenes and the app window show example data and are left out.
 
@@ -9,7 +9,22 @@ URL: https://latchkey.snackstud.io/changelog.html
 
 # Changelog
 What changed in each version of Pistachio, newest first. The app shows the same notes once after it updates, and again from What's New… in the app menu.
-Latest: 0.4.0, 18 November 2026. Download.
+Latest: 0.5.0, 23 November 2026. Download.
+## 0.5.0
+23 November 2026
+### App
+- Added a local Pistachio/Key icon choice in General settings for the Dock, menu bar and in-app marks.
+- Updated the bundled app and Safari icons to the supplied Pistachio mark. Finder and Safari keep the bundled icon; switching styles does not modify the signed app. Existing command aliases are retained.
+### CLI
+- Added PISTACHIO_* environment configuration, with priority over existing configuration names.
+- Added the current pistachio_* MCP tool names while preserving compatible clients. Grant requests describe the duration limits implemented by the app.
+- Added the full pistachio command to the app installer, development installer and Homebrew packages.
+- Added the current credential and key-file reference schemes alongside existing references; projects keep working.
+### Website
+- Rebranded the website as Pistachio with the supplied mark and “Your secrets. In a shell.” brand line. Updated supporting pages, browser icons, social cards and discovery files.
+- Refined the product-led hero, compact audience navigation and interactive proxy panel. Added a mobile menu and a browser-local appearance preference that persists across pages.
+- Used neutral page and code surfaces with restrained green accents, plus independent neutral/blue app depictions. Added layered container shadows and subtle scroll-entry motion that respects reduced motion.
+- Documented secretsinashell.com as the intended future domain. Existing downloads, commands, reference scheme, signing identities and published URLs retain their current names; this change does not deploy the site.
 ## 0.4.0
 18 November 2026
 ### App
@@ -266,13 +281,13 @@ brew trust zachshallbetter/latchkey
 brew install latchkey-cli
 ```
 Or download latchkey-cli-VERSION.zip from the latest release, unzip it, move pistachio to a folder on your PATH (such as ~/.local/bin), and add pst as a link to it if you like.
-Open Pistachio once, then check the tool reaches it:
+Open Pistachio (the current download) once, then check the tool reaches it:
 Terminal
 ```
-pst status
+pistachio status
 ```
 ## With the direct download
-The tool comes inside the app. Choose Install Command Line Tool… in the app menu, which links ~/.local/bin/pistachio and pst to it, or install the app with Homebrew (brew install --cask latchkey), which adds both.
+The tool comes inside the app. Choose Pistachio › Install Command Line Tool…, which links ~/.local/bin/pistachio and pst to it, or install the app with Homebrew (brew install --cask latchkey), which adds both.
 ## Next
 Quickstart · CLI reference · Agents and MCP · Support
 
@@ -282,12 +297,12 @@ Page: Coding agents and MCP: grants and exit codes · Pistachio
 URL: https://latchkey.snackstud.io/developers/agents.html
 
 # Agents and MCP
-Coding agents need your keys to run tests and dev servers. With Pistachio they get them through pst run: the values reach the command, not the agent’s files, and you decide what an agent may use without asking.
+Coding agents need your keys to run tests and dev servers. With Pistachio they get them through pistachio run: the values reach the command, not the agent’s files, and you decide what an agent may use without asking.
 ## The pattern
-- Keep references in env files: pst import .env.local --rewrite.
-- Run anything that needs secrets through pst run.
+- Keep references in env files: pistachio import .env.local --rewrite.
+- Run anything that needs secrets through pistachio run.
 - Decide what an agent may read without you: agent-safe items for values that aren’t secret, grants for a folder and a time. Everything else asks you, showing the agent’s process chain, folder and command.
-Fresh git worktrees don’t have your .env (it’s gitignored). pst run --env PROJECT/ENV loads an environment’s items directly, and a grant for a repository’s folder covers its worktrees.
+Fresh git worktrees don’t have your .env (it’s gitignored). pistachio run --env PROJECT/ENV loads an environment’s items directly, and a grant for a repository’s folder covers its worktrees.
 An agent runs its tests through pst run, and you allow the folder until the agent quits. Its next run goes through. A production item isn't covered, so it asks again, and a denial is exit 77. Example data; the output is what Pistachio prints.
 ## Skills and plugins
 The Pistachio skill tells an agent to run commands through pst run, check before a slow run, never print or write a value, put references in env files, give you the pst set command for a missing key, suggest a session grant when you step away, and stop on 77 or 66.
@@ -305,9 +320,9 @@ CLAUDE.md / AGENTS.md
 ```
 Secrets are in Pistachio. Env files hold pistachio:// references, not values.
 Run anything that needs secrets as
-`pst run --env-file .env.local -- <command>` or
-`pst run --env <project>/<environment> -- <command>`.
-Never run `pst get`, never print the environment, and never read or
+`pistachio run --env-file .env.local -- <command>` or
+`pistachio run --env <project>/<environment> -- <command>`.
+Never run `pistachio get`, never print the environment, and never read or
 write values in .env files. If pistachio exits with 77 (refused) or 66
 (missing), stop and ask; don't retry.
 ```
@@ -320,28 +335,28 @@ CodeMeaningWhat an agent should do
 73A file couldn’t be rewrittenStop and report
 77Refused: not agent-safe, not approved, no grantStop; ask the person to approve or grant. Don’t retry
 127The command couldn’t startFix the command
-On 77 and 66 the message names the items and, for 77, the exact pst grant command that would allow them, for the person to run.
+On 77 and 66 the message names the items and, for 77, the exact pistachio grant command that would allow them, for the person to run.
 ## Leaving an agent working
 Terminal
 ```
-pst grant 'shop/development/*' --session --for 4h                  # ends when the agent quits
-pst grant 'shop/development/*' --command "npm test" --for 2h       # only this command
-pst grant 'shop/development/*' --folder ~/Projects/shop --for 2h   # the folder, for a time
+pistachio grant 'shop/development/*' --session --for 4h                  # ends when the agent quits
+pistachio grant 'shop/development/*' --command "npm test" --for 2h       # only this command
+pistachio grant 'shop/development/*' --folder ~/Projects/shop --for 2h   # the folder, for a time
 ```
-Run them inside the agent’s session (in Claude Code, start the line with !) so --session ties to the agent. The agent’s reads go through without asking until the grant ends, and each one is in the app’s Activity. End it early from Grants in the app or with pst revoke ID.
+Run them inside the agent’s session (in Claude Code, start the line with !) so --session ties to the agent. The agent’s reads go through without asking until the grant ends, and each one is in the app’s Activity. End it early from Grants in the app or with pistachio revoke ID.
 ## Keys an agent can use but never read
-For OpenAI and Anthropic keys, pst run --proxy (or proxy: true on pistachio_run) gives the command a placeholder and a local base URL, and adds the real key only to requests to the provider. An agent’s command can call the API but can’t print, encode or send the key anywhere else. See --proxy.
+For OpenAI and Anthropic keys, pistachio run --proxy (or proxy: true on pistachio_run) gives the command a placeholder and a local base URL, and adds the real key only to requests to the provider. An agent’s command can call the API but can’t print, encode or send the key anywhere else. See --proxy.
 Only the command and the processes it starts can use the proxy; a request from any other program gets a 403, and the proxy stops when the command exits. To narrow what the command may do with the key, add --proxy-models A,B (only requests naming a listed model are forwarded) and --proxy-requests N (refuse requests after N). On pistachio_run these are proxy_models, an array of model names, and proxy_requests, a number; both need proxy: true. Pistachio says on standard error that the limits are enforced.
 Terminal
 ```
-pst run --proxy --proxy-models gpt-4o-mini --proxy-requests 100 --env shop/development -- npm test
+pistachio run --proxy --proxy-models gpt-4o-mini --proxy-requests 100 --env shop/development -- npm test
 ```
 ## After an agent session
 See what the agent was given, and replace anything you’d rather it no longer knew:
 Terminal
 ```
-pst touched --since 4h --by claude
-pst rotate --touched --since 4h --by claude --open --push
+pistachio touched --since 4h --by claude
+pistachio rotate --touched --since 4h --by claude --open --push
 ```
 ## From another Mac over SSH
 Forward Pistachio’s socket when you connect, then point pistachio on the other Mac at it:
@@ -352,18 +367,18 @@ ssh -o StreamLocalBindUnlink=yes -R /tmp/pistachio-$USER.sock:"$HOME/Library/App
 On the other Mac
 ```
 export PISTACHIO_SOCKET=/tmp/pistachio-$USER.sock
-pst run --env shop/development -- npm test
+pistachio run --env shop/development -- npm test
 ```
 $USER expands to your login name on each Mac: use the same name on both, or put a fixed name in both commands. Forwarding needs the direct-download app on your Mac; the Mac App Store version doesn’t support it yet, and if the other Mac has the App Store version installed, set PISTACHIO_BROKER=direct there.
 - Each read that is not agent-safe asks. Your Mac sees only your ssh client, so grants don’t apply and can’t be made over the connection.
 - The approval panel says so, and shows what the tool on the other computer says it’s running, marked as unchecked.
-- The tool there can’t check the app’s signature through a forwarded socket; pst status says so.
+- The tool there can’t check the app’s signature through a forwarded socket; pistachio status says so.
 - The other computer needs pistachio too; the tool is macOS only.
 ## Pistachio’s MCP server
-pst mcp gives agents Pistachio’s tools over MCP: for clients without a shell, like Claude Desktop, and for structured refusals instead of exit codes. It has no direct secret-read tool. Child output masks exact secret values; transformed secrets can still leak.
+pistachio mcp gives agents Pistachio’s tools over MCP: for clients without a shell, like Claude Desktop, and for structured refusals instead of exit codes. It has no direct secret-read tool. Child output masks exact secret values; transformed secrets can still leak.
 Terminal
 ```
-claude mcp add pistachio -- ~/.local/bin/pst mcp
+claude mcp add pistachio -- ~/.local/bin/pistachio mcp
 ```
 Other clients
 ```
@@ -382,8 +397,8 @@ pistachio_request_grantAsks you for a grant on ids in the agent’s folder for d
 pistachio_projectWhich project the folder’s checkout is, from its Git remotes, and its environmentsNo
 pistachio_export_referencesWrites an environment’s env file of references and plain settings, never values, inside its cwd onlyNo
 - Output is always masked, and only the last 64 KB of each stream is returned, with a flag when it was cut. Standard input is empty.
-- Commands stop after timeout_seconds: 600 by default, at most 3600. Use it for tests, builds and scripts; run dev servers in a shell with pst run. A cancelled request stops its command.
-- Grants an agent asks for cover only the folder it runs in (and that repository’s worktrees), last for the time it asked for (which you see and approve), end when the agent quits, and can’t include production environments or a whole project. Grant those yourself with pst grant.
+- Commands stop after timeout_seconds: 600 by default, at most 3600. Use it for tests, builds and scripts; run dev servers in a shell with pistachio run. A cancelled request stops its command.
+- Grants an agent asks for cover only the folder it runs in (and that repository’s worktrees), last for the time it asked for (which you see and approve), end when the agent quits, and can’t include production environments or a whole project. Grant those yourself with pistachio grant.
 - Approval panels for requests through the MCP server say they come from an agent.
 - Several requests in a row from the same agent in the same folder share one panel while it’s up, and one touch answers them; a grant until the agent quits stops the asking for the rest of the session.
 - Reading values, changing or deleting items, earlier values, remote locations and pushes aren’t offered.
@@ -423,7 +438,7 @@ Agents need the absolute path when ~/.local/bin isn’t on their PATH: use "comm
 ## Key files
 Terminal
 ```
-pst run --file ASC_KEY_PATH=shop/production/ASC_P8 -- fastlane beta
+pistachio run --file ASC_KEY_PATH=shop/production/ASC_P8 -- fastlane beta
 ```
 The command gets the path of a temporary file only you can read, deleted when it exits. In an env file, ASC_KEY_PATH=pistachio-file://shop/production/ASC_P8 does the same.
 ## What Pistachio can’t do for you
@@ -439,8 +454,8 @@ The formats Pistachio reads and writes: references in your files, the protocol b
 Use the command-line tool. pistachio is the supported interface, from any language. The socket protocol below is how it talks to the app; it changes only by adding optional fields, but scripts that speak it directly also take on its approval rules.
 ## References
 FormWhereBecomes
-pistachio://IDValues in env files and in the environment of pst runThe item’s value
-pistachio-file://IDValues in env files and in the environment of pst runThe path of a temporary file holding the value, mode 0600, deleted when the command exits
+pistachio://IDValues in env files and in the environment of pistachio runThe item’s value
+pistachio-file://IDValues in env files and in the environment of pistachio runThe path of a temporary file holding the value, mode 0600, deleted when the command exits
 A pistachio:// reference can sit inside a longer value, as in postgres://app:pistachio://shop/production/DB_PASSWORD@db/shop; each one is replaced. A pistachio-file:// reference must be the whole value. ID is NAME or project/environment/NAME, each part letters, digits, _, - and ., at most 64 bytes.
 .env.local
 ```
@@ -483,7 +498,7 @@ linknames: the scope, targetlinks
 unlinknames: the link IDok
 remote-statusnames: the scoperemoteStatus
 pushnames: the scope, link, onlypushResults
-origin: "mcp" marks a request from pst mcp: the approval panel says an agent asked, and a grant it asks for must be its own folder, for the agent’s session, and nothing in production or a whole project. The label is the request’s own claim: it adds limits, never permissions. Unknown op values are refused.
+origin: "mcp" marks a request from pistachio mcp: the approval panel says an agent asked, and a grant it asks for must be its own folder, for the agent’s session, and nothing in production or a whole project. The label is the request’s own claim: it adds limits, never permissions. Unknown op values are refused.
 ### Responses
 Every response has ok. When it’s false, error says why: bad input, a change you didn’t approve, a keychain failure. Reads report per item instead: get answers ok: true with denied for items you refused and missing for IDs that don’t exist, and if anything was denied, no values are released at all. The command-line tool maps these to exit codes 77 and 66.
 A refused get
@@ -491,8 +506,8 @@ A refused get
 {"denied":["shop/production/STRIPE_KEY"],"masked":[],"ok":true,"values":{}}
 ```
 ### The item shape
-What list returns in secrets, and what pst list --json prints:
-pst list --json
+What list returns in secrets, and what pistachio list --json prints:
+pistachio list --json
 ```
 [
   {
@@ -534,7 +549,7 @@ repo is the repository’s common .git folder, present when the folder is in one
 ~/Library/Application Support/Latchkey/access.jsonl, mode 0600: one JSON object per line for every read, change and refusal. Never values.
 access.jsonl
 ```
-{"chain":["zsh","claude","Terminal"],"command":"pst run -- npm test","cwd":"/Users/you/Projects/shop","decision":"allowed (grant k3v9q2)","names":["shop/development/DATABASE_URL"],"op":"get","time":"2026-11-10T20:14:03Z"}
+{"chain":["zsh","claude","Terminal"],"command":"pistachio run -- npm test","cwd":"/Users/you/Projects/shop","decision":"allowed (grant k3v9q2)","names":["shop/development/DATABASE_URL"],"op":"get","time":"2026-11-10T20:14:03Z"}
 ```
 FieldMeaning
 timeWhen
@@ -552,7 +567,7 @@ iCloud Keychain, access group TEAM.io.snackstud.latchkeyItems, earlier values an
 ~/Library/Application Support/Latchkey/broker.sockThe broker socket
 ~/Library/Application Support/Latchkey/access.jsonlThe access log
 The app’s local keychain grant serviceGrants in effect, on this Mac only, changeable only by Pistachio
-The app bundle’s embedded command-line helperThe command-line tool, linked from ~/.local/bin/pistachio
+/Applications/Latchkey.app/Contents/Helpers/latchkeyThe command-line tool, linked from ~/.local/bin/pistachio
 
 ---
 
@@ -560,7 +575,7 @@ Page: CLI reference for pistachio and pst · Pistachio
 URL: https://latchkey.snackstud.io/developers/cli.html
 
 # CLI reference
-Every pistachio command and option. pst help prints a summary. Nothing here prints a value except pst get.
+Every pistachio command and option. pistachio help prints a summary. Nothing here prints a value except pistachio get.
 ## Conventions
 - pst is the same tool: pst run -- npm test.
 - IDs are NAME or project/environment/NAME. Where a command takes several, separate them with commas.
@@ -568,10 +583,10 @@ Every pistachio command and option. pst help prints a summary. Nothing here prin
 - Each command that changes items asks for approval once, for everything it touches.
 - If the app isn’t running, pistachio starts it hidden and waits. PISTACHIO_NO_LAUNCH=1 fails with 69 instead.
 ## Running commands
-### pst run
+### pistachio run
 Synopsis
 ```
-pst run [options] -- COMMAND [ARGS...]
+pistachio run [options] -- COMMAND [ARGS...]
 ```
 Starts COMMAND with every pistachio://ID in its environment replaced by the item’s value.
 OptionMeaning
@@ -583,74 +598,74 @@ OptionMeaning
 --proxy-models A,BWith --proxy: refuse requests that don’t name one of these models in their JSON body.
 --proxy-requests NWith --proxy: refuse requests after N have been forwarded.
 --aws-session, --aws-role ARN, --aws-for TIMEGive COMMAND short-lived AWS credentials instead of the long-lived key (see below).
-Items that aren’t agent-safe or covered by a grant ask for approval first. Values of secret kinds that are 6 characters or longer are replaced with a concealment marker in COMMAND’s output, including values split across two chunks; multi-line values are hidden line by line. COMMAND’s exit status becomes pst run’s. If COMMAND is killed by a signal, the status is 128 plus the signal.
+Items that aren’t agent-safe or covered by a grant ask for approval first. Values of secret kinds that are 6 characters or longer are replaced with <concealed by pistachio> in COMMAND’s output, including values split across two chunks; multi-line values are hidden line by line. COMMAND’s exit status becomes pistachio run’s. If COMMAND is killed by a signal, the status is 128 plus the signal.
 Examples
 ```
-pst run --env-file .env.local -- npm run dev
-pst run --env shop/development --env shop/vercel.preview -- npm test
-pst run --file ASC_KEY_PATH=shop/production/ASC_P8 -- fastlane beta
+pistachio run --env-file .env.local -- npm run dev
+pistachio run --env shop/development --env shop/vercel.preview -- npm test
+pistachio run --file ASC_KEY_PATH=shop/production/ASC_P8 -- fastlane beta
 ```
 Other credentials are delivered normally and are not protected by the proxy. Temporary files are distinct per full item ID.
-### pst check
+### pistachio check
 Synopsis
 ```
-pst check [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [IDS] [--json]
+pistachio check [--env-file FILE]... [--env PROJECT/ENV]... [--file NAME=ID]... [IDS] [--json]
 ```
-What pst run with the same options would get without asking (agent-safe or covered by a grant), what would ask you, and what’s missing. Asks nothing and releases nothing. Exits 66 if an item is missing, otherwise 0.
+What pistachio run with the same options would get without asking (agent-safe or covered by a grant), what would ask you, and what’s missing. Asks nothing and releases nothing. Exits 66 if an item is missing, otherwise 0.
 Example
 ```
-$ pst check --env-file .env.local
+$ pistachio check --env-file .env.local
 agent-safe        shop/development/PGHOST
 granted           shop/development/DATABASE_URL  (grant k3v9q2, 1 hour, 12 minutes left)
 asks              shop/development/STRIPE_KEY
 ```
-### pst mcp
+### pistachio mcp
 Serves Pistachio’s tools to an agent over MCP, on standard input and output. See Pistachio’s MCP server.
 ### Keys that never reach the command: --proxy
-With --proxy, a variable that is exactly a reference to an OpenAI or Anthropic key gets a placeholder instead, and OPENAI_BASE_URL or ANTHROPIC_BASE_URL points at a port on this Mac that pst run listens on. Requests there that carry the placeholder go to api.openai.com or api.anthropic.com with the real key in its place; anything else is refused. The command can use the key but can’t read, print or send it anywhere else.
+With --proxy, a variable that is exactly a reference to an OpenAI or Anthropic key gets a placeholder instead, and OPENAI_BASE_URL or ANTHROPIC_BASE_URL points at a port on this Mac that pistachio run listens on. Requests there that carry the placeholder go to api.openai.com or api.anthropic.com with the real key in its place; anything else is refused. The command can use the key but can’t read, print or send it anywhere else.
 Terminal
 ```
-pst run --proxy --env shop/development -- npm test
+pistachio run --proxy --env shop/development -- npm test
 ```
 It works with programs that use the OpenAI or Anthropic SDKs (or read those base URL variables). The run is refused if a supported key is not a whole reference, its base URL is already set, or the key would also be delivered through another variable or key file; unset custom base URLs first. At least one supported key reference is required.
 Only COMMAND and the processes it starts can use the proxy: a request from any other program, even one that knows the placeholder, gets a 403, and the proxy stops when COMMAND exits. A process that detaches from COMMAND (so launchd adopts it) is refused too.
---proxy-models and --proxy-requests narrow what COMMAND may do with the key. With --proxy-models, only requests with a JSON body naming a listed model are forwarded, so GET /v1/models, multipart uploads and compressed bodies are refused. When either is set, pst run prints pistachio: proxy limits enforced: ... on standard error. Both need --proxy. For the MCP tool, see Agents and MCP.
+--proxy-models and --proxy-requests narrow what COMMAND may do with the key. With --proxy-models, only requests with a JSON body naming a listed model are forwarded, so GET /v1/models, multipart uploads and compressed bodies are refused. When either is set, pistachio run prints pistachio: proxy limits enforced: ... on standard error. Both need --proxy. For the MCP tool, see Agents and MCP.
 Terminal
 ```
-pst run --proxy --proxy-models gpt-4o-mini,gpt-4o --proxy-requests 200 --env shop/development -- npm test
+pistachio run --proxy --proxy-models gpt-4o-mini,gpt-4o --proxy-requests 200 --env shop/development -- npm test
 ```
 ### Short-lived AWS credentials
-With --aws-session, pst run signs a request to AWS STS with your long-lived access key (AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, both references) and gives COMMAND the temporary credentials STS returns, including AWS_SESSION_TOKEN. --aws-role ARN assumes that role instead. They last 15 minutes unless --aws-for says otherwise (at most 12 hours). The long-lived key never reaches COMMAND, and no AWS CLI is needed. MFA isn’t supported yet.
+With --aws-session, pistachio run signs a request to AWS STS with your long-lived access key (AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, both references) and gives COMMAND the temporary credentials STS returns, including AWS_SESSION_TOKEN. --aws-role ARN assumes that role instead. They last 15 minutes unless --aws-for says otherwise (at most 12 hours). The long-lived key never reaches COMMAND, and no AWS CLI is needed. MFA isn’t supported yet.
 Terminal
 ```
-pst run --aws-role arn:aws:iam::123456789012:role/dev --aws-for 1h --env shop/development -- terraform plan
+pistachio run --aws-role arn:aws:iam::123456789012:role/dev --aws-for 1h --env shop/development -- terraform plan
 ```
-### pst get
+### pistachio get
 Synopsis
 ```
-pst get ID
+pistachio get ID
 ```
 Prints one value. Asks unless the item is agent-safe or covered by a grant. Keep agents away from it.
 ## Items
 CommandWhat it does
-pst list [--project P] [--json]IDs grouped by project and environment, with kind, service, whether agents may read them, and the note. --json prints the same as JSON (see the item shape). Never values.
-pst set ID [--kind KIND] [--agent-safe] [--note TEXT] [--service NAME]Add or change an item. The value comes from standard input, or a hidden prompt in a terminal. Kinds: token, password, key, value. Replacing a value keeps the old one as a version. Asks.
-pst update IDS|PATTERN... [--agent-safe yes|no] [--kind KIND] [--service NAME] [--note TEXT] [--fill-sites HOSTS]Change settings on many items with one approval. Values are untouched. --service "" clears the service. --fill-sites vercel.com,app.netlify.com sets the only sites Pistachio for Safari may fill the items on (each covers its subdomains; up to 20); --fill-sites "" goes back to the default: the service’s own site and the deployment platforms.
-pst rm IDS|PATTERN...Delete items with one approval; they go to Recently Deleted for 30 days. If any named item doesn’t exist, nothing is deleted.
-pst mv IDS | --from-file FILE --to PROJECT/ENV | --shared [--file FILE]...Move items into a project’s environment, or back to shared, with one approval. Values, settings and history move with them. References are then updated in the files the items came from, each --file, and the --from-file file, which moves every shared item it refers to. If any target ID already exists, nothing moves.
-pst duplicates [--json]Lists groups of items holding the same value, counted by kind at the top, and what to do about each, with the command to run. See below.
-pst combine IDS --into NAME|ID [--file FILE]...Makes items holding one value into one shared item, with one approval. See below.
-pst scan [DIR] [--json], scan --staged, scan --install-hook [--force]Finds env files that still hold plain values. See Scanning env files.
+pistachio list [--project P] [--json]IDs grouped by project and environment, with kind, service, whether agents may read them, and the note. --json prints the same as JSON (see the item shape). Never values.
+pistachio set ID [--kind KIND] [--agent-safe] [--note TEXT] [--service NAME]Add or change an item. The value comes from standard input, or a hidden prompt in a terminal. Kinds: token, password, key, value. Replacing a value keeps the old one as a version. Asks.
+pistachio update IDS|PATTERN... [--agent-safe yes|no] [--kind KIND] [--service NAME] [--note TEXT] [--fill-sites HOSTS]Change settings on many items with one approval. Values are untouched. --service "" clears the service. --fill-sites vercel.com,app.netlify.com sets the only sites Pistachio for Safari may fill the items on (each covers its subdomains; up to 20); --fill-sites "" goes back to the default: the service’s own site and the deployment platforms.
+pistachio rm IDS|PATTERN...Delete items with one approval; they go to Recently Deleted for 30 days. If any named item doesn’t exist, nothing is deleted.
+pistachio mv IDS | --from-file FILE --to PROJECT/ENV | --shared [--file FILE]...Move items into a project’s environment, or back to shared, with one approval. Values, settings and history move with them. References are then updated in the files the items came from, each --file, and the --from-file file, which moves every shared item it refers to. If any target ID already exists, nothing moves.
+pistachio duplicates [--json]Lists groups of items holding the same value, counted by kind at the top, and what to do about each, with the command to run. See below.
+pistachio combine IDS --into NAME|ID [--file FILE]...Makes items holding one value into one shared item, with one approval. See below.
+pistachio scan [DIR] [--json], scan --staged, scan --install-hook [--force]Finds env files that still hold plain values. See Scanning env files.
 Examples
 ```
-printf %s "$TOKEN" | pst set shop/production/STRIPE_KEY --kind token --service Stripe
-pst update 'shop/development/*' --agent-safe no
-pst list --project shop --json
+printf %s "$TOKEN" | pistachio set shop/production/STRIPE_KEY --kind token --service Stripe
+pistachio update 'shop/development/*' --agent-safe no
+pistachio list --project shop --json
 ```
-### pst duplicates
+### pistachio duplicates
 Synopsis
 ```
-pst duplicates [--json]
+pistachio duplicates [--json]
 ```
 Lists groups of items holding the same value, counted by kind at the top, and what to do about each, with the command to run:
 - production shares a value with another environment: give production its own key;
@@ -659,48 +674,48 @@ Lists groups of items holding the same value, counted by kind at the top, and wh
 - the same key across projects: combine into one shared item. A suggested name that another group also suggests, or that a shared item already has, gets the first project as a prefix (MANAGER_DATABASE_URL);
 - identifiers rather than secrets (IDs, hosts, public keys, web addresses without credentials): mark them plain values.
 Values are compared inside Pistachio and never shown; plain values and values shorter than 8 characters are left out. It asks for approval every time (grants and agent-safe settings don’t stand in), and agents can’t ask. --json gives items, advice, summary and into for each group.
-### pst combine
+### pistachio combine
 Synopsis
 ```
-pst combine IDS --into NAME|ID [--file FILE]...
+pistachio combine IDS --into NAME|ID [--file FILE]...
 ```
 Makes items holding one value into one shared item NAME, or into one item ID of the environment they’re all in, with one approval. NAME is created from them (agent-safe only if every one was; the service if they agree; where they were used, combined), or must already hold the same value. The others go to Recently Deleted, environment records point at NAME, and references are updated in the files the items were imported from and in each --file. If the values differ, nothing changes. Agents can’t combine.
 Example
 ```
-pst duplicates
-pst combine shop/development/OPENAI_API_KEY,blog/development/OPENAI_API_KEY --into OPENAI_API_KEY
+pistachio duplicates
+pistachio combine shop/development/OPENAI_API_KEY,blog/development/OPENAI_API_KEY --into OPENAI_API_KEY
 ```
-### pst scan
+### pistachio scan
 Synopsis
 ```
-pst scan [DIR] [--json]
-pst scan --staged
-pst scan --install-hook [--force]
+pistachio scan [DIR] [--json]
+pistachio scan --staged
+pistachio scan --install-hook [--force]
 ```
 Finds env files under DIR (default: the current folder; .env, .env.* and *.env, not examples, templates or backups, not in node_modules, build or .git folders) that still hold plain values, and prints each as FILE:LINE NAME with the reason, never a value:
 - the value equals a stored item: the line names the item(s). The values are compared inside Pistachio, which receives the values found in the files and returns only item IDs. Like duplicates, it asks every time (grants and agent-safe settings don’t stand in), and agents can’t ask. Plain items and values shorter than 8 characters are left out;
 - the value looks secret: a private key, a password or a connection string with credentials, a token with a known prefix (sk_live_, ghp_, AKIA…), or a long value under a name such as *_TOKEN, *_SECRET or *_API_KEY. Identifiers (IDs, hosts, public addresses) and pistachio:// references are not findings. This check is local.
 It exits 1 when anything is found, so it works in scripts. If Pistachio can’t compare (not approved, not running), the values that look secret are still reported, and it exits 1. --json gives place, key, reason (stored or looks-secret) and items for each finding.
 --staged scans only the lines a commit would add, from the Git index, in env files that are staged.
---install-hook writes a Git pre-commit hook (honoring core.hooksPath, and worktrees) that runs pst scan --staged and refuses the commit on findings. A hook that isn’t Pistachio’s is left alone unless --force. If neither pst nor pistachio is on the PATH, the hook says so and lets the commit through. Skip it for one commit with git commit --no-verify.
+--install-hook writes a Git pre-commit hook (honoring core.hooksPath, and worktrees) that runs pistachio scan --staged and refuses the commit on findings. A hook that isn’t Pistachio’s is left alone unless --force. If neither pst nor pistachio is on the PATH, the hook says so and lets the commit through. Skip it for one commit with git commit --no-verify.
 Examples
 ```
-pst scan ~/Projects/shop
-pst scan --install-hook
+pistachio scan ~/Projects/shop
+pistachio scan --install-hook
 ```
 ## Environments
 Each environment has a record: its variables, each pointing at an item (shared items too) or holding a plain setting such as PORT=3000. Records sync with your items, so an environment works the same on every Mac, wherever its checkout is. Import, set and mv keep them current.
 CommandWhat it does
-pst env [list], pst env show PROJECT/ENV [--json]Records, and one record’s variables. Unconfirmed variables are marked.
-pst env migrate [--dry-run]Makes or completes records from your items and, where they’re on this Mac, the files they came from. Only adds: a stored variable is never changed, and running it again is safe. Reports conflicts, missing items, missing files and plain values that may be secret. What it found through files is unconfirmed until env confirm. Only numbers up to six digits and true/false are recorded from files without asking you. Asks once.
-pst env set PROJECT/ENV NAME=pistachio://ID|NAME=VALUE..., env unset, env confirmChange one record. NAME=pistachio://ID points a variable at an item (it must exist); NAME=VALUE is a plain setting. A plain setting that looks secret is refused: save it as an item and point the variable at it. env confirm with no names confirms everything unconfirmed. Asks once.
-pst env rm PROJECT/ENVForgets an environment’s record, with one approval. Its items stay, and run --env goes back to finding them by ID until a record is made again.
-pst project [DIR], project link [NAME] [DIR] [--remote R], project unlink NAME [DIR], project listWhich project a checkout is, from its Git remotes (never with credentials). project shows the matching project, its environments, and the export command to run. link remembers the checkout’s origin (or --remote R, or its only remote) as project NAME, by default the folder’s name, so clones on your other Macs are recognized; it asks. A remote belongs to one project; unlinking a project’s last remote forgets the project. A match only names the project: it never releases a value or widens a grant. A match through a remote other than origin, as a fork has, is flagged and never taken as the project.
+pistachio env [list], pistachio env show PROJECT/ENV [--json]Records, and one record’s variables. Unconfirmed variables are marked.
+pistachio env migrate [--dry-run]Makes or completes records from your items and, where they’re on this Mac, the files they came from. Only adds: a stored variable is never changed, and running it again is safe. Reports conflicts, missing items, missing files and plain values that may be secret. What it found through files is unconfirmed until env confirm. Only numbers up to six digits and true/false are recorded from files without asking you. Asks once.
+pistachio env set PROJECT/ENV NAME=pistachio://ID|NAME=VALUE..., env unset, env confirmChange one record. NAME=pistachio://ID points a variable at an item (it must exist); NAME=VALUE is a plain setting. A plain setting that looks secret is refused: save it as an item and point the variable at it. env confirm with no names confirms everything unconfirmed. Asks once.
+pistachio env rm PROJECT/ENVForgets an environment’s record, with one approval. Its items stay, and run --env goes back to finding them by ID until a record is made again.
+pistachio project [DIR], project link [NAME] [DIR] [--remote R], project unlink NAME [DIR], project listWhich project a checkout is, from its Git remotes (never with credentials). project shows the matching project, its environments, and the export command to run. link remembers the checkout’s origin (or --remote R, or its only remote) as project NAME, by default the folder’s name, so clones on your other Macs are recognized; it asks. A remote belongs to one project; unlinking a project’s last remote forgets the project. A match only names the project: it never releases a value or widens a grant. A match through a remote other than origin, as a fork has, is flagged and never taken as the project.
 ## Export
-### pst export
+### pistachio export
 Synopsis
 ```
-pst export PROJECT/ENV [--out FILE [--merge [--yes] | --replace]] [--values [--clipboard]]
+pistachio export PROJECT/ENV [--out FILE [--merge [--yes] | --replace]] [--values [--clipboard]]
 ```
 Writes the environment’s env file from its record: pistachio:// references and plain settings, sorted by name, to standard output or FILE.
 - An existing FILE is left alone, and the variables that would change are named, unless --merge or --replace. A symbolic link or anything but a regular file is refused. The file is written beside its destination and renamed into place, so it’s never half-written.
@@ -711,13 +726,13 @@ Writes the environment’s env file from its record: pistachio:// references and
 - Unconfirmed variables and references to missing items are noted on standard error.
 Examples
 ```
-pst export shop/development --out .env.local --merge
-pst export shop/development --values --clipboard
+pistachio export shop/development --out .env.local --merge
+pistachio export shop/development --values --clipboard
 ```
 ## Importing
 Synopsis
 ```
-pst import FILE... [options]
+pistachio import FILE... [options]
 ```
 OptionMeaning
 --batch LISTAlso import the files listed in LIST, one path per line (# comments allowed).
@@ -746,38 +761,38 @@ Referencepistachio://...Left alone
 A value that carries credentials (a key block, a URL with a user or password) is a secret whatever its name says, and anything unclear is a secret. Settings stay in the file, so --rewrite doesn’t touch them. In the app, the Class column of the import sheet does the same as --class. Classes aren’t remembered between imports yet.
 Example
 ```
-pst import .env.local --dry-run
-pst import .env.local --rewrite --class FEATURE_FLAGS=setting
+pistachio import .env.local --dry-run
+pistachio import .env.local --rewrite --class FEATURE_FLAGS=setting
 ```
 ## History
 CommandWhat it does
-pst history IDEarlier values: when, why (replaced, deleted, replaced by a restore) and by whom. Never values.
-pst restore ID [--version N]Put back version N (1 is the most recent), or bring back a deleted item with its settings. The current value is kept as a version first. Asks.
-pst deletedItems deleted in the last 30 days, with days left.
-pst forget IDSDelete earlier values for good. Asks.
+pistachio history IDEarlier values: when, why (replaced, deleted, replaced by a restore) and by whom. Never values.
+pistachio restore ID [--version N]Put back version N (1 is the most recent), or bring back a deleted item with its settings. The current value is kept as a version first. Asks.
+pistachio deletedItems deleted in the last 30 days, with days left.
+pistachio forget IDSDelete earlier values for good. Asks.
 ## Grants
 CommandWhat it does
-pst grant IDS [--folder DIR] [--for TIME] [--session] [--command CMD]... [--once]Let commands run from DIR (default: here), the folders inside it and that repository’s worktrees read these items without asking. TIME is like 30m, 2h, 1d, or always for a grant that lasts until revoked; default 1 hour, no maximum. IDS can include patterns. Asks once.
-pst grantsGrants in effect, with time left and any limits.
-pst revoke ID or allEnd a grant, or all of them. Doesn’t ask.
-Narrow a grant with --session (it ends when the agent you run it under quits, and covers only programs started under it), --command "npm test" (only pst run of that command, read from the signed tool’s own command line), or --once (one request). The approval panel offers the same: until claude quits and Only for ….
+pistachio grant IDS [--folder DIR] [--for TIME] [--session] [--command CMD]... [--once]Let commands run from DIR (default: here), the folders inside it and that repository’s worktrees read these items without asking. TIME is like 30m, 2h, 1d, or always for a grant that lasts until revoked; default 1 hour, no maximum. IDS can include patterns. Asks once.
+pistachio grantsGrants in effect, with time left and any limits.
+pistachio revoke ID or allEnd a grant, or all of them. Doesn’t ask.
+Narrow a grant with --session (it ends when the agent you run it under quits, and covers only programs started under it), --command "npm test" (only pistachio run of that command, read from the signed tool’s own command line), or --once (one request). The approval panel offers the same: until claude quits and Only for ….
 ## Rotating
 CommandWhat it does
-pst touched [--since 24h] [--by NAME] [--grant ID] [--json]Items Pistachio released in that time: to anything, to programs under NAME (such as claude), or under one grant. From the access log; never values.
-pst rotate IDS|PATTERN... | --touched [...] [--open] [--push]Replace items one by one: ends grants that cover them, shows where to make each new key (--open opens it), asks for the new value (the old one stays in history), then pushes to linked environments with --push.
+pistachio touched [--since 24h] [--by NAME] [--grant ID] [--json]Items Pistachio released in that time: to anything, to programs under NAME (such as claude), or under one grant. From the access log; never values.
+pistachio rotate IDS|PATTERN... | --touched [...] [--open] [--push]Replace items one by one: ends grants that cover them, shows where to make each new key (--open opens it), asks for the new value (the old one stays in history), then pushes to linked environments with --push.
 After an agent session
 ```
-pst touched --since 4h --by claude
-pst rotate --touched --since 4h --by claude --open --push
+pistachio touched --since 4h --by claude
+pistachio rotate --touched --since 4h --by claude --open --push
 ```
 Pistachio can’t make the new key for you: Stripe, GitHub, OpenAI and most services issue keys only in their dashboards. It takes you to the page, saves what you paste, and puts it everywhere it’s linked.
 ## Remote locations
 CommandWhat it does
-pst remote list [PROJECT/ENV]Links, with when each was last pushed.
-pst remote link PROJECT/ENV SERVICE KEY=VALUE...Link an environment. SERVICE is vercel, github, railway, fly or ssh (host= and script=; see a service on a Linux server). Asks.
-pst remote unlink LINKRemove a link. Doesn’t ask.
-pst remote status PROJECT/ENVNames missing on each side, and values changed since the last push.
-pst push PROJECT/ENV [--to LINK] [--only IDS] [--dry-run]Push values with each service’s own tool, values on standard input. Asks every time; production needs its own confirmation in the app. Nothing is deployed.
+pistachio remote list [PROJECT/ENV]Links, with when each was last pushed.
+pistachio remote link PROJECT/ENV SERVICE KEY=VALUE...Link an environment. SERVICE is vercel, github, railway, fly or ssh (host= and script=; see a service on a Linux server). Asks.
+pistachio remote unlink LINKRemove a link. Doesn’t ask.
+pistachio remote status PROJECT/ENVNames missing on each side, and values changed since the last push.
+pistachio push PROJECT/ENV [--to LINK] [--only IDS] [--dry-run]Push values with each service’s own tool, values on standard input. Asks every time; production needs its own confirmation in the app. Nothing is deployed.
 ServiceKeysTool
 vercelenvironment= (development, preview or production), and project= or dir=; optional branch= for one preview branchvercel
 githubrepo=owner/repo; optional environment= (leave out for repository secrets)gh
@@ -790,7 +805,7 @@ pistachio log --verifyChecks the log’s chain: exits 0 if every entry is as Pis
 ## Status
 Synopsis
 ```
-pst status
+pistachio status
 ```
 Where values are kept, how you approve, how many items and grants, and the socket path.
 ## Environment variables
@@ -806,7 +821,7 @@ CodeMeaning
 73A file couldn’t be rewritten
 77Refused: not agent-safe, not approved, no grant
 127The command couldn’t start
-On 66 and 77, Pistachio prints the item IDs and what to do, including the pst grant command that would allow the refused items.
+On 66 and 77, Pistachio prints the item IDs and what to do, including the pistachio grant command that would allow the refused items.
 
 ---
 
@@ -859,10 +874,10 @@ URL: https://latchkey.snackstud.io/developers/quickstart.html
 # Quickstart
 From an env file full of secrets to a command that gets them at start-up, in four steps.
 ## 1. Install
-Download the latest disk image and drag Pistachio to Applications, or install it with Homebrew: brew tap zachshallbetter/latchkey, brew trust zachshallbetter/latchkey, then brew install --cask latchkey. The cask adds both commands for you. With the disk image, open it and choose Install Command Line Tool… in the app menu, which links ~/.local/bin/pistachio, and pst for short, to the copy inside the app so it updates with the app. Make sure ~/.local/bin is on your PATH; in zsh, echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc does it. With the Mac App Store version, see the command-line tool.
+Download the latest disk image and drag Pistachio to Applications, or install it with Homebrew: brew tap zachshallbetter/latchkey, brew trust zachshallbetter/latchkey, then brew install --cask latchkey. The cask adds both commands for you. With the disk image, open it and choose Pistachio › Install Command Line Tool…, which links ~/.local/bin/pistachio, and pst for short, to the copy inside the app so it updates with the app. Make sure ~/.local/bin is on your PATH; in zsh, echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc does it. With the Mac App Store version, see the command-line tool.
 Terminal
 ```
-pst status
+pistachio status
 ```
 You should see storage: iCloud Keychain storage (sync status not verified).
 ## 2. Import an env file
@@ -870,13 +885,13 @@ Look first. A dry run prints names and where each would go, never values:
 Terminal
 ```
 cd ~/Projects/shop
-pst import .env.local --dry-run
+pistachio import .env.local --dry-run
 ```
 The dry run also classes each line: secret, setting (such as PORT, left in the file), public value (such as NEXT_PUBLIC_*, saved as a plain value) or existing reference. It counts each class and lists each setting it would leave. Change a line with --class KEY=secret|setting|public.
 Then import, and replace each value in the file with its reference. The project is named after the repository; the environment comes from the file name (.env.local is development).
 Terminal
 ```
-pst import .env.local --rewrite
+pistachio import .env.local --rewrite
 ```
 .env.local
 ```
@@ -885,22 +900,22 @@ STRIPE_KEY=pistachio://shop/development/STRIPE_KEY
 ```
 Imports support quoted multiline values and refuse malformed syntax before saving anything. Rewriting replaces the complete assignment and stops if the file changed while approval was pending.
 The dry run, then the import: one approval, and each value in the file becomes its reference. Here --skip PORT leaves a plain setting as it is. Example data; the output is what Pistachio prints.
-Every project at once: pst import --scan ~/Projects --dry-run, then again without --dry-run. Or pst import --batch files.txt, one path per line. Either way, one approval. See the import options.
+Every project at once: pistachio import --scan ~/Projects --dry-run, then again without --dry-run. Or pistachio import --batch files.txt, one path per line. Either way, one approval. See the import options.
 ## 3. Run a command
 Terminal
 ```
-pst run --env-file .env.local -- npm run dev
-pst run --env shop/development -- npm test      # no env file needed
+pistachio run --env-file .env.local -- npm run dev
+pistachio run --env shop/development -- npm test      # no env file needed
 ```
 pst run reads the references, asks Pistachio for the values, and starts the command with them in its environment; anything it prints of them is concealed. Example data; the output is what Pistachio prints.
-Reads ask unless a grant or the No Approval setting permits them. Values that reach the command’s output are replaced with a concealment marker. The command’s exit status becomes pst run’s.
+Reads ask unless a grant or the No Approval setting permits them. Values that reach the command’s output are replaced with <concealed by pistachio>. The command’s exit status becomes pistachio run’s.
 ## 4. Let an agent work
 Before you step away, allow the folder for a while. Commands run from it, its subfolders and the repository’s worktrees read these items without asking until the grant ends.
 Terminal
 ```
-pst grant 'shop/development/*' --folder ~/Projects/shop --for 2h
-pst grants
-pst revoke all
+pistachio grant 'shop/development/*' --folder ~/Projects/shop --for 2h
+pistachio grants
+pistachio revoke all
 ```
 Then tell the agent how to run things; see instructions for agents.
 
@@ -1047,7 +1062,7 @@ pst check
 ### MCP server In this build
 Status, list, check, run, project, export references and request a grant, for clients without a shell. There's no secret-read tool; grants it asks for cover only its own folder, end when the agent quits, and never include production.
 ```
-claude mcp add pistachio -- ~/.local/bin/pst mcp
+claude mcp add pistachio -- ~/.local/bin/pistachio mcp
 ```
 Pistachio's MCP server
 ### Skill and plugin Pending
@@ -1057,7 +1072,7 @@ The Pistachio skill tells an agent to run through pst run, never print values, a
 ```
 Skills and plugins
 ### Masked output In this build
-A value of a secret kind, 6 characters or longer, that the command prints becomes a concealment marker, even split across chunks. Transformed values aren't caught.
+A value of a secret kind, 6 characters or longer, that the command prints becomes <concealed by pistachio>, even split across chunks. Transformed values aren't caught.
 Where protection ends
 Integrations
 ## From the dashboard where a key is made to the platform that runs it.
@@ -1163,7 +1178,7 @@ pst log --limit 20
 pst log prints one readable line per entry. The file behind it, ~/Library/Application Support/Latchkey/access.jsonl, holds one JSON object per line. The fields to read are op (what happened), names (which items), decision (allowed or approved, with why; or denied or refused), chain (the calling program's parent processes, nearest first), cwd and command. This one is an example:
 Example entry
 ```
-{"chain":["zsh","claude","Terminal"],"command":"pst run -- npm test","cwd":"/Users/you/Projects/shop","decision":"allowed (grant k3v9q2)","names":["shop/development/DATABASE_URL"],"op":"get","time":"2026-11-10T20:14:03Z"}
+{"chain":["zsh","claude","Terminal"],"command":"pistachio run -- npm test","cwd":"/Users/you/Projects/shop","decision":"allowed (grant k3v9q2)","names":["shop/development/DATABASE_URL"],"op":"get","time":"2026-11-10T20:14:03Z"}
 ```
 Real entries also carry prev and mac, the hash chain that --verify checks.
 ### List what one program touched
@@ -1203,7 +1218,7 @@ Guide · Coding agents
 # Give coding agents API keys without handing them over
 An agent that runs your tests needs the keys your tests use. It doesn't need to see them, keep them, or have them pasted into a chat window.
 By Zach ShallbetterPublished 14 November 2026Needs the command-line tool
-In shortKeep pistachio:// references in your env files and tell the agent to run commands through pst run. Each read asks you with Touch ID, showing the agent, folder and command, unless a grant you made covers it. For OpenAI and Anthropic keys, --proxy lets the command call the API without ever holding the key.
+In shortKeep pistachio:// references in your env files and tell the agent to run commands through pistachio run. Each read asks you with Touch ID, showing the agent, folder and command, unless a grant you made covers it. For OpenAI and Anthropic keys, --proxy lets the command call the API without ever holding the key.
 ## The usual shortcuts
 Pasting a key into the conversation puts it in a transcript. Leaving it in .env lets the agent read the file, and so print, log or commit it. Exporting it in your shell hands it to everything that shell starts, for as long as it runs.
 ## Set it up
@@ -1215,13 +1230,13 @@ Agent instructions
 ```
 Secrets are in Pistachio. Env files hold pistachio:// references, not values.
 Run anything that needs secrets as
-`pst run --env-file .env.local -- <command>`.
-Never run `pst get`, never print the environment, and never read or
+`pistachio run --env-file .env.local -- <command>`.
+Never run `pistachio get`, never print the environment, and never read or
 write values in .env files. If pistachio exits with 77 (refused) or 66
 (missing), stop and ask; don't retry.
 ```
 ### Approve when it asks
-When the agent runs pst run, the approval panel names the agent, the programs it runs through, the folder and the full command. Choose to allow once, allow from that folder for a while, or Deny, then touch the sensor: Touch ID listens right in the panel, from whatever app you're in. Several requests the agent makes in a row share one panel, so one touch answers them all, and each can be denied on its own. A refused run exits with 77 and prints the exact pst grant command that would allow it.
+When the agent runs pistachio run, the approval panel names the agent, the programs it runs through, the folder and the full command. Choose to allow once, allow from that folder for a while, or Deny, then touch the sensor: Touch ID listens right in the panel, from whatever app you're in. Several requests the agent makes in a row share one panel, so one touch answers them all, and each can be denied on its own. A refused run exits with 77 and prints the exact pistachio grant command that would allow it.
 ### Grant before you step away
 Terminal
 ```
@@ -1308,7 +1323,7 @@ In shortRun pst import .env.local --rewrite. Each secret moves into iCloud Keych
 A .env file is ignored by Git, but nothing else ignores it. Backups and cloud-synced folders copy it, screen shares show it, it gets pasted into chat to "just get the build working", and any program you run in the project, a coding agent included, can open it. Rotating a key means finding every copy.
 ## Move the values into Keychain
 ### Install Pistachio and its command-line tool
-Download it free or install it with Homebrew, whose cask adds pistachio and its short name pst. With the disk image, open it once and choose Install Command Line Tool… in the app menu. With the Mac App Store version, see the command-line tool.
+Download it free or install it with Homebrew, whose cask adds pistachio and its short name pst. With the disk image, open it once and choose Pistachio › Install Command Line Tool…. With the Mac App Store version, see the command-line tool.
 ### Preview the import
 Terminal
 ```
@@ -1418,7 +1433,7 @@ Keep values out of files, find duplicates, and set up new checkouts.
 Keep API keys out of your .env filesMove values into iCloud Keychain and leave references in the file.Block commits that contain secretsRefuse commits that add plain secrets to env files.Set up a clone or worktree without .envGet a new clone or worktree running without copying .env.Find the same API key in many projectsFind reused keys and give production its own.Merge into an existing .env fileAdd variables to a .env and keep your comments and order.Paste env vars into a dashboard, no filePaste an environment into a hosting dashboard, no file on disk.
 ## Coding agents
 Give agents what a task needs, and nothing they could keep.
-Give coding agents API keys without handing them overApprovals, grants, and keys an agent can use but never read.Hide your OpenAI or Anthropic key from an AI agentLet a command call OpenAI or Anthropic without holding the key.Rotate the keys an AI agent touchedList what an agent was given, then replace each key in one pass.Keep API keys out of MCP server configsStart the server through pst run so the config holds references.
+Give coding agents API keys without handing them overApprovals, grants, and keys an agent can use but never read.Hide your OpenAI or Anthropic key from an AI agentLet a command call OpenAI or Anthropic without holding the key.Rotate the keys an AI agent touchedList what an agent was given, then replace each key in one pass.Keep API keys out of MCP server configsStart the server through pistachio run so the config holds references.
 ## Deploying
 Get values to platforms, build tools and cloud accounts.
 Push env vars to your deploy platformsSend one environment's values to Vercel, GitHub, Railway or Fly.Push credentials to a Linux serverSend each credential over ssh to a root-only file your service loads.Use short-lived AWS credentials locallyGive a command AWS credentials that expire, not your long-lived key.Use an App Store Connect key with fastlaneGive fastlane a .p8 key as a temporary file that is deleted when it exits.
@@ -1509,7 +1524,7 @@ Guide · MCP servers
 # Keep API keys out of MCP server configs
 MCP clients start servers from a JSON config, and the usual way to give a server its key is to type the key into that file. Pistachio lets the config hold a reference instead.
 By Zach ShallbetterPublished 14 November 2026Needs the command-line tool
-In shortSave the key in Pistachio, then change the server's command to pst run --no-masking -- … and put pistachio://NAME in its env. The client starts the server as before; Pistachio fills the key in for that process.
+In shortSave the key in Pistachio, then change the server's command to pistachio run --no-masking -- … and put pistachio://NAME in its env. The client starts the server as before; Pistachio fills the key in for that process.
 ## Why the config is a problem
 A config such as .mcp.json or Claude Desktop's settings file holds every server's keys in plain text. It gets shared to set up a teammate, checked into a repository for a project's tools, or synced between Macs, and every key in it goes along.
 ## Wrap the server
@@ -1519,7 +1534,7 @@ Terminal
 pst set SOME_API_KEY --kind token
 ```
 The value is read from a hidden prompt or standard input, so it never appears in your shell history.
-### Start the server through pst run
+### Start the server through pistachio run
 MCP server config
 ```
 {
@@ -1538,7 +1553,7 @@ pst update SOME_API_KEY --agent-safe yes
 ## Pistachio's own MCP server
 Terminal
 ```
-claude mcp add pistachio -- ~/.local/bin/pst mcp
+claude mcp add pistachio -- ~/.local/bin/pistachio mcp
 ```
 For clients without a shell, Pistachio's server offers status, listing, checking, running commands with references filled in, and asking you for a grant. It has no tool that reads a value, and the output it returns is masked.
 ## What this doesn't do
@@ -1697,7 +1712,7 @@ Terminal
 ```
 pst scan --install-hook
 ```
-This writes a pre-commit hook that runs pst scan --staged. It honours core.hooksPath and works in worktrees. If the repository already has a hook that is not Pistachio's, it is left alone. Add --force to replace it.
+This writes a pre-commit hook that runs pistachio scan --staged. It honours core.hooksPath and works in worktrees. If the repository already has a hook that is not Pistachio's, it is left alone. Add --force to replace it.
 ### Commit as usual
 --staged reads only the lines a commit would add, from the Git index, in env files that are staged. If it finds a plain value, the commit is refused and the file, line and variable name are given, plus the stored item when the value equals one. Fix the file and commit again. To skip the check for one commit, use git commit --no-verify.
 ## Use the same check in a script
@@ -1763,7 +1778,7 @@ Only the command and the processes it starts. A request from any other program g
 - A program running as you that can attach a debugger to the command or read its memory gets whatever the command has.
 See the CLI reference and the security page for the details.
 ## Related
-Give coding agents API keys without handing them overApprovals, grants, and keys an agent can use but never read.Keep API keys out of MCP server configsStart the server through pst run so the config holds references.
+Give coding agents API keys without handing them overApprovals, grants, and keys an agent can use but never read.Keep API keys out of MCP server configsStart the server through pistachio run so the config holds references.
 
 ---
 
@@ -1929,7 +1944,7 @@ Guide · SSH
 # Use your secrets on another Mac over SSH
 You work on a second Mac through SSH and its commands need keys that live on your laptop. Copying a .env file across leaves a plain-text copy behind.
 By Zach ShallbetterPublished 14 November 2026Needs the command-line tool
-In shortConnect with ssh -R to forward Pistachio's socket, set PISTACHIO_SOCKET on the other Mac, and run pst run there. The request reaches the app on your own Mac, which asks you to approve each read of an item that needs approval.
+In shortConnect with ssh -R to forward Pistachio's socket, set PISTACHIO_SOCKET on the other Mac, and run pistachio run there. The request reaches the app on your own Mac, which asks you to approve each read of an item that needs approval.
 ## Why files are the wrong answer
 A remote shell has no Touch ID and no keychain of yours. The usual fixes are to copy the env file over, or to paste values into the session. Both leave the values in a file or in shell history on a machine you may not control as tightly as your laptop.
 Pistachio's command-line tool never touches the keychain. It asks the app over a Unix socket. If you forward that socket over SSH, the tool on the far Mac asks the app on your Mac, and the approval appears where you are sitting.
@@ -1950,16 +1965,16 @@ The other Mac
 export PISTACHIO_SOCKET=/tmp/pistachio-$USER.sock
 ```
 ### Run your command
-Use pst run as you would at home. Here shop/development is an example environment.
+Use pistachio run as you would at home. Here shop/development is an example environment.
 The other Mac
 ```
-pst run --env shop/development -- npm test
+pistachio run --env shop/development -- npm test
 ```
 ### Approve on your Mac
 The approval panel opens on your own Mac. It says the request came over SSH and shows what the tool on the other computer says it is running, marked as unchecked. Approve with Touch ID, or deny. A request nobody answers is denied after two minutes.
 ## What is different from working locally
 - Each read asks, unless the item is set to need no approval. Your Mac sees only your ssh client, not the program on the other computer, so grants don't apply and can't be made over the connection.
-- pst status on the other Mac says it can't check the app's signature through a forwarded socket.
+- pistachio status on the other Mac says it can't check the app's signature through a forwarded socket.
 - Copying to the clipboard is refused over SSH, because the clipboard would be on the other computer.
 The Agents and MCP reference has the same setup in short form, and Security explains how Pistachio identifies callers.
 ## What this doesn't do
@@ -2087,17 +2102,18 @@ Merge into an existing .env fileAdd variables to a .env and keep your comments a
 
 ---
 
-Page: Pistachio: free Mac secrets manager for .env files and agents
+Page: Pistachio: Your secrets. In a shell.
 URL: https://latchkey.snackstud.io/
 
-A native Mac tool for developers
-# Your projects move. Your secrets don't.
-Development credentials live in your Mac's iCloud Keychain. Pistachio fills them in when a command starts.
-Download free See how it works
-Free · Notarized by Apple · macOS 15 or later
-Your app gets the variables it expects; nothing is rewritten around a new secrets API. Example data.
-## From scattered .env files to a working project.
-Import the environment you already have. Pistachio stores the credentials and replaces their values with references. On another Mac, restore the project's environment and get back to work. The environment travels with the project; the credential stays in your vault.
+A native Mac app by Snack Studio
+# Your secrets.In a shell.
+API keys and credentials, kept in Keychain. Ready for the commands and coding agents you approve.
+Download for Mac See how it works
+Free to use · macOS 15 or later
+Design preview with example data. Try the working app demo.
+Kept in Keychain. References in your files. Access you approve.
+## Less copying. More building.
+Import your environment once. Keep your workflow. Pistachio keeps the values in Keychain and leaves references in your project. Your commands get the credentials you approve when they start.
 1
 ### References in your files. Values in Keychain.
 Point Pistachio at an env file. A dry run shows where each value would go and sends nothing. Then one approval saves them to iCloud Keychain under the repository's name and the environment the file name implies, and --rewrite leaves a reference where each value was. Settings such as PORT are recognised and left in the file; --skip leaves out anything else you name.
@@ -2145,15 +2161,17 @@ pst touched lists every key Pistachio released to programs an agent started. pst
 Rotating
 ## Keep supported API keys out of agent processes
 For OpenAI and Anthropic, Pistachio's local proxy keeps the upstream key out of the command while forwarding its API requests. The process can still use the provider; it never receives the original key. Try what a command could do with it:
+### Try a command
+Interactive example · no real keys
 In the command's environment
 ```
 OPENAI_API_KEY=lk-proxy-3f9c…8e4a
 OPENAI_BASE_URL=http://127.0.0.1:52817/v1
 ```
-Arriving at api.openai.com
+Destination: api.openai.com
 ```
 POST /v1/chat/completions
-Authorization: Bearer lk-proxy-3f9c…8e4a
+Authorization: Bearer — (no request yet)
 ```
 ```
 Choose something for the command to try.
@@ -2198,13 +2216,13 @@ For technical evaluatorsInspect how values are stored and released, where protec
 Security modelDeveloper docsRoadmap
 ## One developer, building in the open.
 Pistachio is designed and built by Zach Shallbetter, a systems engineer in Spokane, Washington, and published by his studio, Snack Studio. The source is on GitHub, every change is in the changelog, and questions reach the studio at Contact support.
-## Stop being the credential courier.
-Keep your projects, credentials and coding agents working together, with access you can inspect and control. Pistachio is free to download and use, and the core is meant to stay free. Pro will add more for a one-time price in the Mac App Store.
+## A safer home for your secrets.
+Keep the project moving. Keep access in your hands. Pistachio is free to download and use, and the core is meant to stay free. Pro will add more for a one-time price in the Mac App Store.
 Download freeSee what Pro adds
 - 1Download and installOpen the latest disk image and drag Pistachio to Applications, or run brew tap zachshallbetter/latchkey, brew trust zachshallbetter/latchkey and brew install --cask latchkey.
-- 2Add the command-line toolThe Homebrew cask adds the command aliases for you. With the disk image, open Pistachio and choose Install Command Line Tool… in the app menu to add pst, pistachio to ~/.local/bin. They link to the tool inside the app, so they update with it.
+- 2Add the command-line toolThe Homebrew cask adds both for you. With the disk image, open Pistachio and choose Pistachio › Install Command Line Tool… to add pistachio and pst to ~/.local/bin. They link to the tool inside the app, so they update with it.
 - 3Check itRun pst status. Beside how you approve, your item and grant counts and the socket, it should say storage: iCloud Keychain and that the app's signature was checked.
-Development previewLatest version 0.4.0 (what's new). Notarized by Apple and free. macOS 15 or later; Intel verification is pending; iCloud Keychain on for sync between Macs. Installation steps · Source · Command reference
+Development previewLatest version 0.5.0 (what's new). Notarized by Apple and free. macOS 15 or later; Intel verification is pending; iCloud Keychain on for sync between Macs. Installation steps · Source · Command reference
 
 ---
 
@@ -2322,7 +2340,7 @@ Pistachio Pro will be sold by Apple through the Mac App Store; it isn't on sale 
 ## Crash reports
 If you share crash reports and analytics with app developers in macOS settings, Apple may pass us anonymous crash reports for Pistachio. They never contain your values.
 ## This website
-The site uses no cookies, analytics or third-party requests: fonts are your system's, and every script is served from this site. The host keeps standard request logs (address, page, time) for operating the site.
+The site uses no cookies, analytics or third-party requests: fonts are your system's, and every script is served from this site. The host keeps standard request logs (address, page, time) for operating the site. Your appearance preference and the homepage’s human/agent view choice are stored only in this browser’s local storage; they are not sent to us.
 ## Email
 If you write to Contact support, we keep the conversation to answer you and delete it when it's no longer needed. Never send a real secret.
 ## Children
@@ -2420,21 +2438,21 @@ M
 ### Duplicates and combine
 Built
 Gap: the same key copied into many projects meant many places to rotate it, and production sharing a key with development.
-Built: pst duplicates compares values inside Pistachio with one approval and recommends what to do; pst combine makes them one shared item, and the files follow.
+Built: pistachio duplicates compares values inside Pistachio with one approval and recommends what to do; pistachio combine makes them one shared item, and the files follow.
 - You
 Tier 2
 ## Coding agents
 Where Pistachio can be clearly better than a .env file or a password manager.
 M
 ### Use a value without holding it
-Gap: “agent-safe” means the agent can hold the value: it can call pst get, and masking only catches exact copies.
+Gap: “agent-safe” means the agent can hold the value: it can call pistachio get, and masking only catches exact copies.
 Plan: refuse get to agent callers, and mask base64, URL-encoded and JSON-escaped copies too.
 - Agents
 M
 ### MCP server
 Built
 Gap: agents learn Pistachio from instructions and shell commands.
-Built: pst mcp with tools for status, listing items, checking and running a command with references filled in, the checkout's project, writing an env file of references, and asking for a grant. No tool returns a value.
+Built: pistachio mcp with tools for status, listing items, checking and running a command with references filled in, the checkout's project, writing an env file of references, and asking for a grant. No tool returns a value.
 - Agents
 M
 ### Secret requests
@@ -2470,7 +2488,7 @@ Plan: GOOGLE_APPLICATION_CREDENTIALS=pistachio-file://gcp-sa writes a 0600 tempo
 M
 ### Project commands
 Gap: there's no standard way to set up a project or check it in CI.
-Built: pst check confirms what a run would get without reading values, and pst export writes an env file of references from the environment's record. Next: pst init and a shell hook.
+Built: pistachio check confirms what a run would get without reading values, and pistachio export writes an env file of references from the environment's record. Next: pistachio init and a shell hook.
 - YouAgents
 M
 ### Last used, expiry and rotation
@@ -2486,7 +2504,7 @@ M
 ### Scan for plain-text secrets
 Built
 Gap: secrets already sitting in repos and old .env files stay there.
-Built: pst scan finds env files holding a stored value or one that looks secret, naming file, line and item but never the value, and a pre-commit hook refuses those commits.
+Built: pistachio scan finds env files holding a stored value or one that looks secret, naming file, line and item but never the value, and a pre-commit hook refuses those commits.
 - YouAgents
 S
 ### Activity alerts
@@ -2531,7 +2549,7 @@ Plan: release the Mac App Store version, where Pro is sold. Its one-time purchas
 - You
 M
 ### Test coverage
-Gap: there are no end-to-end tests for pst run or the socket server, and no UI tests.
+Gap: there are no end-to-end tests for pistachio run or the socket server, and no UI tests.
 Plan: tests that run the CLI against a broker with a test approver, plus a few UI tests for the window.
 - You
 ## Limits and non-goals
@@ -2649,9 +2667,9 @@ Most answers are in the docs. For anything else, write to Contact support; we an
 - Quickstart: install, import an env file and run a command.
 - The command-line tool: getting it with the Mac App Store version or the direct download.
 - CLI reference and Agents and MCP.
-- pst status shows whether the command-line tool reaches the app, how you approve, and where values are kept. Include its output when you write (it never shows values).
+- pistachio status shows whether the command-line tool reaches the app, how you approve, and where values are kept. Include its output when you write (it never shows values).
 ## Common problems
-- "cannot reach the Pistachio app" (exit 69): the tool starts Pistachio itself, so this usually means PISTACHIO_NO_LAUNCH=1 is set or the app can't start. Open Pistachio once and try again. It stays in the menu bar after you close its window, and keeps answering the tool.
+- "cannot reach the Pistachio app" (exit 69): the tool starts Pistachio itself, so this usually means PISTACHIO_NO_LAUNCH=1 is set or the app can't start. Open Pistachio (the current download) once and try again. It stays in the menu bar after you close its window, and keeps answering the tool.
 - A command still sees pistachio:// references: run it through pst run -- …, which replaces them with values for that command only.
 - Values don't appear on another Mac: both Macs need iCloud Keychain turned on with the same Apple Account, and the items must have been saved to iCloud Keychain. Syncing to a second Mac hasn't been tested end to end yet.
 ## Pistachio Pro

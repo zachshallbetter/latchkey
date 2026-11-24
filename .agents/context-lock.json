@@ -5,10 +5,10 @@
   "validityBasis": "aggregate-source-digest",
   "selectedPaths": [],
   "sourceSelection": {
-    "includedCount": 397,
-    "includedBytes": 3588443,
+    "includedCount": 404,
+    "includedBytes": 3668839,
     "excludedCounts": {
-      "extension": 126,
+      "extension": 136,
       "generated-or-transient-file": 2
     }
   },
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "e9160cf0e9a02fe95686642b1ebe6a26a6150c7b",
+        "commit": "d65846ef17f568cfe2902a3875a15d69928d364d",
         "branch": "codex/pistachio-pst-command",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "8ae9da8fa307aba58688e4f0bae70b6993df56c259ba0f508906ca894f57079d",
+  "aggregateSourceDigest": "63f33cde57eea465c7868c48b48d249f1ca6d3563f2d2e990bf54635e98ea56e",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -728,19 +728,29 @@
       "sha256": "467ace7b20c125a733ff32de4949956dc526f6a57f0bd080e5377c01002b4893"
     },
     {
+      "path": "App/Latchkey/AppBranding.swift",
+      "bytes": 943,
+      "sha256": "6ffdc0722def708eae512d8869659bf763c4cb7b6de59eb432b6ef720f165318"
+    },
+    {
       "path": "App/Latchkey/AppIcon.icon/icon.json",
-      "bytes": 1541,
-      "sha256": "29ae56bc734cec503e1620e1c69d1ccd0f87a4d4ab824e751163e9caf3dfcee6"
+      "bytes": 1457,
+      "sha256": "5b52eafae4900588c4d0d60e934158efb7c7c2c0f04fc5efc131d8d9223dd036"
     },
     {
       "path": "App/Latchkey/ApprovalPanel.swift",
-      "bytes": 26023,
-      "sha256": "8736a7ad9db50cff405aaf450cfc9cd00725b8a338707901902b676616a16a29"
+      "bytes": 25962,
+      "sha256": "cd3941a01344ac998df08f7eaa22d5641663000a05b7f43c29b763d846a856a1"
     },
     {
       "path": "App/Latchkey/Assets.xcassets/Contents.json",
       "bytes": 59,
       "sha256": "141dec78f726770fe3b569b7f6d35263546f579fd8ec549d9a1bd5bfdbc4ab73"
+    },
+    {
+      "path": "App/Latchkey/Assets.xcassets/KeyDockIcon.imageset/Contents.json",
+      "bytes": 345,
+      "sha256": "d7261fc67d3a6313bb532ecbd8eeebeb2a5ae931e5c4cd8dc1a0cfbaff2bac26"
     },
     {
       "path": "App/Latchkey/Assets.xcassets/Logo.imageset/Contents.json",
@@ -751,6 +761,21 @@
       "path": "App/Latchkey/Assets.xcassets/MenuBarIcon.imageset/Contents.json",
       "bytes": 258,
       "sha256": "39696113926c65039cc6a7c2f8ea5b56ca570300aac03e87fcbcdf64907f56a1"
+    },
+    {
+      "path": "App/Latchkey/Assets.xcassets/PistachioDockIcon.imageset/Contents.json",
+      "bytes": 345,
+      "sha256": "d7261fc67d3a6313bb532ecbd8eeebeb2a5ae931e5c4cd8dc1a0cfbaff2bac26"
+    },
+    {
+      "path": "App/Latchkey/Assets.xcassets/PistachioLogo.imageset/Contents.json",
+      "bytes": 220,
+      "sha256": "b25c03e9cce6e08923db8ac19447c2a3d99f53fde99d72ec514cf584df253e80"
+    },
+    {
+      "path": "App/Latchkey/Assets.xcassets/PistachioMenuBarIcon.imageset/Contents.json",
+      "bytes": 274,
+      "sha256": "123a07f1e8c546c6db77b0cf40c1f42ae062e0d84af3195cdd59133da1a83c05"
     },
     {
       "path": "App/Latchkey/Assets.xcassets/ServiceIcons/AWS.imageset/Contents.json",
@@ -959,18 +984,18 @@
     },
     {
       "path": "App/Latchkey/LatchkeyApp.swift",
-      "bytes": 66488,
-      "sha256": "2a41a636a10dd99ee437763d3d3c60fdd7f67587804de61ac379b44302e58c13"
+      "bytes": 66679,
+      "sha256": "c877f1c981a0db769759a98a99b09e32bbf47ba2459e5342c9842cebaae5495c"
     },
     {
       "path": "App/Latchkey/MainWindow.swift",
-      "bytes": 49959,
-      "sha256": "4fe316b70fae4563758bcf3d001979fda0ce266309c2bbce69ab33ea8f93c6f9"
+      "bytes": 50226,
+      "sha256": "36e7c57f860d93c1ee0c3b56fd94c2a8ab607a74a47ac743d9e53a37a787bf3b"
     },
     {
       "path": "App/Latchkey/MenuBarPanel.swift",
-      "bytes": 7526,
-      "sha256": "8aef5eec7e4d0c8579e539ca1e47766ec6a21a457df82676fa12dd9096bd56b1"
+      "bytes": 7749,
+      "sha256": "6d324beee0136497d48147b5420805d3f78e9b653e8e4bbbb5606da0003c074a"
     },
     {
       "path": "App/Latchkey/Pages.swift",
@@ -999,8 +1024,8 @@
     },
     {
       "path": "App/Latchkey/SettingsView.swift",
-      "bytes": 18671,
-      "sha256": "5eb0c4143960e4b1153e6f0554be62b44ed5e4870fb9965f21ad43c3137192b6"
+      "bytes": 19429,
+      "sha256": "900f16262d9dc98fb98dc3563032755e4c84a35f2780b58c3b488b3951566728"
     },
     {
       "path": "App/Latchkey/Sheets.swift",
@@ -1024,8 +1049,8 @@
     },
     {
       "path": "App/Latchkey/WhatsNew.swift",
-      "bytes": 4498,
-      "sha256": "6a57cbe758195d2bd8357ecec5fbf2c1771aa393ebf63324bae40f1e6f2272d5"
+      "bytes": 4437,
+      "sha256": "44a990cf9a5582018acc037638422bdb2e86dd29ca99eb7c162a3660466d96d9"
     },
     {
       "path": "App/Safari/Resources/background.js",
@@ -1045,7 +1070,7 @@
     {
       "path": "App/Safari/Resources/manifest.json",
       "bytes": 775,
-      "sha256": "ce33f0d0209b3a5c7217ee46541c35be3a9707778a7385b7033559d0693a23ba"
+      "sha256": "587043bb400191744a13637a144f8877277be490a369562e65ab3be2997cefc6"
     },
     {
       "path": "App/Safari/Resources/popup.html",
@@ -1080,12 +1105,12 @@
     {
       "path": "App/project.yml",
       "bytes": 4848,
-      "sha256": "cf17d59ace3a4a3f4b88dd856ca2d2161ca09896b43602f2a432cbff8dcc59c1"
+      "sha256": "2eb1667f5bc530d1d32d9b609daea27508ba0699bb9fbfb13c2a59640ccd23a7"
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 41567,
-      "sha256": "17bee3ebb5f5334c7583386da4fe28fb3f0eb391d815430bdfc98b4745b78523"
+      "bytes": 42012,
+      "sha256": "d6f8c178d6bf68ca952fb4c07bac67d6dc4d61b4f6e501665216cfec944a053c"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1129,8 +1154,8 @@
     },
     {
       "path": "Sources/LatchkeyCore/AppPreferences.swift",
-      "bytes": 2956,
-      "sha256": "ee17f3981c78a093ab47f71d703dac19e25fece2f33372af0c9c82f1ee8e9107"
+      "bytes": 3364,
+      "sha256": "de049417e954aaec5038d79611ade92106f6ffbafec44eaecc217b6bdac617b8"
     },
     {
       "path": "Sources/LatchkeyCore/Approval.swift",
@@ -1319,8 +1344,8 @@
     },
     {
       "path": "Tests/LatchkeyCoreTests/AppPreferencesTests.swift",
-      "bytes": 3272,
-      "sha256": "970b87ae7e7406f639d9b3ea785312a9775ca115aaf47c48a6d41394779378fe"
+      "bytes": 4181,
+      "sha256": "99c20041d6247335073a70f10f111acb4f7375d1c9b852fa5dd2b74b675713bc"
     },
     {
       "path": "Tests/LatchkeyCoreTests/ApprovalDisclosureTests.swift",
@@ -1579,8 +1604,8 @@
     },
     {
       "path": "docs/development.md",
-      "bytes": 11823,
-      "sha256": "95bc0a8252a44f680233865e98083ef78248710f965189db4b3316b8e14b876c"
+      "bytes": 12958,
+      "sha256": "b8c60d4a43590cc808f7b0ffd9a54531ab95e4e3b3b445728a6eed8de692e5a8"
     },
     {
       "path": "docs/evidence/app-store/2026-11-11-cli-transport.json",
@@ -1659,8 +1684,8 @@
     },
     {
       "path": "docs/site.md",
-      "bytes": 18254,
-      "sha256": "46eb66fd284f267f4b69f713d5809ac1052c2afd114b573ecc9b23af0061e0b1"
+      "bytes": 22265,
+      "sha256": "85fda3a4ba1b1aea2467bdb8d67be1747cf3f1a8677b233a4e199eb39d3adad7"
     },
     {
       "path": "docs/troubleshooting.md",
@@ -1698,6 +1723,11 @@
       "sha256": "079b5060b9033439a30bff3334fb4f8d04803a73351d870ef43f9cf570631b2d"
     },
     {
+      "path": "scripts/brand-icons.swift",
+      "bytes": 3831,
+      "sha256": "fd7d248603ff87f225d29a5ac835a0c160051629674d5b177262afe82391b548"
+    },
+    {
       "path": "scripts/build-appstore-sandbox.py",
       "bytes": 2943,
       "sha256": "13057534a06f173c283668d989a7134dbcf61fe6099ac62e52713c135b260943"
@@ -1714,8 +1744,8 @@
     },
     {
       "path": "scripts/discovery.py",
-      "bytes": 4560,
-      "sha256": "796cfc723879e0ce272c16c5dd611c365872fefdf8829b32125048282312ad01"
+      "bytes": 4561,
+      "sha256": "f374a1dd744690e0779b1e5c4d8be7ce3a3d23aaba8e731516687ffca0eab9b2"
     },
     {
       "path": "scripts/fetch-service-icons.py",
@@ -1799,8 +1829,8 @@
     },
     {
       "path": "site/404.html",
-      "bytes": 9874,
-      "sha256": "bf2fbbe7f4a7f5c4079d197e4bb3a46477d27a1ea3c93a28ae7b3c70aca2c4d8"
+      "bytes": 10941,
+      "sha256": "a4e3b660a524c7512dcb1a8031352366bb9f884a9637eb266a43d8c89446e5ef"
     },
     {
       "path": "site/app-demo.js",
@@ -1814,133 +1844,133 @@
     },
     {
       "path": "site/changelog.html",
-      "bytes": 53327,
-      "sha256": "f796bef28a5fbde621685ee31654ca32a4f8fd9df0f5a97f6507c26928cc7da0"
+      "bytes": 56202,
+      "sha256": "86264e471dcab3d8aa79c9339e4f66c528d4d9ea047c27b43b8bc9d2075f9503"
     },
     {
       "path": "site/cli.html",
-      "bytes": 11173,
-      "sha256": "8ce532467bbae749f6454b70eda8d66385f883a070c273805bfc5c93ae0a63c1"
+      "bytes": 12254,
+      "sha256": "b6d8574c1610d084520f384ee7f393f25a1b19e53143243ed45b8aeef2bf70c5"
     },
     {
       "path": "site/developers/agents.html",
-      "bytes": 31027,
-      "sha256": "d83d10d0e2bcaf94d2956cf7f0ce35ade32cb73c936fb335770fa9548ff6f752"
+      "bytes": 32230,
+      "sha256": "26960276250db5e518ecc3254cc3e8b9d6410671485de2af67d7b473f17125ca"
     },
     {
       "path": "site/developers/api.html",
-      "bytes": 26055,
-      "sha256": "07cbe99cd7c0431ab0aac8cc141c92421713b7b9848aff97325922ed6c477ec9"
+      "bytes": 27193,
+      "sha256": "3657b58d716d5d24d73434ff7f0af7384092c7b706180f2b387ddb7d19801d63"
     },
     {
       "path": "site/developers/cli.html",
-      "bytes": 50880,
-      "sha256": "3c6b05ec863033524b345d9d81592c2e8dffed7c6dacf8e19561dd43a154990d"
+      "bytes": 52449,
+      "sha256": "53152ff0ad706f83817223c5c720ecbcd8819abf240a4ff785bd1d4377da5a63"
     },
     {
       "path": "site/developers/index.html",
-      "bytes": 15392,
-      "sha256": "4f188c1cb000305aede142e3c841ddea9e69e3a3325517607f80d97da18d98d5"
+      "bytes": 16476,
+      "sha256": "635338ac44bdfc7e769af3c2079ea8d7637916b3d23d208ca50f3bc65f0c25c0"
     },
     {
       "path": "site/developers/quickstart.html",
-      "bytes": 21628,
-      "sha256": "b22a2528bb58449e72e13add9f2d1f763a594fc0ccc0ecd0d094b0ee9dca89c1"
+      "bytes": 22780,
+      "sha256": "7d2973dff53bb0a90a8a6219efeb1986300ba73d79ca772adc667871b90e9e6c"
     },
     {
       "path": "site/features.html",
-      "bytes": 46871,
-      "sha256": "c6b4398638ac37ac30e95c61d15caf5a56212ef57c60e9a2eb0d69e91d544afb"
+      "bytes": 47961,
+      "sha256": "a6d53d7bd87f8f9d5cb503213a80e45ac3b8913cba7d8f5f4d7de708e86453de"
     },
     {
       "path": "site/guides/audit-secret-access.html",
-      "bytes": 19491,
-      "sha256": "0f8075c926b34d7ff1c208cdced20a8b5e85fe245d0bbc78d4ef56c227a15642"
+      "bytes": 20585,
+      "sha256": "d9fb26b1ec329fade1a585e440934b168e75695a8b2e399b89bafb7008e96ac4"
     },
     {
       "path": "site/guides/coding-agents-and-api-keys.html",
-      "bytes": 19004,
-      "sha256": "15bb7e3bc68bfaee662a2f1281af5c2adc834d8c52d8d0a7b7dddc0c254a5019"
+      "bytes": 20122,
+      "sha256": "7ebb5eb7b5c205a4196123d6bf2e2e0376f1033fe9434b302b8844aa181c6ade"
     },
     {
       "path": "site/guides/duplicate-api-keys.html",
-      "bytes": 18750,
-      "sha256": "83867a9e71a09b80a83b633dae6e2d956d3af0550ea6ac82177a41d4684ef06a"
+      "bytes": 19838,
+      "sha256": "507f0b12e7b07254bf18f824dc212dea3a9d9375a867ec0cd2b424725065bb70"
     },
     {
       "path": "site/guides/env-files-without-secrets.html",
-      "bytes": 19015,
-      "sha256": "d6672d2846726929bfb192f90dc4dd2edbfa423077efea21f644a87ce4401efd"
+      "bytes": 20101,
+      "sha256": "c4403a18099dd488f36af91fb4a12ad910d361b92ec38dc3ca1531695ee86263"
     },
     {
       "path": "site/guides/fastlane-app-store-connect-key.html",
-      "bytes": 19066,
-      "sha256": "b5a27d24e6dabf8fe7b13b48d1aa628c80fb8a8614fa47fe25391e36b278d81d"
+      "bytes": 20154,
+      "sha256": "bd61b0c4fa608fc6334e40008928cca51ec712a30e6521c99ceaf2d30bf51b68"
     },
     {
       "path": "site/guides/index.html",
-      "bytes": 17232,
-      "sha256": "2df8b1cfb8c4616677d35d63e74517eb3eb5bfd81d79f1d8499b968d756ac849"
+      "bytes": 18326,
+      "sha256": "b57272a1a0fe5b04d9421cffda957b6744b5fc0bf065c1238cb27069e9a658a4"
     },
     {
       "path": "site/guides/linux-server-credentials.html",
-      "bytes": 21127,
-      "sha256": "945767ced5d9d40d793d1c58840dab117459fa13f710eaf9e3cf6cefbeaad500"
+      "bytes": 22215,
+      "sha256": "61b3bd264202ad69db757eae6508b1ffc7b41de7d42b95004ecb81b7d8452e58"
     },
     {
       "path": "site/guides/mcp-server-api-keys.html",
-      "bytes": 17614,
-      "sha256": "9f45b2e6043f6087b6da11d7e3e6d6b96e366444e8413283f763544baf0ab95c"
+      "bytes": 18750,
+      "sha256": "733167a8e5acde3a2241a7b8d9ff88d3902233575988675866ad08847ae32c86"
     },
     {
       "path": "site/guides/merge-into-an-existing-env-file.html",
-      "bytes": 19640,
-      "sha256": "8121904d078a6373ab84ee4bc4d5ba191f0af9419e8aa2ca9eb1b85adf07cfb9"
+      "bytes": 20728,
+      "sha256": "df5d7dd84a8862e7301629e1cd0775a807401598364c880a6b9465dfcd81a49c"
     },
     {
       "path": "site/guides/paste-env-into-a-dashboard.html",
-      "bytes": 18659,
-      "sha256": "354fd0c13c26fc3c8367bc7ef6b79293805d841c5e82886653e19ed8d4032689"
+      "bytes": 19747,
+      "sha256": "22973589864851bd0c78b018e29ca349c3bb7fc5a12a46636000a20dffa0e507"
     },
     {
       "path": "site/guides/pre-commit-secret-check.html",
-      "bytes": 19712,
-      "sha256": "73acf91c080c2d679828c2c9ad484cce1ec22fa75d8d8525d03e47497435d8e3"
+      "bytes": 20806,
+      "sha256": "76e93ae8fe68cafee4bcd3dec885634e307ce8505a14d6edfed770664e91f664"
     },
     {
       "path": "site/guides/proxy-api-keys-for-agents.html",
-      "bytes": 19869,
-      "sha256": "8f9f4a84ec9554566c7d8b4eeb5e0fa993703b7326dd6c8dc8e29e17b8eae2c2"
+      "bytes": 20963,
+      "sha256": "aea9ad8ad0fcb00d5ac88af908b7c3e72e04ad7d746e0dfd78a99763dec0d48c"
     },
     {
       "path": "site/guides/push-to-deployment-platforms.html",
-      "bytes": 21542,
-      "sha256": "4f213755f85943d0be07bae2ca6164ebff96ed6e294b00a4cbb0395893522fa4"
+      "bytes": 22630,
+      "sha256": "f67cd9e1ce19ab2340333f24e36bdbe88594182edad1e478d3c8db0996ab2cb8"
     },
     {
       "path": "site/guides/rotate-after-an-agent-session.html",
-      "bytes": 20062,
-      "sha256": "1e2980b7f0d084617c8cc2df3098a2b4736ec40424c4455b55c4aeb40b50f245"
+      "bytes": 21150,
+      "sha256": "49b758492f33dae1e169b22f441ca36a97d1875636d6e6f4b1c7e8de825f6971"
     },
     {
       "path": "site/guides/save-keys-from-safari.html",
-      "bytes": 18542,
-      "sha256": "f46d84f4f2e7e45bb1beb19f6398b0ddf4678352958f8948ebb44bb423d5cb8f"
+      "bytes": 19630,
+      "sha256": "6c344220d83b9b0d981ad52460c0233d3c017d78aa53b97d7feaa368ec935bdf"
     },
     {
       "path": "site/guides/secrets-over-ssh.html",
-      "bytes": 18832,
-      "sha256": "cfd3fe2ee08f3b6cd1b5dc5a69ad838e613dff747e8d23facaebb09f92089b58"
+      "bytes": 19944,
+      "sha256": "388a3578bb5b1792b6e9789e8788df3f83c114b65d2a1d601ece8aeb09d5726e"
     },
     {
       "path": "site/guides/short-lived-aws-credentials.html",
-      "bytes": 19503,
-      "sha256": "09bec76c1cfe10fbd9a6599b6575eb0fff6d62fe44c36502b4aa6b8795459c23"
+      "bytes": 20591,
+      "sha256": "e0f42770f9030018480d5a0d7ea78ea4a92740a1510edf0b27dc2732fd6d3322"
     },
     {
       "path": "site/guides/worktrees-and-fresh-clones.html",
-      "bytes": 19696,
-      "sha256": "85739c7b8d4a78afb7b77687a6562af0f27e56bb5247ed7ab6cac5fc995db1f6"
+      "bytes": 20784,
+      "sha256": "fffcad7cd6214b131dca03172af76fe996978a200a6051d3e2da6dfd2802ef6c"
     },
     {
       "path": "site/humans.txt",
@@ -1949,23 +1979,28 @@
     },
     {
       "path": "site/index.html",
-      "bytes": 81486,
-      "sha256": "9b56eefc5a33bbf192073d9e16ecde677d6a250ca36e1d57d0e09ff4e9616b10"
+      "bytes": 83141,
+      "sha256": "b9a97b4f36f9d1f0af7d5814b237969baf5292e5dc05473611d89f107e1ff843"
+    },
+    {
+      "path": "site/pistachio.css",
+      "bytes": 23845,
+      "sha256": "fa5685503ebace779283aaeb384a778701f9f968ccfcded25b355d893ebf9150"
     },
     {
       "path": "site/pricing.html",
-      "bytes": 31456,
-      "sha256": "3c06362fd1c52f004f52b4c639bae8edb2fad51e3c2bbb8acbfc669f18122015"
+      "bytes": 32511,
+      "sha256": "f2f69dd91bece40c98ba9a02884d06eecbcb601f1e8d32c332d405d3c6118ee7"
     },
     {
       "path": "site/privacy.html",
-      "bytes": 13630,
-      "sha256": "f7e27b1e0669d616d0c11351d68600d427cf747456e431fdfa43d97369ede106"
+      "bytes": 14832,
+      "sha256": "6517b1429d990ea78ceafeb4a360e8eb04331b88ff4385fb3c0244ad25a822ea"
     },
     {
       "path": "site/roadmap.html",
-      "bytes": 43941,
-      "sha256": "df7b39d87bbf72a1864e3930f9d30cd44ca480a7afb3b21d8b8db92bef758050"
+      "bytes": 45049,
+      "sha256": "b74ae803353f100da72f2a6083b225b42648cff3f8e1a18ca8b9a230168dd23d"
     },
     {
       "path": "site/robots.txt",
@@ -1974,13 +2009,13 @@
     },
     {
       "path": "site/scenes.js",
-      "bytes": 31003,
-      "sha256": "9f55247df8f92499aec3f61dd8732520010b1553fd05fc58b5d59a6383464171"
+      "bytes": 31013,
+      "sha256": "2821df45beb1d569ee39452b4738c1bec07d093ddfbd8e1e24d1df66972c148f"
     },
     {
       "path": "site/security.html",
-      "bytes": 34181,
-      "sha256": "3c84f6194d0020679aef60e470e8b16cf3eb7bd667e1c5bd23647836885b99cd"
+      "bytes": 35242,
+      "sha256": "616572df7cc3165b9273da18bc460d3b8611d9b4d261be4b9c12c589a9505cf4"
     },
     {
       "path": "site/site.css",
@@ -1989,23 +2024,23 @@
     },
     {
       "path": "site/site.js",
-      "bytes": 29316,
-      "sha256": "b2ec617181275b129c49e43a8f96711d4a077df669f73372d0ea1ed5619d8dd0"
+      "bytes": 30537,
+      "sha256": "5b49ed600c0ec28795597ac879104773e748d4ab489b3422ad0d76e847f0f70c"
     },
     {
       "path": "site/support.html",
-      "bytes": 11873,
-      "sha256": "997f1231f45497c957738ed046f258f9b1828e3115a94844e461a7b7d5eb0a27"
+      "bytes": 12956,
+      "sha256": "ca814c7eec9feb9ce831484ca3502b192e9ce6cf27b03e0a2ed7d46fc0ce93d9"
     },
     {
       "path": "site/teams.html",
-      "bytes": 24085,
-      "sha256": "296c2b1fb20dc4c1bbd3cd9392dc658080bad352b1477dac99292c322bef56c7"
+      "bytes": 25120,
+      "sha256": "546aa7e2169a45e9b6eb317ff2ed29469d7068f7bba9c0c9bb5899c74033c85f"
     },
     {
       "path": "site/terms.html",
-      "bytes": 11834,
-      "sha256": "b1c984c180aa9357b44a6abc8de59af056dd3322367403807b1418374dd7db30"
+      "bytes": 12888,
+      "sha256": "392ad7a2dd3c7235788d140f501ce5f694283c4329841542862177276da6e4f7"
     },
     {
       "path": "vercel.json",

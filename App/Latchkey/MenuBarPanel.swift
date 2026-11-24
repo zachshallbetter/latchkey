@@ -19,6 +19,16 @@ final class MenuBarItem: NSObject {
         shared = MenuBarItem(model: model)
     }
 
+    static func updateIcon() { shared?.updateIcon() }
+
+    private func updateIcon() {
+        let name = AppPreferences().icon == .key ? "MenuBarIcon" : "PistachioMenuBarIcon"
+        let icon = NSImage(named: name)?.copy() as? NSImage
+        icon?.isTemplate = true
+        icon?.accessibilityDescription = "Pistachio"
+        item.button?.image = icon
+    }
+
     private init(model: AppModel) {
         self.model = model
         super.init()
@@ -27,10 +37,7 @@ final class MenuBarItem: NSObject {
             self?.popover.performClose(nil)
         })
         guard let button = item.button else { return }
-        let icon = NSImage(named: "MenuBarIcon")
-        icon?.isTemplate = true
-        icon?.accessibilityDescription = "Latchkey"
-        button.image = icon
+        updateIcon()
         button.imageScaling = .scaleProportionallyDown
         button.toolTip = "Latchkey: click to open, right-click for quick access"
         button.target = self

@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>try{var savedTheme=localStorage.getItem("pistachio-theme");if(savedTheme==="light"||savedTheme==="dark")document.documentElement.dataset.theme=savedTheme}catch(e){}</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Support and troubleshooting · Pistachio</title>
@@ -27,8 +28,8 @@
   <meta name="twitter:image" content="https://latchkey.snackstud.io/social/support.jpg">
   <meta name="twitter:image:alt" content="Support and troubleshooting. Pistachio, a Mac app from Snack Studio.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fafaf6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151b17" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="logo.svg" type="image/svg+xml">
   <link rel="author" href="https://zachshallbetter.com/">
   <link rel="icon" href="favicon.ico" sizes="48x48">
@@ -126,6 +127,7 @@
   ]
 }
   </script>
+  <link rel="stylesheet" href="pistachio.css?v=20261123-depth">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -139,12 +141,21 @@
         <li><a href="security.html">Security</a></li>
         <li><a href="developers/index.html">Developers</a></li>
         <li><a href="guides/index.html">Guides</a></li>
-        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a></li>
       </ul>
-    </nav>
+    <details class="mobile-menu"><summary><i class="ic ic-menu" aria-hidden="true"></i>Menu</summary><div class="mobile-menu-links">
+        <a href="features.html">Features</a>
+        <a href="index.html#how">How it works</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="security.html">Security</a>
+        <a href="developers/index.html">Developers</a>
+        <a href="guides/index.html">Guides</a>
+        <a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+      </div></details></nav>
   </header>
 
   <main id="main" class="wrap">
+    <aside class="brand-transition" aria-label="Product name update">Pistachio is the new name for Pistachio. The current download, <code>pst</code> commands and <code>pistachio://</code> references still use the original names.</aside>
     <article class="doc">
       <h1>Support and troubleshooting</h1>
       <p class="lede">Most answers are in the docs. For anything else, write to <a href="mailto:latchkey@snackstud.io">Contact support</a>; we answer by email.</p>
@@ -154,12 +165,12 @@
         <li><a href="developers/quickstart.html">Quickstart</a>: install, import an env file and run a command.</li>
         <li><a href="cli.html">The command-line tool</a>: getting it with the Mac App Store version or the direct download.</li>
         <li><a href="developers/cli.html">CLI reference</a> and <a href="developers/agents.html">Agents and MCP</a>.</li>
-        <li><code>pst status</code> shows whether the command-line tool reaches the app, how you approve, and where values are kept. Include its output when you write (it never shows values).</li>
+        <li><code>pistachio status</code> shows whether the command-line tool reaches the app, how you approve, and where values are kept. Include its output when you write (it never shows values).</li>
       </ul>
 
       <h2>Common problems</h2>
       <ul>
-        <li><b>"cannot reach the Pistachio app" (exit 69)</b>: the tool starts Pistachio itself, so this usually means <code>PISTACHIO_NO_LAUNCH=1</code> is set or the app can't start. Open Pistachio once and try again. It stays in the menu bar after you close its window, and keeps answering the tool.</li>
+        <li><b>"cannot reach the Pistachio app" (exit 69)</b>: the tool starts Pistachio itself, so this usually means <code>PISTACHIO_NO_LAUNCH=1</code> is set or the app can't start. Open Pistachio (the current download) once and try again. It stays in the menu bar after you close its window, and keeps answering the tool.</li>
         <li><b>A command still sees <code>pistachio://</code> references</b>: run it through <code>pst run -- …</code>, which replaces them with values for that command only.</li>
         <li><b>Values don't appear on another Mac</b>: both Macs need iCloud Keychain turned on with the same Apple Account, and the items must have been saved to iCloud Keychain. Syncing to a second Mac hasn't been tested end to end yet.</li>
       </ul>

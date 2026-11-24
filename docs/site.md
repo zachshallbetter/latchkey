@@ -1,35 +1,43 @@
-# The website
+# The Pistachio website
+
+Pistachio is the approved new name for Pistachio. The website source uses the owner-reviewed product-led
+mockup and the supplied three-piece vector mark from `media/mark/SVG/pistachio-logo-colo.svg`. The current download
+and all technical names (`Latchkey.app`, `pistachio`, `pst`, `pistachio://`, signing identifiers and support paths) remain
+unchanged. The brand-transition note explains this; the app and domain migrations are separate owner decisions.
 
 The product site is static HTML in [`site/`](../site). There is no build step: what's in the folder is what is
 served. It's published at https://latchkey.snackstud.io from a Vercel project that never builds on push: deploys are manual (see Publishing below).
 
 | File | What it is |
 |---|---|
-| `index.html` | The home page, led by "Your projects move. Your secrets don't.": a hero scene of a reference reaching a command, then four numbered movements (importing an env file, bringing the environment to a fresh clone, a second Mac, an agent asking), each beside a scene; the interactive approval panel; the app window; rotation; the key proxy; integrations; security in brief; Pistachio Pro's planned pricing; three ways in; and the closing band with install. Its CSS is inline |
+| `index.html` | The home page, led by "Your secrets. In a shell.": a static, labelled design preview of the app, terminal and approval card, then four numbered movements (importing an env file, bringing the environment to a fresh clone, a second Mac, an agent asking), each beside a scene; the interactive approval panel; the app window; rotation; the key proxy; integrations; security in brief; Pistachio Pro's planned pricing; three ways in; and the closing band with install. Page-specific CSS is inline; `pistachio.css` supplies the shared brand treatment |
 | `features.html` | Capabilities in six groups (credentials, environments, devices, agents and tools, integrations, visibility), each with one example, an availability label and a link to its docs. Credentials opens with the working app window (`app-demo.js`); the other groups with scenes |
 | `roadmap.html` | What's built, what's next and what's out of scope, by tier. The items are written in the HTML (the script only filters them); mark one **Built** only when the docs describe it as shipped |
 | `pricing.html` | Plans modelled on Peel's: what stays free (storage, references, import, run, approvals, export), Pistachio Pro as a planned one-time in-app purchase in the Mac App Store ($79, updates included, no subscription), Pistachio Teams ($15 per user a month, planned), a comparison marking planned rows, the purchase policy and short answers. Nothing is on sale; early-access requests go to latchkey@snackstud.io |
 | `teams.html` | Developer Credential Migration from Snack Studio (from $2,500, fixed scope) beside the inventory scene: deliverables, steps, credential handling beside the import scene, and limits; Pistachio Teams, looking for design partners |
 | `security.html` | What each mechanism protects and doesn't, from `docs/security.md` and `SECURITY.md`: a scene of a script asking directly (the panel's warning), the six distinctions, each topic beside its heading, and the delivery-path and guarantees tables, which become one block per row on phones |
 | `scenes.js` | The self-playing scenes: small drawings of Pistachio in use that play while on screen and start over. Each `.scene-wrap[data-scene]` names a script there; its HTML is the last frame in the landscape layout, which is what shows without scripts or with reduced motion. In a column narrower than 480px (a phone) each scene switches to its portrait layout in `PORTRAIT`, the same windows stacked in a canvas 360 wide so terminal text stays about 12px; motion is placed relative to the windows, so it works in both. Each has a pause button |
-| `site.css` | Shared styles: the icon set (`.ic .ic-NAME`, masks drawn in the text colour, after the SF Symbols the app uses; card symbols are `.cico`), colour tokens (light and dark) and section hues (`data-hue` on a section: blue, violet, teal, green, amber, rose, orange for Pro), header, footer, code blocks, the developer docs layout, feature rows, availability labels and the scenes |
-| `app-demo.js` | A working copy of the Pistachio window on the home page and Features, laid out as the app is, with example data: the sidebar (All Items, Review, Activity, projects, services, Grants, Recently Deleted, the iCloud Keychain badge), a flat list of two-line rows with search and Type and Environment filters, and the item's detail as cards (value, reference, type, access, service, project, environment, note, location, history, recent activity). Row icons and colours follow the app's `ItemType` in `App/Latchkey/Style.swift`; keep them in step. It listens for the approval scene's `lk:activity` and `lk:grant` events, and sends `lk:revoke` when a grant is revoked there. Showing or copying a value and changing access go through a Touch ID sheet, as in the app |
-| `site.js` | Copy buttons, and every code block coloured by part with an explanation of each on hover or focus: `pst` commands (action, option, value, the program it runs) and their synopses' placeholders, the other programs beside them (`SHELL`), env files and references, JSON fields (`JSONKEYS`), the agent note and the architecture diagram. Only the scenes and the home page's live demos are left alone. The explanations live in its `ACTIONS`, `FLAGS` and `ACTION_FLAGS`; keep them in step with the CLI and the API. On the home page each code block is one keyboard stop and the arrow keys move between parts; on the developer pages explanations are hover-only, since the tables there cover every option |
+| `pistachio.css` | The owner-reviewed visual identity: clean system sans-serif, warm white, restrained green, product-led hero, responsive layouts and explicit light/dark tokens. Loaded after the base and page styles on every page. |
+| `site.css` | Base shared styles: the icon set (`.ic .ic-NAME`, masks drawn in the text colour, after the SF Symbols the app uses; card symbols are `.cico`), colour tokens (light and dark) and section hues (`data-hue` on a section: blue, violet, teal, green, amber, rose, orange for Pro), header, footer, code blocks, the developer docs layout, feature rows, availability labels and the scenes |
+| `app-demo.js` | An interactive Pistachio window on the home page and Features, laid out as the app is, with example data: the sidebar (All Items, Review, Activity, projects, services, Grants, Recently Deleted, the iCloud Keychain badge), a flat list of two-line rows with search and Type and Environment filters, and the item's detail as cards (value, reference, type, access, service, project, environment, note, location, history, recent activity). Row icons and colours follow the app's `ItemType` in `App/Latchkey/Style.swift`; keep them in step. It listens for the approval scene's `lk:activity` and `lk:grant` events, and sends `lk:revoke` when a grant is revoked there. Showing or copying a value and changing access go through a Touch ID sheet, as in the app |
+| `site.js` | Copy buttons, and every code block coloured by part with an explanation of each on hover or focus: `pst` commands (action, option, value, the program it runs) and their synopses' placeholders, the other programs beside them (`SHELL`), env files and references, JSON fields (`JSONKEYS`), the agent note and the architecture diagram. Only the scenes and the home page's live demos are left alone. The same script adds the local appearance control and closes the mobile disclosure menu after navigation. The explanations live in its `ACTIONS`, `FLAGS` and `ACTION_FLAGS`; keep them in step with the CLI and the API. On the home page each code block is one keyboard stop and the arrow keys move between parts; on the developer pages explanations are hover-only, since the tables there cover every option |
 | `changelog.html` | Every released version's notes, newest first, each under `id="vVERSION"`, written from `CHANGELOG.md` by `scripts/changelog-page.py` in the terms page's layout. The same script points every page's Changelog link here and sets the home page's "Latest version" (`<a data-latest-version>`). The update feed links each version's entry here |
 | `privacy.html`, `terms.html`, `support.html` | The privacy policy, terms of use (the App Store EULA for store copies, FSL for the source) and support, linked from every footer. Keep the privacy policy in step with every network request the app or tool makes |
 | `404.html` | The page for a missing path: `noindex`, root-absolute links, what `pst get` prints for a missing name (copied from `failMissing` in `Sources/latchkey/main.swift`), and cards to Features, Pricing, Security and reporting a broken link |
-| `og.png`, `social/` | Social cards, 1200×630: `og.png` for the home page, and one per page in `social/`, all drawn from `scripts/og-image.html` by headless Chrome (`scripts/social-images.py` for the per-page cards) |
+| `og.png`, `social/` | Social cards, 1200×630: `og.png` for the home page, and one per page in `social/`, all rendered by `scripts/social-images.py` using standard-library Python and native macOS AppKit. `scripts/og-image.html` previews the generated home card |
 | `cli.html` | Getting the command-line tool: Homebrew or the signed download for the Mac App Store version, or from inside the direct download |
 | `guides/` | Seventeen task-sized guides in four categories (env files, coding agents, deploying, everyday use) and their index, in the developer docs' layout: the shared sidebar (which links to the categories), breadcrumbs, "On this page", an "In short" answer and a "What this doesn't do" section. Each is a `TechArticle` with a byline; commands and limits come from `docs/`, as on every page. Links start with `../` |
 | `humans.txt` | Who makes Pistachio and how the site is built |
-| `favicon.ico`, `favicon-32.png`, `icon-*.png`, `site.webmanifest` | Browser and home-screen icons, rendered from the app icon's own artwork (`App/Latchkey/AppIcon.icon`) |
+| `favicon.ico`, `favicon-32.png`, `icon-*.png`, `site.webmanifest` | Browser and home-screen icons rendered by `scripts/social-images.py` from the supplied website mark; native app icons are not changed |
 | `llms-full.txt` | The text of every page's main content, written by `scripts/discovery.py` |
 | `<key>.txt` | The IndexNow key, so search engines that take IndexNow accept URLs submitted for this host |
-| `logo.svg` | The mark, used in the header, the drawn approval panel and the favicon. Replace this one file to change the logo |
-| `apple-touch-icon.png` | 180×180, rendered from the app icon (`sips -s format png -z 180 180 …/AppIcon.icns`) |
+| `logo.svg` | The supplied three-piece Pistachio vector mark, used in the header, the illustrated interfaces and generated web assets. Geometry and colors are retained from the owner’s asset |
+| `apple-touch-icon.png` | 180×180, rendered from `logo.svg` by `scripts/social-images.py` |
 | `developers/` | Developer docs: overview, quickstart, CLI reference, agents and MCP, references and API. The Quickstart plays the import and run scenes, Agents and MCP the agent scene. Code wraps instead of scrolling, and tables become one labelled block per row on phones (each `td` carries `data-th`) |
 | `llms.txt` | Everything an agent needs in one file: the facts, the rules to follow, whether Pistachio is installed and how to get it, running commands, exit codes, approvals and grants, new clones, the proxy and AWS, MCP, keeping values out of files, the limits, and absolute links to every page and guide. Keep it in step with `docs/agents.md` and `docs/cli.md`. The home page's **For humans / For agents** switch, under the buttons, shows the line to give an agent (pointing at this file), remembers the choice on the device, and opens with `#agents`; every footer links here as **For agents (llms.txt)** |
 | `robots.txt` | Crawl policy |
+
+The footer’s Appearance button cycles System, Light and Dark, saves `pistachio-theme` in this browser only, and restores it before paint. The privacy page states this local storage use.
 
 The home page's interactive approval panel ("Try it") follows the real sequence: the panel as the app draws it
 (allow once, or Allow from this folder for a time, until the agent quits or only for this command), with Touch ID
@@ -45,16 +53,16 @@ system's, so pages make no third-party requests.
 
 ## Page rules
 
-Every page keeps to these; they're what the layout passes checked, page by page, at 1440 and 375 pixels wide, in
-light and dark:
+Apply these rules to every page. Verify representative product, developer and guide pages at wide and narrow
+widths in light and dark; a static link/metadata audit covers all pages:
 
-- One header (Features, How it works, Pricing, Security, Developers, Guides, and **Download free**) and one footer on every
+- One header (Features, How it works, Pricing, Security, Developers, Guides, and **Download for Mac**) and one footer on every
   page. The footer has the mark, a line on what Pistachio does and the download, then Product, Developers and Trust and
   help columns, and a base line with the publisher and license; generate it for every page at once, since docs pages
   link with `../` and the 404 with `/`. Product pages end with the closing call-to-action band (`.cta-band`): **Download free** first, **See what Pro adds** second. Free leads every primary button; Pro is shown as planned until it is on sale.
 - On phones: every link or button outside running text is at least 32px tall (most 44), inline code breaks at
   spaces and never inside a hyphenated word (`site.js`), and wide tables stack one row per block.
-- The developer docs and the guides share one sidebar, identical on all nine pages (Developers and Guides, with icons),
+- The developer docs and the guides share one sidebar, consistent across those pages (Developers and Guides, with icons),
   so moving between them changes only the article; its Guides group links to the four categories, so it stays short as guides are added. It sticks right under the header, and space for the scrollbar is
   always reserved (`scrollbar-gutter: stable`), so pages don't shift sideways. Browsers with cross-document view
   transitions keep the header and sidebar still and fade only the content. On phones the sidebar shows the current
@@ -156,14 +164,49 @@ paths at any depth, so unlike every other page its links start at `/`.
 
 ## Previewing
 
+Run from the website worktree through the register, using the active session ID:
+
 ```bash
-cd site && python3 -m http.server 8000
+REG_SESSION_ID=<session-id> ~/Projects/_worktrees/.register/reg serve pistachio-site --port 58296 -- python3 -m http.server '{port}' --bind 127.0.0.1 --directory site
 ```
 
-## Brand language
+Open `http://127.0.0.1:58296/`. Register ownership must be joined before serving. Run asset generation and local
+checks through `reg build --label <check-name> -- <command>` as well.
 
-Public copy uses **Pistachio**, the short command **pst**, and `pistachio://` / `pistachio-file://` examples.
-Use the current `PISTACHIO_*` environment names and `pistachio_*` MCP tools. Omit rename and migration messaging.
-The brand line is “Your secrets. In a shell.” and the intended public domain is `secretsinashell.com`.
-Repository destinations, published canonical URLs and working package identifiers remain accurate to their
-configured targets; change them only with the corresponding repository, hosting or packaging change.
+## Pistachio presentation
+
+The approved design puts the product UI in the hero, with the supplied three-piece Pistachio mark. The hero is explicitly an illustration with example data; the working app demo below remains interactive.
+Small screens use a native disclosure menu so every navigation destination stays available without horizontal overflow.
+Appearance choices restore before page styling on every page and persist across navigation.
+No new command, wire protocol, trust identity, domain or payment product is introduced.
+
+Regenerate social cards and icons through the register on macOS, then discovery and context. Check all local links,
+page titles/metadata, JavaScript syntax, and representative desktop/mobile and light/dark browser flows. A new
+public domain, app rename and production deployment remain separate owner-directed work.
+
+The homepage groups the download and secondary action, places compatibility information beside that decision, and
+uses a quiet principles strip followed by a split heading/introduction. Audience destinations are compact rows;
+the maker note shares that alignment. The proxy example is a bordered panel with responsive request lanes,
+action controls and a reserved result/status area; supporting prose and command examples sit beneath it.
+These refinements preserve the existing links and demo behavior in both themes.
+
+The brand line is “Your secrets. In a shell.”: a reference to the Pistachio name and terminal workflows.
+The owner-selected future domain is `secretsinashell.com`; canonical URLs and the production host remain
+unchanged until a separate domain migration.
+
+App depictions use an independent neutral palette: white/gray in light mode, charcoal in dark mode,
+and blue controls/selections. The hero illustration, working app demo and approval scenes retain the
+site’s selected appearance without inheriting its green surfaces. This changes web depictions only.
+
+Large website surfaces use neutral charcoal or warm gray, including code blocks, cards, scene washes
+and callout bands. Pistachio green is limited to small brand highlights and primary actions. App
+depictions retain their separate neutral/blue palette.
+
+Container depth uses three shared shadow levels for inset code/callouts, cards, and floating app windows,
+with theme-specific shadows. Flat audience rows and nested app fields inherit their parent’s depth.
+Homepage containers gently lift/fade during scroll entry using feature-detected native view timelines;
+unsupported browsers and reduced-motion users receive static, fully visible content. Keyboard focus
+settles the animated container immediately; clickable cards also lift slightly on precise-pointer hover.
+
+Public documentation uses Pistachio, `pst`, current reference examples and current MCP names. Rename/migration
+notes are omitted from product pages. Real repository, package, source and signing identifiers remain accurate.

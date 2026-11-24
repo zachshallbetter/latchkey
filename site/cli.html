@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>try{var savedTheme=localStorage.getItem("pistachio-theme");if(savedTheme==="light"||savedTheme==="dark")document.documentElement.dataset.theme=savedTheme}catch(e){}</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Get the pistachio command-line tool · Pistachio</title>
@@ -27,8 +28,8 @@
   <meta name="twitter:image" content="https://latchkey.snackstud.io/social/cli.jpg">
   <meta name="twitter:image:alt" content="Get the pistachio command-line tool. Pistachio, a Mac app from Snack Studio.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fafaf6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151b17" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="logo.svg" type="image/svg+xml">
   <link rel="author" href="https://zachshallbetter.com/">
   <link rel="icon" href="favicon.ico" sizes="48x48">
@@ -126,6 +127,7 @@
   ]
 }
   </script>
+  <link rel="stylesheet" href="pistachio.css?v=20261123-depth">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -139,12 +141,21 @@
         <li><a href="security.html">Security</a></li>
         <li><a href="developers/index.html">Developers</a></li>
         <li><a href="guides/index.html">Guides</a></li>
-        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a></li>
       </ul>
-    </nav>
+    <details class="mobile-menu"><summary><i class="ic ic-menu" aria-hidden="true"></i>Menu</summary><div class="mobile-menu-links">
+        <a href="features.html">Features</a>
+        <a href="index.html#how">How it works</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="security.html">Security</a>
+        <a href="developers/index.html">Developers</a>
+        <a href="guides/index.html">Guides</a>
+        <a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+      </div></details></nav>
   </header>
 
   <main id="main" class="wrap">
+    <aside class="brand-transition" aria-label="Product name update">Pistachio is the new name for Pistachio. The current download, <code>pst</code> commands and <code>pistachio://</code> references still use the original names.</aside>
     <article class="doc">
       <p class="eyebrow">Command line</p>
       <h1>The <span class="moves">command-line tool</span></h1>
@@ -156,11 +167,11 @@
 brew trust zachshallbetter/latchkey
 brew install latchkey-cli</code></pre></figure>
       <p>Or download <code>latchkey-cli-VERSION.zip</code> from the <a href="https://github.com/zachshallbetter/latchkey/releases/latest">latest release</a>, unzip it, move <code>pistachio</code> to a folder on your <code>PATH</code> (such as <code>~/.local/bin</code>), and add <code>pst</code> as a link to it if you like.</p>
-      <p>Open Pistachio once, then check the tool reaches it:</p>
-      <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">pst status</code></pre></figure>
+      <p>Open Pistachio (the current download) once, then check the tool reaches it:</p>
+      <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">pistachio status</code></pre></figure>
 
       <h2>With the direct download</h2>
-      <p>The tool comes inside the app. Choose <b>Install Command Line Tool…</b> in the app menu, which links <code>~/.local/bin/pistachio</code> and <code>pst</code> to it, or install the app with Homebrew (<code>brew install --cask latchkey</code>), which adds both.</p>
+      <p>The tool comes inside the app. Choose <b>Pistachio › Install Command Line Tool…</b>, which links <code>~/.local/bin/pistachio</code> and <code>pst</code> to it, or install the app with Homebrew (<code>brew install --cask latchkey</code>), which adds both.</p>
 
       <h2>Next</h2>
       <p><a href="developers/quickstart.html">Quickstart</a> · <a href="developers/cli.html">CLI reference</a> · <a href="developers/agents.html">Agents and MCP</a> · <a href="support.html">Support</a></p>

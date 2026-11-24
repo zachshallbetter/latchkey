@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>try{var savedTheme=localStorage.getItem("pistachio-theme");if(savedTheme==="light"||savedTheme==="dark")document.documentElement.dataset.theme=savedTheme}catch(e){}</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Give coding agents API keys without handing them over · Pistachio</title>
@@ -16,8 +17,8 @@
   <meta property="og:title" content="Give coding agents API keys without handing them over · Pistachio">
   <meta property="og:description" content="Let Claude Code and other coding agents run tests and builds that need API keys, with your approval or a narrow grant, and without pasting keys into chat.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fafaf6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151b17" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="../logo.svg" type="image/svg+xml">
   <link rel="author" href="https://zachshallbetter.com/">
   <link rel="icon" href="../favicon.ico" sizes="48x48">
@@ -165,6 +166,7 @@
   ]
 }
   </script>
+  <link rel="stylesheet" href="../pistachio.css?v=20261123-depth">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -178,12 +180,21 @@
         <li><a href="../security.html">Security</a></li>
         <li><a href="../developers/index.html">Developers</a></li>
         <li><a href="index.html" aria-current="page">Guides</a></li>
-        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a></li>
       </ul>
-    </nav>
+    <details class="mobile-menu"><summary><i class="ic ic-menu" aria-hidden="true"></i>Menu</summary><div class="mobile-menu-links">
+        <a href="../features.html">Features</a>
+        <a href="../index.html#how">How it works</a>
+        <a href="../pricing.html">Pricing</a>
+        <a href="../security.html">Security</a>
+        <a href="../developers/index.html">Developers</a>
+        <a href="index.html" aria-current="page">Guides</a>
+        <a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+      </div></details></nav>
   </header>
 
   <main id="main" class="wrap docs guides">
+    <aside class="brand-transition" aria-label="Product name update">Pistachio is the new name for Pistachio. The current download, <code>pst</code> commands and <code>pistachio://</code> references still use the original names.</aside>
     <nav class="side" aria-label="Developers and guides"><div class="side-group"><p class="side-title">Developers</p><ul><li><a href="../developers/index.html"><i class="ic ic-book" aria-hidden="true"></i>Overview</a></li><li><a href="../developers/quickstart.html"><i class="ic ic-bolt" aria-hidden="true"></i>Quickstart</a></li><li><a href="../developers/cli.html"><i class="ic ic-terminal" aria-hidden="true"></i>CLI reference</a></li><li><a href="../developers/agents.html"><i class="ic ic-agent" aria-hidden="true"></i>Agents and MCP</a></li><li><a href="../developers/api.html"><i class="ic ic-code" aria-hidden="true"></i>References and API</a></li></ul></div><div class="side-group current"><p class="side-title">Guides</p><ul><li><a href="index.html"><i class="ic ic-grid" aria-hidden="true"></i>All guides</a></li><li><a href="index.html#env"><i class="ic ic-fileenv" aria-hidden="true"></i>Env files</a></li><li><a href="index.html#agents" class="here"><i class="ic ic-sparkles" aria-hidden="true"></i>Coding agents</a></li><li><a href="index.html#deploy"><i class="ic ic-upload" aria-hidden="true"></i>Deploying</a></li><li><a href="index.html#everyday"><i class="ic ic-macs" aria-hidden="true"></i>Everyday use</a></li></ul></div></nav>
     <article class="doc">
       <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Pistachio</a></li><li><a href="index.html">Guides</a></li><li><span aria-current="page">Coding agents</span></li></ol></nav>
@@ -192,7 +203,7 @@
       <p class="lede">An agent that runs your tests needs the keys your tests use. It doesn't need to see them, keep them, or have them pasted into a chat window.</p>
       <p class="byline"><span>By <a href="https://zachshallbetter.com/" rel="author">Zach Shallbetter</a></span><span>Published 14 November 2026</span><span>Needs <a href="../cli.html">the command-line tool</a></span></p>
       <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#the-usual-shortcuts">The usual shortcuts</a></li><li><a href="#set-it-up">Set it up</a></li><li><a href="#keys-the-agent-can-use-but-never-read">Keys the agent can use but never read</a></li><li><a href="#after-the-session">After the session</a></li><li><a href="#what-this-doesn-t-do">What this doesn't do</a></li></ul></nav>
-      <div class="short"><p><b>In short</b>Keep <code>pistachio://</code> references in your env files and tell the agent to run commands through <code>pst run</code>. Each read asks you with Touch ID, showing the agent, folder and command, unless a grant you made covers it. For OpenAI and Anthropic keys, <code>--proxy</code> lets the command call the API without ever holding the key.</p></div>
+      <div class="short"><p><b>In short</b>Keep <code>pistachio://</code> references in your env files and tell the agent to run commands through <code>pistachio run</code>. Each read asks you with Touch ID, showing the agent, folder and command, unless a grant you made covers it. For OpenAI and Anthropic keys, <code>--proxy</code> lets the command call the API without ever holding the key.</p></div>
 <h2 id="the-usual-shortcuts">The usual shortcuts</h2>
     <p>Pasting a key into the conversation puts it in a transcript. Leaving it in <code>.env</code> lets the agent read the file, and so print, log or commit it. Exporting it in your shell hands it to everything that shell starts, for as long as it runs.</p>
 
@@ -207,14 +218,14 @@
         <p>Add this to <code>CLAUDE.md</code>, <code>AGENTS.md</code> or your agent's instructions:</p>
         <figure class="code"><figcaption><span>Agent instructions</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="markdown">Secrets are in Pistachio. Env files hold pistachio:// references, not values.
 Run anything that needs secrets as
-`pst run --env-file .env.local -- &lt;command&gt;`.
-Never run `pst get`, never print the environment, and never read or
+`pistachio run --env-file .env.local -- &lt;command&gt;`.
+Never run `pistachio get`, never print the environment, and never read or
 write values in .env files. If pistachio exits with 77 (refused) or 66
 (missing), stop and ask; don&#x27;t retry.</code></pre></figure>
       </li>
       <li>
         <h3>Approve when it asks</h3>
-        <p>When the agent runs <code>pst run</code>, the approval panel names the agent, the programs it runs through, the folder and the full command. Choose to allow once, allow from that folder for a while, or Deny, then touch the sensor: Touch ID listens right in the panel, from whatever app you&#x27;re in. Several requests the agent makes in a row share one panel, so one touch answers them all, and each can be denied on its own. A refused run exits with 77 and prints the exact <code>pst grant</code> command that would allow it.</p>
+        <p>When the agent runs <code>pistachio run</code>, the approval panel names the agent, the programs it runs through, the folder and the full command. Choose to allow once, allow from that folder for a while, or Deny, then touch the sensor: Touch ID listens right in the panel, from whatever app you&#x27;re in. Several requests the agent makes in a row share one panel, so one touch answers them all, and each can be denied on its own. A refused run exits with 77 and prints the exact <code>pistachio grant</code> command that would allow it.</p>
       </li>
       <li>
         <h3>Grant before you step away</h3>
