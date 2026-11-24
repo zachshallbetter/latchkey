@@ -2,40 +2,40 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <script>document.documentElement.classList.add("js")</script>
+  <script>document.documentElement.classList.add("js");try{var savedTheme=localStorage.getItem("pistachio-theme");if(savedTheme==="light"||savedTheme==="dark")document.documentElement.dataset.theme=savedTheme}catch(e){}</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Features: env references, Keychain and agent access · Latchkey</title>
-  <meta name="description" content="What Latchkey does today: stable credential IDs, env files of references, environments that rebuild on any Mac, grants for agents and a verifiable access log.">
+  <title>Features: env references, Keychain and agent access · Pistachio</title>
+  <meta name="description" content="What Pistachio does today: stable credential IDs, env files of references, environments that rebuild on any Mac, grants for agents and a verifiable access log.">
   <link rel="canonical" href="https://latchkey.snackstud.io/features.html">
   <meta property="og:url" content="https://latchkey.snackstud.io/features.html">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:site_name" content="Pistachio">
   <meta property="og:image" content="https://latchkey.snackstud.io/social/features.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Features: Env references, Keychain and agent access. What Latchkey does today: stable credential IDs, env files of references, environments that rebuild on any… Latchkey, latchkey.snackstud.io.">
-  <meta property="og:title" content="Features: env references, Keychain and agent access · Latchkey">
-  <meta property="og:description" content="What Latchkey does today: stable credential IDs, env files of references, environments that rebuild on any Mac, grants for agents and a verifiable access log.">
+  <meta property="og:image:alt" content="Features: env references, Keychain and agent access. Pistachio, a Mac app from Snack Studio.">
+  <meta property="og:title" content="Features: env references, Keychain and agent access · Pistachio">
+  <meta property="og:description" content="What Pistachio does today: stable credential IDs, env files of references, environments that rebuild on any Mac, grants for agents and a verifiable access log.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="author" content="Zach Shallbetter">
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
-  <meta name="application-name" content="Latchkey">
-  <meta name="apple-mobile-web-app-title" content="Latchkey">
+  <meta name="application-name" content="Pistachio">
+  <meta name="apple-mobile-web-app-title" content="Pistachio">
   <meta property="og:locale" content="en_US">
   <meta property="og:image:type" content="image/jpeg">
-  <meta name="twitter:title" content="Features: env references, Keychain and agent access · Latchkey">
-  <meta name="twitter:description" content="What Latchkey does today: stable credential IDs, env files of references, environments that rebuild on any Mac, grants for agents and a verifiable access log.">
+  <meta name="twitter:title" content="Features: env references, Keychain and agent access · Pistachio">
+  <meta name="twitter:description" content="What Pistachio does today: stable credential IDs, env files of references, environments that rebuild on any Mac, grants for agents and a verifiable access log.">
   <meta name="twitter:image" content="https://latchkey.snackstud.io/social/features.jpg">
-  <meta name="twitter:image:alt" content="Features: Env references, Keychain and agent access. What Latchkey does today: stable credential IDs, env files of references, environments that rebuild on any… Latchkey, latchkey.snackstud.io.">
+  <meta name="twitter:image:alt" content="Features: env references, Keychain and agent access. Pistachio, a Mac app from Snack Studio.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fafaf6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151b17" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="logo.svg" type="image/svg+xml">
   <link rel="author" href="https://zachshallbetter.com/">
   <link rel="icon" href="favicon.ico" sizes="48x48">
   <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
   <link rel="manifest" href="site.webmanifest">
-  <link rel="alternate" type="text/plain" href="llms.txt" title="Latchkey for language models">
+  <link rel="alternate" type="text/plain" href="llms.txt" title="Pistachio for language models">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="stylesheet" href="site.css">
   <style>
@@ -63,8 +63,8 @@
       "@type": "WebPage",
       "@id": "https://latchkey.snackstud.io/features.html#webpage",
       "url": "https://latchkey.snackstud.io/features.html",
-      "name": "Features: env references, Keychain and agent access · Latchkey",
-      "description": "What Latchkey does today: stable credential IDs, env files of references, environments that rebuild on any Mac, grants for agents and a verifiable access log.",
+      "name": "Features: env references, Keychain and agent access · Pistachio",
+      "description": "What Pistachio does today: stable credential IDs, env files of references, environments that rebuild on any Mac, grants for agents and a verifiable access log.",
       "inLanguage": "en",
       "isPartOf": {
         "@id": "https://latchkey.snackstud.io/#website"
@@ -83,7 +83,7 @@
         "url": "https://latchkey.snackstud.io/social/features.jpg",
         "width": 1200,
         "height": 630,
-        "caption": "Features: Env references, Keychain and agent access. What Latchkey does today: stable credential IDs, env files of references, environments that rebuild on any… Latchkey, latchkey.snackstud.io."
+        "caption": "Features: env references, Keychain and agent access. Pistachio, a Mac app from Snack Studio."
       },
       "breadcrumb": {
         "@id": "https://latchkey.snackstud.io/features.html#breadcrumb"
@@ -95,7 +95,7 @@
         {
           "@type": "ListItem",
           "position": 1,
-          "name": "Latchkey",
+          "name": "Pistachio",
           "item": "https://latchkey.snackstud.io/"
         },
         {
@@ -116,7 +116,7 @@
         "https://github.com/zachshallbetter"
       ],
       "jobTitle": "Systems engineer",
-      "description": "Zach Shallbetter designs and builds Latchkey. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
+      "description": "Zach Shallbetter designs and builds Pistachio. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
       "homeLocation": {
         "@type": "Place",
         "name": "Spokane, Washington"
@@ -144,12 +144,13 @@
   ]
 }
   </script>
+  <link rel="stylesheet" href="pistachio.css?v=20261123-depth">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site">
     <nav class="top wrap" aria-label="Main">
-      <a class="brand" href="index.html"><img class="logo" src="logo.svg" alt="">Latchkey</a>
+      <a class="brand" href="index.html"><img class="logo" src="logo.svg" alt="">Pistachio</a>
       <ul>
         <li><a href="features.html" aria-current="page">Features</a></li>
         <li><a href="index.html#how">How it works</a></li>
@@ -157,12 +158,21 @@
         <li><a href="security.html">Security</a></li>
         <li><a href="developers/index.html">Developers</a></li>
         <li><a href="guides/index.html">Guides</a></li>
-        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a></li>
       </ul>
-    </nav>
+    <details class="mobile-menu"><summary><i class="ic ic-menu" aria-hidden="true"></i>Menu</summary><div class="mobile-menu-links">
+        <a href="features.html" aria-current="page">Features</a>
+        <a href="index.html#how">How it works</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="security.html">Security</a>
+        <a href="developers/index.html">Developers</a>
+        <a href="guides/index.html">Guides</a>
+        <a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+      </div></details></nav>
   </header>
 
   <main id="main" class="wrap">
+    <aside class="brand-transition" aria-label="Product name update">Pistachio is the new name for Latchkey. The current download, <code>lk</code> commands and <code>latchkey://</code> references still use the original names.</aside>
     <section class="page-hero" aria-labelledby="title">
       <h1 id="title">Credentials kept by name in Keychain, and <span class="fills">filled in</span> when a command starts.</h1>
       <p class="lede">Credentials that have IDs, history and a home outside any one project. Env files that hold references. Environments that rebuild on another Mac. Commands and agents that use values only when you've said so, and a record of every time they did.</p>
@@ -170,14 +180,14 @@
         <li><a href="#credentials">Credentials</a></li><li><a href="#environments">Environments</a></li><li><a href="#devices">Devices</a></li>
         <li><a href="#agents">Agents and tools</a></li><li><a href="#integrations">Integrations</a></li><li><a href="#visibility">Visibility</a></li><li><a href="#pro">Pro</a></li>
       </ul>
-      <p class="legend"><span><span class="avail">In this build</span> Works in the development preview.</span><span><span class="avail pending">Pending</span> Built but not yet verified for release, or not built yet.</span><span>Everything on this page is free. <a href="#pro">What Pro adds</a></span><span>Scenes replay what Latchkey prints and shows, with example data.</span></p>
+      <p class="legend"><span><span class="avail">In this build</span> Works in the development preview.</span><span><span class="avail pending">Pending</span> Built but not yet verified for release, or not built yet.</span><span>Everything on this page is free. <a href="#pro">What Pro adds</a></span><span>Scenes replay what Pistachio prints and shows, with example data.</span></p>
     </section>
 
     <section class="section group" id="credentials" aria-labelledby="credentials-title" data-hue="blue">
       <header class="shead"><p class="eyebrow">Credentials</p><h2 id="credentials-title">Every credential has a name, a place and a past.</h2>
         <p>An item is <code>project/environment/NAME</code>, or just <code>NAME</code> when it's shared by every project. Its kind, service and note travel with it, and replacing its value keeps the old one.</p></header>
-      <div class="appwrap"><div class="appwin" id="appwin" aria-label="The Latchkey window, with example data"><div class="appwin-static">
-          <p><b>The Latchkey window, with example data.</b> With scripts on, it works: search, filter by type or environment, pick a project or service in the sidebar, and open an item. It lists:</p>
+      <div class="appwrap"><div class="appwin" id="appwin" aria-label="The Pistachio window, with example data"><div class="appwin-static">
+          <p><b>The Pistachio window, with example data.</b> With scripts on, it works: search, filter by type or environment, pick a project or service in the sidebar, and open an item. It lists:</p>
           <ul>
             <li><b>shop:</b> DATABASE_URL, STRIPE_KEY, PGHOST and NEXT_PUBLIC_SITE_URL for development; DATABASE_URL for preview, not pushed yet; DATABASE_URL and STRIPE_KEY for production, the key changed since its last push</li>
             <li><b>blog:</b> ADMIN_PASSWORD, SENTRY_DSN and GITHUB_TOKEN</li>
@@ -186,7 +196,7 @@
           </ul>
           <p>Opening an item shows its value (hidden until Touch ID), reference, type, access, service, project, environment, note, location, history and recent activity. Review lists what may need a look.</p>
         </div></div>
-        <p class="fine wide-cap">The Latchkey window, working with example data: search, filter by type or environment, pick a project or service, and open an item to see its reference, access, location, history and recent activity. Revealing or copying a value asks for Touch ID. The values are made up.</p></div>
+        <p class="fine wide-cap">The Pistachio window, working with example data: search, filter by type or environment, pick a project or service, and open an item to see its reference, access, location, history and recent activity. Revealing or copying a value asks for Touch ID. The values are made up.</p></div>
       <div class="card-grid g2">
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-folder"></i></span><h3>Store and organize <span class="avail">In this build</span></h3><p>Tokens, passwords, key files and plain values, grouped by project and environment in the app and the CLI. The value is read from standard input or a hidden prompt.</p>
           <pre>lk set shop/development/STRIPE_KEY --kind token --service Stripe</pre><a class="more" href="developers/cli.html#items">Items</a></article>
@@ -197,7 +207,7 @@
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-history"></i></span><h3>History and restore <span class="avail">In this build</span></h3><p>The last 10 values of each item, and deleted items for 30 days. History lists when and why, never values; Forget History deletes old values for good.</p>
           <pre>lk history shop/development/STRIPE_KEY
 lk restore shop/development/STRIPE_KEY --version 1</pre><a class="more" href="developers/cli.html#history">History</a></article>
-        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-merge"></i></span><h3>Find duplicates and combine them <span class="avail">In this build</span></h3><p>One approval compares values inside Latchkey and says what to do: give production its own key, or combine the rest into one shared item. Files follow, and the originals go to Recently Deleted.</p>
+        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-merge"></i></span><h3>Find duplicates and combine them <span class="avail">In this build</span></h3><p>One approval compares values inside Pistachio and says what to do: give production its own key, or combine the rest into one shared item. Files follow, and the originals go to Recently Deleted.</p>
           <pre>lk duplicates
 lk combine shop/development/STRIPE_KEY blog/development/STRIPE_KEY --into STRIPE_KEY</pre><a class="more" href="developers/cli.html#duplicates">Duplicates</a></article>
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-scan"></i></span><h3>Catch plain values before a commit <span class="avail">In this build</span></h3><p><code>lk scan</code> finds env files that still hold a stored value or something that looks secret, and prints file, line and item, never the value. The pre-commit hook refuses those commits.</p>
@@ -244,7 +254,7 @@ lk project</pre><a class="more" href="developers/cli.html#environments">Projects
 
     <section class="section group" id="devices" aria-labelledby="devices-title" data-hue="violet">
       <header class="shead"><p class="eyebrow">Devices</p><h2 id="devices-title">The environment travels with the project. The credential stays in your vault.</h2>
-        <p>Values, versions, environment records and project links are keychain items in Latchkey's own access group. iCloud Keychain carries them, end to end encrypted, to every Mac signed in to your Apple Account that has Latchkey installed.</p></header>
+        <p>Values, versions, environment records and project links are keychain items in Pistachio's own access group. iCloud Keychain carries them, end to end encrypted, to every Mac signed in to your Apple Account that has Pistachio installed.</p></header>
       <div class="feature flip">
         <div class="copy"><h3>Clone, export, run</h3><p>On the next Mac the environment record is already there: <code>lk project</code> recognizes the clone and <code>lk export</code> writes its env file. Grants stay on the Mac where you made them.</p>
           <p><span class="avail pending">Second-Mac test pending</span></p></div>
@@ -253,7 +263,7 @@ lk project</pre><a class="more" href="developers/cli.html#environments">Projects
             <span class="device" style="left:14px;top:14px">MACBOOK PRO</span>
             <span class="device" style="left:332px;top:14px">MAC MINI</span>
             <div class="mw app" id="macs-a" style="left:8px;top:32px;width:256px;height:206px">
-              <div class="mw-bar"><i></i><i></i><i></i><span>Latchkey</span></div>
+              <div class="mw-bar"><i></i><i></i><i></i><span>Pistachio</span></div>
               <div class="body">
                 <div class="sb"><div class="tl"><span class="on"><b>3</b>All</span><span><b>0</b>No Approval</span><span><b>3</b>Ask First</span><span><b>1</b>Activity</span></div>
                   <p class="sh">Projects</p><div class="pj"><i></i>shop<em>2</em></div></div>
@@ -276,10 +286,10 @@ lk project</pre><a class="more" href="developers/cli.html#environments">Projects
         </div>
       </div>
       <div class="card-grid g2">
-        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-shieldcheck"></i></span><h3>Signed app access <span class="avail">In this build</span></h3><p>Only the signed Latchkey app can read its keychain group. The <code>lk</code> tool never touches the keychain; it checks the app's signature before sending anything.</p><a class="more" href="security.html#storage">Storage and sync</a></article>
+        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-shieldcheck"></i></span><h3>Signed app access <span class="avail">In this build</span></h3><p>Only the signed Pistachio app can read its keychain group. The <code>lk</code> tool never touches the keychain; it checks the app's signature before sending anything.</p><a class="more" href="security.html#storage">Storage and sync</a></article>
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-macs"></i></span><h3>Use it from another Mac over SSH <span class="avail">In this build</span></h3><p>Forward the app's socket. Each read without the No Approval setting asks you on your own Mac; local grants don't apply over the connection. Direct download only, for now.</p>
           <pre>export LATCHKEY_SOCKET=/tmp/latchkey-$USER.sock</pre><a class="more" href="developers/agents.html#ssh">From another Mac over SSH</a></article>
-        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-shieldcheck"></i></span><h3>Locks like Passwords <span class="avail">In this build</span></h3><p>The window locks when Latchkey opens, after 5 minutes in the background and when the Mac sleeps; Touch ID unlocks it. Approvals for commands and agents still work while it's locked.</p><a class="more" href="security.html#release">App lock</a></article>
+        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-shieldcheck"></i></span><h3>Locks like Passwords <span class="avail">In this build</span></h3><p>The window locks when Pistachio opens, after 5 minutes in the background and when the Mac sleeps; Touch ID unlocks it. Approvals for commands and agents still work while it's locked.</p><a class="more" href="security.html#release">App lock</a></article>
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-laptop"></i></span><h3>Intel Macs <span class="avail pending">Pending</span></h3><p>The app is built for Apple silicon and Intel. The release hasn't been tried on an Intel Mac yet.</p><a class="more" href="index.html#install">Install</a></article>
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-sync"></i></span><h3>Updates itself <span class="avail">In this build</span></h3><p>The direct download checks for updates with Sparkle, or install and upgrade with Homebrew. It sends no system profile; the Mac App Store version updates through the store.</p>
           <pre>brew install --cask latchkey</pre><a class="more" href="developers/quickstart.html#install">Installing</a></article>
@@ -311,14 +321,14 @@ lk project</pre><a class="more" href="developers/cli.html#environments">Projects
         </div>
       </div>
       <div class="card-grid g3">
-        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-clock"></i></span><h3>Grants with limits <span class="avail">In this build</span></h3><p>For a folder (and its repository's worktrees), for any length of time, until the agent quits, until you revoke it, for one command, or for one request. Kept where only Latchkey can change them.</p>
+        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-clock"></i></span><h3>Grants with limits <span class="avail">In this build</span></h3><p>For a folder (and its repository's worktrees), for any length of time, until the agent quits, until you revoke it, for one command, or for one request. Kept where only Pistachio can change them.</p>
           <pre>lk grant 'shop/development/*' --session --for 4h
 lk grant 'shop/development/*' --command "npm test" --for 2h</pre><a class="more" href="developers/cli.html#grants">Grants</a></article>
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-check"></i></span><h3>Check before a slow run <span class="avail">In this build</span></h3><p>What a run would get without asking, what would ask you, and what's missing. Asks nothing, releases nothing.</p>
           <pre>lk check --env shop/development</pre><a class="more" href="developers/cli.html#check">lk check</a></article>
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-plug"></i></span><h3>MCP server <span class="avail">In this build</span></h3><p>Status, list, check, run, project, export references and request a grant, for clients without a shell. There's no secret-read tool; grants it asks for cover only its own folder, end when the agent quits, and never include production.</p>
-          <pre>claude mcp add latchkey -- ~/.local/bin/latchkey mcp</pre><a class="more" href="developers/agents.html#mcp">Latchkey's MCP server</a></article>
-        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-sparkles"></i></span><h3>Skill and plugin <span class="avail pending">Pending</span></h3><p>The Latchkey skill tells an agent to run through <code>lk run</code>, never print values, and stop on 77 or 66. It works from a local checkout. The repository is public, so the marketplace install should work, though it hasn't been tried end to end yet.</p>
+          <pre>claude mcp add latchkey -- ~/.local/bin/latchkey mcp</pre><a class="more" href="developers/agents.html#mcp">Pistachio's MCP server</a></article>
+        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-sparkles"></i></span><h3>Skill and plugin <span class="avail pending">Pending</span></h3><p>The Pistachio skill tells an agent to run through <code>lk run</code>, never print values, and stop on 77 or 66. It works from a local checkout. The repository is public, so the marketplace install should work, though it hasn't been tried end to end yet.</p>
           <pre>/plugin marketplace add /path/to/latchkey</pre><a class="more" href="developers/agents.html#skills">Skills and plugins</a></article>
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-eyeoff"></i></span><h3>Masked output <span class="avail">In this build</span></h3><p>A value of a secret kind, 6 characters or longer, that the command prints becomes <code>&lt;concealed by latchkey&gt;</code>, even split across chunks. Transformed values aren't caught.</p><a class="more" href="security.html#limits">Where protection ends</a></article>
       </div>
@@ -328,7 +338,7 @@ lk grant 'shop/development/*' --command "npm test" --for 2h</pre><a class="more"
       <header class="shead"><p class="eyebrow">Integrations</p><h2 id="integrations-title">From the dashboard where a key is made to the platform that runs it.</h2>
         <p>Save a new key from the page that shows it, push values to deployment platforms with their own tools, and keep some keys out of the command entirely.</p></header>
       <div class="feature flip" id="safari">
-        <div class="copy"><h3>Capture credentials when they're issued</h3><p>When a provider shows you a new key, Latchkey for Safari can recognize it and offer to save it: a <b>Save to Latchkey</b> button sits on the box that holds it. You choose what to save, where it goes and its name; approve, and the panel gives you the reference to use. Spotting happens in the page and nothing leaves it until you press Save. Detection depends on page permissions and supported patterns.</p>
+        <div class="copy"><h3>Capture credentials when they're issued</h3><p>When a provider shows you a new key, Pistachio for Safari can recognize it and offer to save it: a <b>Save to Pistachio</b> button sits on the box that holds it. You choose what to save, where it goes and its name; approve, and the panel gives you the reference to use. Spotting happens in the page and nothing leaves it until you press Save. Detection depends on page permissions and supported patterns.</p>
           <a class="more" href="security.html#safari">What the extension can and can't reach</a></div>
         <div class="scene-wrap" data-scene="safari" style="--w:600;--h:290;--pw:360;--ph:300" aria-hidden="true">
           <div class="canvas">
@@ -337,17 +347,17 @@ lk grant 'shop/development/*' --command "npm test" --for 2h</pre><a class="more"
               <div class="page">
                 <p class="sh5">API key created</p>
                 <p>Copy this key and keep it somewhere safe. It won't be shown again.</p>
-                <div class="keybox">ex_live_8KqT2v…Zp41 <span class="save" id="saf-btn"><svg viewBox="0 0 9 11"><path d="M1 1h7v9L4.5 7.6 1 10z"/></svg>Save to Latchkey</span></div>
+                <div class="keybox">ex_live_8KqT2v…Zp41 <span class="save" id="saf-btn"><svg viewBox="0 0 9 11"><path d="M1 1h7v9L4.5 7.6 1 10z"/></svg>Save to Pistachio</span></div>
               </div>
             </div>
             <div class="sheet off" id="saf-save" style="left:248px;top:128px;width:300px">
-              <p class="sh">Save to Latchkey</p>
+              <p class="sh">Save to Pistachio</p>
               <dl><dt>Where</dt><dd>shop / production</dd><dt>Name</dt><dd>PAYMENTS_KEY</dd></dl>
-              <div class="acts"><small>A live key goes to production.</small><span class="b">Not now</span><span class="b go" id="saf-go">Save to Latchkey</span></div>
+              <div class="acts"><small>A live key goes to production.</small><span class="b">Not now</span><span class="b go" id="saf-go">Save to Pistachio</span></div>
             </div>
             <div class="sheet touch off" id="saf-touch" style="left:185px;top:70px">
               <svg class="fp" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12"/><path d="M18 34c0-6 2-10 6-10s6 4 6 10"/><path d="M24 30v8"/><path d="M10 26c1-9 7-15 14-15s13 6 14 15"/><path d="M12 16c3-4 7-6 12-6s9 2 12 6"/></g></svg>
-              <p><b>Latchkey is trying to add shop/production/PAYMENTS_KEY</b></p><p>Touch ID or enter your password.</p>
+              <p><b>Pistachio is trying to add shop/production/PAYMENTS_KEY</b></p><p>Touch ID or enter your password.</p>
             </div>
             <div class="sheet" id="saf-done" style="left:222px;top:128px;width:340px">
               <p class="sh">Saved</p>
@@ -363,13 +373,13 @@ lk grant 'shop/development/*' --command "npm test" --for 2h</pre><a class="more"
           <pre>lk remote link shop/production fly app=shop-api
 lk remote status shop/production
 lk push shop/production --dry-run</pre><a class="more" href="developers/cli.html#remote">Remote locations</a></article>
-        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-safari"></i></span><h3>Fill a field from Latchkey <span class="avail">In this build</span></h3><p>In a field that takes a key, a badge offers the items that may be filled on that site: the item's service and the deployment platforms, or the sites you choose. Touch ID every time.</p>
+        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-safari"></i></span><h3>Fill a field from Pistachio <span class="avail">In this build</span></h3><p>In a field that takes a key, a badge offers the items that may be filled on that site: the item's service and the deployment platforms, or the sites you choose. Touch ID every time.</p>
           <pre>lk update shop/production/PAYMENTS_KEY --fill-sites vercel.com</pre><a class="more" href="developers/cli.html#items">lk update</a></article>
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-shield"></i></span><h3>Key proxy <span class="avail">In this build</span></h3><p>OpenAI and Anthropic keys stay in <code>lk run</code>; the command gets a placeholder and a local base URL, and the real key goes only to the provider's host. It serves only the command and what it started, and can limit models and requests.</p>
           <pre>lk run --proxy --proxy-models gpt-5 --proxy-requests 50 --env shop/development -- npm test</pre><a class="more" href="developers/cli.html#proxy">--proxy</a></article>
-        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-bolt"></i></span><h3>Short-lived AWS credentials <span class="avail">In this build</span></h3><p>STS credentials that expire after 15 minutes by default, while the long-lived key stays in Latchkey. MFA isn't supported yet.</p>
+        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-bolt"></i></span><h3>Short-lived AWS credentials <span class="avail">In this build</span></h3><p>STS credentials that expire after 15 minutes by default, while the long-lived key stays in Pistachio. MFA isn't supported yet.</p>
           <pre>lk run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</pre><a class="more" href="developers/cli.html#aws">AWS</a></article>
-        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-plug"></i></span><h3>Other MCP servers <span class="avail">In this build</span></h3><p>An MCP server started as a command can get its keys through Latchkey: wrap the command and keep references in its environment.</p>
+        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-plug"></i></span><h3>Other MCP servers <span class="avail">In this build</span></h3><p>An MCP server started as a command can get its keys through Pistachio: wrap the command and keep references in its environment.</p>
           <pre>"command": "latchkey",
 "args": ["run", "--no-masking", "--", "npx", "-y", "some-mcp-server"]</pre><a class="more" href="developers/agents.html#other-mcp">Other MCP servers</a></article>
       </div>
@@ -379,7 +389,7 @@ lk push shop/production --dry-run</pre><a class="more" href="developers/cli.html
       <header class="shead"><p class="eyebrow">Visibility</p><h2 id="visibility-title">Know what read what, and prove the record wasn't edited.</h2>
         <p>Every read, change, grant, move, import and push is logged with the program chain and folder, never a value. Each entry is chained to the last, so an edit or deletion shows.</p></header>
       <div class="feature">
-        <div class="copy"><h3>History, the log and its check</h3><p><code>lk history</code> lists earlier values by when, why and who. <code>lk log --verify</code> checks the access log's chain and names the first line that isn't as Latchkey wrote it.</p></div>
+        <div class="copy"><h3>History, the log and its check</h3><p><code>lk history</code> lists earlier values by when, why and who. <code>lk log --verify</code> checks the access log's chain and names the first line that isn't as Pistachio wrote it.</p></div>
         <div class="scene-wrap" data-scene="log" style="--w:600;--h:260;--pw:360;--ph:270" aria-hidden="true">
           <div class="canvas">
             <div class="mw tty" style="left:12px;top:12px;width:576px;height:236px">
@@ -395,13 +405,13 @@ lk push shop/production --dry-run</pre><a class="more" href="developers/cli.html
 lk rotate --touched --since 4h --by claude --open</pre><a class="more" href="developers/cli.html#rotating">Rotating</a></article>
         <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-pulse"></i></span><h3>Activity and the menu bar <span class="avail">In this build</span></h3><p>Every request in the app's Activity, with what asked and from where; the menu bar panel shows the latest and searches your items. The same log is in the terminal.</p>
           <pre>lk log --limit 20</pre><a class="more" href="index.html#app">The app</a></article>
-        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-gauge"></i></span><h3>Expiry and provider-side usage <span class="avail pending">Pending</span></h3><p>Latchkey records what it released, not what a service saw. Expiry dates, validity checks and provider-side usage aren't tracked yet; until they are, a note on the item can carry the date.</p>
+        <article class="card"><span class="cico" aria-hidden="true"><i class="ic ic-gauge"></i></span><h3>Expiry and provider-side usage <span class="avail pending">Pending</span></h3><p>Pistachio records what it released, not what a service saw. Expiry dates, validity checks and provider-side usage aren't tracked yet; until they are, a note on the item can carry the date.</p>
           <pre>lk update shop/production/STRIPE_KEY --note "expires March 2027"</pre><a class="more" href="security.html#limits">Where protection ends</a></article>
       </div>
     </section>
     <section class="section group" id="pro" aria-labelledby="pro-title" data-hue="orange">
       <header class="shead">
-        <p class="eyebrow">Latchkey Pro</p>
+        <p class="eyebrow">Pistachio Pro</p>
         <h2 id="pro-title">Everything above is free. Pro adds four sets of tools.</h2>
         <p>Pro is planned as a one-time in-app purchase in the Mac App Store, $79 with updates included. None of it is sold before it exists, and none of what's above is planned to move behind it, duplicates, scanning, rotation and pushing to services included.</p>
       </header>
@@ -416,7 +426,7 @@ lk rotate --touched --since 4h --by claude --open</pre><a class="more" href="dev
     <section class="section cta-band" aria-labelledby="cta-title">
       <div>
         <h2 id="cta-title">Stop being the credential courier.</h2>
-        <p><span class="cta-lead">Keep your projects, credentials and coding agents working together, with access you can inspect and control. </span>Latchkey is free to download and use, and the core is meant to stay free. Pro will add more for a one-time price in the Mac App Store.</p>
+        <p><span class="cta-lead">Keep your projects, credentials and coding agents working together, with access you can inspect and control. </span>Pistachio is free to download and use, and the core is meant to stay free. Pro will add more for a one-time price in the Mac App Store.</p>
       </div>
       <div class="cta-actions"><a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a><a class="button secondary" href="pricing.html#pro"><i class="ic ic-star" aria-hidden="true"></i>See what Pro adds</a></div>
     </section>
@@ -426,7 +436,7 @@ lk rotate --touched --since 4h --by claude --open</pre><a class="more" href="dev
     <div class="wrap">
       <div class="foot-grid">
         <div class="foot-brand">
-          <a class="brand" href="index.html"><img class="logo" src="logo.svg" alt="">Latchkey</a>
+          <a class="brand" href="index.html"><img class="logo" src="logo.svg" alt="">Pistachio</a>
           <p>Development credentials in your Mac's iCloud Keychain, filled in when a command starts.</p>
           <a class="button primary small" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
         </div>

@@ -1,41 +1,42 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>try{var savedTheme=localStorage.getItem("pistachio-theme");if(savedTheme==="light"||savedTheme==="dark")document.documentElement.dataset.theme=savedTheme}catch(e){}</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Developer docs: how Latchkey fits together · Latchkey</title>
-  <meta name="description" content="How Latchkey fits together for developers: the latchkey command-line tool, the app that holds the keychain, latchkey:// references, and how agents and MCP servers use them.">
+  <title>Developer docs: how Pistachio fits together · Pistachio</title>
+  <meta name="description" content="How Pistachio fits together for developers: the latchkey command-line tool, the app that holds the keychain, latchkey:// references, and how agents and MCP servers use them.">
   <link rel="canonical" href="https://latchkey.snackstud.io/developers/">
   <meta property="og:url" content="https://latchkey.snackstud.io/developers/">
   <meta property="og:type" content="article">
-  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:site_name" content="Pistachio">
   <meta property="og:image" content="https://latchkey.snackstud.io/social/developers-index.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Developer docs: How Latchkey fits together. How Latchkey fits together for developers: the latchkey command-line tool, the app that holds the… Latchkey, latchkey.snackstud.io.">
-  <meta property="og:title" content="Developer docs: how Latchkey fits together · Latchkey">
-  <meta property="og:description" content="How Latchkey fits together for developers: the latchkey command-line tool, the app that holds the keychain, latchkey:// references, and how agents and MCP servers use them.">
+  <meta property="og:image:alt" content="Developer docs: how Pistachio fits together. Pistachio, a Mac app from Snack Studio.">
+  <meta property="og:title" content="Developer docs: how Pistachio fits together · Pistachio">
+  <meta property="og:description" content="How Pistachio fits together for developers: the latchkey command-line tool, the app that holds the keychain, latchkey:// references, and how agents and MCP servers use them.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fafaf6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151b17" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="../logo.svg" type="image/svg+xml">
   <link rel="author" href="https://zachshallbetter.com/">
   <link rel="icon" href="../favicon.ico" sizes="48x48">
   <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32">
   <link rel="manifest" href="../site.webmanifest">
-  <link rel="alternate" type="text/plain" href="../llms.txt" title="Latchkey for language models">
+  <link rel="alternate" type="text/plain" href="../llms.txt" title="Pistachio for language models">
   <link rel="apple-touch-icon" href="../apple-touch-icon.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="author" content="Zach Shallbetter">
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
-  <meta name="application-name" content="Latchkey">
-  <meta name="apple-mobile-web-app-title" content="Latchkey">
+  <meta name="application-name" content="Pistachio">
+  <meta name="apple-mobile-web-app-title" content="Pistachio">
   <meta property="og:locale" content="en_US">
   <meta property="og:image:type" content="image/jpeg">
-  <meta name="twitter:title" content="Developer docs: how Latchkey fits together · Latchkey">
-  <meta name="twitter:description" content="How Latchkey fits together for developers: the latchkey command-line tool, the app that holds the keychain, latchkey:// references, and how agents and MCP servers use them.">
+  <meta name="twitter:title" content="Developer docs: how Pistachio fits together · Pistachio">
+  <meta name="twitter:description" content="How Pistachio fits together for developers: the latchkey command-line tool, the app that holds the keychain, latchkey:// references, and how agents and MCP servers use them.">
   <meta name="twitter:image" content="https://latchkey.snackstud.io/social/developers-index.jpg">
-  <meta name="twitter:image:alt" content="Developer docs: How Latchkey fits together. How Latchkey fits together for developers: the latchkey command-line tool, the app that holds the… Latchkey, latchkey.snackstud.io.">
+  <meta name="twitter:image:alt" content="Developer docs: how Pistachio fits together. Pistachio, a Mac app from Snack Studio.">
   <meta property="article:author" content="https://zachshallbetter.com/">
   <link rel="stylesheet" href="../site.css">
   <script defer src="../site.js"></script>
@@ -47,8 +48,8 @@
       "@type": "WebPage",
       "@id": "https://latchkey.snackstud.io/developers/#webpage",
       "url": "https://latchkey.snackstud.io/developers/",
-      "name": "Developer docs: how Latchkey fits together · Latchkey",
-      "description": "How Latchkey fits together for developers: the latchkey command-line tool, the app that holds the keychain, latchkey:// references, and how agents and MCP servers use them.",
+      "name": "Developer docs: how Pistachio fits together · Pistachio",
+      "description": "How Pistachio fits together for developers: the latchkey command-line tool, the app that holds the keychain, latchkey:// references, and how agents and MCP servers use them.",
       "inLanguage": "en",
       "isPartOf": {
         "@id": "https://latchkey.snackstud.io/#website"
@@ -67,7 +68,7 @@
         "url": "https://latchkey.snackstud.io/social/developers-index.jpg",
         "width": 1200,
         "height": 630,
-        "caption": "Developer docs: How Latchkey fits together. How Latchkey fits together for developers: the latchkey command-line tool, the app that holds the… Latchkey, latchkey.snackstud.io."
+        "caption": "Developer docs: how Pistachio fits together. Pistachio, a Mac app from Snack Studio."
       },
       "breadcrumb": {
         "@id": "https://latchkey.snackstud.io/developers/#breadcrumb"
@@ -79,7 +80,7 @@
         {
           "@type": "ListItem",
           "position": 1,
-          "name": "Latchkey",
+          "name": "Pistachio",
           "item": "../index.html"
         },
         {
@@ -100,7 +101,7 @@
         "https://github.com/zachshallbetter"
       ],
       "jobTitle": "Systems engineer",
-      "description": "Zach Shallbetter designs and builds Latchkey. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
+      "description": "Zach Shallbetter designs and builds Pistachio. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
       "homeLocation": {
         "@type": "Place",
         "name": "Spokane, Washington"
@@ -128,12 +129,13 @@
   ]
 }
   </script>
+  <link rel="stylesheet" href="../pistachio.css?v=20261123-depth">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site">
     <nav class="top wrap" aria-label="Main">
-      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Pistachio</a>
       <ul>
         <li><a href="../features.html">Features</a></li>
         <li><a href="../index.html#how">How it works</a></li>
@@ -141,21 +143,30 @@
         <li><a href="../security.html">Security</a></li>
         <li><a href="index.html" aria-current="page">Developers</a></li>
         <li><a href="../guides/index.html">Guides</a></li>
-        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a></li>
       </ul>
-    </nav>
+    <details class="mobile-menu"><summary><i class="ic ic-menu" aria-hidden="true"></i>Menu</summary><div class="mobile-menu-links">
+        <a href="../features.html">Features</a>
+        <a href="../index.html#how">How it works</a>
+        <a href="../pricing.html">Pricing</a>
+        <a href="../security.html">Security</a>
+        <a href="index.html" aria-current="page">Developers</a>
+        <a href="../guides/index.html">Guides</a>
+        <a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+      </div></details></nav>
   </header>
   <main id="main" class="wrap docs">
+    <aside class="brand-transition" aria-label="Product name update">Pistachio is the new name for Latchkey. The current download, <code>lk</code> commands and <code>latchkey://</code> references still use the original names.</aside>
     <nav class="side" aria-label="Developers and guides"><div class="side-group current"><p class="side-title">Developers</p><ul><li><a href="index.html" aria-current="page"><i class="ic ic-book" aria-hidden="true"></i>Overview</a></li><li><a href="quickstart.html"><i class="ic ic-bolt" aria-hidden="true"></i>Quickstart</a></li><li><a href="cli.html"><i class="ic ic-terminal" aria-hidden="true"></i>CLI reference</a></li><li><a href="agents.html"><i class="ic ic-agent" aria-hidden="true"></i>Agents and MCP</a></li><li><a href="api.html"><i class="ic ic-code" aria-hidden="true"></i>References and API</a></li></ul></div><div class="side-group"><p class="side-title">Guides</p><ul><li><a href="../guides/index.html"><i class="ic ic-grid" aria-hidden="true"></i>All guides</a></li><li><a href="../guides/index.html#env"><i class="ic ic-fileenv" aria-hidden="true"></i>Env files</a></li><li><a href="../guides/index.html#agents"><i class="ic ic-sparkles" aria-hidden="true"></i>Coding agents</a></li><li><a href="../guides/index.html#deploy"><i class="ic ic-upload" aria-hidden="true"></i>Deploying</a></li><li><a href="../guides/index.html#everyday"><i class="ic ic-macs" aria-hidden="true"></i>Everyday use</a></li></ul></div></nav>
     <article class="doc">
-      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><span aria-current="page">Developers</span></li></ol></nav>
-      <h1>Latchkey for <span class="stays">developers</span></h1>
+      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Pistachio</a></li><li><span aria-current="page">Developers</span></li></ol></nav>
+      <h1>Pistachio for <span class="stays">developers</span></h1>
       <p class="lede">Everything you can script: the <code>latchkey</code> command-line tool, the references your files hold, the protocol the tool speaks to the app, and how to put agents and MCP servers behind it.</p>
       <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#pieces">The pieces</a></li><li><a href="#start">Where to start</a></li><li><a href="#ids">Item IDs</a></li><li><a href="#rules">What&rsquo;s released without asking</a></li></ul></nav>
 
 <h2 id="pieces">The pieces</h2>
 <ul>
-<li>The app holds the keychain. It runs the broker, shows approval panels, and keeps the log, grants and history. Only the signed app can read Latchkey&rsquo;s keychain access group.</li>
+<li>The app holds the keychain. It runs the broker, shows approval panels, and keeps the log, grants and history. Only the signed app can read Pistachio&rsquo;s keychain access group.</li>
 <li><code>latchkey</code>, the command-line tool, asks the app for everything over a Unix socket. It starts the app in the background if it isn&rsquo;t running.</li>
 <li>References such as <code>latchkey://shop/production/DATABASE_URL</code> go in env files and environment variables in place of values.</li>
 </ul>
@@ -173,8 +184,8 @@ Broker (in the app) ──► iCloud Keychain
 <dl class="pages">
 <dt><a href="quickstart.html">Quickstart</a></dt><dd>Install the tool, import an env file, run a command, grant a folder.</dd>
 <dt><a href="cli.html">CLI reference</a></dt><dd>Every command and option, environment variables and exit codes.</dd>
-<dt><a href="agents.html">Agents and MCP</a></dt><dd>Instructions for coding agents, narrower grants, keys an agent can use without reading, rotation after a session, SSH, and Latchkey&rsquo;s MCP server.</dd>
-<dt><a href="api.html">References and API</a></dt><dd>The reference formats, the broker protocol, the access log, and the files Latchkey keeps.</dd>
+<dt><a href="agents.html">Agents and MCP</a></dt><dd>Instructions for coding agents, narrower grants, keys an agent can use without reading, rotation after a session, SSH, and Pistachio&rsquo;s MCP server.</dd>
+<dt><a href="api.html">References and API</a></dt><dd>The reference formats, the broker protocol, the access log, and the files Pistachio keeps.</dd>
 </dl>
 
 <h2 id="ids">Item IDs</h2>
@@ -192,7 +203,7 @@ Broker (in the app) ──► iCloud Keychain
     <div class="wrap">
       <div class="foot-grid">
         <div class="foot-brand">
-          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Pistachio</a>
           <p>Development credentials in your Mac's iCloud Keychain, filled in when a command starts.</p>
           <a class="button primary small" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
         </div>

@@ -176,10 +176,31 @@ The sidebar's service icons are in `App/Latchkey/Assets.xcassets/ServiceIcons`, 
 
 ## The logo and icon
 
-`App/Branding/logo.svg` is the source, a key on a ring. The app icon is `App/Latchkey/AppIcon.icon`, an Icon Composer
-document with light and dark appearances that colours the mark itself; edit it in Icon Composer (in Xcode's
-Applications folder). The menu bar icon and in-app mark are template copies of the SVG in `Assets.xcassets`
-(`MenuBarIcon`, `Logo`), and the website uses `site/logo.svg`.
+`App/Branding/pistachio.svg` is the supplied three-piece color mark; `pistachio-template.svg` is its monochrome
+menu bar counterpart. `App/Branding/logo.svg` retains the original key. Service/provider icons are unchanged.
+
+General settings offers **Pistachio** and **Key**. The `appIconChoice` preference is stored locally and defaults to
+Pistachio, including for malformed values. It updates the running Dock icon through AppKit’s
+`NSApplication.applicationIconImage`, the template status item, and the marks in the app, approvals and What’s New.
+The choice is reapplied on launch; it changes no broker policy, credentials, bundle IDs or signed bundle files.
+Finder and Safari retain the bundled Pistachio icon. macOS does not provide this running-app preference as a Finder
+icon choice; do not write Finder custom-icon metadata or modify the signed application bundle to simulate it.
+
+`App/Latchkey/AppIcon.icon` is the default Icon Composer document, with three separate Pistachio layers and light/dark
+backgrounds. Key/Pistachio Dock alternatives and Safari’s 48/96/128px icons are generated from checked-in vectors by
+`swift scripts/brand-icons.swift`, through the register. The runtime image sets include light and dark appearances.
+`Logo`/`MenuBarIcon` remain the key assets; `PistachioLogo`/`PistachioMenuBarIcon` are the supplied mark. `LogoMark`,
+`BrandAppIcon` and `AppBranding` centralize the presentation choice. The website’s branding is maintained separately
+in its website worktree; see [site.md](site.md).
+
+### Command names during the rename
+
+The installed command is available as `pistachio`, `lk` and `latchkey`, all reaching the same signed tool. Use
+`pistachio` as the new full product command; keep `lk` and `latchkey` working for existing scripts and integrations.
+The package target, executable inside the bundle and code-signing identifier remain `latchkey`; the installer and
+Homebrew expose `pistachio` as an alias. Direct `swift build` still produces `.build/debug/latchkey`. A short
+Pistachio abbreviation is a separate owner decision; `pst` has been proposed, and is not installed by this change.
+Do not remove aliases or change stored identifiers as part of artwork/preferences work.
 
 ## Conventions
 

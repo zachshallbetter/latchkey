@@ -133,6 +133,7 @@ struct LatchkeyApp: App {
 }
 
 private struct InstallsMenuBarItem: ViewModifier {
+    @AppStorage(AppPreferences.Key.icon) private var icon = AppPreferences.Icon.pistachio.rawValue
     let model: AppModel
     @Environment(\.openWindow) private var openWindow
     @Environment(\.openSettings) private var openSettings
@@ -144,12 +145,14 @@ private struct InstallsMenuBarItem: ViewModifier {
             if Snapshot.requested { return }
             #endif
             MenuBarItem.install(model, openWindow: openWindow)
+            AppBranding.apply()
             // Once after each update. A Mac with items already in Latchkey was using an earlier version, even one that
             // didn't record which.
             if AppPreferences().takeWhatsNew(for: WhatsNewView.version, existingUser: !model.items.isEmpty) {
                 model.openWhatsNew()
             }
         }
+        .onChange(of: icon) { _, _ in AppBranding.apply() }
     }
 }
 

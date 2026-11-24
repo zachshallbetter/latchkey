@@ -4,6 +4,7 @@ import Foundation
 public struct AppPreferences {
     public enum Key {
         public static let appearance = "appearance"
+        public static let icon = "appIconChoice"
         public static let clipboardSeconds = "clipboardClearSeconds"
         public static let revealSeconds = "revealSeconds"
         public static let hideOnDeactivate = "hideValuesOnDeactivate"
@@ -22,6 +23,15 @@ public struct AppPreferences {
     private let defaults: UserDefaults
 
     public init(defaults: UserDefaults = .standard) { self.defaults = defaults }
+
+    public enum Icon: String, CaseIterable, Sendable {
+        case pistachio, key
+
+        public var title: String { self == .pistachio ? "Pistachio" : "Key" }
+        public init(preference: String?) { self = preference.flatMap(Self.init(rawValue:)) ?? .pistachio }
+    }
+
+    public var icon: Icon { Icon(preference: defaults.string(forKey: Key.icon)) }
 
     public var clipboardSeconds: Int { Self.clipboardSeconds(defaults.integer(forKey: Key.clipboardSeconds)) }
 

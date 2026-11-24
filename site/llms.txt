@@ -1,14 +1,16 @@
-# Latchkey
+# Pistachio
 
-> Your projects move; your secrets don't. Latchkey keeps API keys, database URLs and key files in iCloud Keychain;
-> project files keep latchkey:// references; Latchkey fills the values in when a command starts, after the owner
+Pistachio is the new product name for Latchkey. The current release still installs as Latchkey.app and uses `latchkey`, `lk`, and `latchkey://`. Keep using those working names; do not invent a `pistachio` command or reference scheme.
+
+> Your projects move; your secrets don't. Pistachio keeps API keys, database URLs and key files in iCloud Keychain;
+> project files keep latchkey:// references; Pistachio fills the values in when a command starts, after the owner
 > approves with Touch ID, Apple Watch or their password, or under a grant they made. For developers and the coding
 > agents they run. This file is everything an agent needs to work with it; the full text of every page is at
 > https://latchkey.snackstud.io/llms-full.txt.
 
 - Platform: a Mac app, macOS 15 or later, with a command-line tool, `latchkey` (`lk` for short).
-- Storage: iCloud Keychain, in Latchkey's own access group, synced to the owner's Macs. No Latchkey server or account.
-- Price: free to download and use, and the core is meant to stay free. Latchkey Pro is a planned one-time purchase in the Mac
+- Storage: iCloud Keychain, in Pistachio's own access group, synced to the owner's Macs. No Pistachio server or account.
+- Price: free to download and use, and the core is meant to stay free. Pistachio Pro is a planned one-time purchase in the Mac
   App Store version; it isn't on sale.
 - Source: https://github.com/zachshallbetter/latchkey (FSL-1.1-ALv2).
 - Made by Zach Shallbetter (https://zachshallbetter.com/), a systems engineer in Spokane, Washington; published by
@@ -18,7 +20,7 @@
 
 Put this in CLAUDE.md, AGENTS.md or your instructions, and follow it:
 
-> Secrets are in Latchkey. Env files hold `latchkey://` references, not values. Run anything that needs secrets as
+> Secrets are in Pistachio. Env files hold `latchkey://` references, not values. Run anything that needs secrets as
 > `latchkey run --env-file .env.local -- <command>` or `latchkey run --env <project>/<environment> -- <command>`.
 > Never run `latchkey get`, never print the environment, and never read or write values in `.env` files. If
 > `latchkey` exits with 77 (refused) or 66 (missing), stop and ask; don't retry.
@@ -36,10 +38,10 @@ Put this in CLAUDE.md, AGENTS.md or your instructions, and follow it:
   should say `storage: iCloud Keychain`.
 - If `latchkey` isn't found: the person installs the app (https://github.com/zachshallbetter/latchkey/releases/latest,
   or `brew tap zachshallbetter/latchkey`, `brew trust zachshallbetter/latchkey`, `brew install --cask latchkey`, which
-  adds `latchkey` and `lk` to `~/.local/bin`). With the disk image, they choose Latchkey › Install Command Line Tool….
+  adds `latchkey` and `lk` to `~/.local/bin`). With the disk image, they choose Pistachio › Install Command Line Tool….
   With the Mac App Store version, the tool is a separate download: after tapping as above, `brew install latchkey-cli`
   (https://latchkey.snackstud.io/cli.html). `~/.local/bin` must be on the PATH.
-- Exit 69 means the app can't be reached: ask the person to open Latchkey.
+- Exit 69 means the app can't be reached: ask the person to open Pistachio.
 
 ## Running commands
 
@@ -54,8 +56,8 @@ latchkey run --file ASC_KEY_PATH=shop/production/ASC_P8 -- fastlane beta   # a k
 - Output is masked: exact copies of secret values (6 characters or longer) are hidden in what the command prints.
   Transformed or encoded copies are not.
 - Exit codes: 0 done; 64 wrong usage (fix the command); 66 no item with that ID (stop, ask the person to add it);
-  69 app unreachable (ask them to open Latchkey); 73 a file couldn't be rewritten (stop and report); 77 refused (stop,
-  ask them to approve or grant; don't retry); 127 the command couldn't start. On 66 and 77 Latchkey prints the IDs and,
+  69 app unreachable (ask them to open Pistachio); 73 a file couldn't be rewritten (stop and report); 77 refused (stop,
+  ask them to approve or grant; don't retry); 127 the command couldn't start. On 66 and 77 Pistachio prints the IDs and,
   for 77, the exact `latchkey grant` command that would allow them.
 
 ## Approvals and grants
@@ -95,7 +97,7 @@ claude mcp add latchkey -- ~/.local/bin/latchkey mcp
   references filled in; output masked, last 64 KB of each stream; stops after 10 minutes by default, at most 60;
   `proxy`, `proxy_models` and `proxy_requests` work as on the command line), latchkey_request_grant, latchkey_project
   and latchkey_export_references. There is no tool that reads a value, exports values, changes items or pushes.
-- Another MCP server started as a command can get its keys through Latchkey: wrap its command and keep references in
+- Another MCP server started as a command can get its keys through Pistachio: wrap its command and keep references in
   its environment.
 
 ```json
@@ -114,7 +116,7 @@ claude mcp add latchkey -- ~/.local/bin/latchkey mcp
 - `latchkey scan --staged` lists env files a commit would add that still hold plain values (file, line and name,
   never the value) and exits 1 if there are any. `latchkey scan --install-hook` adds it as a pre-commit hook.
 
-## What Latchkey can't do
+## What Pistachio can't do
 
 A value released to a command is in that command's memory and environment. The command can print it to a file, send
 it over the network or encode it so masking doesn't catch it. Agent-safe settings and grants decide what reaches a

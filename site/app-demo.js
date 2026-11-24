@@ -1,4 +1,4 @@
-// A working copy of the Latchkey window with example data, laid out as the app is: the sidebar (All Items, Review,
+// A working copy of the Pistachio window with example data, laid out as the app is: the sidebar (All Items, Review,
 // Activity, projects, services, Grants, Recently Deleted), a flat list of two-line rows with search and filters, and
 // the item's detail as cards. Icons and their colours follow the app's ItemType (App/Latchkey/Style.swift). What the
 // visitor does in the approval scene on the home page arrives here as lk:activity and lk:grant events; elsewhere it
@@ -89,10 +89,10 @@
   function env(e) { return '<span class="env env-' + esc(e) + '">' + esc(e) + "</span>"; }
 
   // ---- The approval panel, for reveals, copies and changes made in the app: the request as a question, and Touch ID
-  // read in the panel. Callers word it as the system sheet did ("Latchkey is trying to …").
+  // read in the panel. Callers word it as the system sheet did ("Pistachio is trying to …").
   function touchID(text) {
     var sheet = root.querySelector(".touch");
-    var what = text.replace(/^Latchkey is trying to /, "").replace(/\.$/, "");
+    var what = text.replace(/^Pistachio is trying to /, "").replace(/\.$/, "");
     sheet.querySelector(".touch-text").textContent = what.charAt(0).toUpperCase() + what.slice(1) + "?";
     return new Promise(function (resolve) {
       var done = false, timer;
@@ -110,7 +110,7 @@
       timer = setTimeout(function () { end(true); }, reduce ? 900 : 1600);
     });
   }
-  function log(op, names, decision) { activity.unshift({ op: op, names: names, decision: decision, who: "Latchkey", time: new Date() }); }
+  function log(op, names, decision) { activity.unshift({ op: op, names: names, decision: decision, who: "Pistachio", time: new Date() }); }
 
   // ---- Rendering
   function nav(f, label, icon, n, badge) {
@@ -119,7 +119,7 @@
   }
   function side() {
     var nf = findings().length;
-    return '<div class="side"><div class="brand-row"><img src="' + logo + '" alt=""><div><b>Latchkey</b><span>Development secrets</span></div></div>' +
+    return '<div class="side"><div class="brand-row"><img src="' + logo + '" alt=""><div><b>Pistachio</b><span>Development secrets</span></div></div>' +
       '<ul class="navs">' + nav("all", "All Items", ic("grid"), items.length) + nav("review", "Review", ic("shield"), nf || null, true) +
       nav("activity", "Activity", ic("pulse")) + "</ul>" +
       '<p class="sh">Projects</p><ul>' + projects().map(function (p) { return nav("project:" + p, p, ic("folder"), count("project:" + p)); }).join("") +
@@ -225,7 +225,7 @@
     }
   }
 
-  // The panel's fingerprint, with Latchkey's mark.
+  // The panel's fingerprint, with Pistachio's mark.
   var logo = (document.querySelector('link[rel="icon"]') || { getAttribute: function () { return "logo.svg"; } }).getAttribute("href");
   root.innerHTML = '<div class="chrome"><i></i><i></i><i></i><span class="sb">' + ic("sidebar") + '</span></div><div class="body"></div>' +
     '<div class="touch" hidden role="dialog" aria-label="Touch ID"><div class="touch-icon">' + ic("fingerprint") + '<img src="' + logo + '" alt=""></div>' +
@@ -252,7 +252,7 @@
     if (b.dataset.reveal || b.dataset.copyvalue) {
       var id = b.dataset.reveal || b.dataset.copyvalue, p = parts(id), item = items.filter(function (x) { return x.id === id; })[0];
       if (b.dataset.reveal && state.revealed[id]) { delete state.revealed[id]; render(); return; }
-      if (item.safe || await touchID("Latchkey is trying to release " + p.name + (p.project ? " from " + p.project + "/" + p.env : "") + " to the Latchkey app.")) {
+      if (item.safe || await touchID("Pistachio is trying to release " + p.name + (p.project ? " from " + p.project + "/" + p.env : "") + " to the Pistachio app.")) {
         if (b.dataset.reveal) {
           state.revealed[id] = true; log("Read", [id], item.safe ? "Allowed (agent-safe)" : "Approved");
           setTimeout(function () { delete state.revealed[id]; render(); }, 15000);
@@ -266,7 +266,7 @@
     }
     if (b.dataset.safe) {
       var it = items.filter(function (x) { return x.id === b.dataset.safe; })[0], want = !it.safe, q = parts(it.id);
-      if (await touchID("Latchkey is trying to " + (want ? "allow reads without approval for " : "require approval unless granted for ") + q.name + (q.project ? " from " + q.project + "/" + q.env : "") + ".")) {
+      if (await touchID("Pistachio is trying to " + (want ? "allow reads without approval for " : "require approval unless granted for ") + q.name + (q.project ? " from " + q.project + "/" + q.env : "") + ".")) {
         it.safe = want; log("Update", [it.id], want ? "No approval" : "Ask first"); render();
       }
       return;

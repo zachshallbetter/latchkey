@@ -1,41 +1,42 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>try{var savedTheme=localStorage.getItem("pistachio-theme");if(savedTheme==="light"||savedTheme==="dark")document.documentElement.dataset.theme=savedTheme}catch(e){}</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Hide an OpenAI or Anthropic key from an agent · Latchkey</title>
+  <title>Hide an OpenAI or Anthropic key from an agent · Pistachio</title>
   <meta name="description" content="Let a coding agent call OpenAI or Anthropic without ever holding the key: run the command with lk run --proxy and cap the models and request count.">
   <link rel="canonical" href="https://latchkey.snackstud.io/guides/proxy-api-keys-for-agents.html">
   <meta property="og:url" content="https://latchkey.snackstud.io/guides/proxy-api-keys-for-agents.html">
   <meta property="og:type" content="article">
-  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:site_name" content="Pistachio">
   <meta property="og:image" content="https://latchkey.snackstud.io/social/guides-proxy-api-keys-for-agents.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Guide: Hide an OpenAI or Anthropic key from an agent. Let a coding agent call OpenAI or Anthropic without ever holding the key: run the command with lk run… Latchkey, latchkey.snackstud.io.">
-  <meta property="og:title" content="Hide an OpenAI or Anthropic key from an agent · Latchkey">
+  <meta property="og:image:alt" content="Hide an OpenAI or Anthropic key from an agent. Pistachio, a Mac app from Snack Studio.">
+  <meta property="og:title" content="Hide an OpenAI or Anthropic key from an agent · Pistachio">
   <meta property="og:description" content="Let a coding agent call OpenAI or Anthropic without ever holding the key: run the command with lk run --proxy and cap the models and request count.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fafaf6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151b17" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="../logo.svg" type="image/svg+xml">
   <link rel="author" href="https://zachshallbetter.com/">
   <link rel="icon" href="../favicon.ico" sizes="48x48">
   <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32">
   <link rel="manifest" href="../site.webmanifest">
-  <link rel="alternate" type="text/plain" href="../llms.txt" title="Latchkey for language models">
+  <link rel="alternate" type="text/plain" href="../llms.txt" title="Pistachio for language models">
   <link rel="apple-touch-icon" href="../apple-touch-icon.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="author" content="Zach Shallbetter">
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
-  <meta name="application-name" content="Latchkey">
-  <meta name="apple-mobile-web-app-title" content="Latchkey">
+  <meta name="application-name" content="Pistachio">
+  <meta name="apple-mobile-web-app-title" content="Pistachio">
   <meta property="og:locale" content="en_US">
   <meta property="og:image:type" content="image/jpeg">
-  <meta name="twitter:title" content="Hide an OpenAI or Anthropic key from an agent · Latchkey">
+  <meta name="twitter:title" content="Hide an OpenAI or Anthropic key from an agent · Pistachio">
   <meta name="twitter:description" content="Let a coding agent call OpenAI or Anthropic without ever holding the key: run the command with lk run --proxy and cap the models and request count.">
   <meta name="twitter:image" content="https://latchkey.snackstud.io/social/guides-proxy-api-keys-for-agents.jpg">
-  <meta name="twitter:image:alt" content="Guide: Hide an OpenAI or Anthropic key from an agent. Let a coding agent call OpenAI or Anthropic without ever holding the key: run the command with lk run… Latchkey, latchkey.snackstud.io.">
+  <meta name="twitter:image:alt" content="Hide an OpenAI or Anthropic key from an agent. Pistachio, a Mac app from Snack Studio.">
   <meta property="article:author" content="https://zachshallbetter.com/">
   <link rel="stylesheet" href="../site.css">
   <style>
@@ -59,7 +60,7 @@
       "@type": "WebPage",
       "@id": "https://latchkey.snackstud.io/guides/proxy-api-keys-for-agents.html#webpage",
       "url": "https://latchkey.snackstud.io/guides/proxy-api-keys-for-agents.html",
-      "name": "Hide an OpenAI or Anthropic key from an agent · Latchkey",
+      "name": "Hide an OpenAI or Anthropic key from an agent · Pistachio",
       "description": "Let a coding agent call OpenAI or Anthropic without ever holding the key: run the command with lk run --proxy and cap the models and request count.",
       "inLanguage": "en",
       "isPartOf": {
@@ -79,7 +80,7 @@
         "url": "https://latchkey.snackstud.io/social/guides-proxy-api-keys-for-agents.jpg",
         "width": 1200,
         "height": 630,
-        "caption": "Guide: Hide an OpenAI or Anthropic key from an agent. Let a coding agent call OpenAI or Anthropic without ever holding the key: run the command with lk run… Latchkey, latchkey.snackstud.io."
+        "caption": "Hide an OpenAI or Anthropic key from an agent. Pistachio, a Mac app from Snack Studio."
       },
       "breadcrumb": {
         "@id": "https://latchkey.snackstud.io/guides/proxy-api-keys-for-agents.html#breadcrumb"
@@ -91,7 +92,7 @@
         {
           "@type": "ListItem",
           "position": 1,
-          "name": "Latchkey",
+          "name": "Pistachio",
           "item": "https://latchkey.snackstud.io/"
         },
         {
@@ -137,7 +138,7 @@
         "https://github.com/zachshallbetter"
       ],
       "jobTitle": "Systems engineer",
-      "description": "Zach Shallbetter designs and builds Latchkey. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
+      "description": "Zach Shallbetter designs and builds Pistachio. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
       "homeLocation": {
         "@type": "Place",
         "name": "Spokane, Washington"
@@ -165,12 +166,13 @@
   ]
 }
   </script>
+  <link rel="stylesheet" href="../pistachio.css?v=20261123-depth">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site">
     <nav class="top wrap" aria-label="Main">
-      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Pistachio</a>
       <ul>
         <li><a href="../features.html">Features</a></li>
         <li><a href="../index.html#how">How it works</a></li>
@@ -178,24 +180,33 @@
         <li><a href="../security.html">Security</a></li>
         <li><a href="../developers/index.html">Developers</a></li>
         <li><a href="index.html" aria-current="page">Guides</a></li>
-        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a></li>
       </ul>
-    </nav>
+    <details class="mobile-menu"><summary><i class="ic ic-menu" aria-hidden="true"></i>Menu</summary><div class="mobile-menu-links">
+        <a href="../features.html">Features</a>
+        <a href="../index.html#how">How it works</a>
+        <a href="../pricing.html">Pricing</a>
+        <a href="../security.html">Security</a>
+        <a href="../developers/index.html">Developers</a>
+        <a href="index.html" aria-current="page">Guides</a>
+        <a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+      </div></details></nav>
   </header>
 
   <main id="main" class="wrap docs guides">
+    <aside class="brand-transition" aria-label="Product name update">Pistachio is the new name for Latchkey. The current download, <code>lk</code> commands and <code>latchkey://</code> references still use the original names.</aside>
     <nav class="side" aria-label="Developers and guides"><div class="side-group"><p class="side-title">Developers</p><ul><li><a href="../developers/index.html"><i class="ic ic-book" aria-hidden="true"></i>Overview</a></li><li><a href="../developers/quickstart.html"><i class="ic ic-bolt" aria-hidden="true"></i>Quickstart</a></li><li><a href="../developers/cli.html"><i class="ic ic-terminal" aria-hidden="true"></i>CLI reference</a></li><li><a href="../developers/agents.html"><i class="ic ic-agent" aria-hidden="true"></i>Agents and MCP</a></li><li><a href="../developers/api.html"><i class="ic ic-code" aria-hidden="true"></i>References and API</a></li></ul></div><div class="side-group current"><p class="side-title">Guides</p><ul><li><a href="index.html"><i class="ic ic-grid" aria-hidden="true"></i>All guides</a></li><li><a href="index.html#env"><i class="ic ic-fileenv" aria-hidden="true"></i>Env files</a></li><li><a href="index.html#agents" class="here"><i class="ic ic-sparkles" aria-hidden="true"></i>Coding agents</a></li><li><a href="index.html#deploy"><i class="ic ic-upload" aria-hidden="true"></i>Deploying</a></li><li><a href="index.html#everyday"><i class="ic ic-macs" aria-hidden="true"></i>Everyday use</a></li></ul></div></nav>
     <article class="doc">
-      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><a href="index.html">Guides</a></li><li><span aria-current="page">Proxy keys for agents</span></li></ol></nav>
+      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Pistachio</a></li><li><a href="index.html">Guides</a></li><li><span aria-current="page">Proxy keys for agents</span></li></ol></nav>
       <p class="eyebrow">Guide · Key proxy</p>
       <h1>Hide your OpenAI or Anthropic <span class="placeholder">key</span> from an AI agent</h1>
       <p class="lede">Your tests call OpenAI or Anthropic, so the agent that runs them needs a working key. It doesn't need to hold the key, and what it holds it can print.</p>
       <p class="byline"><span>By <a href="https://zachshallbetter.com/" rel="author">Zach Shallbetter</a></span><span>Published 14 November 2026</span><span>Needs <a href="../cli.html">the command-line tool</a></span></p>
       <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#why-a-working-key-means-an-exposed-key">Why a working key means an exposed key</a></li><li><a href="#run-the-command-through-the-proxy">Run the command through the proxy</a></li><li><a href="#who-can-use-the-proxy">Who can use the proxy</a></li><li><a href="#what-this-doesn-t-do">What this doesn't do</a></li></ul></nav>
-      <div class="short"><p><b>In short</b>Run the command as <code>lk run --proxy --env-file .env.local -- npm test</code>. It gets a placeholder and a local base URL instead of the key, and Latchkey adds the real key only to requests bound for the provider. Add <code>--proxy-models</code> and <code>--proxy-requests</code> to narrow what it can do.</p></div>
+      <div class="short"><p><b>In short</b>Run the command as <code>lk run --proxy --env-file .env.local -- npm test</code>. It gets a placeholder and a local base URL instead of the key, and Pistachio adds the real key only to requests bound for the provider. Add <code>--proxy-models</code> and <code>--proxy-requests</code> to narrow what it can do.</p></div>
 <h2 id="why-a-working-key-means-an-exposed-key">Why a working key means an exposed key</h2>
 <p>Normally <code>lk run</code> puts the real value in the command's environment. That is how <code>process.env.OPENAI_API_KEY</code> works. It also means the command, and any agent driving it, can print the value, write it to a file or send it somewhere. Masking hides exact copies in the output, nothing more.</p>
-<p>For OpenAI and Anthropic keys there is a better arrangement. The command doesn't need the key. It needs to make API calls that carry it. So Latchkey adds the key to those calls outside the command.</p>
+<p>For OpenAI and Anthropic keys there is a better arrangement. The command doesn't need the key. It needs to make API calls that carry it. So Pistachio adds the key to those calls outside the command.</p>
 <h2 id="run-the-command-through-the-proxy">Run the command through the proxy</h2>
 <ol class="steps">
 <li>
@@ -242,7 +253,7 @@
     <div class="wrap">
       <div class="foot-grid">
         <div class="foot-brand">
-          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Pistachio</a>
           <p>Development credentials in your Mac's iCloud Keychain, filled in when a command starts.</p>
           <a class="button primary small" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
         </div>

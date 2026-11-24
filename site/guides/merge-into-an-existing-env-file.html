@@ -1,41 +1,42 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>try{var savedTheme=localStorage.getItem("pistachio-theme");if(savedTheme==="light"||savedTheme==="dark")document.documentElement.dataset.theme=savedTheme}catch(e){}</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Update a .env file without overwriting it · Latchkey</title>
+  <title>Update a .env file without overwriting it · Pistachio</title>
   <meta name="description" content="Add or update variables in an existing .env with lk export --merge. Your comments, order and other variables stay exactly as they were.">
   <link rel="canonical" href="https://latchkey.snackstud.io/guides/merge-into-an-existing-env-file.html">
   <meta property="og:url" content="https://latchkey.snackstud.io/guides/merge-into-an-existing-env-file.html">
   <meta property="og:type" content="article">
-  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:site_name" content="Pistachio">
   <meta property="og:image" content="https://latchkey.snackstud.io/social/guides-merge-into-an-existing-env-file.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Guide: Update a .env file without overwriting it. Add or update variables in an existing .env with lk export --merge. Your comments, order and other… Latchkey, latchkey.snackstud.io.">
-  <meta property="og:title" content="Update a .env file without overwriting it · Latchkey">
+  <meta property="og:image:alt" content="Update a .env file without overwriting it. Pistachio, a Mac app from Snack Studio.">
+  <meta property="og:title" content="Update a .env file without overwriting it · Pistachio">
   <meta property="og:description" content="Add or update variables in an existing .env with lk export --merge. Your comments, order and other variables stay exactly as they were.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fafaf6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151b17" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="../logo.svg" type="image/svg+xml">
   <link rel="author" href="https://zachshallbetter.com/">
   <link rel="icon" href="../favicon.ico" sizes="48x48">
   <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32">
   <link rel="manifest" href="../site.webmanifest">
-  <link rel="alternate" type="text/plain" href="../llms.txt" title="Latchkey for language models">
+  <link rel="alternate" type="text/plain" href="../llms.txt" title="Pistachio for language models">
   <link rel="apple-touch-icon" href="../apple-touch-icon.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="author" content="Zach Shallbetter">
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
-  <meta name="application-name" content="Latchkey">
-  <meta name="apple-mobile-web-app-title" content="Latchkey">
+  <meta name="application-name" content="Pistachio">
+  <meta name="apple-mobile-web-app-title" content="Pistachio">
   <meta property="og:locale" content="en_US">
   <meta property="og:image:type" content="image/jpeg">
-  <meta name="twitter:title" content="Update a .env file without overwriting it · Latchkey">
+  <meta name="twitter:title" content="Update a .env file without overwriting it · Pistachio">
   <meta name="twitter:description" content="Add or update variables in an existing .env with lk export --merge. Your comments, order and other variables stay exactly as they were.">
   <meta name="twitter:image" content="https://latchkey.snackstud.io/social/guides-merge-into-an-existing-env-file.jpg">
-  <meta name="twitter:image:alt" content="Guide: Update a .env file without overwriting it. Add or update variables in an existing .env with lk export --merge. Your comments, order and other… Latchkey, latchkey.snackstud.io.">
+  <meta name="twitter:image:alt" content="Update a .env file without overwriting it. Pistachio, a Mac app from Snack Studio.">
   <meta property="article:author" content="https://zachshallbetter.com/">
   <link rel="stylesheet" href="../site.css">
   <style>
@@ -59,7 +60,7 @@
       "@type": "WebPage",
       "@id": "https://latchkey.snackstud.io/guides/merge-into-an-existing-env-file.html#webpage",
       "url": "https://latchkey.snackstud.io/guides/merge-into-an-existing-env-file.html",
-      "name": "Update a .env file without overwriting it · Latchkey",
+      "name": "Update a .env file without overwriting it · Pistachio",
       "description": "Add or update variables in an existing .env with lk export --merge. Your comments, order and other variables stay exactly as they were.",
       "inLanguage": "en",
       "isPartOf": {
@@ -79,7 +80,7 @@
         "url": "https://latchkey.snackstud.io/social/guides-merge-into-an-existing-env-file.jpg",
         "width": 1200,
         "height": 630,
-        "caption": "Guide: Update a .env file without overwriting it. Add or update variables in an existing .env with lk export --merge. Your comments, order and other… Latchkey, latchkey.snackstud.io."
+        "caption": "Update a .env file without overwriting it. Pistachio, a Mac app from Snack Studio."
       },
       "breadcrumb": {
         "@id": "https://latchkey.snackstud.io/guides/merge-into-an-existing-env-file.html#breadcrumb"
@@ -91,7 +92,7 @@
         {
           "@type": "ListItem",
           "position": 1,
-          "name": "Latchkey",
+          "name": "Pistachio",
           "item": "https://latchkey.snackstud.io/"
         },
         {
@@ -137,7 +138,7 @@
         "https://github.com/zachshallbetter"
       ],
       "jobTitle": "Systems engineer",
-      "description": "Zach Shallbetter designs and builds Latchkey. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
+      "description": "Zach Shallbetter designs and builds Pistachio. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
       "homeLocation": {
         "@type": "Place",
         "name": "Spokane, Washington"
@@ -165,12 +166,13 @@
   ]
 }
   </script>
+  <link rel="stylesheet" href="../pistachio.css?v=20261123-depth">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site">
     <nav class="top wrap" aria-label="Main">
-      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Pistachio</a>
       <ul>
         <li><a href="../features.html">Features</a></li>
         <li><a href="../index.html#how">How it works</a></li>
@@ -178,21 +180,30 @@
         <li><a href="../security.html">Security</a></li>
         <li><a href="../developers/index.html">Developers</a></li>
         <li><a href="index.html" aria-current="page">Guides</a></li>
-        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a></li>
       </ul>
-    </nav>
+    <details class="mobile-menu"><summary><i class="ic ic-menu" aria-hidden="true"></i>Menu</summary><div class="mobile-menu-links">
+        <a href="../features.html">Features</a>
+        <a href="../index.html#how">How it works</a>
+        <a href="../pricing.html">Pricing</a>
+        <a href="../security.html">Security</a>
+        <a href="../developers/index.html">Developers</a>
+        <a href="index.html" aria-current="page">Guides</a>
+        <a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+      </div></details></nav>
   </header>
 
   <main id="main" class="wrap docs guides">
+    <aside class="brand-transition" aria-label="Product name update">Pistachio is the new name for Latchkey. The current download, <code>lk</code> commands and <code>latchkey://</code> references still use the original names.</aside>
     <nav class="side" aria-label="Developers and guides"><div class="side-group"><p class="side-title">Developers</p><ul><li><a href="../developers/index.html"><i class="ic ic-book" aria-hidden="true"></i>Overview</a></li><li><a href="../developers/quickstart.html"><i class="ic ic-bolt" aria-hidden="true"></i>Quickstart</a></li><li><a href="../developers/cli.html"><i class="ic ic-terminal" aria-hidden="true"></i>CLI reference</a></li><li><a href="../developers/agents.html"><i class="ic ic-agent" aria-hidden="true"></i>Agents and MCP</a></li><li><a href="../developers/api.html"><i class="ic ic-code" aria-hidden="true"></i>References and API</a></li></ul></div><div class="side-group current"><p class="side-title">Guides</p><ul><li><a href="index.html"><i class="ic ic-grid" aria-hidden="true"></i>All guides</a></li><li><a href="index.html#env" class="here"><i class="ic ic-fileenv" aria-hidden="true"></i>Env files</a></li><li><a href="index.html#agents"><i class="ic ic-sparkles" aria-hidden="true"></i>Coding agents</a></li><li><a href="index.html#deploy"><i class="ic ic-upload" aria-hidden="true"></i>Deploying</a></li><li><a href="index.html#everyday"><i class="ic ic-macs" aria-hidden="true"></i>Everyday use</a></li></ul></div></nav>
     <article class="doc">
-      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><a href="index.html">Guides</a></li><li><span aria-current="page">Merge into .env</span></li></ol></nav>
+      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Pistachio</a></li><li><a href="index.html">Guides</a></li><li><span aria-current="page">Merge into .env</span></li></ol></nav>
       <p class="eyebrow">Guide · Merge</p>
       <h1><span class="moves">Merge</span> into an existing .env file</h1>
       <p class="lede">You have a .env with your own comments and settings, and you want to add the project's variables to it. Writing a fresh file would throw all of that away.</p>
       <p class="byline"><span>By <a href="https://zachshallbetter.com/" rel="author">Zach Shallbetter</a></span><span>Published 14 November 2026</span><span>Needs <a href="../cli.html">the command-line tool</a></span></p>
       <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#why-a-plain-export-is-careful">Why a plain export is careful</a></li><li><a href="#merge-the-variables">Merge the variables</a></li><li><a href="#in-the-app">In the app</a></li><li><a href="#merging-values">Merging values</a></li><li><a href="#what-this-doesn-t-do">What this doesn't do</a></li></ul></nav>
-      <div class="short"><p><b>In short</b>Run <code>lk export shop/development --out .env.local --merge</code>. Latchkey lists the names it will add and update, asks to go ahead, and leaves every other byte of the file as it is. <code>--replace</code> rewrites the whole file instead.</p></div>
+      <div class="short"><p><b>In short</b>Run <code>lk export shop/development --out .env.local --merge</code>. Pistachio lists the names it will add and update, asks to go ahead, and leaves every other byte of the file as it is. <code>--replace</code> rewrites the whole file instead.</p></div>
 <h2 id="why-a-plain-export-is-careful">Why a plain export is careful</h2>
 <p>An env file collects things over time: notes to yourself, a variable you added for one experiment, blank lines that group sections. A tool that regenerates the file removes all of it. So <code>lk export</code> does not overwrite an existing file. It leaves the file alone and names the variables that would change.</p>
 <p>The examples use an example project called <code>shop</code>.</p>
@@ -201,7 +212,7 @@
 <li>
 <h3>See what would change</h3>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">lk export shop/development --out .env.local</code></pre></figure>
-<p>With the file already there and no flag, nothing is written. Latchkey names the variables that would change, so you can decide before anything moves.</p>
+<p>With the file already there and no flag, nothing is written. Pistachio names the variables that would change, so you can decide before anything moves.</p>
 </li>
 <li>
 <h3>Merge</h3>
@@ -239,7 +250,7 @@ DATABASE_URL=latchkey://shop/development/DATABASE_URL</code></pre></figure>
 <h2 id="what-this-doesn-t-do">What this doesn't do</h2>
 <ul>
 <li>The file must be UTF-8 <code>KEY=VALUE</code> lines.</li>
-<li>It never removes a variable. Ones Latchkey does not manage stay, including ones you no longer want.</li>
+<li>It never removes a variable. Ones Pistachio does not manage stay, including ones you no longer want.</li>
 <li>If the file changes while the question waits, the merge is refused. Run it again.</li>
 <li>A symbolic link, or anything but a regular file, at the destination is refused.</li>
 <li>A file that does not exist yet is created, as without <code>--merge</code>.</li>
@@ -256,7 +267,7 @@ DATABASE_URL=latchkey://shop/development/DATABASE_URL</code></pre></figure>
     <div class="wrap">
       <div class="foot-grid">
         <div class="foot-brand">
-          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Pistachio</a>
           <p>Development credentials in your Mac's iCloud Keychain, filled in when a command starts.</p>
           <a class="button primary small" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
         </div>

@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 (2026-11-23)
+
+### App
+- Added a local Pistachio/Key icon choice in General settings for the Dock, menu bar and in-app marks.
+- Updated the bundled app and Safari icons to the supplied Pistachio mark. Finder and Safari keep the bundled
+  icon; switching styles does not modify the signed app. Existing command aliases are retained.
 
 ### CLI
 - Every `LATCHKEY_` environment variable can also be set as `PISTACHIO_` (`PISTACHIO_SOCKET`, `PISTACHIO_BROKER`,
@@ -14,6 +19,16 @@
   for `latchkey run` and `lk run` cover `pistachio run` too, and `latchkey` and `lk` keep working.
 - Env files can use `pistachio://ID` and `pistachio-file://ID` as well as `latchkey://ID` and `latchkey-file://ID`,
   ahead of the rename to Pistachio. Both mean the same and always will, so existing files keep working unchanged.
+
+### Website
+- Rebranded the website as Pistachio with the supplied mark and “Your secrets. In a shell.” brand line.
+  Updated supporting pages, browser icons, social cards and discovery files.
+- Refined the product-led hero, compact audience navigation and interactive proxy panel. Added a mobile menu
+  and a browser-local appearance preference that persists across pages.
+- Used neutral page and code surfaces with restrained green accents, plus independent neutral/blue app
+  depictions. Added layered container shadows and subtle scroll-entry motion that respects reduced motion.
+- Documented `secretsinashell.com` as the intended future domain. Existing downloads, commands, reference
+  scheme, signing identities and published URLs retain their current names; this change does not deploy the site.
 
 ## 0.4.0 (2026-11-18)
 

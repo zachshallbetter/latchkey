@@ -1,41 +1,42 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>try{var savedTheme=localStorage.getItem("pistachio-theme");if(savedTheme==="light"||savedTheme==="dark")document.documentElement.dataset.theme=savedTheme}catch(e){}</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>How to keep API keys out of MCP server configs · Latchkey</title>
+  <title>How to keep API keys out of MCP server configs · Pistachio</title>
   <meta name="description" content="Start an MCP server through latchkey run so its config holds a latchkey:// reference instead of the API key, and the key stays in iCloud Keychain.">
   <link rel="canonical" href="https://latchkey.snackstud.io/guides/mcp-server-api-keys.html">
   <meta property="og:url" content="https://latchkey.snackstud.io/guides/mcp-server-api-keys.html">
   <meta property="og:type" content="article">
-  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:site_name" content="Pistachio">
   <meta property="og:image" content="https://latchkey.snackstud.io/social/guides-mcp-server-api-keys.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Guide: How to keep API keys out of MCP server configs. Start an MCP server through latchkey run so its config holds a latchkey:// reference instead of the API… Latchkey, latchkey.snackstud.io.">
-  <meta property="og:title" content="How to keep API keys out of MCP server configs · Latchkey">
+  <meta property="og:image:alt" content="How to keep API keys out of MCP server configs. Pistachio, a Mac app from Snack Studio.">
+  <meta property="og:title" content="How to keep API keys out of MCP server configs · Pistachio">
   <meta property="og:description" content="Start an MCP server through latchkey run so its config holds a latchkey:// reference instead of the API key, and the key stays in iCloud Keychain.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fafaf6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151b17" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="../logo.svg" type="image/svg+xml">
   <link rel="author" href="https://zachshallbetter.com/">
   <link rel="icon" href="../favicon.ico" sizes="48x48">
   <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32">
   <link rel="manifest" href="../site.webmanifest">
-  <link rel="alternate" type="text/plain" href="../llms.txt" title="Latchkey for language models">
+  <link rel="alternate" type="text/plain" href="../llms.txt" title="Pistachio for language models">
   <link rel="apple-touch-icon" href="../apple-touch-icon.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="author" content="Zach Shallbetter">
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
-  <meta name="application-name" content="Latchkey">
-  <meta name="apple-mobile-web-app-title" content="Latchkey">
+  <meta name="application-name" content="Pistachio">
+  <meta name="apple-mobile-web-app-title" content="Pistachio">
   <meta property="og:locale" content="en_US">
   <meta property="og:image:type" content="image/jpeg">
-  <meta name="twitter:title" content="How to keep API keys out of MCP server configs · Latchkey">
+  <meta name="twitter:title" content="How to keep API keys out of MCP server configs · Pistachio">
   <meta name="twitter:description" content="Start an MCP server through latchkey run so its config holds a latchkey:// reference instead of the API key, and the key stays in iCloud Keychain.">
   <meta name="twitter:image" content="https://latchkey.snackstud.io/social/guides-mcp-server-api-keys.jpg">
-  <meta name="twitter:image:alt" content="Guide: How to keep API keys out of MCP server configs. Start an MCP server through latchkey run so its config holds a latchkey:// reference instead of the API… Latchkey, latchkey.snackstud.io.">
+  <meta name="twitter:image:alt" content="How to keep API keys out of MCP server configs. Pistachio, a Mac app from Snack Studio.">
   <meta property="article:author" content="https://zachshallbetter.com/">
   <link rel="stylesheet" href="../site.css">
   <style>
@@ -59,7 +60,7 @@
       "@type": "WebPage",
       "@id": "https://latchkey.snackstud.io/guides/mcp-server-api-keys.html#webpage",
       "url": "https://latchkey.snackstud.io/guides/mcp-server-api-keys.html",
-      "name": "How to keep API keys out of MCP server configs · Latchkey",
+      "name": "How to keep API keys out of MCP server configs · Pistachio",
       "description": "Start an MCP server through latchkey run so its config holds a latchkey:// reference instead of the API key, and the key stays in iCloud Keychain.",
       "inLanguage": "en",
       "isPartOf": {
@@ -79,7 +80,7 @@
         "url": "https://latchkey.snackstud.io/social/guides-mcp-server-api-keys.jpg",
         "width": 1200,
         "height": 630,
-        "caption": "Guide: How to keep API keys out of MCP server configs. Start an MCP server through latchkey run so its config holds a latchkey:// reference instead of the API… Latchkey, latchkey.snackstud.io."
+        "caption": "How to keep API keys out of MCP server configs. Pistachio, a Mac app from Snack Studio."
       },
       "breadcrumb": {
         "@id": "https://latchkey.snackstud.io/guides/mcp-server-api-keys.html#breadcrumb"
@@ -91,7 +92,7 @@
         {
           "@type": "ListItem",
           "position": 1,
-          "name": "Latchkey",
+          "name": "Pistachio",
           "item": "https://latchkey.snackstud.io/"
         },
         {
@@ -137,7 +138,7 @@
         "https://github.com/zachshallbetter"
       ],
       "jobTitle": "Systems engineer",
-      "description": "Zach Shallbetter designs and builds Latchkey. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
+      "description": "Zach Shallbetter designs and builds Pistachio. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
       "homeLocation": {
         "@type": "Place",
         "name": "Spokane, Washington"
@@ -165,12 +166,13 @@
   ]
 }
   </script>
+  <link rel="stylesheet" href="../pistachio.css?v=20261123-depth">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site">
     <nav class="top wrap" aria-label="Main">
-      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Pistachio</a>
       <ul>
         <li><a href="../features.html">Features</a></li>
         <li><a href="../index.html#how">How it works</a></li>
@@ -178,28 +180,37 @@
         <li><a href="../security.html">Security</a></li>
         <li><a href="../developers/index.html">Developers</a></li>
         <li><a href="index.html" aria-current="page">Guides</a></li>
-        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a></li>
       </ul>
-    </nav>
+    <details class="mobile-menu"><summary><i class="ic ic-menu" aria-hidden="true"></i>Menu</summary><div class="mobile-menu-links">
+        <a href="../features.html">Features</a>
+        <a href="../index.html#how">How it works</a>
+        <a href="../pricing.html">Pricing</a>
+        <a href="../security.html">Security</a>
+        <a href="../developers/index.html">Developers</a>
+        <a href="index.html" aria-current="page">Guides</a>
+        <a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+      </div></details></nav>
   </header>
 
   <main id="main" class="wrap docs guides">
+    <aside class="brand-transition" aria-label="Product name update">Pistachio is the new name for Latchkey. The current download, <code>lk</code> commands and <code>latchkey://</code> references still use the original names.</aside>
     <nav class="side" aria-label="Developers and guides"><div class="side-group"><p class="side-title">Developers</p><ul><li><a href="../developers/index.html"><i class="ic ic-book" aria-hidden="true"></i>Overview</a></li><li><a href="../developers/quickstart.html"><i class="ic ic-bolt" aria-hidden="true"></i>Quickstart</a></li><li><a href="../developers/cli.html"><i class="ic ic-terminal" aria-hidden="true"></i>CLI reference</a></li><li><a href="../developers/agents.html"><i class="ic ic-agent" aria-hidden="true"></i>Agents and MCP</a></li><li><a href="../developers/api.html"><i class="ic ic-code" aria-hidden="true"></i>References and API</a></li></ul></div><div class="side-group current"><p class="side-title">Guides</p><ul><li><a href="index.html"><i class="ic ic-grid" aria-hidden="true"></i>All guides</a></li><li><a href="index.html#env"><i class="ic ic-fileenv" aria-hidden="true"></i>Env files</a></li><li><a href="index.html#agents" class="here"><i class="ic ic-sparkles" aria-hidden="true"></i>Coding agents</a></li><li><a href="index.html#deploy"><i class="ic ic-upload" aria-hidden="true"></i>Deploying</a></li><li><a href="index.html#everyday"><i class="ic ic-macs" aria-hidden="true"></i>Everyday use</a></li></ul></div></nav>
     <article class="doc">
-      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><a href="index.html">Guides</a></li><li><span aria-current="page">MCP servers</span></li></ol></nav>
+      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Pistachio</a></li><li><a href="index.html">Guides</a></li><li><span aria-current="page">MCP servers</span></li></ol></nav>
       <p class="eyebrow">Guide · MCP servers</p>
       <h1>Keep API keys <span class="moves">out</span> of MCP server configs</h1>
-      <p class="lede">MCP clients start servers from a JSON config, and the usual way to give a server its key is to type the key into that file. Latchkey lets the config hold a reference instead.</p>
+      <p class="lede">MCP clients start servers from a JSON config, and the usual way to give a server its key is to type the key into that file. Pistachio lets the config hold a reference instead.</p>
       <p class="byline"><span>By <a href="https://zachshallbetter.com/" rel="author">Zach Shallbetter</a></span><span>Published 14 November 2026</span><span>Needs <a href="../cli.html">the command-line tool</a></span></p>
-      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#why-the-config-is-a-problem">Why the config is a problem</a></li><li><a href="#wrap-the-server">Wrap the server</a></li><li><a href="#latchkey-s-own-mcp-server">Latchkey's own MCP server</a></li><li><a href="#what-this-doesn-t-do">What this doesn't do</a></li></ul></nav>
-      <div class="short"><p><b>In short</b>Save the key in Latchkey, then change the server's command to <code>latchkey run --no-masking -- …</code> and put <code>latchkey://NAME</code> in its <code>env</code>. The client starts the server as before; Latchkey fills the key in for that process.</p></div>
+      <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#why-the-config-is-a-problem">Why the config is a problem</a></li><li><a href="#wrap-the-server">Wrap the server</a></li><li><a href="#latchkey-s-own-mcp-server">Pistachio's own MCP server</a></li><li><a href="#what-this-doesn-t-do">What this doesn't do</a></li></ul></nav>
+      <div class="short"><p><b>In short</b>Save the key in Pistachio, then change the server's command to <code>latchkey run --no-masking -- …</code> and put <code>latchkey://NAME</code> in its <code>env</code>. The client starts the server as before; Pistachio fills the key in for that process.</p></div>
 <h2 id="why-the-config-is-a-problem">Why the config is a problem</h2>
     <p>A config such as <code>.mcp.json</code> or Claude Desktop's settings file holds every server's keys in plain text. It gets shared to set up a teammate, checked into a repository for a project's tools, or synced between Macs, and every key in it goes along.</p>
 
     <h2 id="wrap-the-server">Wrap the server</h2>
     <ol class="steps">
       <li>
-        <h3>Save the key in Latchkey</h3>
+        <h3>Save the key in Pistachio</h3>
         <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">lk set SOME_API_KEY --kind token</code></pre></figure>
         <p>The value is read from a hidden prompt or standard input, so it never appears in your shell history.</p>
       </li>
@@ -219,9 +230,9 @@
       </li>
     </ol>
 
-    <h2 id="latchkey-s-own-mcp-server">Latchkey's own MCP server</h2>
+    <h2 id="latchkey-s-own-mcp-server">Pistachio's own MCP server</h2>
     <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">claude mcp add latchkey -- ~/.local/bin/latchkey mcp</code></pre></figure>
-    <p>For clients without a shell, Latchkey's server offers status, listing, checking, running commands with references filled in, and asking you for a grant. It has no tool that reads a value, and the output it returns is masked.</p>
+    <p>For clients without a shell, Pistachio's server offers status, listing, checking, running commands with references filled in, and asking you for a grant. It has no tool that reads a value, and the output it returns is masked.</p>
 
     <h2 id="what-this-doesn-t-do">What this doesn't do</h2>
     <p>Only servers started as a command can be wrapped. A server reached over HTTP with a header key can't get it this way. And like any command, a wrapped server holds the key in memory once it starts.</p>
@@ -236,7 +247,7 @@
     <div class="wrap">
       <div class="foot-grid">
         <div class="foot-brand">
-          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Pistachio</a>
           <p>Development credentials in your Mac's iCloud Keychain, filled in when a command starts.</p>
           <a class="button primary small" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
         </div>

@@ -1,41 +1,42 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>try{var savedTheme=localStorage.getItem("pistachio-theme");if(savedTheme==="light"||savedTheme==="dark")document.documentElement.dataset.theme=savedTheme}catch(e){}</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>CLI reference for latchkey and lk · Latchkey</title>
+  <title>CLI reference for latchkey and lk · Pistachio</title>
   <meta name="description" content="Reference for the latchkey command-line tool: every command and option, its environment variables and its exit codes.">
   <link rel="canonical" href="https://latchkey.snackstud.io/developers/cli.html">
   <meta property="og:url" content="https://latchkey.snackstud.io/developers/cli.html">
   <meta property="og:type" content="article">
-  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:site_name" content="Pistachio">
   <meta property="og:image" content="https://latchkey.snackstud.io/social/developers-cli.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Docs: CLI reference for latchkey and lk. Reference for the latchkey command-line tool: every command and option, its environment variables and its… Latchkey, latchkey.snackstud.io.">
-  <meta property="og:title" content="CLI reference for latchkey and lk · Latchkey">
+  <meta property="og:image:alt" content="CLI reference for latchkey and lk. Pistachio, a Mac app from Snack Studio.">
+  <meta property="og:title" content="CLI reference for latchkey and lk · Pistachio">
   <meta property="og:description" content="Reference for the latchkey command-line tool: every command and option, its environment variables and its exit codes.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fafaf6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151b17" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="../logo.svg" type="image/svg+xml">
   <link rel="author" href="https://zachshallbetter.com/">
   <link rel="icon" href="../favicon.ico" sizes="48x48">
   <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32">
   <link rel="manifest" href="../site.webmanifest">
-  <link rel="alternate" type="text/plain" href="../llms.txt" title="Latchkey for language models">
+  <link rel="alternate" type="text/plain" href="../llms.txt" title="Pistachio for language models">
   <link rel="apple-touch-icon" href="../apple-touch-icon.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="author" content="Zach Shallbetter">
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
-  <meta name="application-name" content="Latchkey">
-  <meta name="apple-mobile-web-app-title" content="Latchkey">
+  <meta name="application-name" content="Pistachio">
+  <meta name="apple-mobile-web-app-title" content="Pistachio">
   <meta property="og:locale" content="en_US">
   <meta property="og:image:type" content="image/jpeg">
-  <meta name="twitter:title" content="CLI reference for latchkey and lk · Latchkey">
+  <meta name="twitter:title" content="CLI reference for latchkey and lk · Pistachio">
   <meta name="twitter:description" content="Reference for the latchkey command-line tool: every command and option, its environment variables and its exit codes.">
   <meta name="twitter:image" content="https://latchkey.snackstud.io/social/developers-cli.jpg">
-  <meta name="twitter:image:alt" content="Docs: CLI reference for latchkey and lk. Reference for the latchkey command-line tool: every command and option, its environment variables and its… Latchkey, latchkey.snackstud.io.">
+  <meta name="twitter:image:alt" content="CLI reference for latchkey and lk. Pistachio, a Mac app from Snack Studio.">
   <meta property="article:author" content="https://zachshallbetter.com/">
   <link rel="stylesheet" href="../site.css">
   <script defer src="../site.js"></script>
@@ -47,7 +48,7 @@
       "@type": "WebPage",
       "@id": "https://latchkey.snackstud.io/developers/cli.html#webpage",
       "url": "https://latchkey.snackstud.io/developers/cli.html",
-      "name": "CLI reference for latchkey and lk · Latchkey",
+      "name": "CLI reference for latchkey and lk · Pistachio",
       "description": "Reference for the latchkey command-line tool: every command and option, its environment variables and its exit codes.",
       "inLanguage": "en",
       "isPartOf": {
@@ -67,7 +68,7 @@
         "url": "https://latchkey.snackstud.io/social/developers-cli.jpg",
         "width": 1200,
         "height": 630,
-        "caption": "Docs: CLI reference for latchkey and lk. Reference for the latchkey command-line tool: every command and option, its environment variables and its… Latchkey, latchkey.snackstud.io."
+        "caption": "CLI reference for latchkey and lk. Pistachio, a Mac app from Snack Studio."
       },
       "breadcrumb": {
         "@id": "https://latchkey.snackstud.io/developers/cli.html#breadcrumb"
@@ -79,7 +80,7 @@
         {
           "@type": "ListItem",
           "position": 1,
-          "name": "Latchkey",
+          "name": "Pistachio",
           "item": "../index.html"
         },
         {
@@ -106,7 +107,7 @@
         "https://github.com/zachshallbetter"
       ],
       "jobTitle": "Systems engineer",
-      "description": "Zach Shallbetter designs and builds Latchkey. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
+      "description": "Zach Shallbetter designs and builds Pistachio. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
       "homeLocation": {
         "@type": "Place",
         "name": "Spokane, Washington"
@@ -134,12 +135,13 @@
   ]
 }
   </script>
+  <link rel="stylesheet" href="../pistachio.css?v=20261123-depth">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site">
     <nav class="top wrap" aria-label="Main">
-      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Pistachio</a>
       <ul>
         <li><a href="../features.html">Features</a></li>
         <li><a href="../index.html#how">How it works</a></li>
@@ -147,14 +149,23 @@
         <li><a href="../security.html">Security</a></li>
         <li><a href="index.html" aria-current="page">Developers</a></li>
         <li><a href="../guides/index.html">Guides</a></li>
-        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a></li>
       </ul>
-    </nav>
+    <details class="mobile-menu"><summary><i class="ic ic-menu" aria-hidden="true"></i>Menu</summary><div class="mobile-menu-links">
+        <a href="../features.html">Features</a>
+        <a href="../index.html#how">How it works</a>
+        <a href="../pricing.html">Pricing</a>
+        <a href="../security.html">Security</a>
+        <a href="index.html" aria-current="page">Developers</a>
+        <a href="../guides/index.html">Guides</a>
+        <a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+      </div></details></nav>
   </header>
   <main id="main" class="wrap docs">
+    <aside class="brand-transition" aria-label="Product name update">Pistachio is the new name for Latchkey. The current download, <code>lk</code> commands and <code>latchkey://</code> references still use the original names.</aside>
     <nav class="side" aria-label="Developers and guides"><div class="side-group current"><p class="side-title">Developers</p><ul><li><a href="index.html"><i class="ic ic-book" aria-hidden="true"></i>Overview</a></li><li><a href="quickstart.html"><i class="ic ic-bolt" aria-hidden="true"></i>Quickstart</a></li><li><a href="cli.html" aria-current="page"><i class="ic ic-terminal" aria-hidden="true"></i>CLI reference</a></li><li><a href="agents.html"><i class="ic ic-agent" aria-hidden="true"></i>Agents and MCP</a></li><li><a href="api.html"><i class="ic ic-code" aria-hidden="true"></i>References and API</a></li></ul></div><div class="side-group"><p class="side-title">Guides</p><ul><li><a href="../guides/index.html"><i class="ic ic-grid" aria-hidden="true"></i>All guides</a></li><li><a href="../guides/index.html#env"><i class="ic ic-fileenv" aria-hidden="true"></i>Env files</a></li><li><a href="../guides/index.html#agents"><i class="ic ic-sparkles" aria-hidden="true"></i>Coding agents</a></li><li><a href="../guides/index.html#deploy"><i class="ic ic-upload" aria-hidden="true"></i>Deploying</a></li><li><a href="../guides/index.html#everyday"><i class="ic ic-macs" aria-hidden="true"></i>Everyday use</a></li></ul></div></nav>
     <article class="doc">
-      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><a href="index.html">Developers</a></li><li><span aria-current="page">CLI reference</span></li></ol></nav>
+      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Pistachio</a></li><li><a href="index.html">Developers</a></li><li><span aria-current="page">CLI reference</span></li></ol></nav>
       <h1>CLI reference</h1>
       <p class="lede">Every <code>latchkey</code> command and option. <code>latchkey help</code> prints a summary. Nothing here prints a value except <code>latchkey get</code>.</p>
       <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#conventions">Conventions</a></li><li><a href="#running">Running commands</a></li><li><a href="#items">Items</a></li><li><a href="#scan">Scanning env files</a></li><li><a href="#environments">Environments</a></li><li><a href="#export">Export</a></li><li><a href="#import">Importing</a></li><li><a href="#history">History</a></li><li><a href="#grants">Grants</a></li><li><a href="#rotating">Rotating</a></li><li><a href="#remote">Remote locations</a></li><li><a href="#log">The log</a></li><li><a href="#status">Status</a></li><li><a href="#environment">Environment variables</a></li><li><a href="#exit-codes">Exit codes</a></li></ul></nav>
@@ -188,7 +199,7 @@ granted           shop/development/DATABASE_URL  (grant k3v9q2, 1 hour, 12 minut
 asks              shop/development/STRIPE_KEY</code></pre></figure>
 
 <h3 id="mcp-command"><code>latchkey mcp</code></h3>
-<p>Serves Latchkey&rsquo;s tools to an agent over MCP, on standard input and output. See <a href="agents.html#mcp">Latchkey&rsquo;s MCP server</a>.</p>
+<p>Serves Pistachio&rsquo;s tools to an agent over MCP, on standard input and output. See <a href="agents.html#mcp">Pistachio&rsquo;s MCP server</a>.</p>
 
 <h3 id="proxy">Keys that never reach the command: <code>--proxy</code></h3>
 <p>With <code>--proxy</code>, a variable that is exactly a reference to an OpenAI or Anthropic key gets a placeholder instead, and <code>OPENAI_BASE_URL</code> or <code>ANTHROPIC_BASE_URL</code> points at a port on this Mac that <code>latchkey run</code> listens on. Requests there that carry the placeholder go to <code>api.openai.com</code> or <code>api.anthropic.com</code> with the real key in its place; anything else is refused. The command can use the key but can&rsquo;t read, print or send it anywhere else.</p>
@@ -207,7 +218,7 @@ asks              shop/development/STRIPE_KEY</code></pre></figure>
 <p>Prints one value. Asks unless the item is agent-safe or covered by a grant. Keep agents away from it.</p>
 
 <h2 id="items">Items</h2>
-<table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td data-th="Command"><code>latchkey list <span class="nw">[--project</span> P] <span class="nw">[--json]</span></code></td><td data-th="What it does">IDs grouped by project and environment, with kind, service, whether agents may read them, and the note. <code><span class="nw">--json</span></code> prints the same as JSON (see <a href="api.html#item">the item shape</a>). Never values.</td></tr><tr><td data-th="Command"><code>latchkey set ID <span class="nw">[--kind</span> KIND] <span class="nw">[--agent-safe]</span> <span class="nw">[--note</span> TEXT] <span class="nw">[--service</span> NAME]</code></td><td data-th="What it does">Add or change an item. The value comes from standard input, or a hidden prompt in a terminal. Kinds: <code>token</code>, <code>password</code>, <code>key</code>, <code>value</code>. Replacing a value keeps the old one as a version. Asks.</td></tr><tr><td data-th="Command"><code>latchkey update IDS|PATTERN... <span class="nw">[--agent-safe</span> yes|no] <span class="nw">[--kind</span> KIND] <span class="nw">[--service</span> NAME] <span class="nw">[--note</span> TEXT] <span class="nw">[--fill-sites</span> HOSTS]</code></td><td data-th="What it does">Change settings on many items with one approval. Values are untouched. <code><span class="nw">--service</span> ""</code> clears the service. <code><span class="nw">--fill-sites</span> vercel.com,app.netlify.com</code> sets the only sites Latchkey for Safari may fill the items on (each covers its subdomains; up to 20); <code><span class="nw">--fill-sites</span> ""</code> goes back to the default: the service&rsquo;s own site and the deployment platforms.</td></tr><tr><td data-th="Command"><code>latchkey rm IDS|PATTERN...</code></td><td data-th="What it does">Delete items with one approval; they go to Recently Deleted for 30 days. If any named item doesn&rsquo;t exist, nothing is deleted.</td></tr><tr><td data-th="Command"><code>latchkey mv IDS | <span class="nw">--from-file</span> FILE <span class="nw">--to</span> PROJECT/ENV | <span class="nw">--shared</span> <span class="nw">[--file</span> FILE]...</code></td><td data-th="What it does">Move items into a project&rsquo;s environment, or back to shared, with one approval. Values, settings and history move with them. References are then updated in the files the items came from, each <code><span class="nw">--file</span></code>, and the <code><span class="nw">--from-file</span></code> file, which moves every shared item it refers to. If any target ID already exists, nothing moves.</td></tr><tr><td data-th="Command"><code>latchkey duplicates <span class="nw">[--json]</span></code></td><td data-th="What it does">Lists groups of items holding the same value, counted by kind at the top, and what to do about each, with the command to run. See <a href="#duplicates">below</a>.</td></tr><tr><td data-th="Command"><code>latchkey combine IDS <span class="nw">--into</span> NAME|ID <span class="nw">[--file</span> FILE]...</code></td><td data-th="What it does">Makes items holding one value into one shared item, with one approval. See <a href="#combine">below</a>.</td></tr><tr><td data-th="Command"><code>latchkey scan <span class="nw">[DIR]</span> <span class="nw">[--json]</span></code>, <code>scan <span class="nw">--staged</span></code>, <code>scan <span class="nw">--install-hook</span> <span class="nw">[--force]</span></code></td><td data-th="What it does">Finds env files that still hold plain values. See <a href="#scan">Scanning env files</a>.</td></tr></tbody></table>
+<table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td data-th="Command"><code>latchkey list <span class="nw">[--project</span> P] <span class="nw">[--json]</span></code></td><td data-th="What it does">IDs grouped by project and environment, with kind, service, whether agents may read them, and the note. <code><span class="nw">--json</span></code> prints the same as JSON (see <a href="api.html#item">the item shape</a>). Never values.</td></tr><tr><td data-th="Command"><code>latchkey set ID <span class="nw">[--kind</span> KIND] <span class="nw">[--agent-safe]</span> <span class="nw">[--note</span> TEXT] <span class="nw">[--service</span> NAME]</code></td><td data-th="What it does">Add or change an item. The value comes from standard input, or a hidden prompt in a terminal. Kinds: <code>token</code>, <code>password</code>, <code>key</code>, <code>value</code>. Replacing a value keeps the old one as a version. Asks.</td></tr><tr><td data-th="Command"><code>latchkey update IDS|PATTERN... <span class="nw">[--agent-safe</span> yes|no] <span class="nw">[--kind</span> KIND] <span class="nw">[--service</span> NAME] <span class="nw">[--note</span> TEXT] <span class="nw">[--fill-sites</span> HOSTS]</code></td><td data-th="What it does">Change settings on many items with one approval. Values are untouched. <code><span class="nw">--service</span> ""</code> clears the service. <code><span class="nw">--fill-sites</span> vercel.com,app.netlify.com</code> sets the only sites Pistachio for Safari may fill the items on (each covers its subdomains; up to 20); <code><span class="nw">--fill-sites</span> ""</code> goes back to the default: the service&rsquo;s own site and the deployment platforms.</td></tr><tr><td data-th="Command"><code>latchkey rm IDS|PATTERN...</code></td><td data-th="What it does">Delete items with one approval; they go to Recently Deleted for 30 days. If any named item doesn&rsquo;t exist, nothing is deleted.</td></tr><tr><td data-th="Command"><code>latchkey mv IDS | <span class="nw">--from-file</span> FILE <span class="nw">--to</span> PROJECT/ENV | <span class="nw">--shared</span> <span class="nw">[--file</span> FILE]...</code></td><td data-th="What it does">Move items into a project&rsquo;s environment, or back to shared, with one approval. Values, settings and history move with them. References are then updated in the files the items came from, each <code><span class="nw">--file</span></code>, and the <code><span class="nw">--from-file</span></code> file, which moves every shared item it refers to. If any target ID already exists, nothing moves.</td></tr><tr><td data-th="Command"><code>latchkey duplicates <span class="nw">[--json]</span></code></td><td data-th="What it does">Lists groups of items holding the same value, counted by kind at the top, and what to do about each, with the command to run. See <a href="#duplicates">below</a>.</td></tr><tr><td data-th="Command"><code>latchkey combine IDS <span class="nw">--into</span> NAME|ID <span class="nw">[--file</span> FILE]...</code></td><td data-th="What it does">Makes items holding one value into one shared item, with one approval. See <a href="#combine">below</a>.</td></tr><tr><td data-th="Command"><code>latchkey scan <span class="nw">[DIR]</span> <span class="nw">[--json]</span></code>, <code>scan <span class="nw">--staged</span></code>, <code>scan <span class="nw">--install-hook</span> <span class="nw">[--force]</span></code></td><td data-th="What it does">Finds env files that still hold plain values. See <a href="#scan">Scanning env files</a>.</td></tr></tbody></table>
 <figure class="code"><figcaption><span>Examples</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">printf %s &quot;$TOKEN&quot; | latchkey set shop/production/STRIPE_KEY --kind token --service Stripe
 latchkey update &#x27;shop/development/*&#x27; --agent-safe no
 latchkey list --project shop --json</code></pre></figure>
@@ -222,7 +233,7 @@ latchkey list --project shop --json</code></pre></figure>
 <li>the same key across projects: combine into one shared item. A suggested name that another group also suggests, or that a shared item already has, gets the first project as a prefix (<code>MANAGER_DATABASE_URL</code>);</li>
 <li>identifiers rather than secrets (IDs, hosts, public keys, web addresses without credentials): mark them plain values.</li>
 </ul>
-<p>Values are compared inside Latchkey and never shown; plain values and values shorter than 8 characters are left out. It asks for approval every time (grants and agent-safe settings don&rsquo;t stand in), and agents can&rsquo;t ask. <code><span class="nw">--json</span></code> gives <code>items</code>, <code>advice</code>, <code>summary</code> and <code>into</code> for each group.</p>
+<p>Values are compared inside Pistachio and never shown; plain values and values shorter than 8 characters are left out. It asks for approval every time (grants and agent-safe settings don&rsquo;t stand in), and agents can&rsquo;t ask. <code><span class="nw">--json</span></code> gives <code>items</code>, <code>advice</code>, <code>summary</code> and <code>into</code> for each group.</p>
 
 <h3 id="combine"><code>latchkey combine</code></h3>
 <figure class="code"><figcaption><span>Synopsis</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">latchkey combine IDS --into NAME|ID [--file FILE]...</code></pre></figure>
@@ -236,12 +247,12 @@ latchkey scan --staged
 latchkey scan --install-hook [--force]</code></pre></figure>
 <p>Finds env files under DIR (default: the current folder; <code>.env</code>, <code>.env.*</code> and <code>*.env</code>, not examples, templates or backups, not in <code>node_modules</code>, build or <code>.git</code> folders) that still hold plain values, and prints each as <code>FILE:LINE  NAME</code> with the reason, never a value:</p>
 <ul>
-<li>the value equals a stored item: the line names the item(s). The values are compared inside Latchkey, which receives the values found in the files and returns only item IDs. Like <code>duplicates</code>, it asks every time (grants and agent-safe settings don&rsquo;t stand in), and agents can&rsquo;t ask. Plain items and values shorter than 8 characters are left out;</li>
+<li>the value equals a stored item: the line names the item(s). The values are compared inside Pistachio, which receives the values found in the files and returns only item IDs. Like <code>duplicates</code>, it asks every time (grants and agent-safe settings don&rsquo;t stand in), and agents can&rsquo;t ask. Plain items and values shorter than 8 characters are left out;</li>
 <li>the value looks secret: a private key, a password or a connection string with credentials, a token with a known prefix (<code>sk_live_</code>, <code>ghp_</code>, <code>AKIA</code>&hellip;), or a long value under a name such as <code>*_TOKEN</code>, <code>*_SECRET</code> or <code>*_API_KEY</code>. Identifiers (IDs, hosts, public addresses) and <code>latchkey://</code> references are not findings. This check is local.</li>
 </ul>
-<p>It exits 1 when anything is found, so it works in scripts. If Latchkey can&rsquo;t compare (not approved, not running), the values that look secret are still reported, and it exits 1. <code><span class="nw">--json</span></code> gives <code>place</code>, <code>key</code>, <code>reason</code> (<code>stored</code> or <code>looks-secret</code>) and <code>items</code> for each finding.</p>
+<p>It exits 1 when anything is found, so it works in scripts. If Pistachio can&rsquo;t compare (not approved, not running), the values that look secret are still reported, and it exits 1. <code><span class="nw">--json</span></code> gives <code>place</code>, <code>key</code>, <code>reason</code> (<code>stored</code> or <code>looks-secret</code>) and <code>items</code> for each finding.</p>
 <p><code><span class="nw">--staged</span></code> scans only the lines a commit would add, from the Git index, in env files that are staged.</p>
-<p><code><span class="nw">--install-hook</span></code> writes a Git pre-commit hook (honoring <code>core.hooksPath</code>, and worktrees) that runs <code>latchkey scan --staged</code> and refuses the commit on findings. A hook that isn&rsquo;t Latchkey&rsquo;s is left alone unless <code><span class="nw">--force</span></code>. If neither <code>lk</code> nor <code>latchkey</code> is on the PATH, the hook says so and lets the commit through. Skip it for one commit with <code>git commit --no-verify</code>.</p>
+<p><code><span class="nw">--install-hook</span></code> writes a Git pre-commit hook (honoring <code>core.hooksPath</code>, and worktrees) that runs <code>latchkey scan --staged</code> and refuses the commit on findings. A hook that isn&rsquo;t Pistachio&rsquo;s is left alone unless <code><span class="nw">--force</span></code>. If neither <code>lk</code> nor <code>latchkey</code> is on the PATH, the hook says so and lets the commit through. Skip it for one commit with <code>git commit --no-verify</code>.</p>
 <figure class="code"><figcaption><span>Examples</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey scan ~/Projects/shop
 latchkey scan --install-hook</code></pre></figure>
 
@@ -254,7 +265,7 @@ latchkey scan --install-hook</code></pre></figure>
 <p>Writes the environment&rsquo;s env file from its record: <code>latchkey://</code> references and plain settings, sorted by name, to standard output or FILE.</p>
 <ul>
 <li>An existing FILE is left alone, and the variables that would change are named, unless <code><span class="nw">--merge</span></code> or <code><span class="nw">--replace</span></code>. A symbolic link or anything but a regular file is refused. The file is written beside its destination and renamed into place, so it&rsquo;s never half-written.</li>
-<li><code><span class="nw">--merge</span></code> updates the variables the record has, appends the ones missing, and leaves every other byte of the file as it is: comments, blank lines, order, variables Latchkey doesn&rsquo;t manage, line endings, a last line without one. A variable already holding the value is left as written; an updated line keeps its indentation and <code>export</code> and loses an inline comment. It lists the names it will <code>add</code> and <code>update</code>, then asks to go ahead (<code><span class="nw">--yes</span></code> skips that; without a terminal <code><span class="nw">--yes</span></code> is required). The file must be UTF-8 <code>KEY=VALUE</code> lines, and it&rsquo;s refused if it changes while waiting. Nothing to change writes nothing. A file that doesn&rsquo;t exist yet is created, as without <code><span class="nw">--merge</span></code>. With <code><span class="nw">--values</span></code>, a variable already in the file is listed as an update before its value is known, and a merged file becomes readable only by you.</li>
+<li><code><span class="nw">--merge</span></code> updates the variables the record has, appends the ones missing, and leaves every other byte of the file as it is: comments, blank lines, order, variables Pistachio doesn&rsquo;t manage, line endings, a last line without one. A variable already holding the value is left as written; an updated line keeps its indentation and <code>export</code> and loses an inline comment. It lists the names it will <code>add</code> and <code>update</code>, then asks to go ahead (<code><span class="nw">--yes</span></code> skips that; without a terminal <code><span class="nw">--yes</span></code> is required). The file must be UTF-8 <code>KEY=VALUE</code> lines, and it&rsquo;s refused if it changes while waiting. Nothing to change writes nothing. A file that doesn&rsquo;t exist yet is created, as without <code><span class="nw">--merge</span></code>. With <code><span class="nw">--values</span></code>, a variable already in the file is listed as an update before its value is known, and a merged file becomes readable only by you.</li>
 <li><code><span class="nw">--replace</span></code> rewrites the whole file, losing its comments and other variables.</li>
 <li><code><span class="nw">--values</span></code> writes the values themselves, in plain text. It needs <code><span class="nw">--out</span></code> (or <code><span class="nw">--clipboard</span></code>), asks every time with the file named (no grant, agent-safe setting or earlier approval stands in), writes the file readable only by you, and the access log records which items went to which file, never the values. Agents can&rsquo;t use it. Inside a Git checkout the file must be ignored and not tracked, or nothing is asked or written; a file in a folder that syncs to iCloud Drive, Dropbox, Google Drive or OneDrive gets a warning, since the values would leave the Mac.</li>
 <li><code><span class="nw">--values</span> <span class="nw">--clipboard</span></code> copies the environment as an env block (no header comment) for a dashboard that takes a pasted one, instead of writing a file. It asks every time, naming the environment and that the values go to the clipboard. The copy is for this Mac only (not Universal Clipboard), marked concealed and transient so clipboard managers skip it, and cleared after 60 seconds if nothing else was copied meanwhile. Agents and Safari can&rsquo;t copy, nor can a request forwarded over SSH (the clipboard would be on the other computer). The log records &ldquo;copied to the clipboard&rdquo;, never the values; unlike a file, a copy can&rsquo;t be traced afterwards.</li>
@@ -283,28 +294,28 @@ latchkey import .env.local --rewrite --class FEATURE_FLAGS=setting</code></pre><
 <p>Narrow a grant with <code>--session</code> (it ends when the agent you run it under quits, and covers only programs started under it), <code>--command "npm test"</code> (only <code>latchkey run</code> of that command, read from the signed tool&rsquo;s own command line), or <code>--once</code> (one request). The approval panel offers the same: <strong>until claude quits</strong> and <strong>Only for &hellip;</strong>.</p>
 
 <h2 id="rotating">Rotating</h2>
-<table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td data-th="Command"><code>latchkey touched <span class="nw">[--since</span> 24h] <span class="nw">[--by</span> NAME] <span class="nw">[--grant</span> ID] <span class="nw">[--json]</span></code></td><td data-th="What it does">Items Latchkey released in that time: to anything, to programs under NAME (such as <code>claude</code>), or under one grant. From the access log; never values.</td></tr><tr><td data-th="Command"><code>latchkey rotate IDS|PATTERN... | <span class="nw">--touched</span> [...] <span class="nw">[--open]</span> <span class="nw">[--push]</span></code></td><td data-th="What it does">Replace items one by one: ends grants that cover them, shows where to make each new key (<code><span class="nw">--open</span></code> opens it), asks for the new value (the old one stays in history), then pushes to linked environments with <code><span class="nw">--push</span></code>.</td></tr></tbody></table>
+<table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td data-th="Command"><code>latchkey touched <span class="nw">[--since</span> 24h] <span class="nw">[--by</span> NAME] <span class="nw">[--grant</span> ID] <span class="nw">[--json]</span></code></td><td data-th="What it does">Items Pistachio released in that time: to anything, to programs under NAME (such as <code>claude</code>), or under one grant. From the access log; never values.</td></tr><tr><td data-th="Command"><code>latchkey rotate IDS|PATTERN... | <span class="nw">--touched</span> [...] <span class="nw">[--open]</span> <span class="nw">[--push]</span></code></td><td data-th="What it does">Replace items one by one: ends grants that cover them, shows where to make each new key (<code><span class="nw">--open</span></code> opens it), asks for the new value (the old one stays in history), then pushes to linked environments with <code><span class="nw">--push</span></code>.</td></tr></tbody></table>
 <figure class="code"><figcaption><span>After an agent session</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">latchkey touched --since 4h --by claude
 latchkey rotate --touched --since 4h --by claude --open --push</code></pre></figure>
-<p>Latchkey can&rsquo;t make the new key for you: Stripe, GitHub, OpenAI and most services issue keys only in their dashboards. It takes you to the page, saves what you paste, and puts it everywhere it&rsquo;s linked.</p>
+<p>Pistachio can&rsquo;t make the new key for you: Stripe, GitHub, OpenAI and most services issue keys only in their dashboards. It takes you to the page, saves what you paste, and puts it everywhere it&rsquo;s linked.</p>
 
 <h2 id="remote">Remote locations</h2>
 <table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td data-th="Command"><code>latchkey remote list [PROJECT/ENV]</code></td><td data-th="What it does">Links, with when each was last pushed.</td></tr><tr><td data-th="Command"><code>latchkey remote link PROJECT/ENV SERVICE KEY=VALUE...</code></td><td data-th="What it does">Link an environment. SERVICE is <code>vercel</code>, <code>github</code>, <code>railway</code>, <code>fly</code> or <code>ssh</code> (<code>host=</code> and <code>script=</code>; see <a href="../guides/push-to-deployment-platforms.html#a-service-on-a-linux-server">a service on a Linux server</a>). Asks.</td></tr><tr><td data-th="Command"><code>latchkey remote unlink LINK</code></td><td data-th="What it does">Remove a link. Doesn&rsquo;t ask.</td></tr><tr><td data-th="Command"><code>latchkey remote status PROJECT/ENV</code></td><td data-th="What it does">Names missing on each side, and values changed since the last push.</td></tr><tr><td data-th="Command"><code>latchkey push PROJECT/ENV <span class="nw">[--to</span> LINK] <span class="nw">[--only</span> IDS] <span class="nw">[--dry-run]</span></code></td><td data-th="What it does">Push values with each service&rsquo;s own tool, values on standard input. Asks every time; production needs its own confirmation in the app. Nothing is deployed.</td></tr></tbody></table>
 <table><thead><tr><th>Service</th><th>Keys</th><th>Tool</th></tr></thead><tbody><tr><td data-th="Service"><code>vercel</code></td><td data-th="Keys"><code>environment=</code> (development, preview or production), and <code>project=</code> or <code>dir=</code>; optional <code>branch=</code> for one preview branch</td><td data-th="Tool"><code>vercel</code></td></tr><tr><td data-th="Service"><code>github</code></td><td data-th="Keys"><code>repo=owner/repo</code>; optional <code>environment=</code> (leave out for repository secrets)</td><td data-th="Tool"><code>gh</code></td></tr><tr><td data-th="Service"><code>railway</code></td><td data-th="Keys"><code>environment=</code>, <code>service=</code>, and <code>project=</code> or <code>dir=</code></td><td data-th="Tool"><code>railway</code></td></tr><tr><td data-th="Service"><code>fly</code></td><td data-th="Keys"><code>app=</code></td><td data-th="Tool"><code>flyctl</code></td></tr></tbody></table>
 
 <h2 id="log">The log</h2>
-<table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td data-th="Command"><code>latchkey log <span class="nw">[--limit</span> 20]</code></td><td data-th="What it does">Recent access log entries: time, what, decision, items, who, folder and command. Never values; likely secrets in command lines are redacted.</td></tr><tr><td data-th="Command"><code>latchkey log <span class="nw">--verify</span></code></td><td data-th="What it does">Checks the log&rsquo;s chain: exits 0 if every entry is as Latchkey wrote it, 1 with the first line that isn&rsquo;t.</td></tr></tbody></table>
+<table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td data-th="Command"><code>latchkey log <span class="nw">[--limit</span> 20]</code></td><td data-th="What it does">Recent access log entries: time, what, decision, items, who, folder and command. Never values; likely secrets in command lines are redacted.</td></tr><tr><td data-th="Command"><code>latchkey log <span class="nw">--verify</span></code></td><td data-th="What it does">Checks the log&rsquo;s chain: exits 0 if every entry is as Pistachio wrote it, 1 with the first line that isn&rsquo;t.</td></tr></tbody></table>
 
 <h2 id="status">Status</h2>
 <figure class="code"><figcaption><span>Synopsis</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">latchkey status</code></pre></figure>
 <p>Where values are kept, how you approve, how many items and grants, and the socket path.</p>
 
 <h2 id="environment">Environment variables</h2>
-<table><thead><tr><th>Variable</th><th>Meaning</th></tr></thead><tbody><tr><td data-th="Variable"><code>LATCHKEY_NO_LAUNCH=1</code></td><td data-th="Meaning">Don&rsquo;t start the app if it isn&rsquo;t running; fail with exit 69 instead.</td></tr><tr><td data-th="Variable"><code>LATCHKEY_SOCKET=PATH</code></td><td data-th="Meaning">Connect to a socket forwarded over SSH from the Mac running Latchkey (see <a href="agents.html#ssh">from another Mac</a>).</td></tr></tbody></table>
+<table><thead><tr><th>Variable</th><th>Meaning</th></tr></thead><tbody><tr><td data-th="Variable"><code>LATCHKEY_NO_LAUNCH=1</code></td><td data-th="Meaning">Don&rsquo;t start the app if it isn&rsquo;t running; fail with exit 69 instead.</td></tr><tr><td data-th="Variable"><code>LATCHKEY_SOCKET=PATH</code></td><td data-th="Meaning">Connect to a socket forwarded over SSH from the Mac running Pistachio (see <a href="agents.html#ssh">from another Mac</a>).</td></tr></tbody></table>
 
 <h2 id="exit-codes">Exit codes</h2>
-<table><thead><tr><th>Code</th><th>Meaning</th></tr></thead><tbody><tr><td data-th="Code">0</td><td data-th="Meaning">Done</td></tr><tr><td data-th="Code">64</td><td data-th="Meaning">Wrong usage</td></tr><tr><td data-th="Code">66</td><td data-th="Meaning">No item with that ID</td></tr><tr><td data-th="Code">69</td><td data-th="Meaning">The Latchkey app can&rsquo;t be reached</td></tr><tr><td data-th="Code">73</td><td data-th="Meaning">A file couldn&rsquo;t be rewritten</td></tr><tr><td data-th="Code">77</td><td data-th="Meaning">Refused: not agent-safe, not approved, no grant</td></tr><tr><td data-th="Code">127</td><td data-th="Meaning">The command couldn&rsquo;t start</td></tr></tbody></table>
-<p>On 66 and 77, Latchkey prints the item IDs and what to do, including the <code>latchkey grant</code> command that would allow the refused items.</p>
+<table><thead><tr><th>Code</th><th>Meaning</th></tr></thead><tbody><tr><td data-th="Code">0</td><td data-th="Meaning">Done</td></tr><tr><td data-th="Code">64</td><td data-th="Meaning">Wrong usage</td></tr><tr><td data-th="Code">66</td><td data-th="Meaning">No item with that ID</td></tr><tr><td data-th="Code">69</td><td data-th="Meaning">The Pistachio app can&rsquo;t be reached</td></tr><tr><td data-th="Code">73</td><td data-th="Meaning">A file couldn&rsquo;t be rewritten</td></tr><tr><td data-th="Code">77</td><td data-th="Meaning">Refused: not agent-safe, not approved, no grant</td></tr><tr><td data-th="Code">127</td><td data-th="Meaning">The command couldn&rsquo;t start</td></tr></tbody></table>
+<p>On 66 and 77, Pistachio prints the item IDs and what to do, including the <code>latchkey grant</code> command that would allow the refused items.</p>
 
       <nav class="pager" aria-label="Pages"><a class="prev" href="quickstart.html"><span>Previous</span>Quickstart</a><a class="next" href="agents.html"><span>Next</span>Agents and MCP</a></nav>
     </article>
@@ -313,7 +324,7 @@ latchkey rotate --touched --since 4h --by claude --open --push</code></pre></fig
     <div class="wrap">
       <div class="foot-grid">
         <div class="foot-brand">
-          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Pistachio</a>
           <p>Development credentials in your Mac's iCloud Keychain, filled in when a command starts.</p>
           <a class="button primary small" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
         </div>

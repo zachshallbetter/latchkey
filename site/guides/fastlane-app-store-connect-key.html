@@ -1,41 +1,42 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>try{var savedTheme=localStorage.getItem("pistachio-theme");if(savedTheme==="light"||savedTheme==="dark")document.documentElement.dataset.theme=savedTheme}catch(e){}</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>fastlane and an App Store Connect key · Latchkey</title>
+  <title>fastlane and an App Store Connect key · Pistachio</title>
   <meta name="description" content="Keep your App Store Connect .p8 key in iCloud Keychain and give fastlane a temporary file that only you can read and that is deleted when it exits.">
   <link rel="canonical" href="https://latchkey.snackstud.io/guides/fastlane-app-store-connect-key.html">
   <meta property="og:url" content="https://latchkey.snackstud.io/guides/fastlane-app-store-connect-key.html">
   <meta property="og:type" content="article">
-  <meta property="og:site_name" content="Latchkey">
+  <meta property="og:site_name" content="Pistachio">
   <meta property="og:image" content="https://latchkey.snackstud.io/social/guides-fastlane-app-store-connect-key.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Guide: fastlane and an App Store Connect key. Keep your App Store Connect .p8 key in iCloud Keychain and give fastlane a temporary file that only you… Latchkey, latchkey.snackstud.io.">
-  <meta property="og:title" content="fastlane and an App Store Connect key · Latchkey">
+  <meta property="og:image:alt" content="fastlane and an App Store Connect key. Pistachio, a Mac app from Snack Studio.">
+  <meta property="og:title" content="fastlane and an App Store Connect key · Pistachio">
   <meta property="og:description" content="Keep your App Store Connect .p8 key in iCloud Keychain and give fastlane a temporary file that only you can read and that is deleted when it exits.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1014" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fafaf6" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151b17" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="../logo.svg" type="image/svg+xml">
   <link rel="author" href="https://zachshallbetter.com/">
   <link rel="icon" href="../favicon.ico" sizes="48x48">
   <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32">
   <link rel="manifest" href="../site.webmanifest">
-  <link rel="alternate" type="text/plain" href="../llms.txt" title="Latchkey for language models">
+  <link rel="alternate" type="text/plain" href="../llms.txt" title="Pistachio for language models">
   <link rel="apple-touch-icon" href="../apple-touch-icon.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="author" content="Zach Shallbetter">
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
-  <meta name="application-name" content="Latchkey">
-  <meta name="apple-mobile-web-app-title" content="Latchkey">
+  <meta name="application-name" content="Pistachio">
+  <meta name="apple-mobile-web-app-title" content="Pistachio">
   <meta property="og:locale" content="en_US">
   <meta property="og:image:type" content="image/jpeg">
-  <meta name="twitter:title" content="fastlane and an App Store Connect key · Latchkey">
+  <meta name="twitter:title" content="fastlane and an App Store Connect key · Pistachio">
   <meta name="twitter:description" content="Keep your App Store Connect .p8 key in iCloud Keychain and give fastlane a temporary file that only you can read and that is deleted when it exits.">
   <meta name="twitter:image" content="https://latchkey.snackstud.io/social/guides-fastlane-app-store-connect-key.jpg">
-  <meta name="twitter:image:alt" content="Guide: fastlane and an App Store Connect key. Keep your App Store Connect .p8 key in iCloud Keychain and give fastlane a temporary file that only you… Latchkey, latchkey.snackstud.io.">
+  <meta name="twitter:image:alt" content="fastlane and an App Store Connect key. Pistachio, a Mac app from Snack Studio.">
   <meta property="article:author" content="https://zachshallbetter.com/">
   <link rel="stylesheet" href="../site.css">
   <style>
@@ -59,7 +60,7 @@
       "@type": "WebPage",
       "@id": "https://latchkey.snackstud.io/guides/fastlane-app-store-connect-key.html#webpage",
       "url": "https://latchkey.snackstud.io/guides/fastlane-app-store-connect-key.html",
-      "name": "fastlane and an App Store Connect key · Latchkey",
+      "name": "fastlane and an App Store Connect key · Pistachio",
       "description": "Keep your App Store Connect .p8 key in iCloud Keychain and give fastlane a temporary file that only you can read and that is deleted when it exits.",
       "inLanguage": "en",
       "isPartOf": {
@@ -79,7 +80,7 @@
         "url": "https://latchkey.snackstud.io/social/guides-fastlane-app-store-connect-key.jpg",
         "width": 1200,
         "height": 630,
-        "caption": "Guide: fastlane and an App Store Connect key. Keep your App Store Connect .p8 key in iCloud Keychain and give fastlane a temporary file that only you… Latchkey, latchkey.snackstud.io."
+        "caption": "fastlane and an App Store Connect key. Pistachio, a Mac app from Snack Studio."
       },
       "breadcrumb": {
         "@id": "https://latchkey.snackstud.io/guides/fastlane-app-store-connect-key.html#breadcrumb"
@@ -91,7 +92,7 @@
         {
           "@type": "ListItem",
           "position": 1,
-          "name": "Latchkey",
+          "name": "Pistachio",
           "item": "https://latchkey.snackstud.io/"
         },
         {
@@ -137,7 +138,7 @@
         "https://github.com/zachshallbetter"
       ],
       "jobTitle": "Systems engineer",
-      "description": "Zach Shallbetter designs and builds Latchkey. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
+      "description": "Zach Shallbetter designs and builds Pistachio. He is a systems engineer in Spokane, Washington, and the founder of Snack Studio, which publishes it.",
       "homeLocation": {
         "@type": "Place",
         "name": "Spokane, Washington"
@@ -165,12 +166,13 @@
   ]
 }
   </script>
+  <link rel="stylesheet" href="../pistachio.css?v=20261123-depth">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site">
     <nav class="top wrap" aria-label="Main">
-      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+      <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Pistachio</a>
       <ul>
         <li><a href="../features.html">Features</a></li>
         <li><a href="../index.html#how">How it works</a></li>
@@ -178,24 +180,33 @@
         <li><a href="../security.html">Security</a></li>
         <li><a href="../developers/index.html">Developers</a></li>
         <li><a href="index.html" aria-current="page">Guides</a></li>
-        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download free</a></li>
+        <li><a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a></li>
       </ul>
-    </nav>
+    <details class="mobile-menu"><summary><i class="ic ic-menu" aria-hidden="true"></i>Menu</summary><div class="mobile-menu-links">
+        <a href="../features.html">Features</a>
+        <a href="../index.html#how">How it works</a>
+        <a href="../pricing.html">Pricing</a>
+        <a href="../security.html">Security</a>
+        <a href="../developers/index.html">Developers</a>
+        <a href="index.html" aria-current="page">Guides</a>
+        <a class="button primary" href="../index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+      </div></details></nav>
   </header>
 
   <main id="main" class="wrap docs guides">
+    <aside class="brand-transition" aria-label="Product name update">Pistachio is the new name for Latchkey. The current download, <code>lk</code> commands and <code>latchkey://</code> references still use the original names.</aside>
     <nav class="side" aria-label="Developers and guides"><div class="side-group"><p class="side-title">Developers</p><ul><li><a href="../developers/index.html"><i class="ic ic-book" aria-hidden="true"></i>Overview</a></li><li><a href="../developers/quickstart.html"><i class="ic ic-bolt" aria-hidden="true"></i>Quickstart</a></li><li><a href="../developers/cli.html"><i class="ic ic-terminal" aria-hidden="true"></i>CLI reference</a></li><li><a href="../developers/agents.html"><i class="ic ic-agent" aria-hidden="true"></i>Agents and MCP</a></li><li><a href="../developers/api.html"><i class="ic ic-code" aria-hidden="true"></i>References and API</a></li></ul></div><div class="side-group current"><p class="side-title">Guides</p><ul><li><a href="index.html"><i class="ic ic-grid" aria-hidden="true"></i>All guides</a></li><li><a href="index.html#env"><i class="ic ic-fileenv" aria-hidden="true"></i>Env files</a></li><li><a href="index.html#agents"><i class="ic ic-sparkles" aria-hidden="true"></i>Coding agents</a></li><li><a href="index.html#deploy" class="here"><i class="ic ic-upload" aria-hidden="true"></i>Deploying</a></li><li><a href="index.html#everyday"><i class="ic ic-macs" aria-hidden="true"></i>Everyday use</a></li></ul></div></nav>
     <article class="doc">
-      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Latchkey</a></li><li><a href="index.html">Guides</a></li><li><span aria-current="page">fastlane and .p8 keys</span></li></ol></nav>
+      <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Pistachio</a></li><li><a href="index.html">Guides</a></li><li><span aria-current="page">fastlane and .p8 keys</span></li></ol></nav>
       <p class="eyebrow">Guide · fastlane</p>
       <h1>Use an App Store Connect <span class="fills">key</span> with fastlane</h1>
       <p class="lede">fastlane wants the path of a .p8 file. That file ends up in the repo folder, a Downloads folder or a backup, and it can sign in as your team.</p>
       <p class="byline"><span>By <a href="https://zachshallbetter.com/" rel="author">Zach Shallbetter</a></span><span>Published 14 November 2026</span><span>Needs <a href="../cli.html">the command-line tool</a></span></p>
       <nav class="toc" aria-labelledby="toc-title"><h2 id="toc-title">On this page</h2><ul><li><a href="#why-the-p8-file-lingers">Why the .p8 file lingers</a></li><li><a href="#set-it-up">Set it up</a></li><li><a href="#with-an-agent">With an agent</a></li><li><a href="#what-this-doesn-t-do">What this doesn't do</a></li></ul></nav>
-      <div class="short"><p><b>In short</b>Save the .p8 as a key item, then run <code>lk run --file ASC_KEY_PATH=shop/production/ASC_P8 -- fastlane beta</code>. The command gets the path of a temporary file only you can read, and Latchkey deletes it when the command exits.</p></div>
+      <div class="short"><p><b>In short</b>Save the .p8 as a key item, then run <code>lk run --file ASC_KEY_PATH=shop/production/ASC_P8 -- fastlane beta</code>. The command gets the path of a temporary file only you can read, and Pistachio deletes it when the command exits.</p></div>
 <h2 id="why-the-p8-file-lingers">Why the .p8 file lingers</h2>
 <p>The App Store Connect key is a <code>.p8</code> file, and fastlane reads it from a path. So the file gets saved somewhere and stays there: in the project, in a shared folder, in a backup, sometimes in Git. Anyone who can read it can use the key. Replacing it means finding every copy.</p>
-<p>The tool needs a file, not a value in the environment. Latchkey stores the key as an item in iCloud Keychain and writes a file only for the length of the command. Your project folder never holds it, and neither does a backup of that folder.</p>
+<p>The tool needs a file, not a value in the environment. Pistachio stores the key as an item in iCloud Keychain and writes a file only for the length of the command. Your project folder never holds it, and neither does a backup of that folder.</p>
 <h2 id="set-it-up">Set it up</h2>
 <ol class="steps">
 <li>
@@ -208,7 +219,7 @@
 <h3>Run fastlane with <code>--file</code></h3>
 <p><code>NAME=ID</code> sets the variable NAME to the path of a temporary file holding the item's value. Use the name your lane reads for the key's path.</p>
 <figure class="code"><figcaption><span>Terminal</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="bash">lk run --file ASC_KEY_PATH=shop/production/ASC_P8 -- fastlane beta</code></pre></figure>
-<p>The file is readable only by you. Latchkey deletes it when the command exits. Temporary files for different item IDs get different paths, even if the final names match.</p>
+<p>The file is readable only by you. Pistachio deletes it when the command exits. Temporary files for different item IDs get different paths, even if the final names match.</p>
 </li>
 <li>
 <h3>Keep the setting in the project</h3>
@@ -226,7 +237,7 @@
 <h2 id="what-this-doesn-t-do">What this doesn't do</h2>
 <ul>
 <li>While the command runs, the file exists on disk. Malware running as you could read it in that time, and so can the command and anything it starts.</li>
-<li>Latchkey can't control what a command does with the file. It could copy it. Masking hides exact copies of each line of the key in output, not altered ones.</li>
+<li>Pistachio can't control what a command does with the file. It could copy it. Masking hides exact copies of each line of the key in output, not altered ones.</li>
 <li>Your lane still needs the other values it reads, such as the key ID and issuer ID. Those are separate items or plain settings.</li>
 <li>The original <code>.p8</code> you downloaded is a plain copy until you delete it.</li>
 </ul>
@@ -242,7 +253,7 @@
     <div class="wrap">
       <div class="foot-grid">
         <div class="foot-brand">
-          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Latchkey</a>
+          <a class="brand" href="../index.html"><img class="logo" src="../logo.svg" alt="">Pistachio</a>
           <p>Development credentials in your Mac's iCloud Keychain, filled in when a command starts.</p>
           <a class="button primary small" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download free</a>
         </div>

@@ -1,6 +1,6 @@
-// Scenes: small drawings of Latchkey in use that play by themselves while they're on screen, then start over.
+// Scenes: small drawings of Pistachio in use that play by themselves while they're on screen, then start over.
 // Each .scene-wrap[data-scene] names a script below; its HTML is the drawing at its last frame, so a page without
-// scripts, or a visitor who prefers reduced motion, sees how the scene ends. Commands and output are what Latchkey
+// scripts, or a visitor who prefers reduced motion, sees how the scene ends. Commands and output are what Pistachio
 // prints (from Sources/latchkey); project output and values are examples.
 (function () {
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -100,7 +100,7 @@
   var SCENES = {};
 
   // ---------------------------------------------------------------------------------------------------------------
-  // Hero: a reference in an env file, Latchkey asking, the value reaching the command and never its output.
+  // Hero: a reference in an env file, Pistachio asking, the value reaching the command and never its output.
   SCENES.flow = {
     reset: function (s) {
       s.$$(".ln").forEach(function (l) { s.on(l, "hl", false); });
@@ -137,7 +137,7 @@
   };
 
   // ---------------------------------------------------------------------------------------------------------------
-  // 01: a fresh clone has no env file; Latchkey knows the project from its remote and writes one of references.
+  // 01: a fresh clone has no env file; Pistachio knows the project from its remote and writes one of references.
   SCENES.clone = {
     reset: function (s) { s.clear(s.$("#clone-tty")); s.prompt(s.$("#clone-tty"), "~/Projects"); s.hide("#clone-env"); },
     play: async function (s) {
@@ -255,7 +255,7 @@
       var tty = s.$("#agent-tty");
       s.clear(tty);
       await s.wait(500);
-      s.line(tty, '<span class="k">⏺ Claude</span> <span class="d">I\'ll run the tests with Latchkey.</span>');
+      s.line(tty, '<span class="k">⏺ Claude</span> <span class="d">I\'ll run the tests with Pistachio.</span>');
       await s.wait(500);
       await s.type(tty, "lk run --env shop/development -- npm test");
       s.show("#agent-panel");
@@ -292,7 +292,7 @@
       s.hide("#agent-panel");
       await s.rest(600);
       await s.lines(tty, ['<span class="err">latchkey: refused: shop/production/DATABASE_URL (not agent-safe, not approved, no grant)</span>',
-                          '<span class="k">⏺ Claude</span> <span class="d">Latchkey refused that (exit 77), so I\'ll stop and ask you.</span>'], 220);
+                          '<span class="k">⏺ Claude</span> <span class="d">Pistachio refused that (exit 77), so I\'ll stop and ask you.</span>'], 220);
     }
   };
 
@@ -327,7 +327,7 @@
   };
 
   // ---------------------------------------------------------------------------------------------------------------
-  // Latchkey for Safari: a new key on the page where it was made, saved to a project's environment.
+  // Pistachio for Safari: a new key on the page where it was made, saved to a project's environment.
   SCENES.safari = {
     reset: function (s) { s.hide("#saf-save"); s.hide("#saf-touch"); s.on("#saf-touch", "ok", false); s.hide("#saf-done"); s.rest(1); },
     play: async function (s) {
@@ -367,7 +367,7 @@
   };
 
   // ---------------------------------------------------------------------------------------------------------------
-  // Security: a committed reference shows only a name; a script that asks Latchkey directly, not through the signed
+  // Security: a committed reference shows only a name; a script that asks Pistachio directly, not through the signed
   // lk tool, gets the panel with its warning, and is denied.
   SCENES.direct = {
     reset: function (s) { s.clear(s.$("#dir-tty")); s.prompt(s.$("#dir-tty")); s.hide("#dir-panel"); s.hide("#dir-note"); s.rest(1); },
