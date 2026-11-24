@@ -610,7 +610,7 @@ public final class Broker: @unchecked Sendable {
                 case .credential(let id):
                     guard Wire.isValidName(id) else { return "\(id) is not a valid item id" }
                 case .literal(let v):
-                    if v.contains(References.scheme) || v.contains(References.fileScheme) {
+                    if References.mentionsReference(v) {
                         return "\(name): a plain value can't hold a latchkey reference; point it at the item instead"
                     }
                     if v.utf8.count > 4096 { return "\(name): plain values are limited to 4 KB" }
@@ -853,7 +853,7 @@ public final class Broker: @unchecked Sendable {
     func scan(_ req: Request, peer: PeerInfo) throws -> Response {
         guard req.origin != "mcp" else { return Response(ok: false, error: "an agent can't compare values; ask the owner to run lk scan") }
         guard !peer.isSafariExtension else { return Response(ok: false, error: "scanning files isn't available to Safari") }
-        let found = (req.items ?? []).filter { $0.value.count >= Duplicates.shortest && !$0.value.contains(References.scheme) }
+        let found = (req.items ?? []).filter { $0.value.count >= Duplicates.shortest && !References.containsReference($0.value) }
         let items = try store.list().filter { $0.kind.isSecret }
         guard !found.isEmpty, !items.isEmpty else { return Response(ok: true, matches: [:]) }
         let names = items.map(\.name)

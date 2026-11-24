@@ -360,9 +360,8 @@ public enum EnvironmentRecords {
     public static func fromFile(_ text: String, references: [String: String], scope: String) -> EnvironmentRecord? {
         guard RemoteLink.isValidScope(scope) else { return nil }
         var vars: [String: EnvironmentEntry] = [:]
-        for (key, value) in (try? EnvFile.parse(text)) ?? [] where EnvironmentRecord.isValidVariable(key) && value.hasPrefix(References.scheme) {
-            let id = String(value.dropFirst(References.scheme.count))
-            if Wire.isValidName(id) { vars[key] = .credential(id) }
+        for (key, value) in (try? EnvFile.parse(text)) ?? [] where EnvironmentRecord.isValidVariable(key) {
+            if let id = References.wholeReference(value) { vars[key] = .credential(id) }
         }
         for (key, id) in references where EnvironmentRecord.isValidVariable(key) { vars[key] = .credential(id) }
         return vars.isEmpty ? nil : EnvironmentRecord(scope: scope, variables: vars)
@@ -467,13 +466,12 @@ public enum EnvironmentMigration {
                 for (key, value) in lines {
                     guard EnvironmentRecord.isValidVariable(key), !value.isEmpty else { continue }
                     // Already set (a shared item the checkout uses): a plain copy of its value in the file says nothing new.
-                    if vars[key] != nil && !value.hasPrefix(References.scheme) { continue }
-                    if value.hasPrefix(References.scheme) {
-                        let id = String(value.dropFirst(References.scheme.count))
+                    if vars[key] != nil && References.referenceID(value) == nil { continue }
+                    if let id = References.referenceID(value) {
                         guard Wire.isValidName(id) else { continue }
                         if byID[id] == nil { skipped.append("\(key): refers to \(id), which isn't in Latchkey (\(file))"); continue }
                         propose(key, .credential(id), from: file)
-                    } else if value.contains(References.scheme) || value.contains(References.fileScheme) {
+                    } else if References.mentionsReference(value) {
                         skipped.append("\(key): mixes text and references (\(file))")
                     } else if isPlainSetting(value) && !EnvImport.matches(key, EnvImport.defaultSkip) {
                         propose(key, .literal(value), from: file)

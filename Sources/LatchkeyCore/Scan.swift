@@ -23,7 +23,7 @@ public enum Scan {
     public static func candidates(in text: String, path: String, only: Set<Int>? = nil) -> [Candidate] {
         guard let entries = try? EnvFile.located(text) else { return [] }
         return entries.compactMap { e in
-            guard !e.value.isEmpty, !e.value.contains(References.scheme), only?.contains(e.line) ?? true else { return nil }
+            guard !e.value.isEmpty, !References.containsReference(e.value), only?.contains(e.line) ?? true else { return nil }
             return Candidate(path: path, line: e.line, key: e.key, value: e.value)
         }
     }

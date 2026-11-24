@@ -57,6 +57,38 @@ final class CoreTests: XCTestCase {
         XCTAssertEqual(References.resolve("latchkey://missing", with: [:]), "latchkey://missing")
     }
 
+    /// `pistachio://` reads exactly like `latchkey://`, and `latchkey://` keeps working (#122).
+    func testBothSchemesAreReferences() {
+        let env = ["A": "pistachio://gemini", "B": "latchkey://shop/development/KEY",
+                   "URL": "postgres://u:pistachio://db.pass@host/db", "F": "pistachio-file://shop/production/P8",
+                   "G": "latchkey-file://cert", "C": "plain"]
+        XCTAssertEqual(References.names(in: env), ["gemini", "shop/development/KEY", "db.pass"])
+        XCTAssertEqual(References.fileReferences(in: env), ["F": "shop/production/P8", "G": "cert"])
+        let out = References.resolve(env: env, with: ["gemini": "G1", "shop/development/KEY": "K", "db.pass": "P"])
+        XCTAssertEqual(out["A"], "G1")
+        XCTAssertEqual(out["B"], "K")
+        XCTAssertEqual(out["URL"], "postgres://u:P@host/db")
+        XCTAssertEqual(References.wholeReference("pistachio://shop/development/KEY"), "shop/development/KEY")
+        XCTAssertEqual(References.wholeReference("latchkey://KEY"), "KEY")
+        XCTAssertNil(References.wholeReference("pistachio://has space"))
+        XCTAssertNil(References.wholeReference("x-pistachio://KEY"))
+        XCTAssertTrue(References.containsReference("prefix-pistachio://KEY"))
+        XCTAssertFalse(References.containsReference("pistachio-file://KEY"))
+        XCTAssertTrue(References.mentionsReference("pistachio-file://KEY"))
+        XCTAssertEqual(EnvImport.classify(key: "API_KEY", value: "pistachio://API_KEY"), .reference)
+    }
+
+    func testRenamingKeepsEachReferenceInItsOwnScheme() {
+        let text = "A=latchkey://old\nB=pistachio://old\nC=pistachio://other\n"
+        XCTAssertEqual(References.renaming(text, ["old": "new"]), "A=latchkey://new\nB=pistachio://new\nC=pistachio://other\n")
+    }
+
+    func testReferencesAreStillWrittenInTheOldScheme() {
+        XCTAssertEqual(References.scheme, "latchkey://")
+        XCTAssertEqual(References.fileScheme, "latchkey-file://")
+        XCTAssertEqual(try EnvFile.rewrite("KEY=fixture\n", toReferences: ["KEY": "KEY"]), "KEY=latchkey://KEY\n")
+    }
+
     func testNames() {
         XCTAssertTrue(Wire.isValidName("GEMINI_API_KEY"))
         XCTAssertTrue(Wire.isValidName("db.pass-1"))

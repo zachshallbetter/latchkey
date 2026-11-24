@@ -2,16 +2,39 @@ import Darwin
 import Foundation
 
 /// `latchkey://NAME` or `latchkey://project/environment/NAME` inside an environment value stands for that item.
+/// `pistachio://` means the same and always will: env files written before the rename keep working unchanged.
 public enum References {
+    /// The scheme Latchkey writes. It stays `latchkey://` until the tools that read env files outside this repository
+    /// (older Latchkey builds, the bootstrap harness, ACP, Hermit) accept `pistachio://` too.
     public static let scheme = "latchkey://"
+    /// Every scheme that's read as a reference.
+    public static let schemes = ["latchkey://", "pistachio://"]
 
     private static let pattern = try! NSRegularExpression(
-        pattern: "latchkey://((?:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/)?[A-Za-z0-9_.-]+)")
+        pattern: "(latchkey://|pistachio://)((?:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/)?[A-Za-z0-9_.-]+)")
+
+    /// What follows the scheme when `value` starts with one, valid id or not.
+    public static func referenceID(_ value: String) -> String? {
+        schemes.first { value.hasPrefix($0) }.map { String(value.dropFirst($0.count)) }
+    }
+
+    /// The item id when `value` is exactly one reference, in either scheme.
+    public static func wholeReference(_ value: String) -> String? {
+        referenceID(value).flatMap { Wire.isValidName($0) ? $0 : nil }
+    }
+
+    /// Whether `value` holds a reference anywhere, in either scheme.
+    public static func containsReference(_ value: String) -> Bool { schemes.contains { value.contains($0) } }
+
+    /// Whether `value` holds a reference or file reference anywhere, in either scheme.
+    public static func mentionsReference(_ value: String) -> Bool {
+        (schemes + fileSchemes).contains { value.contains($0) }
+    }
 
     public static func names(in value: String) -> [String] {
         let ns = value as NSString
         return pattern.matches(in: value, range: NSRange(location: 0, length: ns.length)).map {
-            ns.substring(with: $0.range(at: 1))
+            ns.substring(with: $0.range(at: 2))
         }
     }
 
@@ -30,7 +53,7 @@ public enum References {
         var last = 0
         for m in pattern.matches(in: value, range: NSRange(location: 0, length: ns.length)) {
             out += ns.substring(with: NSRange(location: last, length: m.range.location - last))
-            let name = ns.substring(with: m.range(at: 1))
+            let name = ns.substring(with: m.range(at: 2))
             out += values[name] ?? ns.substring(with: m.range)
             last = m.range.location + m.range.length
         }
@@ -38,15 +61,16 @@ public enum References {
         return out
     }
 
-    /// The same text with each `latchkey://OLD` reference whose id is in `renames` pointing at the new id.
+    /// The same text with each `latchkey://OLD` reference whose id is in `renames` pointing at the new id, in the scheme
+    /// it was written in.
     public static func renaming(_ text: String, _ renames: [String: String]) -> String {
         let ns = text as NSString
         var out = ""
         var last = 0
         for m in pattern.matches(in: text, range: NSRange(location: 0, length: ns.length)) {
-            let id = ns.substring(with: m.range(at: 1))
+            let id = ns.substring(with: m.range(at: 2))
             guard let new = renames[id] else { continue }
-            out += ns.substring(with: NSRange(location: last, length: m.range.location - last)) + scheme + new
+            out += ns.substring(with: NSRange(location: last, length: m.range.location - last)) + ns.substring(with: m.range(at: 1)) + new
             last = m.range.location + m.range.length
         }
         return out + ns.substring(from: last)
@@ -54,19 +78,21 @@ public enum References {
 
     /// `latchkey-file://ID` as a whole value: the command gets the path of a temporary file holding the value,
     /// for tools that want a file (a .p8 key, a service-account JSON).
+    /// `pistachio-file://ID` means the same.
     public static let fileScheme = "latchkey-file://"
+    public static let fileSchemes = ["latchkey-file://", "pistachio-file://"]
 
     /// Variables whose whole value is a file reference → the item id.
     public static func fileReferences(in env: [String: String]) -> [String: String] {
         env.compactMapValues { v in
-            guard v.hasPrefix(fileScheme) else { return nil }
-            let id = String(v.dropFirst(fileScheme.count))
+            guard let s = fileSchemes.first(where: { v.hasPrefix($0) }) else { return nil }
+            let id = String(v.dropFirst(s.count))
             return Wire.isValidName(id) ? id : nil
         }
     }
 
     public static func resolve(env: [String: String], with values: [String: String]) -> [String: String] {
-        env.mapValues { $0.contains(scheme) ? resolve($0, with: values) : $0 }
+        env.mapValues { containsReference($0) ? resolve($0, with: values) : $0 }
     }
 }
 

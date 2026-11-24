@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### CLI
+- Env files can use `pistachio://ID` and `pistachio-file://ID` as well as `latchkey://ID` and `latchkey-file://ID`,
+  ahead of the rename to Pistachio. Both mean the same and always will, so existing files keep working unchanged.
+
 ## 0.4.0 (2026-11-18)
 
 ### App

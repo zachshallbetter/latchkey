@@ -28,6 +28,27 @@ final class RunTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: dir.path))
     }
 
+    func testRunFillsInBothSchemes() throws {
+        let env = ["NEW": "pistachio://shop/development/KEY", "OLD": "latchkey://shop/development/KEY",
+                   "NEW_FILE": "pistachio-file://shop/production/KEY", "PLAIN": "x"]
+        XCTAssertEqual(referencedIDs(env), ["shop/development/KEY", "shop/production/KEY"])
+        let run = try prepare(env, values: ["shop/development/KEY": "fixture-dev", "shop/production/KEY": "fixture-prod"])
+        defer { run.cleanUp() }
+        XCTAssertEqual(run.environment["NEW"], "fixture-dev")
+        XCTAssertEqual(run.environment["OLD"], "fixture-dev")
+        XCTAssertEqual(run.environment["PLAIN"], "x")
+        let path = try XCTUnwrap(run.environment["NEW_FILE"])
+        XCTAssertEqual(try String(contentsOfFile: path, encoding: .utf8), "fixture-prod")
+    }
+
+    func testProxyAcceptsTheNewSchemeAndStillRefusesASecondDelivery() throws {
+        let values = ["KEY": "fixture-provider-key"]
+        let run = try prepare(["OPENAI_API_KEY": "pistachio://KEY"], values: values, proxy: true)
+        XCTAssertTrue(run.environment["OPENAI_API_KEY"]?.hasPrefix("lk-proxy-") == true)
+        XCTAssertThrowsError(try prepare(["OPENAI_API_KEY": "pistachio://KEY", "ALIAS": "latchkey://KEY"], values: values, proxy: true))
+        XCTAssertThrowsError(try prepare(["OPENAI_API_KEY": "latchkey://KEY", "KEY_FILE": "pistachio-file://KEY"], values: values, proxy: true))
+    }
+
     func testIncompleteBrokerReplyNeverBecomesAnEmptyKeyFile() {
         XCTAssertThrowsError(try prepare(["KEY": "latchkey-file://MISSING"], values: [:]))
     }

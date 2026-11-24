@@ -50,7 +50,7 @@ public enum EnvImport {
     /// A value that looks like credentials (a key block, a connection string with a password) is a secret whatever
     /// its name says.
     public static func classify(key: String, value: String, agentSafePatterns: [String] = []) -> ImportClass {
-        if value.contains(References.scheme) { return .reference }
+        if References.containsReference(value) { return .reference }
         if guessKind(key, value) != nil { return .secret }
         if let url = URL(string: value), url.host != nil, url.user != nil || url.password != nil { return .secret }
         let k = key.uppercased()

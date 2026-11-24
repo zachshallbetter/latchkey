@@ -96,10 +96,7 @@ func prepareRun(_ spec: RunSpec, env planned: [String: String], masking: Bool, p
     var env = planned
     // Variables that are exactly one reference, for --proxy to hold back.
     var wholeReferences: [String: String] = [:]
-    for (k, v) in env where v.hasPrefix(References.scheme) {
-        let id = String(v.dropFirst(References.scheme.count))
-        if Wire.isValidName(id) { wholeReferences[k] = id }
-    }
+    for (k, v) in env { if let id = References.wholeReference(v) { wholeReferences[k] = id } }
     let fileRefs = References.fileReferences(in: env)
     let names = referencedIDs(env)
     if proxy && names.isEmpty { throw RunError.usage("--proxy needs an OPENAI_API_KEY or ANTHROPIC_API_KEY reference") }
