@@ -129,14 +129,14 @@ final class FreshCheckoutTests: XCTestCase {
     }
 
     @discardableResult
-    func lk(_ args: [String], in dir: URL, expect status: Int32 = 0) throws -> String {
+    func lk(_ args: [String], in dir: URL, expect status: Int32 = 0, prefix: String = "LATCHKEY_") throws -> String {
         let tool = Bundle(for: Self.self).bundleURL.deletingLastPathComponent().appendingPathComponent("latchkey")
         guard FileManager.default.isExecutableFile(atPath: tool.path) else { throw XCTSkip("the latchkey tool isn't built next to the tests") }
         let p = Process()
         p.executableURL = tool
         p.arguments = args
         p.currentDirectoryURL = dir
-        p.environment = ["LATCHKEY_SOCKET": socket, "LATCHKEY_NO_LAUNCH": "1", "PATH": "/usr/bin:/bin", "HOME": NSHomeDirectory()]
+        p.environment = [prefix + "SOCKET": socket, prefix + "NO_LAUNCH": "1", "PATH": "/usr/bin:/bin", "HOME": NSHomeDirectory()]
         let out = Pipe()
         p.standardOutput = out
         p.standardError = out
@@ -146,6 +146,21 @@ final class FreshCheckoutTests: XCTestCase {
         let text = String(decoding: data, as: UTF8.self)
         XCTAssertEqual(p.terminationStatus, status, "latchkey \(args.joined(separator: " ")):\n\(text)")
         return text
+    }
+
+    /// Only the new names: PISTACHIO_SOCKET and PISTACHIO_NO_LAUNCH, and a pistachio:// env file (#122, #124).
+    func testTheNewNamesAloneReachTheBrokerAndFillInReferences() throws {
+        let store = MemoryStore()
+        try store.save(name: "FIXTURE_KEY", value: "fixture-value-123", kind: .token, agentSafe: false, note: "")
+        let broker = Broker(store: store, approver: FixedApprover(true), logURL: nil)
+        let path = socket
+        Thread.detachNewThread { try? broker.serve(socketPath: path) }
+        var waited = 0
+        while (try? UnixSocket.connect(socket)).map({ close($0) }) == nil && waited < 50 { usleep(100_000); waited += 1 }
+
+        try "FIXTURE_KEY=pistachio://FIXTURE_KEY\n".write(to: root.appendingPathComponent(".env"), atomically: true, encoding: .utf8)
+        try lk(["run", "--env-file", ".env", "--", "/bin/sh", "-c", "test \"$FIXTURE_KEY\" = fixture-value-123"], in: root, prefix: "PISTACHIO_")
+        try lk(["run", "--env-file", ".env", "--", "/bin/sh", "-c", "test \"$FIXTURE_KEY\" = wrong"], in: root, expect: 1, prefix: "PISTACHIO_")
     }
 
     func testAFreshCloneElsewhereFindsItsEnvironmentExportsAndRuns() throws {

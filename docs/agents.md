@@ -145,13 +145,16 @@ claude mcp add latchkey -- ~/.local/bin/latchkey mcp
 
 | Tool | What it does | Asks you? |
 |---|---|---|
-| `latchkey_status` | Where values are kept, how you approve, item and grant counts | No |
-| `latchkey_list` | Item IDs with kind, service and agent-safe, by project or environment. Never values | No |
-| `latchkey_check` | What a run would get without asking, what would ask, what's missing | No |
-| `latchkey_run` | Runs a command with references filled in, in a given folder, from env files, environments or key files. Returns the exit code and the output, masked | When an item isn't agent-safe or granted |
-| `latchkey_request_grant` | Asks you for a grant on items in the agent's folder | Always |
-| `latchkey_project` | Which project the folder's checkout is, from its Git remotes, and its environments | No |
-| `latchkey_export_references` | Writes an environment's env file of references and plain settings, never values, inside the tool's `cwd` only, and that `cwd` must be the folder the server started in, inside it, or a worktree of its repository; an existing file only with `replace` | No |
+| `pistachio_status` | Where values are kept, how you approve, item and grant counts | No |
+| `pistachio_list` | Item IDs with kind, service and agent-safe, by project or environment. Never values | No |
+| `pistachio_check` | What a run would get without asking, what would ask, what's missing | No |
+| `pistachio_run` | Runs a command with references filled in, in a given folder, from env files, environments or key files. Returns the exit code and the output, masked | When an item isn't agent-safe or granted |
+| `pistachio_request_grant` | Asks you for a grant on items in the agent's folder | Always |
+| `pistachio_project` | Which project the folder's checkout is, from its Git remotes, and its environments | No |
+| `pistachio_export_references` | Writes an environment's env file of references and plain settings, never values, inside the tool's `cwd` only, and that `cwd` must be the folder the server started in, inside it, or a worktree of its repository; an existing file only with `replace` | No |
+
+The tools were named `latchkey_status`, `latchkey_run` and so on. The old names still work, listed beside the new ones,
+until the next release.
 
 - **Output** is always masked, and only the last 64 KB of each stream is returned. Standard input is empty.
 - **Commands stop** after 10 minutes by default, at most 60. Use it for tests, builds and scripts; run dev servers in

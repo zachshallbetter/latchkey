@@ -39,7 +39,7 @@ final class AWSTests: XCTestCase {
     /// Reaches AWS, so it runs only when asked: LATCHKEY_NETWORK_TESTS=1 swift test. AWS's example key isn't a real
     /// one, so STS must refuse it by name, which shows the request was well formed and signed.
     func testSTSRefusesTheExampleKeyByName() throws {
-        try XCTSkipUnless(ProcessInfo.processInfo.environment["LATCHKEY_NETWORK_TESTS"] == "1", "set LATCHKEY_NETWORK_TESTS=1")
+        try XCTSkipUnless(Setting.value("NETWORK_TESTS") == "1", "set PISTACHIO_NETWORK_TESTS=1 (or LATCHKEY_NETWORK_TESTS=1)")
         let r = AWSSTS.mint(accessKeyID: "AKIAIOSFODNN7EXAMPLE", secret: secret, role: nil, duration: 900)
         guard case .failure(.aws(let code, _)) = r else { return XCTFail("expected an AWS error, got \(r)") }
         XCTAssertEqual(code, "InvalidClientTokenId")

@@ -15,8 +15,8 @@ public struct BrokerEndpoint: Equatable, Sendable {
         case invalidChannel, signedToolRequired, forwardingUnavailable, invalidLocalSocket
         public var errorDescription: String? {
             switch self {
-            case .invalidLocalSocket: return "LATCHKEY_LOCAL_SOCKET must be an absolute path and cannot be combined with LATCHKEY_SOCKET."
-            case .invalidChannel: return "LATCHKEY_BROKER must be auto, direct or app-store."
+            case .invalidLocalSocket: return "PISTACHIO_LOCAL_SOCKET (or LATCHKEY_LOCAL_SOCKET) must be an absolute path and cannot be combined with PISTACHIO_SOCKET (or LATCHKEY_SOCKET)."
+            case .invalidChannel: return "PISTACHIO_BROKER (or LATCHKEY_BROKER) must be auto, direct or app-store."
             case .signedToolRequired: return "The App Store broker requires the signed Latchkey CLI from the same developer team."
             case .forwardingUnavailable: return "SSH forwarding is not yet supported by the App Store broker. Select the direct broker explicitly."
             }
@@ -33,14 +33,15 @@ public struct BrokerEndpoint: Equatable, Sendable {
 
     public static func select(environment: [String: String], team: String?, installedAppIsStore: Bool,
                               home: URL, directPath: String) throws -> Self {
-        let channel = environment["LATCHKEY_BROKER"] ?? "auto"
+        let channel = Setting.value("BROKER", in: environment) ?? "auto"
         guard ["auto", "direct", "app-store"].contains(channel) else { throw ConfigurationError.invalidChannel }
-        let local = environment["LATCHKEY_LOCAL_SOCKET"].flatMap { $0.isEmpty ? nil : $0 }
-        if let local, !local.hasPrefix("/") || environment["LATCHKEY_SOCKET"].map({ !$0.isEmpty }) == true {
+        let local = Setting.value("LOCAL_SOCKET", in: environment).flatMap { $0.isEmpty ? nil : $0 }
+        let forwarded = Setting.value("SOCKET", in: environment).flatMap { $0.isEmpty ? nil : $0 }
+        if let local, !local.hasPrefix("/") || forwarded != nil {
             throw ConfigurationError.invalidLocalSocket
         }
         let store = channel == "app-store" || (channel == "auto" && installedAppIsStore)
-        if let forwarded = environment["LATCHKEY_SOCKET"], !forwarded.isEmpty {
+        if let forwarded {
             guard !store else { throw ConfigurationError.forwardingUnavailable }
             return Self(path: forwarded, authentication: .sshForward)
         }

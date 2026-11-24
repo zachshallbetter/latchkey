@@ -5,7 +5,7 @@ import LatchkeyCore
 // The app runs the same Broker; run one or the other, not both.
 
 let env = ProcessInfo.processInfo.environment
-let store = KeychainStore.automatic(accessGroup: env["LATCHKEY_ACCESS_GROUP"])
+let store = KeychainStore.automatic(accessGroup: Setting.value("ACCESS_GROUP", in: env))
 let broker = Broker(store: store, approver: SystemApprover(), allowsPush: false)
 
 FileHandle.standardError.write(Data("""

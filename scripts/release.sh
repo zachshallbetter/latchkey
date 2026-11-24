@@ -11,7 +11,7 @@
 #   - Xcode signed in to that team (exporting creates the Developer ID provisioning profile the keychain
 #     entitlement needs).
 #   - Notary credentials saved under a keychain profile (default name latchkey-notary; override with
-#     LATCHKEY_NOTARY_PROFILE):
+#     PISTACHIO_NOTARY_PROFILE or LATCHKEY_NOTARY_PROFILE):
 #       xcrun notarytool store-credentials latchkey-notary --apple-id YOUR_APPLE_ID --team-id TEAM
 #     It asks for an app-specific password (appleid.apple.com › Sign-In and Security › App-Specific Passwords).
 set -euo pipefail
@@ -19,7 +19,7 @@ cd "${0:A:h}/.."
 
 NOTARIZE=1
 [[ "${1:-}" == "--skip-notarize" ]] && NOTARIZE=0
-PROFILE="${LATCHKEY_NOTARY_PROFILE:-latchkey-notary}"
+PROFILE="${PISTACHIO_NOTARY_PROFILE:-${LATCHKEY_NOTARY_PROFILE:-latchkey-notary}}"
 TEAM=$(sed -n 's/^ *DEVELOPMENT_TEAM: *"\{0,1\}\([A-Z0-9]*\)"\{0,1\} *$/\1/p' App/project.yml | head -1)
 VERSION=$(sed -n 's/^ *MARKETING_VERSION: *"\{0,1\}\([0-9][0-9.]*\)"\{0,1\} *$/\1/p' App/project.yml | head -1)
 OUT="build/release/$VERSION"
@@ -158,9 +158,10 @@ else
   print "    (no appcast: sign_update failed, usually because there's no Sparkle key for the latchkey account in your keychain; run generate_keys --account latchkey once. See $OUT/sign_update.log)"
 fi
 
-# The Homebrew cask, once there's a public place to download from (LATCHKEY_RELEASES_REPO, as owner/name) and a
-# homepage (LATCHKEY_HOMEPAGE).
-: ${LATCHKEY_RELEASES_REPO:=zachshallbetter/latchkey} ${LATCHKEY_HOMEPAGE:=https://latchkey.snackstud.io/}
+# The Homebrew cask, once there's a public place to download from (PISTACHIO_RELEASES_REPO or LATCHKEY_RELEASES_REPO,
+# as owner/name) and a homepage (PISTACHIO_HOMEPAGE or LATCHKEY_HOMEPAGE).
+LATCHKEY_RELEASES_REPO="${PISTACHIO_RELEASES_REPO:-${LATCHKEY_RELEASES_REPO:-zachshallbetter/latchkey}}"
+LATCHKEY_HOMEPAGE="${PISTACHIO_HOMEPAGE:-${LATCHKEY_HOMEPAGE:-https://latchkey.snackstud.io/}}"
 if [[ -n "${LATCHKEY_RELEASES_REPO:-}" && -n "${LATCHKEY_HOMEPAGE:-}" ]]; then
   step "Writing the Homebrew cask and formula"
   sed -e "s|@VERSION@|$VERSION|" -e "s|@SHA256@|$(cut -d' ' -f1 "$DMG.sha256")|" \

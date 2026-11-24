@@ -82,7 +82,7 @@ final class VersionTests: XCTestCase {
 final class KeychainVersionTests: XCTestCase {
     /// Writes to the real login keychain, so it runs only when asked: LATCHKEY_KEYCHAIN_TESTS=1 swift test
     func testKeychainVersionRoundTrip() throws {
-        try XCTSkipUnless(ProcessInfo.processInfo.environment["LATCHKEY_KEYCHAIN_TESTS"] == "1")
+        try XCTSkipUnless(Setting.value("KEYCHAIN_TESTS") == "1")
         let versions = KeychainVersionStore(mode: .thisMac)
         let item = "latchkey-test-\(UUID().uuidString.prefix(8))"
         let v = try versions.record(SecretInfo(name: item, kind: .token, agentSafe: false, note: "t", updatedAt: Date()),

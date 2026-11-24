@@ -120,7 +120,7 @@ final class BrokerTests: XCTestCase {
 
     /// Writes to the real login keychain, so it runs only when asked: LATCHKEY_KEYCHAIN_TESTS=1 swift test
     func testKeychainRoundTrip() throws {
-        try XCTSkipUnless(ProcessInfo.processInfo.environment["LATCHKEY_KEYCHAIN_TESTS"] == "1")
+        try XCTSkipUnless(Setting.value("KEYCHAIN_TESTS") == "1")
         let store = KeychainStore(mode: .thisMac)
         let name = "latchkey-test-\(UUID().uuidString.prefix(8))"
         defer { _ = try? store.remove(name) }
