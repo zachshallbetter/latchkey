@@ -93,10 +93,10 @@ final class BrokerGrantTests: XCTestCase {
 
     /// `pistachio`, `latchkey` and `lk` are one signed tool: the name that ran it changes nothing (#123).
     func testEveryNameOfTheToolIsTreatedAlike() throws {
-        for name in ["pst", "pistachio", "latchkey", "lk", "/Users/x/.local/bin/pst", "/Users/x/.local/bin/pistachio"] {
+        for name in ["pst", "pist", "pistachio", "latchkey", "lk", "/Users/x/.local/bin/pst", "/Users/x/.local/bin/pistachio"] {
             XCTAssertEqual(tool([name, "run", "--env-file", ".env", "--", "npm", "test"]).runCommand, ["npm", "test"], name)
         }
-        for name in ["pst", "pistachio", "latchkey", "lk"] {
+        for name in ["pst", "pist", "pistachio", "latchkey", "lk"] {
             let chain = ["zsh", name, "claude"]
             let launched = PeerInfo(pid: 1, path: "", cwd: "", chain: chain, ancestors: [me, me, me])
             XCTAssertEqual(launched.sessionProcess?.name, "claude", "\(name) is a launcher, not the session")
@@ -106,7 +106,7 @@ final class BrokerGrantTests: XCTestCase {
         try store.save(name: "API", value: "api-value-456", kind: .token, agentSafe: false, note: "")
         let b = Broker(store: store, approver: GrantsOnlyApprover(), logURL: nil)
         XCTAssertTrue(b.handle(Request(op: "grant", names: ["API"], folder: "/tmp/site", commands: [["npm", "test"]]), peer: peer).ok)
-        for name in ["pst", "pistachio", "latchkey", "lk"] {
+        for name in ["pst", "pist", "pistachio", "latchkey", "lk"] {
             XCTAssertEqual(b.handle(Request(op: "get", names: ["API"]), peer: tool([name, "run", "--", "npm", "test"])).values,
                            ["API": "api-value-456"], name)
             XCTAssertEqual(b.handle(Request(op: "get", names: ["API"]), peer: tool([name, "get", "API"])).denied, ["API"], name)

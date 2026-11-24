@@ -17,6 +17,9 @@
   standalone archives and SwiftPM expose the new names; existing command aliases remain compatible.
 - Updated current help, app suggestions, agent guidance and website examples. Generated pre-commit hooks prefer
   current names and fall back to older aliases. Stored identifiers and historical release notes are unchanged.
+- `pist` works too, as another short name for the same tool: installers, Homebrew, the standalone archive and SwiftPM
+  add it beside `pst`, `pistachio`, `lk` and `latchkey`.
+- Env files can use `pist://ID` and `pist-file://ID`, which mean the same as `latchkey://` and `pistachio://`.
 
 
 ## 0.5.0 (2026-11-23)

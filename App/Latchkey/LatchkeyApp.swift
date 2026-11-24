@@ -808,7 +808,7 @@ final class AppModel {
     var installedTool: URL? {
         let home = URL(fileURLWithPath: NSHomeDirectory())
         let places = [".local/bin", "/opt/homebrew/bin", "/usr/local/bin"].flatMap { folder in
-            ["pst", "pistachio", "lk", "latchkey"].map { name in
+            ["pst", "pist", "pistachio", "lk", "latchkey"].map { name in
                 folder.hasPrefix("/") ? URL(fileURLWithPath: folder).appendingPathComponent(name)
                     : home.appendingPathComponent(folder).appendingPathComponent(name)
             }
@@ -817,10 +817,10 @@ final class AppModel {
     }
 
     static var toolLinks: [URL] {
-        ["pst", "pistachio", "lk", "latchkey"].map { URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".local/bin/\($0)") }
+        ["pst", "pist", "pistachio", "lk", "latchkey"].map { URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".local/bin/\($0)") }
     }
 
-    /// Links pst, pistachio and compatibility aliases lk/latchkey in ~/.local/bin to the bundled tool, so they update
+    /// Links pst, pist, pistachio and compatibility aliases lk/latchkey in ~/.local/bin to the bundled tool, so they update
     /// with the app. Replaces only links; a file of any of those names is left alone and reported.
     func installCommandLineTool() {
         #if LATCHKEY_APP_STORE

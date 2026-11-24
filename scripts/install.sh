@@ -1,6 +1,6 @@
 #!/bin/zsh
 # Builds Latchkey and installs it:
-#   app → /Applications/Latchkey.app      CLI → ~/.local/bin/latchkey, with pst, pistachio and lk  (override with PISTACHIO_BIN_DIR or LATCHKEY_BIN_DIR)
+#   app → /Applications/Latchkey.app      CLI → ~/.local/bin/latchkey, with pst, pist, pistachio and lk  (override with PISTACHIO_BIN_DIR or LATCHKEY_BIN_DIR)
 #
 # With DEVELOPMENT_TEAM set in App/project.yml the app is signed with your team and keeps values in
 # iCloud Keychain. Without it, the app is signed ad hoc and keeps values in this Mac's login keychain.
@@ -50,7 +50,7 @@ ditto "$DERIVED/Build/Products/Release/Latchkey.app" /Applications/Latchkey.app
 mkdir -p "$BIN_DIR"
 install -m 0755 .build/release/latchkey "$BIN_DIR/latchkey"
 # `pst` for short and `pistachio` in full; keep `lk` for existing scripts. Leave existing files alone.
-for name in pst pistachio lk; do
+for name in pst pist pistachio lk; do
   if [[ -L "$BIN_DIR/$name" || ! -e "$BIN_DIR/$name" ]]; then ln -sf "$BIN_DIR/latchkey" "$BIN_DIR/$name"; fi
 done
 # The app tells its own tool from any other program on its socket by this signature, and the tool checks the app's.

@@ -73,7 +73,7 @@ extension Broker.LogEntry {
     /// The program asking, in a word: the nearest one in its chain that isn't a shell.
     var actor: String {
         if let p = program { return p }
-        let shells: Set<String> = ["zsh", "bash", "sh", "fish", "login", "sudo", "env", "tmux", "screen", "sshd-session", "latchkey", "lk", "pistachio", "pst"]
+        let shells: Set<String> = ["zsh", "bash", "sh", "fish", "login", "sudo", "env", "tmux", "screen", "sshd-session", "latchkey", "lk", "pistachio", "pst", "pist"]
         let name = chain.first { !shells.contains($0.lowercased()) } ?? chain.first ?? ""
         return name.prefix(1).uppercased() + name.dropFirst()
     }

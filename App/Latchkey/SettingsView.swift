@@ -190,13 +190,13 @@ struct SettingsView: View {
     @ViewBuilder private var developer: some View {
         Section("Command Line") {
             #if LATCHKEY_APP_STORE
-            SettingsNote("The command-line tool, pistachio (pst for short), is a separate, signed download. It connects to this app through an authenticated App Group endpoint, and every value it asks for is approved here.")
+            SettingsNote("The command-line tool, pistachio (pst or pist for short), is a separate, signed download. It connects to this app through an authenticated App Group endpoint, and every value it asks for is approved here.")
             Link("Get the Command-Line Tool", destination: AppModel.commandLineToolPage)
             #else
             if let tool = model.bundledTool {
                 LabeledContent("Bundled CLI", value: tool.lastPathComponent)
                 Button("Install Command Line Tool…") { model.installCommandLineTool() }
-                SettingsNote("Links pst and pistachio in ~/.local/bin to the copy inside the app, so they update with it. Existing files are left alone.")
+                SettingsNote("Links pst, pist and pistachio in ~/.local/bin to the copy inside the app, so they update with it. Existing files are left alone.")
             } else if let tool = model.installedTool {
                 LabeledContent("Installed", value: (tool.path as NSString).abbreviatingWithTildeInPath)
                 SettingsNote("Installed separately from this copy of Pistachio (by scripts/install.sh, Homebrew or the download), so update it the same way.")

@@ -9,7 +9,7 @@ final class CommandNameTests: XCTestCase {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
         var expected: String?
-        for name in ["pst", "pistachio", "lk", "latchkey"] {
+        for name in ["pst", "pist", "pistachio", "lk", "latchkey"] {
             let alias = directory.appendingPathComponent(name)
             try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: tool)
             let process = Process()
@@ -27,6 +27,7 @@ final class CommandNameTests: XCTestCase {
             XCTAssertEqual(process.terminationStatus, 0, name)
             XCTAssertTrue(help.contains("pst run"), name)
             XCTAssertTrue(help.contains("pistachio is the full name"), name)
+            XCTAssertTrue(help.contains("pist works too"), name)
             if let expected { XCTAssertEqual(help, expected, name) } else { expected = help }
         }
     }

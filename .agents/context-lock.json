@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 405,
-    "includedBytes": 3672539,
+    "includedBytes": 3674152,
     "excludedCounts": {
       "extension": 137,
       "generated-or-transient-file": 2
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "b5b5a41afbc3a30d546c9b89a36a1e9e74752779",
-        "branch": "codex/pistachio-native-branding",
+        "commit": "c30bcc539aa06ff5c24dbe03dcc628749a8a57f8",
+        "branch": null,
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "257f26669326391334d4945701312b53323a2ac0d6de57d149b048cee1cac1a2",
+  "aggregateSourceDigest": "e38ead4603a5eb0495d365c335bb4bbdd079d824c1df93c1ecf2805d88f47067",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -989,8 +989,8 @@
     },
     {
       "path": "App/Latchkey/LatchkeyApp.swift",
-      "bytes": 66704,
-      "sha256": "0442488413b2f124af90380bbb450f433ca7ace70bc22943bc4271d6180fd30b"
+      "bytes": 66726,
+      "sha256": "b369f416ea261db4060e1ac4763a786fc0f3089a1b57293fa654fc78480fa12c"
     },
     {
       "path": "App/Latchkey/MainWindow.swift",
@@ -1004,8 +1004,8 @@
     },
     {
       "path": "App/Latchkey/Pages.swift",
-      "bytes": 47875,
-      "sha256": "28659273bf8a915cf1d32dbe1cb3d3f498337effbf98b13bf7ab4a608d024b02"
+      "bytes": 47883,
+      "sha256": "252d468e90d1bcc0e7c8debb191e8e5ca05f5a360693d89eb2370fdfbf0be583"
     },
     {
       "path": "App/Latchkey/ProEntitlement.swift",
@@ -1029,8 +1029,8 @@
     },
     {
       "path": "App/Latchkey/SettingsView.swift",
-      "bytes": 19448,
-      "sha256": "e1714acf2c5abf712861fe0e1513b01ca0e53276c1417f03b416fc3ef3d2a5d4"
+      "bytes": 19462,
+      "sha256": "b1c0599a0ec34d0275d60eb688759671ace0febfe02c28f04309217f9a4a82c3"
     },
     {
       "path": "App/Latchkey/Sheets.swift",
@@ -1114,8 +1114,8 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 42574,
-      "sha256": "816deb9d2477111318c28d3544b1506d3a3a249d7d614f1606ebfd7f06a9fb55"
+      "bytes": 42860,
+      "sha256": "f2e57b7d41d1995f80164087a4efa493600223cd330988cbd2289802800bd803"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1134,8 +1134,8 @@
     },
     {
       "path": "Package.swift",
-      "bytes": 1173,
-      "sha256": "2f8a0e6c600b55c8926dcacb2bef9c94664d98677d4cf846f3e0ac0f58974d61"
+      "bytes": 1231,
+      "sha256": "47e244397cbe36ec496321c539e61ea988bc0af453384f633b13f13b3e4726fb"
     },
     {
       "path": "README.md",
@@ -1249,8 +1249,8 @@
     },
     {
       "path": "Sources/LatchkeyCore/Peer.swift",
-      "bytes": 8874,
-      "sha256": "08aab85c79b67c35167280de4fb09e4c54e59643493ab1302582cc5da712fd9b"
+      "bytes": 8882,
+      "sha256": "a8d290c9eb76c4f1987f1c95ad30fefdeca66f0b38c6177a0a5e8ae3a64413f4"
     },
     {
       "path": "Sources/LatchkeyCore/ProGate.swift",
@@ -1259,8 +1259,8 @@
     },
     {
       "path": "Sources/LatchkeyCore/References.swift",
-      "bytes": 20689,
-      "sha256": "01b576468c424d8213540e617566a02cf3b330392fe9ec84869a22c9a18d301a"
+      "bytes": 20757,
+      "sha256": "98cdca67d59bc1d483dc60223361303e5d23c86696c7c35f0db0bfe6150a2d4d"
     },
     {
       "path": "Sources/LatchkeyCore/ReleaseNotes.swift",
@@ -1279,8 +1279,8 @@
     },
     {
       "path": "Sources/LatchkeyCore/Scan.swift",
-      "bytes": 3883,
-      "sha256": "fc4181cc52450f305e379c0bc67344338a008ae57e46badaf2b86a222c898a0d"
+      "bytes": 3902,
+      "sha256": "04bc1c1c06862d4c7a411f391495bfe81c23a1add8fb1cfdb58cac70da145596"
     },
     {
       "path": "Sources/LatchkeyCore/SecurityScopedAccess.swift",
@@ -1339,8 +1339,8 @@
     },
     {
       "path": "Sources/latchkey/main.swift",
-      "bytes": 80434,
-      "sha256": "fabea10dd6890631002d5827e6b8bc389894963bdcb14f814120173ab776ab52"
+      "bytes": 80451,
+      "sha256": "29275e731f209d217760f4f9a1b1aa2247ef8c7403b51a928268732e692981e6"
     },
     {
       "path": "Tests/LatchkeyCoreTests/AWSTests.swift",
@@ -1394,8 +1394,8 @@
     },
     {
       "path": "Tests/LatchkeyCoreTests/CoreTests.swift",
-      "bytes": 4794,
-      "sha256": "0a375370a004601e14443082c8f2740ecdf1b9e968c6f69161204ae608c90a4e"
+      "bytes": 5774,
+      "sha256": "74281b88850cbdd5e6e080c7e0508b3a37c146417b0d1dc1c3f45217bc2cc20f"
     },
     {
       "path": "Tests/LatchkeyCoreTests/DuplicatesTests.swift",
@@ -1419,13 +1419,13 @@
     },
     {
       "path": "Tests/LatchkeyCoreTests/GrantTests.swift",
-      "bytes": 31967,
-      "sha256": "26c2d007b9813b42e895fa0e2deba03f04e7d8950d500ee2891291847927a638"
+      "bytes": 31991,
+      "sha256": "4cdb668f21d97b8f5e85e203a80276a59c73c5d6006c740243d92411970a1491"
     },
     {
       "path": "Tests/LatchkeyCoreTests/HookCommandTests.swift",
-      "bytes": 2241,
-      "sha256": "fa046816ed905288f452beb17f342dadc444dd3af8db19d95eea504ca37b1fd4"
+      "bytes": 2249,
+      "sha256": "414376e3b99f01d0f3c4ca5dc8208979183aa6cf48687c5f8f81c67a26c71bdb"
     },
     {
       "path": "Tests/LatchkeyCoreTests/ImportTests.swift",
@@ -1499,8 +1499,8 @@
     },
     {
       "path": "Tests/LatchkeyRunTests/CommandNameTests.swift",
-      "bytes": 1817,
-      "sha256": "2b5bf433c67c65a903ffbaeb6fe5c0c5477928f2cebf7e393d546e8aa7ea4c66"
+      "bytes": 1890,
+      "sha256": "841521365b1623ee2e4f7b4b46de5c23be95469962485559876e60110c28eda9"
     },
     {
       "path": "Tests/LatchkeyRunTests/EnvironmentRunTests.swift",
@@ -1604,8 +1604,8 @@
     },
     {
       "path": "docs/concepts.md",
-      "bytes": 7214,
-      "sha256": "85f0a50751e8e02c4fdc6b98c2ae2fcc439ea2de84b0f6530704d8954c155eee"
+      "bytes": 7226,
+      "sha256": "bdbc915d4bdc86e7d852dbc8940c5a5bf17e8054123ccc076a54dd4c0ec25691"
     },
     {
       "path": "docs/development.md",
@@ -1764,8 +1764,8 @@
     },
     {
       "path": "scripts/install.sh",
-      "bytes": 4991,
-      "sha256": "06e8fc0a4ea61b1e3d274202fcc49ebb8b6d0dd596736945af27d8d1ef263e68"
+      "bytes": 5002,
+      "sha256": "971b40b8ddb50a9cabcbc3d90a05ff639b049e8fd3ae7fbe6bc01d1d5360b207"
     },
     {
       "path": "scripts/og-image.html",
@@ -1779,8 +1779,8 @@
     },
     {
       "path": "scripts/release.sh",
-      "bytes": 10956,
-      "sha256": "b2a37be414d1f6d473b7e228591e8709800ce0644608f34e8703c4ff4935ba98"
+      "bytes": 10961,
+      "sha256": "81270dc7dc1b0727ad3d21e79821eda2607d841a73829274e10a0bf2addb00b3"
     },
     {
       "path": "scripts/release_notes.py",

@@ -78,6 +78,19 @@ final class CoreTests: XCTestCase {
         XCTAssertEqual(EnvImport.classify(key: "API_KEY", value: "pistachio://API_KEY"), .reference)
     }
 
+    /// `pist://` and `pist-file://` read the same as the other schemes.
+    func testTheShortSchemeIsAReferenceToo() {
+        let env = ["A": "pist://gemini", "URL": "postgres://u:pist://db.pass@host/db", "F": "pist-file://shop/production/P8"]
+        XCTAssertEqual(References.names(in: env), ["gemini", "db.pass"])
+        XCTAssertEqual(References.fileReferences(in: env), ["F": "shop/production/P8"])
+        XCTAssertEqual(References.resolve(env: env, with: ["gemini": "G1", "db.pass": "P"])["URL"], "postgres://u:P@host/db")
+        XCTAssertEqual(References.wholeReference("pist://shop/development/KEY"), "shop/development/KEY")
+        XCTAssertTrue(References.mentionsReference("pist-file://KEY"))
+        XCTAssertFalse(References.containsReference("pist-file://KEY"))
+        XCTAssertEqual(References.renaming("A=pist://old\n", ["old": "new"]), "A=pist://new\n")
+        XCTAssertEqual(EnvImport.classify(key: "API_KEY", value: "pist://API_KEY"), .reference)
+    }
+
     func testRenamingKeepsEachReferenceInItsOwnScheme() {
         let text = "A=latchkey://old\nB=pistachio://old\nC=pistachio://other\n"
         XCTAssertEqual(References.renaming(text, ["old": "new"]), "A=latchkey://new\nB=pistachio://new\nC=pistachio://other\n")

@@ -10,6 +10,7 @@ let package = Package(
         .library(name: "LatchkeySeal", targets: ["LatchkeySeal"]),
         .executable(name: "pistachio", targets: ["latchkey"]),
         .executable(name: "pst", targets: ["latchkey"]),
+        .executable(name: "pist", targets: ["latchkey"]),
         .executable(name: "latchkey", targets: ["latchkey"]),
         .executable(name: "latchkey-broker", targets: ["latchkey-broker"]),
     ],
