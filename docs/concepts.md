@@ -26,6 +26,10 @@ A reference can be the whole value or part of one. `latchkey run` fills them in 
 the form `latchkey-file://ID` is different: the command gets the path of a temporary file holding the value (see
 [key files](#key-files)).
 
+`pistachio://ID` and `pistachio-file://ID` mean the same as `latchkey://ID` and `latchkey-file://ID`, ahead of the
+rename to Pistachio. Both schemes keep working permanently, so env files never need rewriting. Latchkey still writes
+`latchkey://` until the other tools that read env files accept the new scheme too.
+
 ## Projects, environments and services
 
 - A **project** is usually a repository. Import names it after the repository's folder (a worktree counts as its

@@ -47,6 +47,13 @@ final class EnvironmentRecordTests: XCTestCase {
         XCTAssertEqual(withValues["DATABASE_URL"], "postgres://u:p w@h/db")
     }
 
+    func testAnEnvFileInEitherSchemeBecomesTheSameRecord() throws {
+        let text = "OLD=latchkey://shop/development/OLD\nNEW=pistachio://shop/development/NEW\nPORT=3000\n"
+        let record = try XCTUnwrap(EnvironmentRecords.fromFile(text, references: [:], scope: "shop/development"))
+        XCTAssertEqual(record.variables["OLD"], .credential("shop/development/OLD"))
+        XCTAssertEqual(record.variables["NEW"], .credential("shop/development/NEW"))
+    }
+
     func testRemotesNormalizeAndNeverKeepCredentials() {
         for url in ["git@github.com:Me/Shop.git", "https://github.com/me/shop", "https://user:ghp_secret@github.com/me/shop.git/",
                     "ssh://git@github.com:22/me/shop.git"] {

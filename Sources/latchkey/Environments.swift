@@ -80,8 +80,7 @@ func envCommand(_ input: [String]) -> Never {
             guard let eq = a.firstIndex(of: "=") else { fail("\(a): give NAME=latchkey://ID or NAME=VALUE", code: 64) }
             let name = String(a[..<eq]), value = String(a[a.index(after: eq)...])
             guard EnvironmentRecord.isValidVariable(name) else { fail("\(name) is not a valid variable name", code: 64) }
-            if value.hasPrefix(References.scheme) {
-                let id = String(value.dropFirst(References.scheme.count))
+            if let id = References.referenceID(value) {
                 guard Wire.isValidName(id) else { fail("\(id) is not a valid item id", code: 64) }
                 vars[name] = .credential(id)
             } else {
