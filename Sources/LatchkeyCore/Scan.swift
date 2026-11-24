@@ -66,7 +66,7 @@ public enum Scan {
     public static let hook = """
     #!/bin/sh
     \(hookMarker)
-    tool=$(command -v pst || command -v pistachio || command -v lk || command -v latchkey)
+    tool=$(command -v pst || command -v pist || command -v pistachio || command -v lk || command -v latchkey)
     if [ -z "$tool" ]; then
         echo "pistachio: not found on PATH; staged env files were not scanned" >&2
         exit 0

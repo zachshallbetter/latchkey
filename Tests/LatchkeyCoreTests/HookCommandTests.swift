@@ -9,7 +9,7 @@ final class HookCommandTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: directory) }
         let hook = directory.appendingPathComponent("pre-commit")
         try Scan.hook.write(to: hook, atomically: true, encoding: .utf8)
-        let names = ["pst", "pistachio", "lk", "latchkey"]
+        let names = ["pst", "pist", "pistachio", "lk", "latchkey"]
         for name in names {
             let stub = directory.appendingPathComponent(name)
             try "#!/bin/sh\nprintf '\(name):%s\\n' \"$*\"\nexit 77\n".write(to: stub, atomically: true, encoding: .utf8)

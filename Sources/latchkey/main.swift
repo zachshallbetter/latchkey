@@ -6,7 +6,7 @@ import LatchkeyCore
 let usage = """
 Pistachio: run commands with secrets from the Mac app.
 
-pst is the short command; pistachio is the full name.
+pst is the short command (pist works too); pistachio is the full name.
 
 Items are shared (ID = NAME) or belong to a project's environment (ID = project/environment/NAME).
 Files refer to them as pistachio://ID.

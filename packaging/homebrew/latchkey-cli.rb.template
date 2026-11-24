@@ -16,6 +16,7 @@ class LatchkeyCli < Formula
     bin.install_symlink "latchkey" => "lk"
     bin.install_symlink "latchkey" => "pistachio"
     bin.install_symlink "latchkey" => "pst"
+    bin.install_symlink "latchkey" => "pist"
   end
 
   def caveats

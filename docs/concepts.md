@@ -26,9 +26,9 @@ A reference can be the whole value or part of one. `pst run` fills them in when 
 the form `pistachio-file://ID` is different: the command gets the path of a temporary file holding the value (see
 [key files](#key-files)).
 
-`pistachio://ID` and `pistachio-file://ID` mean the same as `pistachio://ID` and `pistachio-file://ID`, ahead of the
-rename to Pistachio. Both schemes keep working permanently, so env files never need rewriting. Pistachio still writes
-`pistachio://` until the other tools that read env files accept the new scheme too.
+`latchkey://ID`, `pistachio://ID` and `pist://ID` all mean the same, as do `latchkey-file://ID`,
+`pistachio-file://ID` and `pist-file://ID`. All of them keep working permanently, so env files never need rewriting.
+The app and `pst export` still write `latchkey://` until the other tools that read env files accept the new schemes.
 
 ## Projects, environments and services
 

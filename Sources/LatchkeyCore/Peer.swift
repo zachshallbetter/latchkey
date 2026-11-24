@@ -55,7 +55,7 @@ public struct PeerInfo: Codable, Sendable, Hashable {
 
     /// Programs that only pass a command along; a session grant ties itself to the first ancestor that isn't one.
     static let launchers: Set<String> = ["zsh", "bash", "sh", "dash", "fish", "tcsh", "csh", "ksh", "login", "sudo", "env",
-                                         "nohup", "tmux", "screen", "latchkey", "lk", "pistachio", "pst", "xargs", "make", "npx", "npm", "pnpm", "yarn", "bun"]
+                                         "nohup", "tmux", "screen", "latchkey", "lk", "pistachio", "pst", "pist", "xargs", "make", "npx", "npm", "pnpm", "yarn", "bun"]
 
     /// The process a session grant should last as long as: the nearest ancestor that isn't a shell or launcher,
     /// usually the agent (`claude`, `codex`, `cursor`).

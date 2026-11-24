@@ -2,16 +2,16 @@ import Darwin
 import Foundation
 
 /// `latchkey://NAME` or `latchkey://project/environment/NAME` inside an environment value stands for that item.
-/// `pistachio://` means the same and always will: env files written before the rename keep working unchanged.
+/// `pistachio://` and `pist://` mean the same and always will: env files written before the rename keep working unchanged.
 public enum References {
     /// The scheme Latchkey writes. It stays `latchkey://` until the tools that read env files outside this repository
     /// (older Latchkey builds, the bootstrap harness, ACP, Hermit) accept `pistachio://` too.
     public static let scheme = "latchkey://"
     /// Every scheme that's read as a reference.
-    public static let schemes = ["latchkey://", "pistachio://"]
+    public static let schemes = ["latchkey://", "pistachio://", "pist://"]
 
     private static let pattern = try! NSRegularExpression(
-        pattern: "(latchkey://|pistachio://)((?:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/)?[A-Za-z0-9_.-]+)")
+        pattern: "(latchkey://|pistachio://|pist://)((?:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/)?[A-Za-z0-9_.-]+)")
 
     /// What follows the scheme when `value` starts with one, valid id or not.
     public static func referenceID(_ value: String) -> String? {
@@ -78,9 +78,9 @@ public enum References {
 
     /// `latchkey-file://ID` as a whole value: the command gets the path of a temporary file holding the value,
     /// for tools that want a file (a .p8 key, a service-account JSON).
-    /// `pistachio-file://ID` means the same.
+    /// `pistachio-file://ID` and `pist-file://ID` mean the same.
     public static let fileScheme = "latchkey-file://"
-    public static let fileSchemes = ["latchkey-file://", "pistachio-file://"]
+    public static let fileSchemes = ["latchkey-file://", "pistachio-file://", "pist-file://"]
 
     /// Variables whose whole value is a file reference → the item id.
     public static func fileReferences(in env: [String: String]) -> [String: String] {
