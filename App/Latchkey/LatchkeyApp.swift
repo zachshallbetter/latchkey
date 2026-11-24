@@ -800,7 +800,6 @@ final class AppModel {
     /// Store app may not install code outside its own container (guidelines 2.4.5, 2.5.2).
     static let commandLineToolPage = URL(string: "https://latchkey.snackstud.io/cli.html")!
 
-    /// `latchkey`, and `lk` for short, in ~/.local/bin.
     /// A copy of the command-line tool installed outside the app (scripts/install.sh, Homebrew or the download), for
     /// copies of Latchkey without one inside.
     var installedTool: URL? {
@@ -811,11 +810,11 @@ final class AppModel {
     }
 
     static var toolLinks: [URL] {
-        ["latchkey", "lk"].map { URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".local/bin/\($0)") }
+        ["latchkey", "lk", "pistachio"].map { URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".local/bin/\($0)") }
     }
 
-    /// Links ~/.local/bin/latchkey and ~/.local/bin/lk to the tool inside the app, so it updates with the app. Replaces
-    /// only links; a file of either name is left alone and reported.
+    /// Links ~/.local/bin/latchkey, ~/.local/bin/lk and ~/.local/bin/pistachio to the tool inside the app, so they update
+    /// with the app. Replaces only links; a file of any of those names is left alone and reported.
     func installCommandLineTool() {
         #if LATCHKEY_APP_STORE
         NSWorkspace.shared.open(Self.commandLineToolPage)
@@ -844,8 +843,8 @@ final class AppModel {
             notice = "Couldn't install the command-line tool: \(error.localizedDescription)"
             return
         }
-        var text = installed.isEmpty ? "" : "Installed \(installed.joined(separator: " and ")). Make sure ~/.local/bin is on your PATH."
-        if !inTheWay.isEmpty { text += (text.isEmpty ? "" : " ") + "\(inTheWay.joined(separator: " and ")) already exists and isn't a link to Latchkey; left as is." }
+        var text = installed.isEmpty ? "" : "Installed \(ListFormatter.localizedString(byJoining: installed)). Make sure ~/.local/bin is on your PATH."
+        if !inTheWay.isEmpty { text += (text.isEmpty ? "" : " ") + "\(ListFormatter.localizedString(byJoining: inTheWay)) \(inTheWay.count == 1 ? "already exists and isn't a link" : "already exist and aren't links") to Latchkey; left as is." }
         notice = text
         #endif
     }

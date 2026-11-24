@@ -73,7 +73,7 @@ window shows them; the script refuses a version with no notes), and a link to th
 ## Homebrew
 
 The script writes `build/release/VERSION/latchkey.rb` from `packaging/homebrew/latchkey.rb.template`: the app,
-`latchkey` and `lk` on the PATH, and a `zap` that removes Latchkey's folder and settings (not keychain items). The
+`latchkey`, `lk` and `pistachio` on the PATH, and a `zap` that removes Latchkey's folder and settings (not keychain items). The
 download repository and homepage default to `zachshallbetter/latchkey` and https://latchkey.snackstud.io/
 (override with `LATCHKEY_RELEASES_REPO` and `LATCHKEY_HOMEPAGE`).
 

@@ -14,6 +14,7 @@ cask "latchkey" do
   app "Latchkey.app"
   binary "#{appdir}/Latchkey.app/Contents/Helpers/latchkey"
   binary "#{appdir}/Latchkey.app/Contents/Helpers/latchkey", target: "lk"
+  binary "#{appdir}/Latchkey.app/Contents/Helpers/latchkey", target: "pistachio"
 
   # Items stay in iCloud Keychain; remove them in the app first if you want them gone.
   zap trash: [

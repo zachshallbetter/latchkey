@@ -1,6 +1,6 @@
 # Command line
 
-`latchkey` (or `lk` for short) talks to the Latchkey app, starting it in the background if it isn't running. It has no direct value-printing command
+`latchkey` (or `lk` for short, or `pistachio`, its name after the rename) talks to the Latchkey app, starting it in the background if it isn't running. It has no direct value-printing command
 except `latchkey get`; child output uses exact-value masking, which transformed secrets can bypass. `latchkey help` prints a summary.
 
 IDs are `NAME` (shared) or `project/environment/NAME`. Where a command takes several, separate them with commas, and
