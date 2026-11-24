@@ -282,9 +282,9 @@ struct ApprovalView: View {
             }
             DisclosureGroup(isExpanded: $showDetails) {
                 Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 8) {
-                    if request.fromSafari {
-                        row("Asked by", "Pistachio's Safari extension")
-                        if let page = request.page { row("Page", page + "\n(as Safari reported it)", mono: true) }
+                    if request.fromBrowser {
+                        row("Asked by", "Pistachio for " + (request.browserName ?? "Safari"))
+                        if let page = request.page { row("Page", page + "\n(as " + (request.browserName ?? "Safari") + " reported it)", mono: true) }
                     } else {
                         let via = request.chain.prefix(4).joined(separator: " › ")
                         row("Asked by", (request.asker.map { "\($0), via \(via)" } ?? via) + (request.byAgent ? "\nthrough Pistachio's MCP server" : ""))
@@ -438,7 +438,7 @@ struct ApprovalView: View {
 
     /// Who and where, in a line: "Claude in ~/Projects/site".
     private var subtitle: String {
-        if request.fromSafari { return "Pistachio for Safari" + (request.page.map { " on \($0)" } ?? "") }
+        if request.fromBrowser { return "Pistachio for " + (request.browserName ?? "Safari") + (request.page.map { " on \($0)" } ?? "") }
         if request.overSSH { return "From another computer" }
         let place = request.folder.isEmpty || request.folder == "/" ? "" : " in " + Broker.tilde(request.folder)
         return (request.asker ?? (request.fromApp ? "Pistachio" : "A program")) + place

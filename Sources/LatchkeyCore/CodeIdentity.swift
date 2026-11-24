@@ -8,6 +8,7 @@ public enum CodeIdentity {
     /// The app's bundle ID and the identifier the command-line tool is signed with.
     public static let appIdentifier = "io.snackstud.latchkey"
     public static let toolIdentifier = "io.snackstud.latchkey.cli"
+    public static let browserHostIdentifier = "io.snackstud.pistachio.browser"
     public static let safariExtensionIdentifier = "io.snackstud.latchkey.safari"
 
     /// The team that signed this process, or nil for an unsigned or ad hoc build, which can't vouch for anyone.
@@ -40,6 +41,22 @@ public enum CodeIdentity {
         guard SecStaticCodeCreateWithPath(url as CFURL, [], &code) == errSecSuccess, let code,
               SecRequirementCreateWithString(text as CFString, [], &requirement) == errSecSuccess, let requirement else { return false }
         return SecStaticCodeCheckValidity(code, SecCSFlags(rawValue: kSecCSStrictValidate), requirement) == errSecSuccess
+    }
+
+    /// Supplemental native-browser parent check. The broker still authenticates the helper by audit token.
+    public static func browserParent(_ pid: Int32, identifierPrefix: String, team: String) -> Bool {
+        guard let started = PeerInfo.started(pid) else { return false }
+        var code: SecCode?, staticCode: SecStaticCode?, requirement: SecRequirement?, info: CFDictionary?
+        let attributes = [kSecGuestAttributePid: NSNumber(value: pid)] as CFDictionary
+        let text = "anchor apple generic and certificate leaf[subject.OU] = \"\(team)\""
+        guard SecCodeCopyGuestWithAttributes(nil, attributes, [], &code) == errSecSuccess, let code,
+              SecRequirementCreateWithString(text as CFString, [], &requirement) == errSecSuccess, let requirement,
+              SecCodeCheckValidity(code, [], requirement) == errSecSuccess,
+              SecCodeCopyStaticCode(code, [], &staticCode) == errSecSuccess, let staticCode,
+              SecCodeCopySigningInformation(staticCode, SecCSFlags(rawValue: kSecCSSigningInformation), &info) == errSecSuccess,
+              let identifier = (info as? [String: Any])?[kSecCodeInfoIdentifier as String] as? String,
+              identifier == identifierPrefix || identifier.hasPrefix(identifierPrefix + ".") else { return false }
+        return PeerInfo.started(pid) == started
     }
 
     /// The audit token of the process on the other end of a Unix socket.

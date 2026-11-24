@@ -1,8 +1,8 @@
-// Finds keys and tokens on the page with Latchkey's detector (detector.js) and offers to save them. Confident finds
-// get a small "Save to Latchkey" button on the box that holds the key; less certain ones are listed in the toolbar
+// Finds keys and tokens on the page with Pistachio's detector (detector.js) and offers to save them. Confident finds
+// get a small "Save to Pistachio" button on the box that holds the key; less certain ones are listed in the toolbar
 // panel. It also notes fields that expect a key, token or certificate, by their labels, never their values, and can
-// fill one from Latchkey when you choose an item. Values stay in this page until you press Save, and then go only to
-// the Latchkey app, which asks you first; a filled value comes from the app only after you approve it, and goes only
+// fill one from Pistachio when you choose an item. Values stay in this page until you press Save, and then go only to
+// the Pistachio app, which asks you first; a filled value comes from the app only after you approve it, and goes only
 // into the field you chose. The toolbar panel sees previews, never values.
 (function () {
   "use strict";
@@ -17,7 +17,7 @@
   var pageURL = location.href;
   var FIELDS = "input:not([type=password]):not([type=hidden]), textarea";
   var MAX_FOUND = 100;
-  var UNREACHABLE = "Couldn't reach Latchkey. Reload this page; if that doesn't help, open the Latchkey app.";
+  var UNREACHABLE = "Couldn't reach Pistachio. Reload this page; if that doesn't help, open the Pistachio app.";
 
   // ---- Where to look, and the words around a value
   var SKIP = "script,style,noscript,svg,template,[contenteditable=true]";
@@ -36,11 +36,21 @@
     return bits.filter(Boolean).join(" ").replace(/\s+/g, " ").slice(0, 200);
   }
   function nearbyFor(el) {
-    var box = el.closest('[role="dialog"], dialog, [aria-modal="true"], .modal, form, section, article') || el.parentElement;
-    return box ? (box.innerText || box.textContent || "").slice(0, 1500) : "";
+    // Keep the nearest relevant group. A page-wide “API keys” heading must not turn unrelated IDs into secrets.
+    for (var box = el.parentElement, depth = 0; box && box !== document.body && box !== document.documentElement && depth < 5; box = box.parentElement, depth++) {
+      var text = box.innerText || box.textContent || "";
+      if (text.length > 1500) break;
+      if (box.matches('[role="dialog"], dialog, [aria-modal="true"], .modal, form, section, article, tr, li') ||
+          /\b(?:api[ _-]?key|secret|token|copy|shown|generate|created)\b/i.test(text)) return text;
+    }
+    var parent = el.parentElement;
+    return parent && parent !== document.body && parent !== document.documentElement ?
+      (parent.innerText || parent.textContent || "").slice(0, 400) : "";
   }
   function contextFor(el, field) {
-    return { label: labelFor(el), nearby: nearbyFor(el), host: location.hostname, field: field };
+    // Titles and URL paths are classification hints only; query/fragment data is never collected for detection.
+    return { label: labelFor(el), nearby: nearbyFor(el), host: location.hostname, field: field,
+             title: (document.title || "").slice(0, 160), path: (location.pathname || "").slice(0, 200) };
   }
 
   // ---- Where a key is on screen: one box, the frame around its text or the field holding it. The button and the
@@ -150,7 +160,7 @@
   // ---- Fields that expect a secret, as password managers spot password fields: by label, placeholder, name and
   // autocomplete hint. Their values are never read here (password-type fields included).
   var secretFields = [];     // { el, kind: { type, kind }, label }
-  var filled = new WeakSet(); // fields Latchkey filled: what's in them came from Latchkey, so it isn't offered back
+  var filled = new WeakSet(); // fields Pistachio filled: what's in them came from Pistachio, so it isn't offered back
   var MAX_FIELDS = 50;
   function noteField(el) {
     if (!D.fieldKind || secretFields.some(function (f) { return f.el === el; })) return;
@@ -220,6 +230,7 @@
 
   // ---- The button on a key's box
   var STYLE =
+    "[hidden]{display:none!important}" +
     ":host{all:initial}" +
     "*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,sans-serif}" +
     "@keyframes lkpop{from{opacity:0;transform:scale(.85)}}" +
@@ -238,8 +249,24 @@
     ".r{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}button.x{font:600 13px -apple-system,sans-serif;padding:6px 12px;border-radius:7px;border:1px solid #c9d0d9;background:transparent;color:inherit;cursor:pointer}" +
     "button.go{background:#0a63d1;border-color:#0a63d1;color:#fff}button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #0a63d1;outline-offset:1px}" +
     ".s{margin:10px 0 0;min-height:1em}.hint{margin:4px 0 0;font-size:12px}.conf{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:5px;font-size:11px;font-weight:600;background:rgba(127,127,127,.18)}" +
+    "details{margin:8px 0}summary{cursor:pointer;font-size:12px}details p{margin:8px 0 0}summary:focus-visible{outline:2px solid #0a63d1;outline-offset:2px}" +
     ".ref{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:6px 8px;border-radius:7px;background:rgba(127,127,127,.14)}.ref code{flex:1;overflow-wrap:anywhere}";
-  var MARK = '<svg viewBox="0 0 523 544" aria-hidden="true"><path d="M405.4,40.3C449,46.4 480.9,82.9 482.9,125.3C496.2,127.9 509.8,130.9 523,133.8C531.6,17.7 373.8,-46.7 298.2,40.2C314,43.4 328.6,48.5 342,55.1C359.9,42.9 382.2,37 405.4,40.3Z"/><path d="M361.9,266.2C311.8,255 272.3,217.2 258.9,167.4C252.9,147.6 271.1,126.5 291.5,129.6C328.5,139.7 320.5,198.8 377,208.8C389.9,212.6 402.2,211 417.2,206.1C410.4,-54.8 29.4,32.8 123.4,276C117,295.9 96.3,309 89.1,328.6C83.1,359.5 85.6,354.9 60.5,368.5C47.7,378.5 65.4,406.1 46.1,409.2C26.6,412.3 0.8,460.9 0.2,465.1C-0.5,470.3 0.1,540.1 6,543.6C18,546.5 68.3,535.6 92.4,528.8C113.5,508.9 201.2,389.6 225.6,360.7C231,352.4 241.2,356.8 249.2,356.9C325.7,363.7 378.1,323.6 402.3,270.2C388.9,270.9 375.1,269.7 362,266.3Z"/><path d="M523.3,129.8C520.8,163.7 513,186.7 498.6,207.1L466.4,183.8C478.4,167.7 483.9,145.3 482.7,121.2Z"/><path d="M498.6,207.1C513.7,185.7 482.4,162.3 466.4,183.8C450.6,205.1 412.1,224.7 383,220.2C340.2,215.9 319.9,180.3 305.5,152.2C299.5,142.7 293.1,137.2 283.1,139.9C272.1,142.5 265.6,153.8 268.6,164.7C280.7,209.9 316.6,245.8 364.3,256.4C413.8,269.3 469.3,248.7 498.6,206.9Z"/></svg>';
+  var MARK_PATHS = ["M166.72,301.46c-191.45,63.02-11.04-197.77,68.73-215.65,27.11-4.15,24.34,48.9,26.61,67,.17,14.74-1.54,28.75-4.76,43.15C246.81,243.37,211.51,283.29,166.72,301.46Z", "M98.99,190.28c-6.59-41.74-20.77-88.47-7.1-129.12,44.38-72.13,123.56-95.35,128.39,13.54C170.16,101.86,127.19,140.29,98.99,190.28Z", "M67.72,295.22C-3.06,263.39-17.65,168.05,20.63,105.54c11.63-17.54,36.47-69.19,60.74-60.54-23.72,47.86-5.36,106.51,1.22,156.81,0,0,2.59,12.73,2.59,12.73C73.26,239.23,63.63,267.51,67.72,295.22Z"];
+
+  function addStyle(root, extra) {
+    var style = document.createElement("style");
+    style.textContent = STYLE + (extra || "");
+    root.prepend(style);
+  }
+  function addMark(button) {
+    var ns = "http://www.w3.org/2000/svg", svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 262.07 311.26");
+    svg.setAttribute("aria-hidden", "true");
+    MARK_PATHS.forEach(function (d) {
+      var path = document.createElementNS(ns, "path"); path.setAttribute("d", d); svg.append(path);
+    });
+    button.prepend(svg);
+  }
 
   function host(z) {
     var h = document.createElement("div");
@@ -271,7 +298,7 @@
 
   // The panel opens from the button, beside the box rather than over the key: below it, else above, else to a side.
   function placePanel(h) {
-    var d = h._d, b = d && d.id ? boxOf(d) : null, r = b && b.rect, pad = 8;
+    var d = h._d, b = d ? boxOf(d) : null, r = b && b.rect, pad = 8;
     var w = h.offsetWidth || 340, ht = h.offsetHeight || 280, vw = window.innerWidth, vh = window.innerHeight;
     if (!r && h._anchor && document.contains(h._anchor)) r = h._anchor.getBoundingClientRect();
     if (!r || (!r.width && !r.height)) {   // nothing on screen to sit beside: the bottom-right corner
@@ -296,10 +323,11 @@
     if (pills.has(d.id)) return;
     var h = host(2147483646);
     var root = h.attachShadow({ mode: "closed" });
-    root.innerHTML = "<style>" + STYLE + "</style><button class='pill' type='button'>" + MARK + "<span>Save to Latchkey</span></button>";
+    root.innerHTML = "<button class='pill' type='button'><span>Save to Pistachio</span></button>";
+    addStyle(root); addMark(root.querySelector("button"));
     h._button = root.querySelector("button");
-    h._button.setAttribute("aria-label", "Save this " + (d.result.service || "secret") + " to Latchkey");
-    h._button.title = "Save to Latchkey";
+    h._button.setAttribute("aria-label", "Save this " + (d.result.service || "secret") + " to Pistachio");
+    h._button.title = "Save to Pistachio";
     h._button.addEventListener("click", function () { openPanel(d); });
     pills.set(d.id, h);
     placePill(h, d);
@@ -344,21 +372,37 @@
     h._d = d; h._anchor = anchor || d.element;
     var root = h.attachShadow({ mode: "closed" });
     var label = r.type + (r.environment ? " · " + (r.environment === "production" ? "live" : "test") : "");
-    root.innerHTML = "<style>" + STYLE + "</style>" +
-      '<div class="b" role="dialog" aria-label="Save to Latchkey">' +
-      '<b class="t">Save to Latchkey?</b>' +
-      '<p class="m"><span id="what"></span><span class="conf" id="conf"></span><br><code id="prev"></code></p>' +
+    root.innerHTML =
+      '<div class="b" role="dialog" aria-label="Save to Pistachio">' +
+      '<b class="t" id="lk-heading">Save to Pistachio?</b>' +
+      '<p class="m" id="lk-source"></p>' +
+      '<div id="lk-form">' +
+      '<p class="m"><span id="what"></span><span class="conf" id="conf" hidden></span><br><code id="prev"></code></p>' +
+      '<details class="m"><summary>About this suggestion</summary><p id="lk-page-title"></p><p id="lk-evidence"></p></details>' +
       '<label for="lk-place">Where</label><select id="lk-place"><option value="">Shared (every project)</option></select>' +
       '<label for="lk-name">Name</label><input id="lk-name" autocomplete="off" spellcheck="false">' +
-      '<p class="m hint" id="lk-hint"></p>' +
-      '<div class="r"><button type="button" class="x" id="lk-no">Not now</button><button type="button" class="x go" id="lk-save">Save to Latchkey</button></div>' +
+      '<p class="m hint" id="lk-hint" hidden></p>' +
+      '<div class="r"><button type="button" class="x" id="lk-no">Not now</button><button type="button" class="x go" id="lk-save">Save to Pistachio</button></div></div>' +
       '<p class="s m" id="lk-status" aria-live="polite"></p>' +
-      '<div id="lk-next" hidden><p class="m">Use it in an env file in place of the value:</p>' +
-      '<p class="ref"><code id="lk-ref"></code><button type="button" class="x" id="lk-copy">Copy</button></p>' +
-      '<p class="m">Then run your project with <code>lk run --env-file .env -- &lt;your command&gt;</code>. If this replaces an older key, revoke the old one on this page.</p></div></div>';
+      '<div id="lk-next" hidden>' +
+      '<div class="r"><button type="button" class="x" id="lk-copy">Copy reference</button><button type="button" class="x go" id="lk-done">Done</button></div>' +
+      '<details class="m"><summary>Use in your project</summary><p>Use this reference in your env file:</p>' +
+      '<p class="ref"><code id="lk-ref"></code></p>' +
+      '<p>Run your project with <code>pst run --env-file .env -- &lt;your command&gt;</code>.</p></details></div></div>';
+    addStyle(root);
     h._panel = root.querySelector(".b");
+    var title = (document.title || "").split(r.value).join(D.preview(r.value)).trim().slice(0, 120);
+    root.getElementById("lk-source").textContent = "From " + location.host;
+    root.getElementById("lk-page-title").textContent = title;
+    label = label.replace(" (suggested)", "").replace(/\bapi\b/gi, "API");
     root.getElementById("what").textContent = label;
-    root.getElementById("conf").textContent = r.isPublic ? "not secret" : { high: "strong match", medium: "possible secret", selected: "you chose it" }[r.confidence] || "likely";
+    var evidence = root.getElementById("lk-evidence");
+    if (r.basis === "context" && r.evidence && r.evidence.length) {
+      evidence.textContent = r.evidence.join(" · ");
+    }
+    if (r.isPublic) { root.getElementById("conf").hidden = false; root.getElementById("conf").textContent = "public"; }
+    if (!evidence.textContent) evidence.textContent = r.confidence === "selected" ? "You selected this text." : "Recognized credential format.";
+    root.querySelectorAll("details").forEach(function (details) { details.addEventListener("toggle", function () { placePanel(h); }); });
     root.getElementById("prev").textContent = D.preview(r.value);
     var placeSel = root.getElementById("lk-place"), name = root.getElementById("lk-name"), hint = root.getElementById("lk-hint");
     var status = root.getElementById("lk-status"), save = root.getElementById("lk-save");
@@ -367,12 +411,13 @@
     function id() { return (placeSel.value ? placeSel.value + "/" : "") + name.value.trim(); }
     function explain() {
       var taken = existing.some(function (e) { return e.id === id(); });
-      hint.textContent = taken ? "Replaces the current value; the old one stays in its history." : "Saved as " + id() + ".";
+      hint.hidden = !taken;
+      hint.textContent = taken ? "Replaces an existing item. Its previous value stays in history." : "";
     }
     placeSel.addEventListener("change", explain);
     name.addEventListener("input", explain);
     browser.runtime.sendMessage({ op: "places" }).then(function (res) {
-      if (!res || !res.ok) { status.textContent = (res && res.error) || "Couldn't reach Latchkey."; explain(); return; }
+      if (!res || !res.ok) { status.textContent = (res && res.error) || "Couldn't reach Pistachio."; explain(); return; }
       existing = res.items || [];
       res.places.forEach(function (p) { var o = document.createElement("option"); o.value = p; o.textContent = p; placeSel.appendChild(o); });
       // Where this service's key already lives, or a project environment that matches a live or test key.
@@ -389,6 +434,7 @@
       placePanel(h);
     }).catch(function () { status.textContent = UNREACHABLE; explain(); });
     root.getElementById("lk-no").addEventListener("click", close);
+    root.getElementById("lk-done").addEventListener("click", close);
     function close() { h.remove(); if (panelHost === h) panelHost = null; }
     h.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
     save.addEventListener("click", function () {
@@ -399,11 +445,12 @@
       browser.runtime.sendMessage({ op: "save", id: id(), value: r.value, kind: r.kind, service: r.service }).then(function (res) {
         if (res && res.ok) {
           retire(d);
-          status.textContent = "Saved to Latchkey as " + res.id + ".";
-          save.hidden = true; placeSel.disabled = true; name.disabled = true; hint.hidden = true;
-          root.getElementById("lk-no").textContent = "Done";
-          root.getElementById("lk-ref").textContent = res.id.split("/").pop() + "=latchkey://" + res.id;
+          root.getElementById("lk-heading").textContent = "Saved to Pistachio";
+          status.textContent = res.id;
+          root.getElementById("lk-form").hidden = true;
+          root.getElementById("lk-ref").textContent = res.id.split("/").pop() + "=pistachio://" + res.id;
           root.getElementById("lk-next").hidden = false;
+          root.getElementById("lk-done").focus();
           var pill = pills.get(d.id); if (pill) { pill.remove(); pills.delete(d.id); }
           root.getElementById("lk-copy").addEventListener("click", function (ev) {
             navigator.clipboard.writeText(root.getElementById("lk-ref").textContent).then(function () { ev.target.textContent = "Copied"; }, function () { ev.target.textContent = "Select and copy"; });
@@ -420,7 +467,7 @@
     setTimeout(function () { (offeredByPage ? save : name).focus(); placePanel(h); }, 0);
   }
 
-  // ---- Filling a field from Latchkey. Clicking into a field that expects a key shows a Latchkey badge in it; the
+  // ---- Filling a field from Pistachio. Clicking into a field that expects a key shows a Pistachio badge in it; the
   // badge lists the items the app allows on this site (names only), and choosing one asks for Touch ID. The value
   // comes back only then, and goes straight into that field.
   var fillBadge = null;
@@ -441,10 +488,11 @@
     hideFillBadge();
     var h = host(2147483646);
     var root = h.attachShadow({ mode: "closed" });
-    root.innerHTML = "<style>" + STYLE + "</style><button class='pill icon' type='button'>" + MARK + "<span>Fill from Latchkey</span></button>";
+    root.innerHTML = "<button class='pill icon' type='button'><span>Fill from Pistachio</span></button>";
+    addStyle(root); addMark(root.querySelector("button"));
     var b = root.querySelector("button");
-    b.setAttribute("aria-label", "Fill this " + f.kind.type.toLowerCase() + " from Latchkey");
-    b.title = "Fill from Latchkey";
+    b.setAttribute("aria-label", "Fill this " + f.kind.type.toLowerCase() + " from Pistachio");
+    b.title = "Fill from Pistachio";
     b.addEventListener("mousedown", function (e) { e.preventDefault(); });   // keep the field focused
     b.addEventListener("click", function () { openFillPanel(f); });
     h._field = f; fillBadge = h;
@@ -487,16 +535,16 @@
     var h = host(2147483647);
     h._d = null; h._anchor = f.el; h._field = f;
     var root = h.attachShadow({ mode: "closed" });
-    root.innerHTML = "<style>" + STYLE +
-      ".list{max-height:220px;overflow:auto;margin:8px 0 0;padding:0;list-style:none}.list button{width:100%;text-align:left;display:block;padding:6px 8px;margin:0 0 4px;" +
-      "border:1px solid rgba(127,127,127,.3);border-radius:7px;background:transparent;color:inherit;font:13px -apple-system,sans-serif;cursor:pointer}" +
-      ".list button:hover{background:rgba(127,127,127,.12)}.list small{display:block;color:#8a94a2;font-size:11px}</style>" +
-      '<div class="b" role="dialog" aria-label="Fill from Latchkey">' +
-      '<b class="t">Fill from Latchkey</b><p class="m" id="what"></p>' +
+    root.innerHTML =
+      '<div class="b" role="dialog" aria-label="Fill from Pistachio">' +
+      '<b class="t">Fill from Pistachio</b><p class="m" id="what"></p>' +
       '<input id="lk-q" placeholder="Search items" autocomplete="off" spellcheck="false" aria-label="Search items">' +
       '<ul class="list" id="lk-items"></ul>' +
       '<p class="s m" id="lk-status" aria-live="polite"></p>' +
       '<div class="r"><button type="button" class="x" id="lk-no">Not now</button></div></div>';
+    addStyle(root, ".list{max-height:220px;overflow:auto;margin:8px 0 0;padding:0;list-style:none}.list button{width:100%;text-align:left;display:block;padding:6px 8px;margin:0 0 4px;" +
+      "border:1px solid rgba(127,127,127,.3);border-radius:7px;background:transparent;color:inherit;font:13px -apple-system,sans-serif;cursor:pointer}" +
+      ".list button:hover{background:rgba(127,127,127,.12)}.list small{display:block;color:#8a94a2;font-size:11px}");
     h._panel = root.querySelector(".b");
     var status = root.getElementById("lk-status"), list = root.getElementById("lk-items"), q = root.getElementById("lk-q");
     root.getElementById("what").textContent = f.kind.type + (f.label ? " · " + f.label : "");
@@ -535,7 +583,7 @@
     browser.runtime.sendMessage({ op: "fillable" }).then(function (res) {
       if (!res || !res.ok) { status.textContent = (res && res.error) || UNREACHABLE; placePanel(h); return; }
       items = rank(res.items || [], f);
-      if (!items.length) status.textContent = "Nothing in Latchkey can be filled on " + (res.host || "this site") + ". Latchkey fills an item only on its service's own site and where deployments keep their environment variables.";
+      if (!items.length) status.textContent = "Nothing in Pistachio can be filled on " + (res.host || "this site") + ". Pistachio fills an item only on its service's own site and where deployments keep their environment variables.";
       draw();
     }).catch(function () { status.textContent = UNREACHABLE; placePanel(h); });
     panelHost = h;
@@ -567,9 +615,11 @@
       return Promise.resolve(!!d);
     }
     if (msg.op === "save-selection") {
-      var sel = window.getSelection(), text = sel ? sel.toString().trim() : "";
+      var sel = window.getSelection();
+      var text = (typeof msg.selectionText === "string" ? msg.selectionText : sel ? sel.toString() : "").trim();
+      if (text.length > 16 * 1024) return Promise.resolve(false);
       if (!text) return Promise.resolve(false);
-      var anchor = sel.rangeCount ? sel.getRangeAt(0).startContainer.parentElement : document.body;
+      var anchor = sel && sel.rangeCount ? sel.getRangeAt(0).startContainer.parentElement : document.body;
       // What you chose yourself is saved even if the detector wouldn't have flagged it.
       var r = D.classify(text, contextFor(anchor, true)) ||
         { value: text, type: "Selected text", service: "", name: "API_KEY", kind: text.indexOf("\n") >= 0 ? "key" : "token", confidence: "selected" };

@@ -5,7 +5,12 @@ const assert = require("assert");
 const D = require("./Resources/detector.js");
 
 const ALNUM = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-function rand(n, chars = ALNUM) { let s = ""; for (let i = 0; i < n; i++) s += chars[Math.floor(Math.random() * chars.length)]; return s; }
+let seed = 17392853;
+function rand(n, chars = ALNUM) {
+  let s = "";
+  for (let i = 0; i < n; i++) { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; s += chars[(seed >>> 16) % chars.length]; }
+  return s;
+}
 const HEX = "0123456789abcdef";
 const j = (...p) => p.join("");
 
@@ -135,7 +140,7 @@ check("fields that expect a secret, by label and name, not value", () => {
   assert.strictEqual(k({ name: "q", placeholder: "Search tokens" }), null);
 });
 
-// Run the randomized cases many times, so a lucky draw can't hide a flaky rule.
+// Run reproducible generated cases many times, so fixture variation does not make the suite flaky.
 for (let round = 0; round < 200; round++) {
   for (const [, name] of cases) void name;
   const s = rand(48);

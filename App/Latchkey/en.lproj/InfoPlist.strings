@@ -1,0 +1,3 @@
+/* Localized product name; base display name matches the compatibility bundle filename for Finder. */
+"CFBundleDisplayName" = "Pistachio";
+"CFBundleName" = "Pistachio";

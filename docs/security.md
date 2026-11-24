@@ -165,3 +165,31 @@ Be clear about these before you rely on Pistachio:
 ## Reporting a problem
 
 Report security issues privately, as [SECURITY.md](../SECURITY.md) describes, rather than in a public issue.
+
+## Chrome and Firefox native connection
+
+Local development builds use a separate `browser.sock` listener in the existing App Group container. Its
+`.browserExtension` gate authenticates `io.snackstud.pistachio.browser` from the app’s signing team through the
+peer audit token and permits only `status`, `list`, `set` and `fill`. Every save/fill asks; agent-safe flags,
+CLI grants and grouped approvals do not bypass browser approval. The broker checks allowed fill sites again.
+The shared translator exposes no general request forwarding or export operation.
+
+The native helper accepts versioned, length-prefixed JSON (64 KiB input, 1 MiB output), refuses truncated frames
+and unlisted Chrome/Firefox extension arguments, and checks the parent browser’s vendor signature. Browser host
+manifests restrict allowed extensions. These checks supplement per-action approval; they do not attest that an
+extension is uncompromised. Page origins come from the browser background’s sender context. A compromised extension
+could misrepresent that context, so the displayed origin and app approval remain essential.
+
+The setup script verifies the app/helper signature before writing native-host manifests. A private, owner-only
+allowlist in the shared container records public extension IDs. Removal leaves vault contents untouched. Browser
+permissions remain under the user’s control. Installed-browser status connectivity is verified; live save/fill and signed sandbox runtime verification remain pending;
+see [connection setup and limitations](chrome-extension.md). No extension-store release is implied by a local build.
+
+### Browser detection context
+
+Credential detection and suggested naming use bounded local field labels, nearby groups, page title/path and exact
+provider-dashboard hints. Whole-body wording, randomness or a provider hostname alone is insufficient. Negative
+labels (request IDs, public keys, checksums, examples) take precedence over generic credential cues; public envelopes
+stay public. Provider hints and confidence never authorize a fill or replace the broker’s origin/approval checks.
+No network validity checks are performed, and titles/paths/nearby text are not added to native broker requests.
+Query strings and fragments are excluded from classification context. See [detection behavior](chrome-extension.md#context-aware-detection).

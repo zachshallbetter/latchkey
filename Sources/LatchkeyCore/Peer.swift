@@ -18,6 +18,10 @@ public struct PeerInfo: Codable, Sendable, Hashable {
     public var ancestors: [ProcessStamp]
     /// True when the caller is Latchkey's own Safari extension, checked by signature on the extension's socket.
     public var isSafariExtension = false
+    /// Set only after the browser helper passes its dedicated signed gate; never taken from request JSON.
+    public var nativeBrowser: String? = nil
+    public var isWebExtension: Bool { isSafariExtension || nativeBrowser != nil }
+    public var webExtensionName: String? { isSafariExtension ? "Safari" : nativeBrowser }
 
     public init(pid: Int32, path: String, cwd: String, chain: [String], arguments: [String] = [], isLatchkeyTool: Bool = false,
                 ancestors: [ProcessStamp] = []) {

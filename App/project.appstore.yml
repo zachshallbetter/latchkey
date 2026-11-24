@@ -15,6 +15,14 @@ targets:
       - package: LatchkeyCore
         product: LatchkeyCore
       - target: LatchkeySafari
+      - target: PistachioBrowserHost
+        embed: true
+        link: false
+        # The tool target supplies its exact signing identifier; do not replace it on copy.
+        codeSign: false
+        copy:
+          destination: wrapper
+          subpath: Contents/Helpers
     # The direct build's Info.plist is its target's plist; here it would be copied as a resource, with unresolved
     # $(PRODUCT_NAME)-style values that App Store Connect rejects.
     sources:REPLACE:
@@ -40,7 +48,8 @@ targets:
       properties:REPLACE:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        CFBundleDisplayName: Pistachio
+        # Base name matches the compatibility .app filename; en.lproj supplies the visible product name.
+        CFBundleDisplayName: Latchkey
         CFBundleName: Pistachio
         LSApplicationCategoryType: public.app-category.developer-tools
         LSMultipleInstancesProhibited: true
@@ -62,6 +71,14 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSHumanReadableCopyright: Copyright © 2026 Snack Studio
+
+  PistachioBrowserHost:
+    entitlements:
+      path: AppStore/BrowserHost.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)io.snackstud.latchkey
 
 # Same scheme XcodeGen would generate, plus the local StoreKit configuration for testing Latchkey Pro (Debug runs only).
 schemes:

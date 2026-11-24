@@ -38,6 +38,14 @@ targets:
         product: LatchkeySeal
       - package: Sparkle
       - target: LatchkeySafari
+      - target: PistachioBrowserHost
+        embed: true
+        link: false
+        # The tool target supplies its exact signing identifier; do not replace it on copy.
+        codeSign: false
+        copy:
+          destination: wrapper
+          subpath: Contents/Helpers
     entitlements:
       path: Latchkey/Latchkey.entitlements
       properties:
@@ -56,7 +64,8 @@ targets:
       properties:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        CFBundleDisplayName: Pistachio
+        # Base name matches the compatibility .app filename; en.lproj supplies the visible product name.
+        CFBundleDisplayName: Latchkey
         CFBundleName: Pistachio
         LSApplicationCategoryType: public.app-category.developer-tools
         # One Latchkey at a time: two would compete for the broker socket and the approval panel.
@@ -114,3 +123,25 @@ targets:
         PRODUCT_NAME: LatchkeySafari
         ENABLE_HARDENED_RUNTIME: YES
         CODE_SIGN_STYLE: Automatic
+
+  PistachioBrowserHost:
+    type: tool
+    platform: macOS
+    sources:
+      - path: ../Sources/pistachio-browser-host/main.swift
+    dependencies:
+      - package: LatchkeyCore
+        product: LatchkeyCore
+    entitlements:
+      path: Browser/BrowserHost.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)io.snackstud.latchkey
+    settings:
+      base:
+        PRODUCT_NAME: pistachio-browser-host
+        OTHER_CODE_SIGN_FLAGS: $(inherited) --identifier io.snackstud.pistachio.browser
+        PRODUCT_BUNDLE_IDENTIFIER: io.snackstud.pistachio.browser
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO

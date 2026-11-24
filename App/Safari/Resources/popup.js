@@ -1,17 +1,22 @@
-// Shows whether the extension can reach the Latchkey app, and the keys spotted on this page (previews only).
+// Shows whether the extension can reach the Pistachio app, and the keys spotted on this page (previews only).
 (function () {
-  var el = document.getElementById("status");
+  var el = document.getElementById("status"), selectionError = "";
   browser.runtime.sendNativeMessage("io.snackstud.latchkey", { op: "status" }).then(function (r) {
-    if (r && r.ok) { el.className = "status ok"; el.textContent = "Connected to Latchkey."; }
-    else { el.className = "status no"; el.textContent = (r && r.error) || "Can't reach Latchkey. Open the app."; }
+    if (selectionError) return;
+    if (r && r.ok) { el.className = "status ok"; el.textContent = "Connected to Pistachio."; }
+    else { el.className = "status no"; el.textContent = (r && r.error) || "Can't reach Pistachio. Open the app."; }
   }, function () {
-    el.className = "status no"; el.textContent = "Can't reach Latchkey. Open the app.";
+    if (selectionError) return;
+    el.className = "status no"; el.textContent = "Can't reach Pistachio. Open the app.";
   });
 
   var list = document.getElementById("found"), none = document.getElementById("none");
   browser.tabs.query({ active: true, currentWindow: true }).then(function (tabs) {
     var tab = tabs[0];
     if (!tab) { none.hidden = false; return; }
+    browser.runtime.sendMessage({ op: "selection-status", tabId: tab.id }).then(function (result) {
+      if (result && result.error) { selectionError = result.error; el.className = "status no"; el.textContent = result.error; }
+    }).catch(function () {});
     // Fields that expect a key, token or certificate, by their labels; nothing here reads what's in them.
     browser.tabs.sendMessage(tab.id, { op: "fields" }, { frameId: 0 }).then(function (fields) {
       if (!fields || !fields.length) return;

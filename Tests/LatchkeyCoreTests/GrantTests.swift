@@ -200,7 +200,7 @@ final class BrokerGrantTests: XCTestCase {
         XCTAssertEqual(asked.page, "https://dashboard.stripe.com")
         XCTAssertNil(asked.program, "named as the extension, not by its path")
         XCTAssertFalse(asked.canGrant)
-        XCTAssertTrue(asked.reason.contains("Latchkey's Safari extension on https://dashboard.stripe.com"), asked.reason)
+        XCTAssertTrue(asked.reason.contains("Pistachio for Safari on https://dashboard.stripe.com"), asked.reason)
     }
 
     func testFillSitesAreHttpsDeployPlatformsOrTheServicesOwnSite() {

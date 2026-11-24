@@ -5,10 +5,10 @@
   "validityBasis": "aggregate-source-digest",
   "selectedPaths": [],
   "sourceSelection": {
-    "includedCount": 405,
-    "includedBytes": 3674152,
+    "includedCount": 417,
+    "includedBytes": 3747279,
     "excludedCounts": {
-      "extension": 137,
+      "extension": 139,
       "generated-or-transient-file": 2
     }
   },
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "c30bcc539aa06ff5c24dbe03dcc628749a8a57f8",
+        "commit": "442ba4b2ddccc1253ed205c4b7d9720f4629af9c",
         "branch": null,
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "e38ead4603a5eb0495d365c335bb4bbdd079d824c1df93c1ecf2805d88f47067",
+  "aggregateSourceDigest": "8e6be4a43a280135689f7dba67a9c9f00163460e6d29a6c471f9109a970a5e9e",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -733,6 +733,21 @@
       "sha256": "8e0f472682ce3d40e00404ef0460635d72b80d6b433af5e4335ac674517c30e0"
     },
     {
+      "path": "App/Browser/browser-api.js",
+      "bytes": 2449,
+      "sha256": "32ddb7b7e6834268f4f98e7f8f20577c69caa6624c2d276c44f71748337fe7bc"
+    },
+    {
+      "path": "App/Browser/browser-api.test.js",
+      "bytes": 2634,
+      "sha256": "6c70334d009c35a33550c7d76f8c5012285b0e0e5d66db37efa44b991b335fb1"
+    },
+    {
+      "path": "App/Browser/selection.test.js",
+      "bytes": 4239,
+      "sha256": "54fe402b4925ce7c7e06fe6c5a9476d575ae91bca649e82f77e617a6aa7c1ce7"
+    },
+    {
       "path": "App/Latchkey/AppBranding.swift",
       "bytes": 1161,
       "sha256": "a7b627234ea42feed096c3a873edab97d67c0d12b07dd6a9520ed7bc40802723"
@@ -744,8 +759,8 @@
     },
     {
       "path": "App/Latchkey/ApprovalPanel.swift",
-      "bytes": 25972,
-      "sha256": "2a667bf93b2238d032564964f39abe262d4f6bd5f3c8b5dfa5875f47abe22771"
+      "bytes": 26061,
+      "sha256": "dd8e6279ae24863ac6a9b49afd8e8332ad4e97b15f81f9049b544c9ffdbad62e"
     },
     {
       "path": "App/Latchkey/Assets.xcassets/Contents.json",
@@ -989,8 +1004,8 @@
     },
     {
       "path": "App/Latchkey/LatchkeyApp.swift",
-      "bytes": 66726,
-      "sha256": "b369f416ea261db4060e1ac4763a786fc0f3089a1b57293fa654fc78480fa12c"
+      "bytes": 67133,
+      "sha256": "789588d095be5f3800870bf1baebbd3677ba3ce54b284dfd7549e624b6600f51"
     },
     {
       "path": "App/Latchkey/MainWindow.swift",
@@ -1059,63 +1074,68 @@
     },
     {
       "path": "App/Safari/Resources/background.js",
-      "bytes": 2388,
-      "sha256": "05ad564962fd7afe930930605ad025de446521be47f299e36639a467bae48104"
+      "bytes": 4079,
+      "sha256": "5e9da1697b98bb0a40ce436214e82e9d1d18914b9e74699463c5d876f29f2320"
     },
     {
       "path": "App/Safari/Resources/content.js",
-      "bytes": 35969,
-      "sha256": "e2699071631ebe0046dc0fa74a24c461abae68cf892aada0d8fdd1d3e0a912e7"
+      "bytes": 38163,
+      "sha256": "9f5f3c4fb71c4d1b11fca72dd8c1be00f08873d9c499710bbd48d5e9242eb946"
     },
     {
       "path": "App/Safari/Resources/detector.js",
-      "bytes": 14056,
-      "sha256": "19ae53d08121af13f0b74bd7286ba514dd98b456e48af49897dab77637bd01f7"
+      "bytes": 19988,
+      "sha256": "44a2c26a7cf5b4de19371a63d4e9d786d6b8c8a18a8374487102a4639d074206"
     },
     {
       "path": "App/Safari/Resources/manifest.json",
-      "bytes": 775,
-      "sha256": "587043bb400191744a13637a144f8877277be490a369562e65ab3be2997cefc6"
+      "bytes": 789,
+      "sha256": "aef985307cf563e40a1bf9d2e76a46df4153946e9c59b0a8bb24ab84b76bcede"
     },
     {
       "path": "App/Safari/Resources/popup.html",
-      "bytes": 2616,
-      "sha256": "be7fe1ae780b30290f07adbd2627e49826b809cb233b54ab978279d482e8b1de"
+      "bytes": 2623,
+      "sha256": "bf2d617bde9ed9aef40f86cd4a6793fc73778d0ea9c399536450062d24d3ad74"
     },
     {
       "path": "App/Safari/Resources/popup.js",
-      "bytes": 2531,
-      "sha256": "d49b7d40390c90cc64d07fa3545d7ef946afd05f58173fe848710a46aae328e4"
+      "bytes": 2878,
+      "sha256": "a682b29a7d1172becda867362c7b99cc99e9139b4e95b9b2365f78f658704103"
     },
     {
       "path": "App/Safari/SafariWebExtensionHandler.swift",
-      "bytes": 4793,
-      "sha256": "9f631e1dc2a8e18312bca1115049a56f0f256bd80a35daf6ba82c5c9087fe2dd"
+      "bytes": 1627,
+      "sha256": "c548ad0f6177e592c343f1da2cf4b71dcdf51ccc302f39a46f2a9ef6a47cd4b2"
     },
     {
       "path": "App/Safari/content.test.js",
-      "bytes": 4165,
-      "sha256": "a14cd4abac00a39c949ad90ae0101f2dfc5f5f4c319e97f3039a005f3b7fb542"
+      "bytes": 5572,
+      "sha256": "fb7b7015f33010e868cf730be26d6840b801c4ccc0289ebd29b7c7c5b599296d"
+    },
+    {
+      "path": "App/Safari/detector-context.test.js",
+      "bytes": 7457,
+      "sha256": "54dfe95aab0e8ca103deed8b28da54d22eaaecd20d65e832f570de3723af4b06"
     },
     {
       "path": "App/Safari/detector.test.js",
-      "bytes": 7459,
-      "sha256": "25188948a150780206a87eac6e9afe552f270d79506652b66b0d33dba02ac28a"
+      "bytes": 7551,
+      "sha256": "6e11a58551b4c51d11d3878d504661b89bb48c54e242758e939410fab305c8e5"
     },
     {
       "path": "App/project.appstore.yml",
-      "bytes": 3011,
-      "sha256": "6185e8111423a314012fd24e65c80f918cd7f53ae81b7a132919e5687948bae6"
+      "bytes": 3645,
+      "sha256": "0aae4d95343076111b3d1b175c17386bbfe97be9b99f5b9fe5c8ffd6bc47c057"
     },
     {
       "path": "App/project.yml",
-      "bytes": 4914,
-      "sha256": "538ca92541e7da88dd79fea1f5a294bd7e753833e4c63324ff4a18a31cc8c2d8"
+      "bytes": 6031,
+      "sha256": "d9c171fdd2ad40363a60a755eef173c00db27ac1192ad52ef65f8f56c935d259"
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 42860,
-      "sha256": "f2e57b7d41d1995f80164087a4efa493600223cd330988cbd2289802800bd803"
+      "bytes": 44582,
+      "sha256": "84b15763c9d3ade56d1b8ce9e92ffbae69f42ed97d367837021908710010311b"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1134,8 +1154,8 @@
     },
     {
       "path": "Package.swift",
-      "bytes": 1231,
-      "sha256": "47e244397cbe36ec496321c539e61ea988bc0af453384f633b13f13b3e4726fb"
+      "bytes": 1412,
+      "sha256": "7d709f95259cda8289584c6f1883268b5ab43de8f749d4eda0e116fbf79a795a"
     },
     {
       "path": "README.md",
@@ -1164,18 +1184,28 @@
     },
     {
       "path": "Sources/LatchkeyCore/Approval.swift",
-      "bytes": 9529,
-      "sha256": "c8f53ea8097455b2e80aab4f5b3bdba20ad1be5d74933e41d289827cdc5cfae3"
+      "bytes": 9642,
+      "sha256": "648c00d32f5e0c47d354e0f574428040f5dc46114d1bd59f71946334f9430274"
     },
     {
       "path": "Sources/LatchkeyCore/Broker.swift",
-      "bytes": 100706,
-      "sha256": "dbda3fc8c9e4f13e7266d93a25188e296553a5fb81e590ebf68e0253eda147a8"
+      "bytes": 101251,
+      "sha256": "917b2b3994d22282bde8ae2b05b7b8dec026aee777d63960cb54931404004a19"
     },
     {
       "path": "Sources/LatchkeyCore/BrokerEndpoint.swift",
       "bytes": 3383,
       "sha256": "ad06c3373a837880628ae974f01cf3260394f1eb40d827b07f57014fa0efa078"
+    },
+    {
+      "path": "Sources/LatchkeyCore/BrowserExtensionMessages.swift",
+      "bytes": 3517,
+      "sha256": "f7bcb73375a781963d74820c42876391d88f7cba6f1ede796b0eb9a3c7446ebf"
+    },
+    {
+      "path": "Sources/LatchkeyCore/BrowserNativeMessaging.swift",
+      "bytes": 3278,
+      "sha256": "98cc04c49c92d324cba96c6da230daeb4deaf8332f4d2bc97f459a800ac8d8d3"
     },
     {
       "path": "Sources/LatchkeyCore/Clipboard.swift",
@@ -1184,8 +1214,8 @@
     },
     {
       "path": "Sources/LatchkeyCore/CodeIdentity.swift",
-      "bytes": 3895,
-      "sha256": "13e87baf1d368dfc09fc801a1f9856c6ccb9c41c1b1a9c0b255309e3bbd399c0"
+      "bytes": 5325,
+      "sha256": "b06042a2a3ea7f642ffc26569d2b6ea9369e20207e0296a88e5e2b74206bce8d"
     },
     {
       "path": "Sources/LatchkeyCore/Duplicates.swift",
@@ -1249,8 +1279,8 @@
     },
     {
       "path": "Sources/LatchkeyCore/Peer.swift",
-      "bytes": 8882,
-      "sha256": "a8d290c9eb76c4f1987f1c95ad30fefdeca66f0b38c6177a0a5e8ae3a64413f4"
+      "bytes": 9205,
+      "sha256": "284144304874be89103581b7f20c3b3ad9593e2361d2ee494fbec0bc01e662da"
     },
     {
       "path": "Sources/LatchkeyCore/ProGate.swift",
@@ -1304,8 +1334,8 @@
     },
     {
       "path": "Sources/LatchkeyCore/Wire.swift",
-      "bytes": 18482,
-      "sha256": "7b23fad64443eb70ef27fe74d500873122ee2a2774d0185d70b510ccb52248f4"
+      "bytes": 18785,
+      "sha256": "cf6fb7e2d4067656ac6d68053f614a9b61e49c2b0cbc8d1d780242b23efcb23f"
     },
     {
       "path": "Sources/LatchkeySeal/SealedBox.swift",
@@ -1341,6 +1371,11 @@
       "path": "Sources/latchkey/main.swift",
       "bytes": 80451,
       "sha256": "29275e731f209d217760f4f9a1b1aa2247ef8c7403b51a928268732e692981e6"
+    },
+    {
+      "path": "Sources/pistachio-browser-host/main.swift",
+      "bytes": 3453,
+      "sha256": "20318e8d1abeca6db0f104fe2d4486b83de776adfa56d88cc87ff2824b9e6f8d"
     },
     {
       "path": "Tests/LatchkeyCoreTests/AWSTests.swift",
@@ -1393,6 +1428,11 @@
       "sha256": "2478316537f8b96e93ac4265c53255af4b6ce9c54ac771873171308727fa46f7"
     },
     {
+      "path": "Tests/LatchkeyCoreTests/BrowserExtensionTests.swift",
+      "bytes": 6949,
+      "sha256": "74599f60371227db44430a9d9afa9100e61da998a37f2a5b624d0e26a4f68e98"
+    },
+    {
       "path": "Tests/LatchkeyCoreTests/CoreTests.swift",
       "bytes": 5774,
       "sha256": "74281b88850cbdd5e6e080c7e0508b3a37c146417b0d1dc1c3f45217bc2cc20f"
@@ -1419,8 +1459,8 @@
     },
     {
       "path": "Tests/LatchkeyCoreTests/GrantTests.swift",
-      "bytes": 31991,
-      "sha256": "4cdb668f21d97b8f5e85e203a80276a59c73c5d6006c740243d92411970a1491"
+      "bytes": 31984,
+      "sha256": "2e3d39ada542d0fe9f82e3931e9132af23c64b763cf6268daf11868ead53ce99"
     },
     {
       "path": "Tests/LatchkeyCoreTests/HookCommandTests.swift",
@@ -1543,6 +1583,11 @@
       "sha256": "72035bcee31001b3d198ff4349a744bafed4c0d4f0336bfd3f97d4f0e0f9adf9"
     },
     {
+      "path": "docs/browser-extension-connection.md",
+      "bytes": 4276,
+      "sha256": "0abdc35755a4e968fd4dc3f0fbfe1b1bcab07bb060f251342113a8a5762c8521"
+    },
+    {
       "path": "docs/cases/01-cross-mac-migration.md",
       "bytes": 2398,
       "sha256": "8cdfada647308057fabf85e4a4e5f210974cbdb40614040dc634bfff5871e330"
@@ -1594,8 +1639,8 @@
     },
     {
       "path": "docs/chrome-extension.md",
-      "bytes": 8721,
-      "sha256": "40ea64779b6bcbb7e863023f46d2f34b6cf0d0344a8a7fdc7401450257091f86"
+      "bytes": 8634,
+      "sha256": "84529625f7bdff4b175e7b04b10c2267d4db8e215880924ad5012d9cdd14947d"
     },
     {
       "path": "docs/cli.md",
@@ -1609,8 +1654,8 @@
     },
     {
       "path": "docs/development.md",
-      "bytes": 13607,
-      "sha256": "ffcfdc829bc00c53425c7c285ffd8e333da500d370b70de5c2f704644f63bf26"
+      "bytes": 16236,
+      "sha256": "289adf1dfc3a2fe254717f366961240c24e2dee83c31ae24d2ab5aedee00c5a7"
     },
     {
       "path": "docs/evidence/app-store/2026-11-11-cli-transport.json",
@@ -1684,8 +1729,8 @@
     },
     {
       "path": "docs/security.md",
-      "bytes": 16088,
-      "sha256": "2bfe0218b5140d9dbfd5af20b71cca57ece90a96b4ea6d64d0ad29293303d9d0"
+      "bytes": 18455,
+      "sha256": "b8e16aa8017a7c3765140939f49ac80e5c6f1cfe8f9f33d195dc0f01899e0da7"
     },
     {
       "path": "docs/site.md",
@@ -1734,8 +1779,13 @@
     },
     {
       "path": "scripts/build-appstore-sandbox.py",
-      "bytes": 2943,
-      "sha256": "13057534a06f173c283668d989a7134dbcf61fe6099ac62e52713c135b260943"
+      "bytes": 2976,
+      "sha256": "525fcdc0dd4c78693b96cf3e90596dd4022a380e51d68df763e500b6a9474d63"
+    },
+    {
+      "path": "scripts/build-browser-extensions.py",
+      "bytes": 4983,
+      "sha256": "37f91989f0485c72496749139f42db7c4b02f0e536a99f8ebc8cc1eabfa56b33"
     },
     {
       "path": "scripts/changelog-page.py",
@@ -1788,6 +1838,11 @@
       "sha256": "575641bf4f6334863f177f0f3dce6d1cb99c0e7bccfc535c636eb02f4d197a23"
     },
     {
+      "path": "scripts/setup-browser-connection.py",
+      "bytes": 5047,
+      "sha256": "f4f8c7225d514688b832a7465ea21476da5a0f01132b71a3ba1c79684bb6ffb0"
+    },
+    {
       "path": "scripts/social-images.py",
       "bytes": 7781,
       "sha256": "fe54d95c2d26383063cde4ff075244ddeb56945928dd1073cfd5581fe585b4b8"
@@ -1816,6 +1871,11 @@
       "path": "scripts/tests/test_appstore_preflight.py",
       "bytes": 5528,
       "sha256": "7c8ded368e96c1880ba6bc1fb884fcd9a05c0285e7eae3ab04bdc374ed2ef793"
+    },
+    {
+      "path": "scripts/tests/test_browser_extensions.py",
+      "bytes": 4528,
+      "sha256": "d6f11f624483d5f03dbbdbf8cc3a45f5ee438eb864e5f9b78ab814977dc519d8"
     },
     {
       "path": "scripts/tests/test_release_notes.py",

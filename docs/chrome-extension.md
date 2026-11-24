@@ -1,131 +1,115 @@
-# Pistachio for Chrome (proposal)
+# Pistachio for Chrome and Firefox
 
-Status: **proposed, not built.** Pistachio has a Safari extension only. This page describes how a Chrome extension
-would work and what it would add to Pistachio's trust boundary, so the decision can be made before any code. It adds
-a new caller identity and a new way into the broker, so it needs the owner's approval first.
+Status: local development builds. Neither extension has been published. Chrome and Firefox share Safari’s
+Pistachio artwork, key detection, save/fill controls and popup. Every save and fill still requires the app’s approval.
+The owner approved the [native connection design](browser-extension-connection.md) on November 23, 2026.
 
-## What it would do
+## Build
 
-The same thing as Pistachio for Safari ([app.md](app.md#pistachio-for-safari)): spot a new key on the page where it was
-made and save it when you say so, and fill a saved key into a field on a site the app allows. Nothing new is allowed:
-the same four broker operations (`status`, `list`, `set`, `fill`), the same approvals (every save and every fill asks),
-and the same fill rules, decided by the app from the page's origin.
-
-Chromium browsers share one extension and one native messaging design: Google Chrome (including Beta, Dev and Canary),
-Microsoft Edge, Brave, Arc, Vivaldi and Chromium. "Chrome" below means all of them.
-
-## How Safari's extension reaches the app today
-
-```
-content.js ─► background.js ─► Safari ─► SafariWebExtensionHandler (appex, sandboxed)
-                                               │ JSON line over a Unix socket in the App Group container
-                                               ▼
-                                   Broker, gate .safariExtension (code signature io.snackstud.latchkey.safari;
-                                   ops status, list, set, fill)
+```bash
+python3 scripts/build-browser-extensions.py
 ```
 
-Safari runs the native handler for us, inside the app bundle, and the app admits it by code signature.
+Outputs under `build/browser-extensions/`:
 
-## How Chrome's would
+- `chrome/` and `pistachio-chrome.zip`: unpacked Chrome MV3 extension and reproducible archive.
+- `firefox/` and `pistachio-firefox.xpi`: Firefox MV3 extension and unsigned development archive.
+- `build-info.json`: archive SHA-256 hashes.
 
-Chrome has no app extension point. It launches a **native messaging host**: a program named in a small JSON file that
-Chrome reads from its own folder, talking to it over standard input and output (a 4-byte length, then JSON; at most
-1 MB from the host and 64 MB to it). Chrome starts the host when the extension calls `sendNativeMessage` and passes
-the calling extension's origin as its first argument.
+Chrome uses a service worker and requires Chrome 120 or later. Firefox uses background scripts and requires
+Firefox 142 or later. Its data disclosures include authentication information, website activity and website
+content because an approved save sends a detected credential and its page context to the local native app.
+Detection itself runs locally; no remote collection service is added.
 
+## Try a development build
+
+First build and install the updated Pistachio app using `scripts/install.sh`, then open it. The app must contain
+`Contents/Helpers/pistachio-browser-host`; an older branded app without this helper cannot connect. The retained
+installation filename is `/Applications/Latchkey.app`.
+
+1. In Chrome, open `chrome://extensions`, enable Developer mode, choose **Load unpacked**, and select
+   `build/browser-extensions/chrome`. Copy the actual extension ID shown by Chrome.
+2. In Firefox, open `about:debugging#/runtime/this-firefox`, choose **Load Temporary Add-on**, and select
+   `build/browser-extensions/firefox/manifest.json`. This temporary add-on is removed when Firefox exits.
+3. Preview setup, then register only the browsers being tested:
+
+```bash
+python3 scripts/setup-browser-connection.py --chrome-id YOUR_CHROME_EXTENSION_ID --firefox --dry-run
+python3 scripts/setup-browser-connection.py --chrome-id YOUR_CHROME_EXTENSION_ID --firefox
 ```
-content.js ─► background.js ─► Chrome ─► pistachio-chrome-host (in Latchkey.app/Contents/Helpers)
-                                               │ JSON line over a Unix socket
-                                               ▼
-                                   Broker, gate .chromeExtension (code signature io.snackstud.latchkey.chrome;
-                                   ops status, list, set, fill)
-```
 
-### The pieces
+Omit a browser’s option when it is not needed. `--app /absolute/path/to/Latchkey.app` selects another signed build.
+Setup checks the app, helper signature and shared container, writes per-user native-host manifests, and records
+only allowed extension IDs in `browser-host-allowlist.json` in the app’s existing shared container. Repeated Chrome
+IDs can be supplied; a new Chrome setup replaces the configured Chrome ID list. No browser/site permissions are
+granted by this script. Choose site access in the browser. Open the popup to check connectivity, then use a test
+credential to exercise saving, refusal and filling with the app’s approval panel.
 
-1. **The extension.** `detector.js` and `content.js` are shared with Safari unchanged; `background.js` and `popup.js`
-   get a one-line shim (`globalThis.browser ??= chrome`), because Chrome's MV3 API is `chrome.*` and returns
-   promises the same way. The manifest is Safari's plus a pinned `key` so the development build's extension ID is
-   stable. The two copies come from one source folder at build time; no fork.
-2. **The host, `pistachio-chrome-host`.** A small Swift executable in the package (beside `pistachio` and
-   `latchkey-broker`), embedded in `Contents/Helpers` and signed with the identifier `io.snackstud.latchkey.chrome`.
-   It does what `SafariWebExtensionHandler.answer` does today. That function moves into `LatchkeyCore` so both
-   hosts share one implementation; it is the canonical translator from extension messages to broker requests.
-   The host reads one framed message, refuses anything over 64 KB (a saved value is capped at 16 KB already), answers,
-   and exits.
-3. **The host manifest.** `io.snackstud.latchkey.json`, written to each installed browser's `NativeMessagingHosts`
-   folder (for example `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/`). Its `path` points at the
-   host inside `/Applications/Latchkey.app`, and `allowed_origins` lists only Pistachio's extension IDs (the Chrome Web
-   Store ID, and the pinned development ID in development builds only).
-4. **The gate.** `Broker.Gate.chromeExtension`, with the same four operations as Safari's. The app admits a
-   connection only when the peer's code signature says `io.snackstud.latchkey.chrome` from Pistachio's team, checked
-   through the audit token as it is for the CLI and the Safari extension. Approval panels say "Asked by Pistachio for
-   Chrome" (or Edge, Brave… from the parent process) and show the page's site.
+To remove registrations, run the same command with `--remove`; keep the signed app installed until removal is
+complete. Removing the connection does not delete vault items. Setup is currently a developer script; there is no
+Settings installer or store listing yet. Only Google Chrome and Mozilla Firefox are supported by the parent-process
+checks; other Chromium browsers need separately reviewed support.
 
-### Where the socket lives
+## Connection and limits
 
-The direct download listens in `~/Library/Application Support/Latchkey/`. The host gets its own socket there
-(`chrome.sock`), not the CLI's, so a gate mistake can't widen what the host may do. The App Store build is out of scope
-(below).
+Both packages use native host `io.snackstud.pistachio`. The signed helper authenticates its browser parent and
+configured extension arguments, then connects to `browser.sock` in the existing App Group container. The app admits
+only helper identity `io.snackstud.pistachio.browser` from its signing team. Its gate allows `status`, `list`, `set`
+and `fill`, and refuses CLI reads, exports, grants and execution. Safari retains its existing handler and endpoint.
+The shared translator never offers a general broker passthrough.
 
-## What this adds to the trust boundary
+Unit tests, deterministic package checks, Firefox manifest lint and a signed direct-app build cover the local
+candidate. On November 23, 2026, the updated signed app was installed and both Chrome and Firefox displayed
+“Connected to Pistachio” through their native messaging helpers. Chrome used its unpacked extension; Firefox used
+a temporary unsigned add-on. This verifies status connectivity, not a complete live save/fill approval flow. The sandboxed
+build targets the same App Group connection; compilation does not establish runtime parity or App Store approval.
+User-selected registration-folder access and signed sandbox runtime verification remain release work.
 
-- **A new door, same rooms.** The host can do exactly what the Safari extension can: list names, ask to save, ask to
-  fill. Every save and fill shows an approval naming the site; nothing stands in for it. A host that is misused can
-  produce approval panels, not values.
-- **Who can start the host.** Chrome enforces `allowed_origins`, but any program running as you can also run the host
-  binary directly, as it can run the CLI. That's the same boundary as the CLI ([security.md](security.md)). The host
-  additionally checks that its parent process is a Chromium browser signed by its vendor (Google, Microsoft, Brave,
-  The Browser Company, Vivaldi) and refuses otherwise; this narrows casual misuse and is logged, but it is not
-  presented as a security boundary.
-- **The page's origin.** As with Safari, the origin comes from the browser through the extension's background script
-  (`sender.tab.url`), never from the page. If the extension itself were compromised, it could lie about the origin;
-  the approval panel still shows that origin and asks, and fill sites are still decided by the app.
-- **The extension's reach.** Its content script runs on all sites, as Safari's does, because keys appear on many
-  dashboards; detection runs in the page and sends nothing until you press Save. Chrome's own site access controls
-  ("On click", "On specific sites") apply.
-- **Updates.** The Chrome Web Store updates the extension on its own schedule. The host checks a protocol version in
-  every message and refuses one it doesn't know, so a newer extension and an older app fail clearly.
+Firefox rejects an unsigned XPI through ordinary installation with “This add-on could not be installed because it
+has not been verified.” Use the temporary flow above for development; do not disable signature enforcement.
+[Mozilla explains the signing requirement](https://support.mozilla.org/en-US/kb/add-on-signing-in-firefox).
+Firefox permanent installation requires Mozilla signing. Chrome distribution requires the Chrome Web Store release
+workflow. Store accounts, publication, privacy review and release signing remain owner actions.
 
-## Installing it
+References: [Chrome native messaging](https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging),
+[Firefox background contexts](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/background),
+[Mozilla data consent](https://www.extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/).
 
-From **Settings › Developer › Browser Extensions** in the direct download:
+## Save Selection after an extension update
 
-- **Chrome (and the other Chromium browsers found on this Mac):** a row per installed browser with **Install**, which
-  writes that browser's host manifest and opens the extension's Chrome Web Store page, and **Remove**, which deletes
-  the manifest. The row shows "Connected" once the extension has reached the app.
-- **Safari:** unchanged (Turn On in Safari…).
+Selecting **Save Selection to Pistachio** opens an in-page form beside the selected text, with the source host visible. Page title and detection rationale are available under **About this suggestion**.
+Query strings are omitted, and any exact selected value in the title is masked. It does not save immediately. Chrome and Firefox
+use the selection captured by the browser menu, rather than relying on the page to retain its highlight. If a tab
+was already open when the extension was installed or reloaded, the command first tries the existing listener,
+then restores the bundled content scripts in the main frame and retries once. Browser packages declare `scripting`
+for that recovery, using the menu invocation’s existing `activeTab` access. No new native broker powers are added.
 
-`scripts/install.sh` writes the manifests for the development build, pointing `allowed_origins` at the pinned
-development ID, and the development extension is loaded unpacked from `build/chrome-extension/`.
+Restricted pages or missing site access produce a `!` toolbar badge, a recovery tooltip and guidance in the popup.
+Reload the page, allow the extension on that site, select the text again and retry. Framed selections and selections
+over the supported limit are refused. Test values verified opening the panel on an existing Chrome tab after
+extension reload; completing a real vault save still requires the Mac app’s approval and was not part of that check.
 
-Chrome on macOS installs extensions only from the Web Store, apart from unpacked ones in developer mode and ones a
-managed policy allows, so release builds need the
-Web Store listing.
+## Context-aware detection
 
-## Not included
+All browsers share the same local detector. Known credential formats remain strong evidence. Unfamiliar opaque
+values can qualify from a credential’s own label or variable name, or from a bounded local group that combines
+credential wording with creation/reveal cues. Randomness, an API-key page title or a provider hostname alone does
+not qualify a value. Nearby means a small containing group, not the whole document body.
 
-- **The Mac App Store version.** A sandboxed app can't write into Chrome's folders, and the temporary-exception
-  entitlement that would allow it is unlikely to pass review. The store build keeps Safari only and says so in
-  Settings, linking to the direct download for Chrome.
-- **Firefox.** Its native messaging is close to Chrome's (a different manifest folder and `allowed_extensions`), so
-  the host could serve it later. Not in the first version.
+Provider suggestions use exact dashboard hosts or explicit provider variable/label names. For example, an unfamiliar
+dotted token beside “API Key” on Google AI Studio can suggest `GEMINI_API_KEY`, preserving the complete value.
+An explicit variable such as `PAYMENTS_API_KEY` is retained. Local live/test labels can suggest an environment;
+ambiguous labels do not. Context-based results explain their evidence under **About this suggestion** in the save panel.
+These are editable hints, not proof of issuer, validity or permission to fill a site.
 
-## Work, in order
+Request/project/client IDs, checksums, CSRF/verification tokens, examples, masked values and public/publishable
+labels suppress credential suggestions. Unlabeled hashes and UUIDs stay decoys. Public key/certificate envelopes
+are identified as public items and never promoted to high-confidence secret offers. Documentation caps confidence.
+The existing known AWS access-key-ID format remains supported when labeled, even though the ID alone is not a
+secret. Password/hidden input exclusions remain in place.
 
-1. Move the message translator out of `SafariWebExtensionHandler` into `LatchkeyCore`, with tests; Safari keeps
-   working unchanged.
-2. Add `pistachio-chrome-host` and `Broker.Gate.chromeExtension`, with tests for framing, size limits, protocol version,
-   and the gate refusing other operations and other signatures.
-3. Build the Chrome extension from the shared sources; run the existing detector and content tests against it.
-4. Settings › Developer › Browser Extensions, and `scripts/install.sh` support.
-5. Release: embed and sign the host in `scripts/release.sh`; Chrome Web Store developer account, listing, privacy
-   disclosures (all-sites content script, native messaging) and review.
-6. Docs: app.md, security.md, privacy policy (a Chrome extension, same data handling), CHANGELOG.
-
-## Decisions needed
-
-- Approve the new identity (`io.snackstud.latchkey.chrome`), the new gate and socket, and the shared translator.
-- Which browsers to support in the first version: all Chromium browsers above, or Chrome only.
-- Leaving Chrome out of the App Store version.
-- The Chrome Web Store account and listing, which are the owner's to set up.
+Context is bounded: local groups up to 1,500 characters, titles up to 160, paths up to 200. Query strings and
+fragments are excluded. Classification makes no provider requests and sends no new context fields to the app.
+Saving still requires an explicit action and the app’s approval. After success, the form becomes a compact
+confirmation with **Copy reference** and **Done**; command instructions remain under **Use in your project**. Detection is heuristic; manual selection remains
+available for formats the detector misses.

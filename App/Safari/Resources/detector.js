@@ -1,4 +1,4 @@
-// Latchkey's secret detector: finds keys, tokens, private keys and connection strings in text, and says how sure it
+// Pistachio's secret detector: finds keys, tokens, private keys and connection strings in text, and says how sure it
 // is. It runs only in the page; nothing it finds leaves the page unless you press Save. The provider rules are
 // adapted for the browser from the kind of rules secret scanners such as Gitleaks use; randomness on its own is
 // never enough, only supporting evidence.
@@ -37,11 +37,13 @@
 
   var PEM_PRIVATE = /-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----[\s\S]+?-----END (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----/;
   var PEM_CERT = /-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----/;
+  var PEM_PUBLIC = /-----BEGIN (?:RSA )?PUBLIC KEY-----[\s\S]+?-----END (?:RSA )?PUBLIC KEY-----/;
+  var SSH_PUBLIC = /^(?:ssh-(?:rsa|ed25519)|ecdsa-sha2-nistp(?:256|384|521)) [A-Za-z0-9+/=]{24,}(?: [^\r\n]*)?$/;
   var PEM_ANY = /-----BEGIN [A-Z ]+-----/;
   // A URL with a password in it: user:password@host.
   var CONNECTION = /\b(postgres(?:ql)?|mysql|mariadb|mongodb(?:\+srv)?|redis|rediss|amqps?):\/\/[^\s:@/]*:([^\s@/]{6,})@[^\s/]+[^\s"'<>]*/;
   var JWT = /\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{16,}\b/;
-  var GENERIC = /[A-Za-z0-9_\-+/=]{32,}/g;
+  var GENERIC = /[A-Za-z0-9_.~+/-]{24,}={0,2}/g;
 
   // Words around a field that say it holds a secret, and words that say a key is being shown once.
   var SECRET_WORDS = /\b(api[ _-]?key|secret|access[ _-]?key|access[ _-]?token|auth(?:entication)?[ _-]?token|bearer|private[ _-]?key|client[ _-]?secret|signing[ _-]?(?:key|secret)|webhook[ _-]?secret|password|connection[ _-]?string|personal[ _-]?access[ _-]?token|service[ _-]?(?:role[ _-]?)?key|token)\b/i;
@@ -57,10 +59,62 @@
     return h;
   }
 
+  function words(text) {
+    return String(text || "").slice(0, 1500).replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/[_.-]+/g, " ");
+  }
   function snake(label) {
-    var words = (label || "").replace(/[^A-Za-z0-9 ]+/g, " ").trim().split(/\s+/).slice(0, 4);
-    var name = words.join("_").toUpperCase();
-    return /^[A-Z][A-Z0-9_]{2,40}$/.test(name) ? name : null;
+    var name = words(label).replace(/[^A-Za-z0-9 ]+/g, " ").trim().split(/\s+/).slice(0, 6).join("_").toUpperCase();
+    return /^[A-Z][A-Z0-9_]{2,63}$/.test(name) ? name : null;
+  }
+
+  // Hints only: exact dashboard hosts, never a fill permission or proof of who issued a key.
+  var PROVIDERS = [
+    ["aistudio.google.com", "Google", "GEMINI"], ["console.cloud.google.com", "Google", "GOOGLE"],
+    ["dashboard.stripe.com", "Stripe", "STRIPE"], ["github.com", "GitHub", "GITHUB"],
+    ["platform.openai.com", "OpenAI", "OPENAI"], ["console.anthropic.com", "Anthropic", "ANTHROPIC"],
+    ["vercel.com", "Vercel", "VERCEL"], ["resend.com", "Resend", "RESEND"],
+    ["console.neon.tech", "Neon", "NEON"], ["railway.com", "Railway", "RAILWAY"],
+    ["sentry.io", "Sentry", "SENTRY"], ["dash.cloudflare.com", "Cloudflare", "CLOUDFLARE"],
+    ["console.aws.amazon.com", "AWS", "AWS"], ["supabase.com", "Supabase", "SUPABASE"],
+    ["dashboard.clerk.com", "Clerk", "CLERK"], ["api.slack.com", "Slack", "SLACK"], ["fly.io", "Fly", "FLY"]
+  ];
+  var NON_SECRET = /\b(public|publishable|anonymous|anon|client id|key id|request id|trace id|session id|resource id|project id|asset id|commit|checksum|fingerprint|sha ?(?:1|256|512)|hash|integrity|nonce|csrf|verification|one time code|otp)\b/i;
+  var SAMPLE_CONTEXT = /\b(?:(?:example|sample|dummy|placeholder|demo) (?:api )?(?:key|token|secret|credential)|for illustration|do not use this)\b/i;
+  var CREATE_WORDS = /\b(?:new (?:api )?(?:key|token|secret)|(?:create|created|generate|generated|reveal|copy) (?:an? |your |new |this )?(?:api )?(?:key|token|secret)|key details|token details)\b/i;
+  function providerFor(context) {
+    var label = words(context.variable || context.label).toUpperCase();
+    for (var i = 0; i < PROVIDERS.length; i++) {
+      var prefix = PROVIDERS[i][2].replace("OPENAI", "OPEN ?AI").replace("GITHUB", "GIT ?HUB");
+      if (new RegExp("\\b" + prefix + "\\b").test(label)) return PROVIDERS[i];
+    }
+    var host = String(context.host || "").toLowerCase().replace(/\.$/, "");
+    return PROVIDERS.find(function (p) { return host === p[0]; }) || null;
+  }
+  function roleName(label) {
+    var text = words(label);
+    var roles = [
+      [/secret access key/i, "SECRET_ACCESS_KEY"], [/webhook secret/i, "WEBHOOK_SECRET"],
+      [/client secret/i, "CLIENT_SECRET"], [/signing (?:key|secret)/i, "SIGNING_KEY"],
+      [/private key/i, "PRIVATE_KEY"], [/restricted key/i, "RESTRICTED_KEY"],
+      [/service role key/i, "SERVICE_ROLE_KEY"], [/secret key/i, "SECRET_KEY"],
+      [/api key|access key/i, "API_KEY"], [/token|bearer/i, "TOKEN"], [/password/i, "PASSWORD"], [/secret/i, "SECRET"]
+    ];
+    var role = roles.find(function (r) { return r[0].test(text); });
+    return role ? role[1] : "API_KEY";
+  }
+  function suggestedName(context, provider) {
+    var label = String(context.variable || context.label || "").trim();
+    // Keep an explicit credential variable instead of deriving names from arbitrary neighboring prose.
+    if (/^[A-Z_][A-Z0-9_]{2,63}$/.test(label) && SECRET_WORDS.test(words(label))) return label;
+    if (/^[A-Za-z][A-Za-z0-9_]*$/.test(label) && SECRET_WORDS.test(words(label))) return snake(label);
+    var role = roleName(label || context.nearby);
+    if (role === "SECRET_ACCESS_KEY") return "AWS_SECRET_ACCESS_KEY";
+    return provider ? provider[2] + "_" + role : role;
+  }
+  function localEnvironment(label) {
+    var text = words(label);
+    var live = /\b(live|production|prod)\b/i.test(text), test = /\b(test|development|dev|sandbox)\b/i.test(text);
+    return live === test ? undefined : live ? "production" : "development";
   }
 
   /// What a value is, how sure we are (0 to 1), and how to save it. `context`: { label, nearby, host, field }.
@@ -77,11 +131,22 @@
       return { value: v.match(PEM_CERT)[0], type: "Certificate (public)", service: "", name: snake(context.label) || "CERTIFICATE",
                kind: "value", score: 0.55, confidence: "medium", shownOnce: false, isPublic: true };
     }
+    var publicKey = v.match(PEM_PUBLIC) || v.match(SSH_PUBLIC);
+    if (publicKey && !PEM_PRIVATE.test(v)) {
+      return { value: publicKey[0], type: "Public key", service: "", name: "PUBLIC_KEY", kind: "value",
+               score: 0.55, confidence: "medium", shownOnce: false, isPublic: true };
+    }
     for (var p = 0; p < PUBLIC.length; p++) { var pm = v.match(PUBLIC[p]); if (pm && pm[0].length >= v.length - 2) return null; }
 
-    var label = context.label || "", nearby = context.nearby || "", host = (context.host || "").toLowerCase();
-    var secretContext = SECRET_WORDS.test(label) || SECRET_WORDS.test(nearby.slice(0, 400));
+    var label = words(context.label), nearby = words(context.nearby), host = String(context.host || "").toLowerCase();
+    var ownSecret = SECRET_WORDS.test(label), nearbySecret = SECRET_WORDS.test(nearby.slice(0, 400));
+    var secretContext = ownSecret || nearbySecret;
     var once = ONCE_WORDS.test(nearby);
+    var provider = providerFor(context);
+    var creation = once || CREATE_WORDS.test(nearby) || CREATE_WORDS.test(words(context.title));
+    var docs = /\b(documentation|tutorial|example|sample)\b/i.test(words(context.title) + " " + words(context.path));
+    var awsAccessID = /\baccess key id\b/i.test(label) && /^(?:AKIA|ASIA)[A-Z0-9]{16}$/.test(v);
+    if ((NON_SECRET.test(label) && !awsAccessID) || SAMPLE_CONTEXT.test(label) || SAMPLE_CONTEXT.test(nearby)) return null;
     var bonus = (secretContext ? 0.1 : 0) + (once ? 0.15 : 0) + (context.field ? 0.05 : 0);
     var result = null;
 
@@ -105,7 +170,7 @@
         var score = r.weak ? (secretContext || once ? 0.75 : 0.4) : 0.85;
         var service = r.service;
         // Clerk's secret keys share Stripe's prefix: the page tells them apart.
-        if (r.id === "stripe-secret" && /clerk/.test(host)) { service = "Clerk"; r = { name: "CLERK_SECRET_KEY", type: "Clerk secret key" }; }
+        if (r.id === "stripe-secret" && provider && provider[1] === "Clerk") { service = "Clerk"; r = { name: "CLERK_SECRET_KEY", type: "Clerk secret key" }; }
         result = { value: m[0], type: r.type, service: service, name: r.name, kind: "token", score: score,
                    environment: m[1] === "live" ? "production" : m[1] === "test" ? "development" : undefined };
         break;
@@ -118,28 +183,41 @@
         result = { value: jwt[0], type: "Token (JWT)", service: "", name: snake(label) || "API_TOKEN", kind: "token", score: secretContext ? 0.6 : 0.3 };
       }
     }
-    if (!result) {
-      // A long random-looking string is only a candidate when the page says it's a secret.
+    if (!result && !/\bhttps?:\/\//i.test(v)) {
+      // Context cannot make arbitrary page IDs into secrets. A local label is stronger than page-wide wording.
+      var eligible = !/\b(path|filename|file name)\b/i.test(label) && (ownSecret || (nearbySecret && creation && context.field));
       GENERIC.lastIndex = 0;
       var g, best = null;
-      while ((g = GENERIC.exec(v))) {
-        var s = g[0];
-        if (s.length < 32 || s.length > 512) continue;
-        if (/^[a-f0-9]{40}$/i.test(s) || /^[a-f0-9]{64}$/i.test(s)) { if (!secretContext) continue; }   // commit and content hashes
-        if (/^[A-Za-z]+$/.test(s) || /^[0-9]+$/.test(s)) continue;
-        if (/\//.test(s) && !/=$/.test(s) && /\.[a-z]{2,4}(\/|$)/.test(s)) continue;   // a path or URL
-        var h = entropy(s);
-        if (h < 3.5) continue;
-        if (!best || s.length > best.length) best = s;
+      while (eligible && (g = GENERIC.exec(v))) {
+        var candidate = g[0];
+        if (candidate.length < 24 || candidate.length > 512) continue;
+        if (/^[0-9]+$/.test(candidate) || entropy(candidate) < 3.5) continue;
+        if (/^[A-Za-z]+$/.test(candidate) && !(ownSecret && (provider || creation) && entropy(candidate) >= 4)) continue;
+        var hash = /^[a-f0-9]{40}$|^[a-f0-9]{64}$/i.test(candidate);
+        var uuid = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(candidate);
+        if ((hash && !ownSecret) || (uuid && !(ownSecret && provider && creation))) continue;
+        if (!best || candidate.length > best.length) best = candidate;
       }
-      if (best && secretContext) {
-        var named = snake(label);
-        if (/secret access key/i.test(label + " " + nearby.slice(0, 200)) && best.length === 40) named = "AWS_SECRET_ACCESS_KEY";
-        result = { value: best, type: "Secret", service: "", name: named || "API_KEY", kind: "token", score: 0.5 };
+      if (best) {
+        var name = suggestedName(context, provider);
+        var score = 0.45 + (ownSecret ? 0.15 : 0) + (nearbySecret ? 0.05 : 0) + (provider ? 0.05 : 0) + (creation ? 0.1 : 0) + (context.field ? 0.05 : 0);
+        result = { value: best, type: (provider ? provider[1] + " " : "") + roleName(label || nearby).toLowerCase().replace(/_/g, " ") + " (suggested)",
+                   service: provider ? provider[1] : "", name: name, kind: "token", score: score, basis: "context",
+                   environment: localEnvironment(label), evidence: [] };
+        if (ownSecret) result.evidence.push("Credential label");
+        if (nearbySecret) result.evidence.push("Nearby credential wording");
+        if (provider) result.evidence.push("Provider page or variable name");
+        if (creation) result.evidence.push("Creation or copy workflow");
       }
     }
     if (!result) return null;
-    result.score = Math.min(1, result.score + bonus);
+    if (result.basis !== "context") {
+      result.score += bonus;
+      if (context.variable && (SECRET_WORDS.test(words(context.variable)) || /\b(?:database url|db url|redis url|mongodb uri|dsn|connection url)\b/i.test(words(context.variable)))) {
+        result.name = /^[A-Z_][A-Z0-9_]{2,63}$/.test(context.variable) ? context.variable : snake(context.variable) || result.name;
+      }
+    }
+    result.score = Math.min(docs ? 0.65 : 1, result.score);
     result.shownOnce = once;
     result.confidence = result.score >= 0.75 ? "high" : result.score >= 0.5 ? "medium" : "low";
     return result.confidence === "low" ? null : result;
@@ -147,6 +225,7 @@
 
   /// Every distinct secret in a block of text (several keys can share one code block).
   function findAll(text, context) {
+    context = context || {};
     var found = [], seen = {};
     var pieces = [text];
     // Split long text into lines so one value doesn't hide another; private keys stay whole.
@@ -156,7 +235,7 @@
       if (!piece || piece.length < 16) continue;
       // KEY=value and "key": "value" put the label right next to the value.
       var kv = piece.match(/^\s*([A-Za-z_][A-Za-z0-9_.-]{1,60})\s*[:=]\s*(.+)$/);
-      var ctx = kv ? Object.assign({}, context, { label: kv[1] + " " + (context.label || "") }) : context;
+      var ctx = kv ? Object.assign({}, context, { variable: kv[1], label: kv[1] }) : context;
       var r = classify(kv ? kv[2] : piece, ctx);
       if (r && !seen[r.value]) { seen[r.value] = true; found.push(r); }
     }

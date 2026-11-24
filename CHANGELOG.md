@@ -2,8 +2,29 @@
 
 ## Unreleased
 
+### Browser development builds
+
+- Added contextual detection for unfamiliar credentials using local labels, exact provider hints and creation/copy
+  cues. Preserves complete dotted tokens, suggests names such as `GEMINI_API_KEY`, and explains contextual evidence.
+- Tightened handling of request IDs, hashes, public keys, samples and documentation to reduce false positives.
+  Context remains local; native permissions and per-save/fill approvals are unchanged.
+- Simplified the save panel: secondary detection evidence is disclosed on demand, and successful saves replace
+  the form with a compact confirmation and copy-reference action.
+
+- Fixed context-menu saving after extension installation/reload: preserve the browser-captured selection, restore
+  missing main-frame scripts once, and show recovery guidance instead of silently ignoring failures.
+
+- Added reproducible Chrome and Firefox packages sharing Pistachio’s Safari artwork and save/fill controls.
+- Added the owner-approved signed native helper and restricted App Group connection, with per-action approval,
+  bounded/versioned messages and explicit extension allowlists. Added setup/removal tooling and documentation.
+- These are local development builds. Chrome/Firefox app connectivity is verified; live save/fill, signed sandbox
+  runtime checks and store publication remain pending. Firefox permanent installation requires Mozilla signing.
+
 ### App
 
+- Updated Safari’s extension name, popup, page controls, menu and native messages to Pistachio. Save/fill badges
+  now use the supplied pistachio mark. The localized host name also reads Pistachio in macOS; browser permissions,
+  credential handling and the compatibility installation path are unchanged.
 - Completed Pistachio naming in native windows, menus, Settings, membership and approval copy. Stored identities
   and existing references remain compatible.
 - Pistachio uses its bundled layered Dock icon with solid neutral backgrounds and no gradient, specular overlay

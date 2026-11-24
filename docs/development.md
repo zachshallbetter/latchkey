@@ -11,6 +11,8 @@ Tests/LatchkeyCoreTests/   unit tests
 App/project.yml            the app's XcodeGen project (the .xcodeproj is generated, not committed)
 App/Latchkey/              the SwiftUI app
 App/Safari/                Pistachio for Safari: the native handler and the extension's manifest and scripts
+App/Browser/               Chrome/Firefox API facade and native helper entitlements
+Sources/pistachio-browser-host/  signed native messaging helper
 App/Branding/logo.svg      the logo source: a key on a ring
 scripts/install.sh         build and install the app and CLI (development)
 scripts/release.sh         Developer ID build, notarized, in a disk image (see docs/releasing.md)
@@ -24,7 +26,9 @@ AGENTS.md, .agents/         agent operating contract, project intent and records
 ```bash
 swift build
 swift test                                  # unit tests
-node App/Safari/detector.test.js            # the Safari extension's key detector
+node --test App/Safari/*.test.js App/Browser/*.test.js  # shared browser fixtures
+python3 -m unittest discover -s scripts/tests
+python3 scripts/build-browser-extensions.py # Chrome ZIP/unpacked and unsigned Firefox XPI
 LATCHKEY_KEYCHAIN_TESTS=1 swift test        # also round-trips through your real login keychain
 cd App && xcodegen && open Latchkey.xcodeproj
 scripts/install.sh                          # build Release, install the app and CLI, restart the app
@@ -168,7 +172,9 @@ The sidebar's service icons are in `App/Latchkey/Assets.xcassets/ServiceIcons`, 
 ## The logo and icon
 
 `App/Branding/pistachio.svg` is the supplied three-piece color mark; `pistachio-template.svg` is its monochrome
-menu bar counterpart. `App/Branding/logo.svg` retains the original key. Service/provider icons are unchanged.
+menu bar counterpart. `App/Browser/               Chrome/Firefox API facade and native helper entitlements
+Sources/pistachio-browser-host/  signed native messaging helper
+App/Branding/logo.svg` retains the original key. Service/provider icons are unchanged.
 
 General settings offers **Pistachio** and **Key**. The `appIconChoice` preference is stored locally and defaults to
 Pistachio, including for malformed values. Pistachio restores the bundled Icon Composer icon by setting AppKit’s
@@ -191,6 +197,25 @@ Key/Pistachio runtime image assets and Safari’s 48/96/128px icons are generate
 in its website worktree; see [site.md](site.md).
 
 
+## Safari branding
+
+Safari’s manifest, toolbar title, popup, context menu, save/fill controls and native handler messages use Pistachio.
+The host’s `en.lproj/InfoPlist.strings` supplies its visible product name. Its base display name matches the retained
+compatibility bundle filename for
+[Finder’s localized display-name lookup](https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html).
+The page controls use the same three-piece silhouette as `App/Branding/pistachio-template.svg`; the popup and toolbar
+use the generated `App/Safari/Resources/icon-{48,96,128}.png` Pistachio artwork. Safari keeps this bundled artwork
+when the app’s local icon preference is Key.
+
+The native host/bundle identifier, App Group key, internal detector namespace, menu IDs and existing reference
+schemes remain accepted for compatibility; the save confirmation shows the current `pistachio://` alias.
+Branding changes do not add browser/site permissions or alter which values are detected, saved or filled. Reload an existing page after updating the installed extension so its old
+content script is replaced; newly opened pages use the updated artwork and copy.
+
+Run `node --test App/Safari/*.test.js` through the register and build the signed host app to check the packaged
+extension. These fixture checks do not prove real Safari/native messaging; verify the installed name and
+artwork in Safari’s Extensions settings separately.
+
 ## Conventions
 
 - Never deliberately write stored values to logs, errors or test output. `pst get` prints values; child
@@ -205,3 +230,12 @@ in its website worktree; see [site.md](site.md).
 archive and both Homebrew packages provide them. SwiftPM exposes both products from the same executable target.
 See [cli.md](cli.md) for command behavior. Signing, storage and protocol details follow the checked-in source;
 branding edits do not change those boundaries.
+
+## Chrome and Firefox development builds
+
+See [Chrome and Firefox](chrome-extension.md) for package outputs, explicit native-host registration, removal and
+release limitations. Shared browser scripts remain in `App/Safari/Resources`; the package builder adds a browser API
+facade with Chrome callback compatibility and Firefox promise support. `BrowserExtensionMessages` is the shared
+translator. `PistachioBrowserHost` embeds a separately signed executable in `Contents/Helpers`; its explicit signing
+identifier must survive embedding (do not re-sign it using the executable filename). Both app project variants
+include the helper; sandbox compilation alone does not prove browser integration.

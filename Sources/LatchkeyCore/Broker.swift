@@ -312,7 +312,7 @@ public final class Broker: @unchecked Sendable {
     /// only with your approval every time: no
     /// grant, recent approval or agent-safe setting stands in, because the value leaves Latchkey for a web page.
     func fill(_ req: Request, peer: PeerInfo) throws -> Response {
-        guard peer.isSafariExtension else { return Response(ok: false, error: "fill is only for Latchkey for Safari") }
+        guard peer.isWebExtension else { return Response(ok: false, error: "fill is only for Pistachio browser extensions") }
         guard let name = req.names?.first, req.names?.count == 1 else { return Response(ok: false, error: "fill takes one name") }
         guard let info = try store.info(name) else { return Response(ok: true, missing: [name]) }
         guard let page = req.page, let host = Services.fillHost(page), Services.mayFill(origin: page, item: info) else {
@@ -750,7 +750,7 @@ public final class Broker: @unchecked Sendable {
         guard req.origin != "mcp" else {
             return Response(ok: false, error: "an agent can't export values in plain text; it can export references (pst export without --values)")
         }
-        guard !peer.isSafariExtension else { return Response(ok: false, error: "export isn't available to Safari") }
+        guard !peer.isWebExtension else { return Response(ok: false, error: "export isn't available to Safari") }
         let clipboard = req.clipboard == true
         let names = Array(Set(req.names ?? [])).sorted()
         guard !names.isEmpty else { return Response(ok: false, error: "no names given") }
@@ -830,7 +830,7 @@ public final class Broker: @unchecked Sendable {
     /// which keys are shared is itself worth knowing.
     func duplicates(_ req: Request, peer: PeerInfo) throws -> Response {
         guard req.origin != "mcp" else { return Response(ok: false, error: "an agent can't compare values; ask the owner to run pst duplicates") }
-        guard !peer.isSafariExtension else { return Response(ok: false, error: "finding duplicates isn't available to Safari") }
+        guard !peer.isWebExtension else { return Response(ok: false, error: "finding duplicates isn't available to Safari") }
         let items = try store.list().filter { $0.kind.isSecret }
         guard !items.isEmpty else { return Response(ok: true, groups: []) }
         let names = items.map(\.name)
@@ -852,7 +852,7 @@ public final class Broker: @unchecked Sendable {
     /// never a stored value. It asks every time, and agents can't ask.
     func scan(_ req: Request, peer: PeerInfo) throws -> Response {
         guard req.origin != "mcp" else { return Response(ok: false, error: "an agent can't compare values; ask the owner to run pst scan") }
-        guard !peer.isSafariExtension else { return Response(ok: false, error: "scanning files isn't available to Safari") }
+        guard !peer.isWebExtension else { return Response(ok: false, error: "scanning files isn't available to Safari") }
         let found = (req.items ?? []).filter { $0.value.count >= Duplicates.shortest && !References.containsReference($0.value) }
         let items = try store.list().filter { $0.kind.isSecret }
         guard !found.isEmpty, !items.isEmpty else { return Response(ok: true, matches: [:]) }
@@ -1375,8 +1375,9 @@ public final class Broker: @unchecked Sendable {
         // name it as unidentified so the warning shows and its requests are never grouped with others.
         request.program = request.fromApp || peer.isLatchkeyTool ? nil
             : peer.path.isEmpty ? Self.unidentifiedProgram : peer.path
-        if peer.isSafariExtension {
-            request.fromSafari = true
+        if peer.isWebExtension {
+            request.fromSafari = peer.isSafariExtension
+            request.browserName = peer.nativeBrowser
             request.page = req.page
             request.program = nil
             request.folder = ""
@@ -1389,7 +1390,7 @@ public final class Broker: @unchecked Sendable {
             request.sessionName = nil
         }
         request.byAgent = req.origin == "mcp"
-        if !peer.isSSHForward, !peer.isSafariExtension, !peer.path.isEmpty, !peer.ancestors.isEmpty {
+        if !peer.isSSHForward, !peer.isWebExtension, !peer.path.isEmpty, !peer.ancestors.isEmpty {
             request.caller = peer.ancestors.map { "\($0.pid)@\($0.started)" }.joined(separator: " ")
         }
         return request
@@ -1465,7 +1466,7 @@ public final class Broker: @unchecked Sendable {
 
     /// "zsh › claude in ~/Projects/site (running npm test)"
     static func describe(_ peer: PeerInfo, _ req: Request) -> String {
-        if peer.isSafariExtension { return "Latchkey's Safari extension" + (req.page.map { " on " + $0 } ?? "") }
+        if peer.isWebExtension { return "Pistachio for " + (peer.webExtensionName ?? "Browser") + (req.page.map { " on " + $0 } ?? "") }
         let who = peer.chain.prefix(3).joined(separator: " › ")
         let cwd = shortFolder(peer.cwd)
         var s = (who.isEmpty ? "a process" : who) + (cwd.isEmpty ? "" : " in \(cwd)")
@@ -1504,7 +1505,7 @@ public final class Broker: @unchecked Sendable {
         guard let url = logURL else { return }
         var entry = LogEntry(time: Date(), op: op, names: names, decision: decision,
                              chain: peer.chain, cwd: peer.cwd, command: peer.redactedCommandLine.isEmpty ? nil : peer.redactedCommandLine,
-                             program: peer.isSafariExtension ? "Latchkey's Safari extension" + (req.page.map { " on " + $0 } ?? "")
+                             program: peer.isWebExtension ? "Pistachio for " + (peer.webExtensionName ?? "Browser") + (req.page.map { " on " + $0 } ?? "")
                                  : peer.isLatchkeyTool || peer.pid == getpid() || peer.path.isEmpty ? nil : peer.path)
         var head: LogHead?
         if let keys = logKeys, let key = keys.key() {
@@ -1568,6 +1569,7 @@ public final class Broker: @unchecked Sendable {
             "environments", "environment-add", "environment-set", "environment-remove", "export", "projects", "project-link", "project-unlink",
             "duplicates", "combine", "scan"
         ])
+        public static let browserExtension = Gate(identifier: CodeIdentity.browserHostIdentifier, ops: ["status", "list", "set", "fill"])
         public static let safariExtension = Gate(identifier: CodeIdentity.safariExtensionIdentifier, ops: ["status", "list", "set", "fill"])
     }
 
@@ -1602,6 +1604,10 @@ public final class Broker: @unchecked Sendable {
             // the process disappeared/reused its PID, the CLI-only listener must not handle the request.
             if gate?.identifier == CodeIdentity.toolIdentifier, !peer.isLatchkeyTool { close(fd); continue }
             peer.isSafariExtension = gate?.identifier == CodeIdentity.safariExtensionIdentifier
+            if gate?.identifier == CodeIdentity.browserHostIdentifier {
+                peer.nativeBrowser = peer.chain.contains { $0.lowercased().contains("firefox") } ? "Firefox"
+                    : peer.chain.contains { $0.lowercased().contains("chrome") } ? "Chrome" : "Browser"
+            }
             let caller = peer
             DispatchQueue.global().async { [self] in
                 defer { close(fd) }

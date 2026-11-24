@@ -40,6 +40,8 @@ public struct ApprovalRequest: Sendable, Equatable {
     public var remote: RemoteClaim?
     /// From Latchkey's Safari extension, and the site the value was found on (as Safari reported it).
     public var fromSafari = false
+    public var browserName: String? = nil
+    public var fromBrowser: Bool { fromSafari || browserName != nil }
     public var page: String?
     /// Releasing values to a command, where the approval can also become a grant for its folder. Only `get` sets it.
     public var offersGrant = false
@@ -65,7 +67,7 @@ public struct ApprovalRequest: Sendable, Equatable {
     /// Who's asking, in a word: the agent the caller runs under ("Claude"), else the nearest program that isn't a shell.
     /// Nil for the Latchkey window and Safari, and over SSH, where nothing on the other computer can be seen.
     public var asker: String? {
-        guard !fromApp, !fromSafari, !overSSH else { return nil }
+        guard !fromApp, !fromBrowser, !overSSH else { return nil }
         let name = sessionName ?? chain.first { !PeerInfo.launchers.contains($0.lowercased()) }
         guard let name, !name.isEmpty else { return nil }
         return name.prefix(1).uppercased() + name.dropFirst()

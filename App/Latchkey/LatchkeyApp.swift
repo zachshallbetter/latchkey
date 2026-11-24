@@ -543,6 +543,12 @@ final class AppModel {
             try? FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
             Thread.detachNewThread { try? broker.serve(socketPath: path, gate: .safariExtension) }
         }
+        if let group = Bundle.main.object(forInfoDictionaryKey: "LatchkeyAppGroup") as? String,
+           let path = Paths.browserSocket(group: group) {
+            try? FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+            Thread.detachNewThread { try? broker.serve(socketPath: path, gate: .browserExtension) }
+        }
+
     }
 
     var synced: Bool { if case .iCloud = store.mode { true } else { false } }

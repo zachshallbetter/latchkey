@@ -374,6 +374,12 @@ public enum Paths {
             .appendingPathComponent("extension.sock").path
     }
 
+    /// Separate endpoint for the owner-approved signed Chrome/Firefox native helper.
+    public static func browserSocket(group: String) -> String? {
+        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group)?
+            .appendingPathComponent("browser.sock").path
+    }
+
     public static func ensureSupportDir() throws {
         try FileManager.default.createDirectory(at: supportDir, withIntermediateDirectories: true,
                                                 attributes: [.posixPermissions: 0o700])
