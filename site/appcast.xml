@@ -5,6 +5,21 @@
     <link>https://latchkey.snackstud.io/</link>
     <description>Latchkey releases</description>
     <item>
+      <title>Latchkey 0.5.0</title>
+      <pubDate>Tue, 24 Nov 2026 02:29:52 GMT</pubDate>
+      <sparkle:version>8</sparkle:version>
+      <sparkle:shortVersionString>0.5.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <description>&lt;h3&gt;App&lt;/h3&gt;
+&lt;ul&gt;&lt;li&gt;Added a local Pistachio/Key icon choice in General settings for the Dock, menu bar and in-app marks.&lt;/li&gt;&lt;li&gt;Updated the bundled app and Safari icons to the supplied Pistachio mark. Finder and Safari keep the bundled icon; switching styles does not modify the signed app. Existing command aliases are retained.&lt;/li&gt;&lt;/ul&gt;
+&lt;h3&gt;CLI&lt;/h3&gt;
+&lt;ul&gt;&lt;li&gt;Every &lt;code&gt;LATCHKEY_&lt;/code&gt; environment variable can also be set as &lt;code&gt;PISTACHIO_&lt;/code&gt; (&lt;code&gt;PISTACHIO_SOCKET&lt;/code&gt;, &lt;code&gt;PISTACHIO_BROKER&lt;/code&gt;, &lt;code&gt;PISTACHIO_NO_LAUNCH&lt;/code&gt; and the rest), which wins when both are set. The old names keep working.&lt;/li&gt;&lt;li&gt;The MCP tools are renamed &lt;code&gt;pistachio_run&lt;/code&gt;, &lt;code&gt;pistachio_check&lt;/code&gt;, &lt;code&gt;pistachio_list&lt;/code&gt;, &lt;code&gt;pistachio_status&lt;/code&gt;, &lt;code&gt;pistachio_project&lt;/code&gt;, &lt;code&gt;pistachio_request_grant&lt;/code&gt; and &lt;code&gt;pistachio_export_references&lt;/code&gt;. The &lt;code&gt;latchkey_&lt;/code&gt; names are listed beside them and work the same until the next release. &lt;code&gt;pistachio_request_grant&lt;/code&gt; no longer says requests are limited to a day, which stopped being true in 0.4.0.&lt;/li&gt;&lt;li&gt;The command-line tool also answers to &lt;code&gt;pistachio&lt;/code&gt;, the product&amp;#x27;s name after the rename: Install Command Line Tool, &lt;code&gt;scripts/install.sh&lt;/code&gt; and Homebrew link it beside &lt;code&gt;latchkey&lt;/code&gt; and &lt;code&gt;lk&lt;/code&gt;. All three are the same signed tool, so grants for &lt;code&gt;latchkey run&lt;/code&gt; and &lt;code&gt;lk run&lt;/code&gt; cover &lt;code&gt;pistachio run&lt;/code&gt; too, and &lt;code&gt;latchkey&lt;/code&gt; and &lt;code&gt;lk&lt;/code&gt; keep working.&lt;/li&gt;&lt;li&gt;Env files can use &lt;code&gt;pistachio://ID&lt;/code&gt; and &lt;code&gt;pistachio-file://ID&lt;/code&gt; as well as &lt;code&gt;latchkey://ID&lt;/code&gt; and &lt;code&gt;latchkey-file://ID&lt;/code&gt;, ahead of the rename to Pistachio. Both mean the same and always will, so existing files keep working unchanged.&lt;/li&gt;&lt;/ul&gt;
+&lt;h3&gt;Website&lt;/h3&gt;
+&lt;ul&gt;&lt;li&gt;Rebranded the website as Pistachio with the supplied mark and “Your secrets. In a shell.” brand line. Updated supporting pages, browser icons, social cards and discovery files.&lt;/li&gt;&lt;li&gt;Refined the product-led hero, compact audience navigation and interactive proxy panel. Added a mobile menu and a browser-local appearance preference that persists across pages.&lt;/li&gt;&lt;li&gt;Used neutral page and code surfaces with restrained green accents, plus independent neutral/blue app depictions. Added layered container shadows and subtle scroll-entry motion that respects reduced motion.&lt;/li&gt;&lt;li&gt;Documented &lt;code&gt;secretsinashell.com&lt;/code&gt; as the intended future domain. Existing downloads, commands, reference scheme, signing identities and published URLs retain their current names; this change does not deploy the site.&lt;/li&gt;&lt;/ul&gt;</description>
+      <sparkle:fullReleaseNotesLink>https://latchkey.snackstud.io/changelog.html#v0.5.0</sparkle:fullReleaseNotesLink>
+      <enclosure url="https://github.com/zachshallbetter/latchkey/releases/download/v0.5.0/Latchkey-0.5.0.dmg" length="11300881" type="application/octet-stream" sparkle:edSignature="eNjdon+wXUzqxIT2pkRwoCGsqgojYQcnU0aE6RaY84dF5E8ijZNK9RV96k0/zs7Fi1itJqsDt3MQwciMnKbBAQ==" />
+    </item>
+    <item>
       <title>Latchkey 0.4.0</title>
       <pubDate>Sat, 21 Nov 2026 19:26:16 GMT</pubDate>
       <sparkle:version>7</sparkle:version>

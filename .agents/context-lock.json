@@ -18,8 +18,8 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "fff6b4c86b433ebd78a1875618a0515fccccaea9",
-        "branch": "release/0.5.0-prep",
+        "commit": "e9af5927051e5b91bc097cff46f869a9435267e8",
+        "branch": "appcast-0.5.0",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
