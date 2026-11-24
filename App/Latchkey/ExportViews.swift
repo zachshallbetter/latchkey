@@ -71,7 +71,7 @@ struct ExportSheet: View {
             preview
 
             if values {
-                Label("Values are written in plain text, readable only by you. Latchkey asks first, naming the file.",
+                Label("Values are written in plain text, readable only by you. Pistachio asks first, naming the file.",
                       systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.secondary)
             }
             if let gitProblem { Text(gitProblem).font(.caption).foregroundStyle(.red) }

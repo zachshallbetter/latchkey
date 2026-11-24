@@ -227,7 +227,7 @@ extension AppModel {
             out.append(Finding(id: "stale", area: .changes, symbol: "arrow.triangle.2.circlepath", tint: .orange,
                                title: "Changed since last push",
                                summary: "\(count(stale.count, "item")) · \(places(stale))",
-                               why: "These values changed in Latchkey after they were last pushed, so the linked services still have the old ones.",
+                               why: "These values changed in Pistachio after they were last pushed, so the linked services still have the old ones.",
                                items: stale))
         }
         let unpushed = items.filter { remoteStates[$0.name] == .notPushed }
@@ -275,7 +275,7 @@ struct ReviewList: View {
                     Label("Find Duplicates…", systemImage: "doc.on.doc")
                 }
                 .disabled(finding)
-                .help("Compare values inside Latchkey to find items holding the same key. Asks for Touch ID; no value is shown.")
+                .help("Compare values inside Pistachio to find items holding the same key. Asks for Touch ID; no value is shown.")
             }
             Picker("", selection: $area) {
                 Text("All").tag(Finding.Area?.none)

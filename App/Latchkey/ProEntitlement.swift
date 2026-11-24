@@ -62,7 +62,7 @@ final class ProEntitlement: ObservableObject {
     func loadProduct() async {
         do {
             product = try await Product.products(for: [Self.productID]).first { $0.type == .nonConsumable }
-            message = product == nil ? "Latchkey Pro isn't available from the App Store right now." : nil
+            message = product == nil ? "Pistachio Pro isn't available from the App Store right now." : nil
         } catch {
             product = nil
             message = "The App Store price couldn't be loaded: \(error.localizedDescription)"

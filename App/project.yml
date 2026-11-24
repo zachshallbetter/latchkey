@@ -56,7 +56,8 @@ targets:
       properties:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        CFBundleDisplayName: Latchkey
+        CFBundleDisplayName: Pistachio
+        CFBundleName: Pistachio
         LSApplicationCategoryType: public.app-category.developer-tools
         # One Latchkey at a time: two would compete for the broker socket and the approval panel.
         LSMultipleInstancesProhibited: true
@@ -100,7 +101,8 @@ targets:
       properties:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        CFBundleDisplayName: Latchkey
+        CFBundleDisplayName: Pistachio
+        CFBundleName: Pistachio
         NSHumanReadableCopyright: Copyright © 2026 Snack Studio
         LatchkeyAppGroup: $(TeamIdentifierPrefix)io.snackstud.latchkey
         NSExtension:

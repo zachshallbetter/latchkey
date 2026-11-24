@@ -80,7 +80,7 @@ struct RemoteSheet: View {
                             presenting: unlinking) { link in
             Button("Unlink", role: .destructive) { Task { await model.unlink(link) } }
         } message: { _ in
-            Text("Values already there stay there. Latchkey just stops tracking and pushing to it.")
+            Text("Values already there stay there. Pistachio just stops tracking and pushing to it.")
         }
     }
 
@@ -292,7 +292,7 @@ struct AddLocationSheet: View {
 
     private var tokenCaption: String {
         #if LATCHKEY_APP_STORE
-        return "A shared item that holds your \(service.label) access token. Latchkey sends it only to \(service.label), and the push approval names it."
+        return "A shared item that holds your \(service.label) access token. Pistachio sends it only to \(service.label), and the push approval names it."
         #else
         return "Optional: a shared item that holds your \(service.label) access token. Pushes then go straight to \(service.label) instead of through \(service.tool); the approval names the item."
         #endif
@@ -350,7 +350,7 @@ struct AddLocationSheet: View {
                     field("App", $app, "your-app", "The Fly app whose secrets are set. Changes are staged until your next deploy.")
                     tokenField
                 case .ssh:
-                    field("Host", $host, "titan", "The host as named in your SSH config. Your SSH keys are used; Latchkey stores none.")
+                    field("Host", $host, "titan", "The host as named in your SSH config. Your SSH keys are used; Pistachio stores none.")
                     field("Script", $script, "/path/to/add-credential.sh", "Run on the host as sudo -n bash SCRIPT ADAPTER ACCOUNT --stdin, once per item, with the value on standard input. Items are named ADAPTER.ACCOUNT.")
                 }
             }
@@ -410,7 +410,7 @@ struct AddLocationSheet: View {
             Label("Looking for \(service.tool)…", systemImage: "hourglass").foregroundStyle(.secondary).font(.callout)
         case ""?:
             HStack {
-                Label("\(service.tool) isn't installed on this Mac. Latchkey uses it to push.", systemImage: "exclamationmark.triangle.fill")
+                Label("\(service.tool) isn't installed on this Mac. Pistachio uses it to push.", systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange).font(.callout)
                 Spacer()
                 Link("Install…", destination: service.installPage).font(.callout)

@@ -258,15 +258,15 @@ struct ApprovalView: View {
                     Label("From another computer, through your SSH connection", systemImage: "network")
                         .foregroundStyle(.orange).font(.callout.weight(.semibold))
                     if let r = request.remote {
-                        Text("It says it's \(r.host), running \(r.command) in \(r.cwd). Latchkey can't check that.")
+                        Text("It says it's \(r.host), running \(r.command) in \(r.cwd). Pistachio can't check that.")
                             .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     } else {
-                        Text("Latchkey can't see what's asking on the other computer.").font(.caption).foregroundStyle(.secondary)
+                        Text("Pistachio can't see what's asking on the other computer.").font(.caption).foregroundStyle(.secondary)
                     }
                 }
             }
             if let program = request.program {
-                Label("Asked by a program that isn't Latchkey's command-line tool: \(program)", systemImage: "exclamationmark.triangle.fill")
+                Label("Asked by a program that isn't Pistachio's command-line tool: \(program)", systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange).font(.callout.weight(.semibold))
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -283,11 +283,11 @@ struct ApprovalView: View {
             DisclosureGroup(isExpanded: $showDetails) {
                 Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 8) {
                     if request.fromSafari {
-                        row("Asked by", "Latchkey's Safari extension")
+                        row("Asked by", "Pistachio's Safari extension")
                         if let page = request.page { row("Page", page + "\n(as Safari reported it)", mono: true) }
                     } else {
                         let via = request.chain.prefix(4).joined(separator: " › ")
-                        row("Asked by", (request.asker.map { "\($0), via \(via)" } ?? via) + (request.byAgent ? "\nthrough Latchkey's MCP server" : ""))
+                        row("Asked by", (request.asker.map { "\($0), via \(via)" } ?? via) + (request.byAgent ? "\nthrough Pistachio's MCP server" : ""))
                     }
                     if !request.folder.isEmpty { row("Folder", Broker.tilde(request.folder), mono: true) }
                     if !many {
@@ -296,10 +296,10 @@ struct ApprovalView: View {
                         if let command = Self.command(request) { row("Command", command, mono: true, full: true) }
                         if let d = request.duration { row("For", GrantStore.describe(d)) }
                         if request.action == .compare {
-                            row("Purpose", "Compare their values inside Latchkey to find items holding the same key. Only which items match is shown; no value leaves Latchkey.")
+                            row("Purpose", "Compare their values inside Pistachio to find items holding the same key. Only which items match is shown; no value leaves Pistachio.")
                         }
                         if request.action == .scan {
-                            row("Purpose", "Check whether env files still hold these items' values in plain text. Only which items match is shown; no stored value leaves Latchkey.")
+                            row("Purpose", "Check whether env files still hold these items' values in plain text. Only which items match is shown; no stored value leaves Pistachio.")
                         }
                     }
                 }
@@ -438,10 +438,10 @@ struct ApprovalView: View {
 
     /// Who and where, in a line: "Claude in ~/Projects/site".
     private var subtitle: String {
-        if request.fromSafari { return "Latchkey for Safari" + (request.page.map { " on \($0)" } ?? "") }
+        if request.fromSafari { return "Pistachio for Safari" + (request.page.map { " on \($0)" } ?? "") }
         if request.overSSH { return "From another computer" }
         let place = request.folder.isEmpty || request.folder == "/" ? "" : " in " + Broker.tilde(request.folder)
-        return (request.asker ?? (request.fromApp ? "Latchkey" : "A program")) + place
+        return (request.asker ?? (request.fromApp ? "Pistachio" : "A program")) + place
     }
 
     /// A line of what the answer covers, in full.

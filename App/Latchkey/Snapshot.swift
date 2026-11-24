@@ -165,7 +165,7 @@ enum Snapshot {
         }
         if arg("--part") == "pushapproval" {
             var r = ApprovalRequest(action: .push, names: ["shop/production/DATABASE_URL", "shop/production/STRIPE_SECRET_KEY"],
-                                    chain: ["the Latchkey app"], folder: "", reason: "push 2 items")
+                                    chain: ["the Pistachio app"], folder: "", reason: "push 2 items")
             r.targets = ["Vercel shop · production", Self.secondTarget.label]
             r.production = true
             drawOffscreen(ApprovalView(group: ApprovalGroup(ApprovalTicket(r))) { _ in }, to: path)
@@ -213,10 +213,10 @@ enum Snapshot {
         }
         return [
             entry(3, "get", ["shop/production/DATABASE_URL"], "approved", ["zsh", "agent"]),
-            entry(9, "update", ["shop/development/API_TOKEN"], "denied", ["the Latchkey app"]),
+            entry(9, "update", ["shop/development/API_TOKEN"], "denied", ["the Pistachio app"]),
             entry(42, "rm", ["shop/preview/OLD_KEY"], "approved", ["zsh", "zsh", "agent"]),
             entry(65, "revoke", ["shop/development/API_TOKEN"], "revoked 1 grant", ["zsh", "agent"]),
-            entry(130, "import", ["shop/development/API_TOKEN", "shop/development/DATABASE_URL", "shop/development/PGHOST"], "approved", ["the Latchkey app"]),
+            entry(130, "import", ["shop/development/API_TOKEN", "shop/development/DATABASE_URL", "shop/development/PGHOST"], "approved", ["the Pistachio app"]),
         ].compactMap { $0 }
     }
 
@@ -251,10 +251,10 @@ enum Snapshot {
                     kind: .password, agentSafe: false, note: "", service: "Neon", usedIn: nil)
         }
         return [
-            v("shop/production/DATABASE_URL", 3 * 3600, .changed, "the Latchkey app"),
+            v("shop/production/DATABASE_URL", 3 * 3600, .changed, "the Pistachio app"),
             v("shop/production/DATABASE_URL", 9 * 86400, .changed, "zsh › agent"),
-            v("shop/production/DATABASE_URL", 40 * 86400, .restored, "the Latchkey app"),
-            v("old-site/production/SENTRY_DSN", 2 * 86400, .deleted, "the Latchkey app"),
+            v("shop/production/DATABASE_URL", 40 * 86400, .restored, "the Pistachio app"),
+            v("old-site/production/SENTRY_DSN", 2 * 86400, .deleted, "the Pistachio app"),
         ]
     }
 

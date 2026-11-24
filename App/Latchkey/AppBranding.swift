@@ -6,13 +6,15 @@ import SwiftUI
 @MainActor
 enum AppBranding {
     static func image(for choice: AppPreferences.Icon) -> NSImage {
-        NSImage(named: choice == .key ? "KeyDockIcon" : "PistachioDockIcon")
+        NSImage(named: choice == .key ? "KeyDockIcon" : NSImage.applicationIconName)
             ?? NSImage(named: NSImage.applicationIconName)
             ?? NSImage(size: NSSize(width: 1024, height: 1024))
     }
 
     static func apply() {
-        NSApp.applicationIconImage = image(for: AppPreferences().icon)
+        // Let macOS render the bundled Icon Composer asset, including its current appearance.
+        // A flattened runtime image bypasses that treatment. nil restores the original icon.
+        NSApp.applicationIconImage = AppPreferences().icon == .key ? image(for: .key) : nil
         MenuBarItem.updateIcon()
     }
 }

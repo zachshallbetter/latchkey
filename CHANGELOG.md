@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### App
+
+- Completed Pistachio naming in native windows, menus, Settings, membership and approval copy. Stored identities
+  and existing references remain compatible.
+- Pistachio uses its bundled layered Dock icon with solid neutral backgrounds and no gradient, specular overlay
+  or translucency. Key keeps its original shape on a solid black tile with flat blue artwork and no lighting.
+- Sized the Pistachio menu bar symbol to 14 points while retaining Key at 18 points. Both icon choices persist
+  locally, and Key’s Dock tile uses native canvas margins.
+
 ### Command names
 
 - Added `pst` as the preferred short command alongside `pistachio`. App/development installers, Homebrew,

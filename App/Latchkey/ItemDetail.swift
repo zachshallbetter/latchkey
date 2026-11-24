@@ -47,7 +47,7 @@ struct ItemDetail: View {
             if let files = item.usedIn, !files.isEmpty {
                 Text("It moves to Recently Deleted\(model.synced ? " on all your Macs" : "") and can be restored for \(Int(Versions.deletedFor / 86400)) days. Until then these files stop working: \(files.map(Broker.tilde).joined(separator: ", ")).")
             } else {
-                Text("It moves to Recently Deleted\(model.synced ? " on all your Macs" : "") and can be restored for \(Int(Versions.deletedFor / 86400)) days. Until then, files that refer to latchkey://\(item.name) stop working.")
+                Text("It moves to Recently Deleted\(model.synced ? " on all your Macs" : "") and can be restored for \(Int(Versions.deletedFor / 86400)) days. Until then, files that refer to this item stop working.")
             }
         }
     }

@@ -52,7 +52,7 @@ struct LockScreen: View {
                     .padding(7).background(Circle().fill(.secondary)).offset(x: 10, y: 8)
             }
             .padding(.bottom, 6)
-            Text("Latchkey Is Locked").font(.title2.weight(.semibold))
+            Text("Pistachio Is Locked").font(.title2.weight(.semibold))
             Text("Touch ID or enter your password to continue.").foregroundStyle(.secondary)
             if let touchID {
                 InlineTouchID(context: touchID,
@@ -328,7 +328,7 @@ struct Sidebar: View {
                     HStack(spacing: 10) {
                         LogoMark(size: 30).foregroundStyle(.blue)
                         VStack(alignment: .leading, spacing: 1) {
-                            Text("Latchkey").font(.title3.weight(.semibold))
+                            Text("Pistachio").font(.title3.weight(.semibold))
                             Text("Development secrets").font(.callout).foregroundStyle(.secondary)
                         }
                     }
@@ -476,7 +476,7 @@ struct StorageBadge: View {
         .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.quaternary.opacity(0.35)))
         .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(.separator.opacity(0.5)))
         .help(model.synced
-              ? "Items are kept in iCloud Keychain and sync to your Macs signed in to the same Apple Account. Latchkey can't confirm when another Mac has received a change."
+              ? "Items are kept in iCloud Keychain and sync to your Macs signed in to the same Apple Account. Pistachio can't confirm when another Mac has received a change."
               : "Items are kept in this Mac's login keychain and don't sync. See Settings.")
     }
 }
@@ -815,7 +815,7 @@ struct ItemRow: View {
             }
             if hovering, let model {
                 Button { model.copyReference(item.name) } label: { Image(systemName: "link") }
-                    .buttonStyle(.borderless).help("Copy latchkey://\(item.name)")
+                    .buttonStyle(.borderless).help("Copy credential reference")
             }
             if remote == .outOfDate {
                 Image(systemName: "arrow.triangle.2.circlepath").foregroundStyle(.orange)
@@ -981,7 +981,7 @@ struct EmptyDetail: View {
             ContentUnavailableView {
                 Label { Text("No Item Selected") } icon: { LogoMark() }
             } description: {
-                Text("Files keep latchkey://ID references; Latchkey keeps the values.")
+                Text("Files keep references; Pistachio keeps the values.")
             }
         }
     }

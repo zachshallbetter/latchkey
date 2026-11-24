@@ -64,7 +64,7 @@ struct LatchkeyApp: App {
     #endif
 
     var body: some Scene {
-        Window("Latchkey", id: "main") {
+        Window("Pistachio", id: "main") {
             Group {
                 // Not drawn underneath while locked, so nothing shows through or reaches the accessibility tree.
                 if model.locked { LockScreen(model: model) } else { MainWindow(model: model) }
@@ -84,7 +84,7 @@ struct LatchkeyApp: App {
         .defaultLaunchBehavior(.presented)
         .commands {
             CommandGroup(after: .appInfo) {
-                Button("What's New in Latchkey…") { model.openWhatsNew() }
+                Button("What's New in Pistachio…") { model.openWhatsNew() }
                 #if !LATCHKEY_APP_STORE
                 CheckForUpdatesButton(updater: updater)
                 #endif
@@ -95,7 +95,7 @@ struct LatchkeyApp: App {
                 #endif
             }
             CommandGroup(after: .appSettings) {
-                Button("Lock Latchkey") { model.lock(byHand: true) }
+                Button("Lock Pistachio") { model.lock(byHand: true) }
                     .keyboardShortcut("l", modifiers: [.command, .control])
                     .disabled(model.locked)
             }
@@ -105,7 +105,7 @@ struct LatchkeyApp: App {
             }
             ItemCommands(model: model)
             CommandGroup(replacing: .help) {
-                Link("Latchkey Help", destination: URL(string: "https://latchkey.snackstud.io/support.html")!)
+                Link("Pistachio Help", destination: URL(string: "https://latchkey.snackstud.io/support.html")!)
                 Link("Privacy Policy", destination: URL(string: "https://latchkey.snackstud.io/privacy.html")!)
                 Link("Terms of Use", destination: URL(string: "https://latchkey.snackstud.io/terms.html")!)
                 Divider()
@@ -115,7 +115,7 @@ struct LatchkeyApp: App {
 
 
         // Release notes for this version (WhatsNew.swift): opened after an update and from the app menu.
-        Window("What's New in Latchkey", id: "whats-new") {
+        Window("What's New in Pistachio", id: "whats-new") {
             WhatsNewView()
         }
         .windowResizability(.contentSize)
@@ -367,7 +367,7 @@ final class AppModel {
     func unlockWithTouchID(_ context: LAContext, failed: @escaping @MainActor () -> Void) {
         guard locked, !unlocking else { return }
         touchIDLog.notice("lock screen: Touch ID started; app active \(NSApp.isActive, privacy: .public)")
-        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: "unlock Latchkey") { [weak self] passed, error in
+        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: "unlock Pistachio") { [weak self] passed, error in
             touchIDLog.notice("lock screen: Touch ID ended; passed \(passed, privacy: .public), error \((error as? LAError)?.code.rawValue ?? 0, privacy: .public)")
             Task { @MainActor in
                 if passed { self?.locked = false } else { failed() }
@@ -380,7 +380,7 @@ final class AppModel {
         guard locked, !unlocking else { return }
         unlocking = true
         Task.detached {
-            let passed = SystemApprover().confirm("unlock Latchkey")
+            let passed = SystemApprover().confirm("unlock Pistachio")
             await MainActor.run {
                 self.unlocking = false
                 if passed { self.locked = false }
@@ -473,7 +473,7 @@ final class AppModel {
         // 0.1.0 development builds were io.latchkey.Latchkey with items in another access group: bring both over.
         if let previous = Bundle.main.object(forInfoDictionaryKey: "LatchkeyPreviousAccessGroup") as? String {
             let r = StoreMigration.adopt(from: previous, into: store)
-            if !r.moved.isEmpty { notice = "Moved \(r.moved.count) keychain item(s) to Latchkey's new access group." }
+            if !r.moved.isEmpty { notice = "Moved \(r.moved.count) keychain item(s) to Pistachio's new access group." }
             if !r.skipped.isEmpty || !r.failed.isEmpty {
                 problem = "\(r.skipped.count + r.failed.count) item(s) are still in the old access group: "
                     + (r.skipped + r.failed.keys.sorted()).joined(separator: ", ")
@@ -827,7 +827,7 @@ final class AppModel {
         NSWorkspace.shared.open(Self.commandLineToolPage)
         #else
         guard let tool = bundledTool else {
-            notice = "This copy of Latchkey doesn't include the command-line tool; scripts/install.sh installs it."
+            notice = "This copy of Pistachio doesn't include the command-line tool; scripts/install.sh installs it."
             return
         }
         let fm = FileManager.default
@@ -851,7 +851,7 @@ final class AppModel {
             return
         }
         var text = installed.isEmpty ? "" : "Installed \(ListFormatter.localizedString(byJoining: installed)). Make sure ~/.local/bin is on your PATH."
-        if !inTheWay.isEmpty { text += (text.isEmpty ? "" : " ") + "\(ListFormatter.localizedString(byJoining: inTheWay)) \(inTheWay.count == 1 ? "already exists and isn't a link" : "already exist and aren't links") to Latchkey; left as is." }
+        if !inTheWay.isEmpty { text += (text.isEmpty ? "" : " ") + "\(ListFormatter.localizedString(byJoining: inTheWay)) \(inTheWay.count == 1 ? "already exists and isn't a link" : "already exist and aren't links") to Pistachio; left as is." }
         notice = text
         #endif
     }
@@ -1083,7 +1083,7 @@ final class AppModel {
     }
 
     /// Why an approved value wasn't shown: Latchkey went to the back while it was asked for, and values hide then.
-    static let notInFront = "Not shown: Latchkey wasn't in front, and values hide when it loses focus. Show it again."
+    static let notInFront = "Not shown: Pistachio wasn't in front, and values hide when it loses focus. Show it again."
 
     func reveal(_ name: String) async {
         guard let v = await value(of: name) else { return }
@@ -1129,7 +1129,7 @@ final class AppModel {
         if !credentials.isEmpty {
             let r = await send(Request(op: "export", names: credentials, project: scope, clipboard: true,
                                        clearAfter: AppPreferences().clipboardSeconds))
-            if let m = r.missing, !m.isEmpty { notice = "Not in Latchkey: \(m.joined(separator: ", "))."; return }
+            if let m = r.missing, !m.isEmpty { notice = "Not in Pistachio: \(m.joined(separator: ", "))."; return }
             guard r.ok, let values = r.values, credentials.allSatisfy({ values[$0] != nil }) else {
                 notice = r.error ?? "Could not copy \(scope)."
                 return
@@ -1147,7 +1147,7 @@ final class AppModel {
         if values && !credentials.isEmpty {
             if let problem = EnvExport.gitProblem(plan.path) { return problem }
             let r = await send(Request(op: "export", names: credentials, project: scope, destination: plan.path))
-            if let m = r.missing, !m.isEmpty { return "Not in Latchkey: \(m.joined(separator: ", "))." }
+            if let m = r.missing, !m.isEmpty { return "Not in Pistachio: \(m.joined(separator: ", "))." }
             guard r.ok, let v = r.values, credentials.allSatisfy({ v[$0] != nil }) else { return r.error ?? "Not approved." }
             released = v
         }
@@ -1237,7 +1237,7 @@ final class AppModel {
         if rewrite, !saved.isEmpty {
             do {
                 try EnvFile.rewriteFile(at: draft.url, original: draft.text, toReferences: references.filter { saved.contains($0.value) })
-                parts.append("\(draft.url.lastPathComponent) now uses latchkey:// references")
+                parts.append("\(draft.url.lastPathComponent) now uses credential references")
             } catch {
                 parts.append("but \(draft.url.lastPathComponent) could not be rewritten: \(error.localizedDescription)")
             }
@@ -1245,12 +1245,12 @@ final class AppModel {
         notice = parts.joined(separator: ", ") + "."
         if !draft.shared { filter = .project(draft.project) }
         let folder = draft.url.deletingLastPathComponent().path, file = draft.url.lastPathComponent
-        let rewritten = rewrite && parts.contains { $0.contains("now uses latchkey://") }
+        let rewritten = rewrite && parts.contains { $0.contains("now uses credential references") }
         nextSteps = NextSteps(
             title: "Imported \(saved.count) item\(saved.count == 1 ? "" : "s")",
             body: rewritten
-                ? "\(file) now holds latchkey:// references instead of values. Run your project through pst run, and the values are filled in as it starts. Replace npm run dev with your own command."
-                : "The values are in Latchkey. Put latchkey:// references in your env file in their place, then run your project through pst run. Replace npm run dev with your own command.",
+                ? "\(file) now holds credential references instead of values. Run your project through pst run, and the values are filled in as it starts. Replace npm run dev with your own command."
+                : "The values are in Pistachio. Put pistachio:// references in your env file in their place, then run your project through pst run. Replace npm run dev with your own command.",
             commands: ["cd \(Broker.tilde(folder))", "pst run --env-file \(file) -- npm run dev"],
             agents: true)
         return nil
@@ -1321,7 +1321,7 @@ final class AppModel {
         panel.canCreateDirectories = false
         panel.directoryURL = folder
         panel.prompt = "Allow"
-        panel.message = "Choose this file’s folder, or a parent folder, so Latchkey can replace the file safely. Secret access still requires separate approval."
+        panel.message = "Choose this file’s folder, or a parent folder, so Pistachio can replace the file safely. Secret access still requires separate approval."
         guard panel.runModal() == .OK, let chosen = panel.url else { return false }
         let selected = chosen.standardizedFileURL.path
         guard path == selected || path.hasPrefix(selected == "/" ? "/" : selected + "/") else {
@@ -1343,7 +1343,7 @@ final class AppModel {
         panel.allowsMultipleSelection = false
         panel.canCreateDirectories = false
         panel.prompt = "Allow"
-        panel.message = "Choose a project folder Latchkey may read and update. Secret access still requires separate approval."
+        panel.message = "Choose a project folder Pistachio may read and update. Secret access still requires separate approval."
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do { try rememberSelectedURL(url, isDirectory: true) }
         catch { notice = error.localizedDescription }

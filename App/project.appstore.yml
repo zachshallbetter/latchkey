@@ -40,7 +40,8 @@ targets:
       properties:REPLACE:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        CFBundleDisplayName: Latchkey
+        CFBundleDisplayName: Pistachio
+        CFBundleName: Pistachio
         LSApplicationCategoryType: public.app-category.developer-tools
         LSMultipleInstancesProhibited: true
         NSHumanReadableCopyright: Copyright © 2026 Snack Studio

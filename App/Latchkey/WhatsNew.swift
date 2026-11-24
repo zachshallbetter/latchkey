@@ -24,7 +24,7 @@ struct WhatsNewView: View {
             HStack(spacing: 12) {
                 BrandAppIcon(size: 44)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("What's New in Latchkey \(current?.version ?? Self.version)").font(.title3.weight(.semibold))
+                    Text("What's New in Pistachio \(current?.version ?? Self.version)").font(.title3.weight(.semibold))
                     if let date = current?.date { Text(date).font(.callout).foregroundStyle(.secondary) }
                 }
             }

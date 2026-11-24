@@ -24,6 +24,11 @@ final class MenuBarItem: NSObject {
     private func updateIcon() {
         let name = AppPreferences().icon == .key ? "MenuBarIcon" : "PistachioMenuBarIcon"
         let icon = NSImage(named: name)?.copy() as? NSImage
+        if let icon {
+            let ratio = icon.size.width / max(icon.size.height, 1)
+            let side: CGFloat = AppPreferences().icon == .key ? 18 : 14
+            icon.size = NSSize(width: side * min(ratio, 1), height: side / max(ratio, 1))
+        }
         icon?.isTemplate = true
         icon?.accessibilityDescription = "Pistachio"
         item.button?.image = icon
@@ -39,7 +44,7 @@ final class MenuBarItem: NSObject {
         guard let button = item.button else { return }
         updateIcon()
         button.imageScaling = .scaleProportionallyDown
-        button.toolTip = "Latchkey: click to open, right-click for quick access"
+        button.toolTip = "Pistachio: click to open, right-click for quick access"
         button.target = self
         button.action = #selector(clicked)
         button.sendAction(on: [.leftMouseUp, .rightMouseUp])
@@ -83,7 +88,7 @@ struct MenuBarPanel: View {
     /// Use Password… for the system sheet. Unlocking shows the items in place.
     private var lockedBody: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label("Latchkey is locked", systemImage: "lock.fill").font(.headline)
+            Label("Pistachio is locked", systemImage: "lock.fill").font(.headline)
             if let touchID {
                 VStack(spacing: 4) {
                     InlineTouchID(context: touchID,
@@ -165,7 +170,7 @@ struct MenuBarPanel: View {
             }
             Divider()
             HStack {
-                Button("Open Latchkey") { open() }
+                Button("Open Pistachio") { open() }
                 Spacer()
                 Button("Lock") { close(); model.lock(byHand: true) }
                 Button("Settings…") { close(); model.openSettings() }

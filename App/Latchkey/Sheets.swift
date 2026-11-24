@@ -71,7 +71,7 @@ struct AddItemSheet: View {
                                 model.nextSteps = NextSteps(
                                     title: "Added \(added)",
                                     body: "Put this reference in an env file in place of the value, then run your project through pst run. Replace npm run dev with your own command.",
-                                    commands: ["\(ItemID(added)?.name ?? added)=latchkey://\(added)", "pst run --env-file .env -- npm run dev"],
+                                    commands: ["\(ItemID(added)?.name ?? added)=pistachio://\(added)", "pst run --env-file .env -- npm run dev"],
                                     agents: true)
                             }
                         }
@@ -241,8 +241,8 @@ struct ImportSheet: View {
                 Spacer()
             }
             .textFieldStyle(.roundedBorder)
-            Text(draft.shared ? "Items are named after their keys, e.g. latchkey://\(draft.rows.first?.key ?? "KEY")."
-                 : "Items become latchkey://\(draft.itemID(draft.rows.first?.key ?? "KEY")). The project is the repository's folder; the environment comes from the file name.")
+            Text(draft.shared ? "Items are named after their keys, e.g. pistachio://\(draft.rows.first?.key ?? "KEY")."
+                 : "Items become pistachio://\(draft.itemID(draft.rows.first?.key ?? "KEY")). The project is the repository's folder; the environment comes from the file name.")
                 .font(.caption).foregroundStyle(.secondary)
             Table($draft.rows) {
                 TableColumn("") { $row in
@@ -288,7 +288,7 @@ struct ImportSheet: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             Toggle("Overwrite items that already exist", isOn: $replace)
-            Toggle("Replace values in the file with latchkey:// references", isOn: $rewrite)
+            Toggle("Replace values in the file with credential references", isOn: $rewrite)
             if let error { Text(error).font(.caption).foregroundStyle(.red) }
             SheetFooter(note: "One Touch ID approval covers the whole import.", noteSymbol: "touchid") {
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
@@ -331,7 +331,7 @@ struct NextSteps: Identifiable {
     static func agentPrompt(envFile: String?) -> String {
         let file = envFile ?? ".env.local"
         return """
-        Secrets are in Latchkey. \(file) holds latchkey:// references, not values. Run anything that needs them with `pst run --env-file \(file) -- <command>`. In a fresh checkout or worktree, write the file first with `pst project` and `pst export <project>/<environment> --out \(file)`. Never run `pst get`, print the environment, or put real values in env files. If pst exits 77 (refused) or 66 (missing), stop and ask me; don't retry.
+        Secrets are in Pistachio. \(file) holds credential references, not values. Run anything that needs them with `pst run --env-file \(file) -- <command>`. In a fresh checkout or worktree, write the file first with `pst project` and `pst export <project>/<environment> --out \(file)`. Never run `pst get`, print the environment, or put real values in env files. If pst exits 77 (refused) or 66 (missing), stop and ask me; don't retry.
         """
     }
 }
@@ -374,7 +374,7 @@ struct NextStepsSheet: View {
                     }
                     Text(prompt).font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text("Paste it into CLAUDE.md or AGENTS.md, or install the Latchkey skill. Agents ask you here before reading a key.")
+                    Text("Paste it into CLAUDE.md or AGENTS.md, or install the Pistachio skill. Agents ask you here before reading a key.")
                         .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(8)
@@ -407,8 +407,8 @@ struct UpgradeSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            SheetHeader(symbol: "star.fill", tint: .orange, title: "Latchkey Pro",
-                        subtitle: "This feature is part of Latchkey Pro.")
+            SheetHeader(symbol: "star.fill", tint: .orange, title: "Pistachio Pro",
+                        subtitle: "This feature is part of Pistachio Pro.")
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(Self.groups, id: \.title) { group in
                     VStack(alignment: .leading, spacing: 2) {
@@ -417,7 +417,7 @@ struct UpgradeSheet: View {
                     }
                 }
             }
-            Text("Everything Latchkey does today is free. Storing, reading, approving, running, importing, exporting and restoring your secrets never depend on Pro.")
+            Text("Everything Pistachio does today is free. Storing, reading, approving, running, importing, exporting and restoring your secrets never depend on Pro.")
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             SheetFooter {
                 Button("Not Now") { dismiss() }
