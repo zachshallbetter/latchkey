@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### CLI
+- Every `LATCHKEY_` environment variable can also be set as `PISTACHIO_` (`PISTACHIO_SOCKET`, `PISTACHIO_BROKER`,
+  `PISTACHIO_NO_LAUNCH` and the rest), which wins when both are set. The old names keep working.
+- The MCP tools are renamed `pistachio_run`, `pistachio_check`, `pistachio_list`, `pistachio_status`,
+  `pistachio_project`, `pistachio_request_grant` and `pistachio_export_references`. The `latchkey_` names are listed
+  beside them and work the same until the next release. `pistachio_request_grant` no longer says requests are
+  limited to a day, which stopped being true in 0.4.0.
 - The command-line tool also answers to `pistachio`, the product's name after the rename: Install Command Line Tool,
   `scripts/install.sh` and Homebrew link it beside `latchkey` and `lk`. All three are the same signed tool, so grants
   for `latchkey run` and `lk run` cover `pistachio run` too, and `latchkey` and `lk` keep working.

@@ -83,8 +83,9 @@ def main():
         identifier = uuid.uuid4().hex[:8]
         endpoint = pathlib.Path.home() / "Library/Group Containers" / group / (".c" + identifier)
         environment = os.environ.copy()
-        for key in ("LATCHKEY_SOCKET", "LATCHKEY_LOCAL_SOCKET", "LATCHKEY_BROKER", "LATCHKEY_ORIGIN"):
-            environment.pop(key, None)
+        for name in ("SOCKET", "LOCAL_SOCKET", "BROKER", "ORIGIN"):
+            for prefix in ("PISTACHIO_", "LATCHKEY_"):
+                environment.pop(prefix + name, None)
         environment.update(LATCHKEY_BROKER="app-store", LATCHKEY_LOCAL_SOCKET=str(endpoint), LATCHKEY_NO_LAUNCH="1")
         server_env = environment | {"LATCHKEY_PROBE_ID": identifier, "LATCHKEY_PROBE_FOLDER": str(project)}
         server = subprocess.Popen([str(app / "Contents/MacOS" / info["CFBundleExecutable"]), "--broker-transport-self-test"],

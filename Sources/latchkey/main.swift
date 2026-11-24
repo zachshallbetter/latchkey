@@ -162,7 +162,7 @@ func fail(_ message: String, code: Int32 = 1) -> Never {
 func clientEndpoint() throws -> BrokerEndpoint {
     let environment = ProcessInfo.processInfo.environment
     var store = false
-    if (environment["LATCHKEY_BROKER"] ?? "auto") == "auto",
+    if (Setting.value("BROKER", in: environment) ?? "auto") == "auto",
        let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: CodeIdentity.appIdentifier),
        let bundle = Bundle(url: url),
        let channel = bundle.object(forInfoDictionaryKey: "LatchkeyDistributionChannel") as? String,
@@ -190,7 +190,7 @@ func appAnswers(within seconds: Double) -> Bool {
 /// Launching is the last resort: a launch request that lands while the app is already starting ends that
 /// launch, so first give a starting copy a moment, and never launch while one is listed as running.
 func launchApp() -> Bool {
-    if ProcessInfo.processInfo.environment["LATCHKEY_NO_LAUNCH"] == "1" || Paths.forwardedSocket != nil { return false }
+    if Setting.value("NO_LAUNCH") == "1" || Paths.forwardedSocket != nil { return false }
     let bundleID = "io.snackstud.latchkey"
     if appAnswers(within: 1.5) { return true }
     if !NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty {
@@ -209,10 +209,11 @@ func launchApp() -> Bool {
 }
 
 /// Sends one request to the app, starting it if it isn't running. Returns the response as is, `ok` or not.
-/// Commands `latchkey mcp` starts for an agent carry LATCHKEY_ORIGIN=mcp, so their requests say so.
+/// Commands `latchkey mcp` starts for an agent carry PISTACHIO_ORIGIN=mcp (and LATCHKEY_ORIGIN=mcp), so their requests
+/// say so.
 func call(_ request: Request) throws -> Response {
     var request = request
-    if ProcessInfo.processInfo.environment["LATCHKEY_ORIGIN"] == "mcp" { request.origin = "mcp" }
+    if Setting.value("ORIGIN") == "mcp" { request.origin = "mcp" }
     if Paths.forwardedSocket != nil {
         request.remote = RemoteClaim(host: ProcessInfo.processInfo.hostName, cwd: currentDirectory(),
                                      command: Redact.arguments(Array(CommandLine.arguments.dropFirst())).joined(separator: " "))

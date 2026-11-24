@@ -333,6 +333,10 @@ Where values are kept, how you approve, how many items and grants, and the socke
 | `LATCHKEY_NO_LAUNCH=1` | Don't start the app if it isn't running; fail with exit 69 instead. |
 | `LATCHKEY_SOCKET=PATH` | Connect to a socket forwarded over SSH from the Mac running Latchkey (see [From another Mac over SSH](agents.md#from-another-mac-over-ssh)). |
 
+Each `LATCHKEY_` variable here and below can also be set under its new name, `PISTACHIO_NO_LAUNCH`,
+`PISTACHIO_SOCKET` and so on. When both are set, the `PISTACHIO_` one wins, even if it's empty. The `LATCHKEY_` names
+keep working.
+
 ## Exit codes
 
 | Code | Meaning |

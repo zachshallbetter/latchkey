@@ -82,6 +82,28 @@ final class RunTests: XCTestCase {
     }
 }
 
+/// The MCP tools are named pistachio_, and their old latchkey_ names keep working for one release (#124).
+final class MCPToolNameTests: XCTestCase {
+    func testEveryToolIsListedUnderBothNamesWithTheSameSchema() throws {
+        let current = MCPServer.currentTools.map { $0["name"] as! String }
+        XCTAssertEqual(current.sorted(), ["pistachio_check", "pistachio_export_references", "pistachio_list", "pistachio_project",
+                                          "pistachio_request_grant", "pistachio_run", "pistachio_status"])
+        let byName = Dictionary(uniqueKeysWithValues: MCPServer.tools.map { ($0["name"] as! String, $0) })
+        XCTAssertEqual(byName.count, current.count * 2)
+        for name in current {
+            let old = "latchkey_" + name.dropFirst("pistachio_".count)
+            let alias = try XCTUnwrap(byName[old], old)
+            let tool = try XCTUnwrap(byName[name])
+            XCTAssertEqual(alias["inputSchema"] as? NSDictionary, tool["inputSchema"] as? NSDictionary, old)
+            XCTAssertEqual(alias["annotations"] as? NSDictionary, tool["annotations"] as? NSDictionary, old)
+            XCTAssertTrue((alias["description"] as! String).hasPrefix("Old name for \(name)"), old)
+            XCTAssertEqual(MCPServer.currentName(old), name)
+            XCTAssertEqual(MCPServer.currentName(name), name)
+        }
+        XCTAssertEqual(MCPServer.currentName("other_tool"), "other_tool")
+    }
+}
+
 /// The MCP export tool writes without asking the owner, so only inside the folder the agent works in.
 final class MCPExportPathTests: XCTestCase {
     func testExportPathStaysInsideTheFolder() throws {

@@ -1,13 +1,13 @@
 #!/bin/zsh
 # Builds Latchkey and installs it:
-#   app → /Applications/Latchkey.app      CLI → ~/.local/bin/latchkey, with lk and pistachio  (override with LATCHKEY_BIN_DIR)
+#   app → /Applications/Latchkey.app      CLI → ~/.local/bin/latchkey, with lk and pistachio  (override with PISTACHIO_BIN_DIR or LATCHKEY_BIN_DIR)
 #
 # With DEVELOPMENT_TEAM set in App/project.yml the app is signed with your team and keeps values in
 # iCloud Keychain. Without it, the app is signed ad hoc and keeps values in this Mac's login keychain.
 set -euo pipefail
 cd "${0:A:h}/.."
 
-BIN_DIR="${LATCHKEY_BIN_DIR:-$HOME/.local/bin}"
+BIN_DIR="${PISTACHIO_BIN_DIR:-${LATCHKEY_BIN_DIR:-$HOME/.local/bin}}"
 # On machines with a shared build register, builds wait for a slot there. Only the builds: the register
 # cleans up what runs under it, which would take the freshly opened app with it.
 REG="$HOME/Projects/_worktrees/.register/reg"

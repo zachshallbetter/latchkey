@@ -345,17 +345,25 @@ public enum Wire {
     public static func isValidName(_ name: String) -> Bool { ItemID(name) != nil }
 }
 
+/// Latchkey's environment variables, read by their new `PISTACHIO_` name first and their `LATCHKEY_` name otherwise.
+/// Both keep working; when both are set, the `PISTACHIO_` one wins, even if it's empty.
+public enum Setting {
+    public static func value(_ name: String, in environment: [String: String] = ProcessInfo.processInfo.environment) -> String? {
+        environment["PISTACHIO_" + name] ?? environment["LATCHKEY_" + name]
+    }
+}
+
 public enum Paths {
     public static var supportDir: URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         return base.appendingPathComponent("Latchkey", isDirectory: true)
     }
     public static var socket: String { supportDir.appendingPathComponent("broker.sock").path }
-    /// Where the command-line tool connects: LATCHKEY_SOCKET (a socket forwarded over SSH from the Mac running the
+    /// Where the command-line tool connects: PISTACHIO_SOCKET or LATCHKEY_SOCKET (a socket forwarded over SSH from the Mac running the
     /// app), or the app's own socket.
     public static var clientSocket: String { forwardedSocket ?? socket }
     public static var forwardedSocket: String? {
-        ProcessInfo.processInfo.environment["LATCHKEY_SOCKET"].flatMap { $0.isEmpty ? nil : $0 }
+        Setting.value("SOCKET").flatMap { $0.isEmpty ? nil : $0 }
     }
     public static var accessLog: URL { supportDir.appendingPathComponent("access.jsonl") }
 

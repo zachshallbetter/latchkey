@@ -30,6 +30,22 @@ final class BrokerEndpointTests: XCTestCase {
         XCTAssertThrowsError(try select(["LATCHKEY_LOCAL_SOCKET": "/local", "LATCHKEY_SOCKET": "/forward"]))
     }
 
+    /// PISTACHIO_ names are read first; the LATCHKEY_ names keep working (#124).
+    func testSettingsReadTheNewNameFirstAndFallBackToTheOld() throws {
+        XCTAssertEqual(Setting.value("BROKER", in: ["LATCHKEY_BROKER": "direct"]), "direct")
+        XCTAssertEqual(Setting.value("BROKER", in: ["PISTACHIO_BROKER": "app-store"]), "app-store")
+        XCTAssertEqual(Setting.value("BROKER", in: ["PISTACHIO_BROKER": "direct", "LATCHKEY_BROKER": "app-store"]), "direct")
+        XCTAssertEqual(Setting.value("SOCKET", in: ["PISTACHIO_SOCKET": "", "LATCHKEY_SOCKET": "/old"]), "", "a set new name wins even when empty")
+        XCTAssertNil(Setting.value("BROKER", in: ["BROKER": "direct"]))
+
+        XCTAssertEqual(try select(["PISTACHIO_BROKER": "direct"], store: true).path, "/direct/broker.sock")
+        XCTAssertThrowsError(try select(["PISTACHIO_BROKER": "typo", "LATCHKEY_BROKER": "direct"]))
+        XCTAssertEqual(try select(["PISTACHIO_SOCKET": "/ssh/new.sock"]).authentication, .sshForward)
+        XCTAssertEqual(try select(["PISTACHIO_SOCKET": "/ssh/new.sock"]).path, "/ssh/new.sock")
+        XCTAssertThrowsError(try select(["PISTACHIO_LOCAL_SOCKET": "/local", "LATCHKEY_SOCKET": "/forward"]))
+        XCTAssertEqual(try select(["PISTACHIO_BROKER": "app-store", "PISTACHIO_LOCAL_SOCKET": "/fixture"]).path, "/fixture")
+    }
+
     func testCommandContextParsesAllRunOptionsAndRejectsUnknownOnes() {
         func command(_ args: [String]) -> [String]? {
             PeerInfo(pid: 1, path: "/fixture/latchkey", cwd: "/project", chain: [],

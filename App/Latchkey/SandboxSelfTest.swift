@@ -253,9 +253,9 @@ enum SandboxSelfTest {
     /// A separate-process fixture for the real terminal CLI. Never initialize AppModel or a Keychain store.
     /// A random, short App Group path prevents collision with the production broker or Safari listener.
     static func serveFixtureAndExit() -> Never {
-        guard sandboxEntitlement(), let id = ProcessInfo.processInfo.environment["LATCHKEY_PROBE_ID"],
+        guard sandboxEntitlement(), let id = Setting.value("PROBE_ID"),
               id.count == 8, id.allSatisfy({ $0.isHexDigit }),
-              let folder = ProcessInfo.processInfo.environment["LATCHKEY_PROBE_FOLDER"], folder.hasPrefix("/"),
+              let folder = Setting.value("PROBE_FOLDER"), folder.hasPrefix("/"),
               let group = Bundle.main.object(forInfoDictionaryKey: "LatchkeyAppGroup") as? String,
               let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group) else { exit(64) }
         let path = container.appendingPathComponent(".c" + id).path
