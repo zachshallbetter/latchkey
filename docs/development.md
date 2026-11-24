@@ -96,6 +96,26 @@ from `latchkey mcp`: approval panels say an agent asked, and grants it asks for 
 The CLI target holds `main.swift` (commands), `Run.swift` (filling in an environment and masking output, shared by
 `run`, `check` and the MCP server) and `MCP.swift` (`latchkey mcp`: JSON-RPC over standard input and output).
 
+## Stored identifiers
+
+These names find what earlier builds stored, so they never change, including when the product is renamed (decided
+in #121 for the rename to Pistachio). A build with different values can't read existing items, grants, history,
+logs or purchases, and App Store Connect can't rename a bundle or product ID. Only display names change.
+
+- **Keychain services:** `latchkey` (items), `latchkey.history`, `latchkey.grants`, `latchkey.remote`,
+  `latchkey.environment`, `latchkey.project`, `latchkey.logkey` and `latchkey.loghead`.
+- **Access groups:** `$(AppIdentifierPrefix)io.snackstud.latchkey`, and `$(AppIdentifierPrefix)io.latchkey.shared`,
+  which 0.1.0 development builds used and the app still reads (`LatchkeyPreviousAccessGroup`).
+- **App Group:** `$(TeamIdentifierPrefix)io.snackstud.latchkey`, which holds the Safari extension's socket and, in the
+  App Store build, `cli.sock`. The Info.plist keys `LatchkeyAccessGroup`, `LatchkeyPreviousAccessGroup` and
+  `LatchkeyAppGroup` keep their names too.
+- **Bundle and signing identifiers:** `io.snackstud.latchkey` (app, preferences domain, log subsystem and Safari
+  native-messaging name), `.safari`, `.cli` and `.chrome`. The broker checks callers' signatures by these.
+- **In-app purchase:** `io.snackstud.latchkey.pro`.
+- **Files:** `~/Library/Application Support/Latchkey/` with `broker.sock` and `access.jsonl`.
+
+`StoredIdentifierTests` and `scripts/tests/test_stored_identifiers.py` fail if any of these changes.
+
 ## Adding a remote service
 
 Add a case to `RemoteTarget.Service`, then fill in `label`, `tool`, `problem` (required fields), `isProduction`,
