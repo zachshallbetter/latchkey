@@ -3,11 +3,11 @@
   "scope": "full-functionality",
   "submissionEnabled": false,
   "metadata": {
-    "name": "Latchkey",
+    "name": "Pistachio: Secrets in a Shell",
     "primaryCategory": "public.app-category.developer-tools",
-    "supportURL": "https://latchkey.snackstud.io/support.html",
-    "privacyPolicyURL": "https://latchkey.snackstud.io/privacy.html",
-    "marketingURL": "https://latchkey.snackstud.io/",
+    "supportURL": "https://secretsinashell.com/support.html",
+    "privacyPolicyURL": "https://secretsinashell.com/privacy.html",
+    "marketingURL": "https://secretsinashell.com/",
     "reviewContactConfirmed": false,
     "exportComplianceReviewed": false
   },

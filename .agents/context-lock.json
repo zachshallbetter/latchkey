@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 417,
-    "includedBytes": 3747279,
+    "includedBytes": 3747410,
     "excludedCounts": {
       "extension": 139,
       "generated-or-transient-file": 2
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "442ba4b2ddccc1253ed205c4b7d9720f4629af9c",
+        "commit": "a7885af1799c7e95e6043fde7f7affd9a8edb83d",
         "branch": null,
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "8e6be4a43a280135689f7dba67a9c9f00163460e6d29a6c471f9109a970a5e9e",
+  "aggregateSourceDigest": "63a2a6c9437f76d7bef4e9174c7522d4de7c974daf8b9e96c1a8bd722a5aed59",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -1564,8 +1564,8 @@
     },
     {
       "path": "docs/app-store.md",
-      "bytes": 27507,
-      "sha256": "663775afd050b0e4ff59020877f3d1f108c9936a3a56cfd150e433cfcd4fb289"
+      "bytes": 27579,
+      "sha256": "02730219d4d1507e7374131c438747d270745f2423b5bf267b7d4f00e5bdcac2"
     },
     {
       "path": "docs/app.md",
@@ -1744,13 +1744,13 @@
     },
     {
       "path": "packaging/app-store/listing.md",
-      "bytes": 7638,
-      "sha256": "2aff9cfe55eb34e22a736c5f2807b129892e942101528991c154d954ed6aa850"
+      "bytes": 7682,
+      "sha256": "d51e3df6643afb9237585926435b58598ee64bbcc36b97da5210828f168df2da"
     },
     {
       "path": "packaging/app-store/readiness.json",
-      "bytes": 2782,
-      "sha256": "709ca54477d99315b206279134fd5465c5adca9cc3f34cbb40c2995bcd7c373e"
+      "bytes": 2797,
+      "sha256": "c5f96ba85c402234fa1bebea0d1fe1f7b5c72a64c62166de460af022da489f43"
     },
     {
       "path": "plugins/latchkey/.claude-plugin/plugin.json",

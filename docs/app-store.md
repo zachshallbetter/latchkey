@@ -32,7 +32,7 @@ Steps, in order:
 1. Merge the pending work, set `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`, and release the direct build with
    `scripts/release.sh` so the standalone tool and its formula exist (the store app links to them).
 2. In App Store Connect (Account Holder or Admin): accept the agreements, set the EU trader status, create the app
-   record (bundle ID io.snackstud.latchkey, SKU pistachio-mac), and fill in everything in `listing.md`: app
+   record (bundle ID io.snackstud.latchkey, SKU latchkey-mac; the record exists as Pistachio: Secrets in a Shell, Apple ID 6834643228), and fill in everything in `listing.md`: app
    information, description, keywords, URLs, screenshots, App Review notes and contact, App Privacy ("Data Not
    Collected"), age rating answers and price (free).
 3. Build the submission: `python3 scripts/release-appstore.py --output build/appstore/VERSION`. It archives a Release
