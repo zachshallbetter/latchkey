@@ -5,6 +5,7 @@ public struct AppPreferences {
     public enum Key {
         public static let appearance = "appearance"
         public static let icon = "appIconChoice"
+        public static let palette = "paletteChoice"
         public static let clipboardSeconds = "clipboardClearSeconds"
         public static let revealSeconds = "revealSeconds"
         public static let hideOnDeactivate = "hideValuesOnDeactivate"
@@ -33,6 +34,16 @@ public struct AppPreferences {
     }
 
     public var icon: Icon { Icon(preference: defaults.string(forKey: Key.icon)) }
+
+    /// The app's accent colour, chosen apart from the icon.
+    public enum Palette: String, CaseIterable, Sendable {
+        case pistachio, blue, plum, graphite
+
+        public var title: String { rawValue.prefix(1).uppercased() + rawValue.dropFirst() }
+        public init(preference: String?) { self = preference.flatMap(Self.init(rawValue:)) ?? .pistachio }
+    }
+
+    public var palette: Palette { Palette(preference: defaults.string(forKey: Key.palette)) }
 
     public var clipboardSeconds: Int { Self.clipboardSeconds(defaults.integer(forKey: Key.clipboardSeconds)) }
 

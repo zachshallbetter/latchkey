@@ -59,6 +59,7 @@ struct SettingsView: View {
     var section: SettingsSection
     @AppStorage(AppPreferences.Key.appearance) private var appearance = "system"
     @AppStorage(AppPreferences.Key.icon) private var icon = AppPreferences.Icon.pistachio.rawValue
+    @AppStorage(AppPreferences.Key.palette) private var palette = AppPreferences.Palette.pistachio.rawValue
     @AppStorage(AppPreferences.Key.clipboardSeconds) private var clipboardSeconds = AppPreferences.defaultClipboardSeconds
     @AppStorage(AppPreferences.Key.revealSeconds) private var revealSeconds = AppPreferences.defaultRevealSeconds
     @AppStorage(AppPreferences.Key.hideOnDeactivate) private var hideOnDeactivate = true
@@ -110,7 +111,17 @@ struct SettingsView: View {
                 }
             }
             .pickerStyle(.radioGroup)
-            SettingsNote("Changes the Dock icon, menu bar symbol and marks inside the app. Finder and Safari keep the bundled Pistachio icon.")
+            Picker("Palette", selection: Binding(get: { AppPreferences.Palette(preference: palette).rawValue }, set: { palette = $0 })) {
+                ForEach(AppPreferences.Palette.allCases, id: \.rawValue) { choice in
+                    Label {
+                        Text(choice.title)
+                    } icon: {
+                        RoundedRectangle(cornerRadius: 4, style: .continuous).fill(AppPalette.fill(choice)).frame(width: 14, height: 14)
+                    }
+                    .tag(choice.rawValue)
+                }
+            }
+            SettingsNote("The icon changes the Dock icon, menu bar symbol and marks inside the app; Finder and Safari keep the bundled Pistachio icon. The palette colours selections, highlights and buttons.")
             SettingsNote("Preferences are saved on this Mac. They do not change the settings on your other Macs.")
         }
         Section("Startup & Dock") {

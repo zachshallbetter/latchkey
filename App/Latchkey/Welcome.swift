@@ -2,7 +2,7 @@ import AppKit
 import LatchkeyCore
 import SwiftUI
 
-/// Pistachio's welcome window, which walks through the choices only the user can make: its icon and theme (applied as
+/// Pistachio's welcome window, which walks through the choices only the user can make: its icon and palette (applied as
 /// they're chosen, to the Dock, the menu bar and this window), what quitting does, the browser extension, and connecting
 /// coding agents. It opens on a new Mac (`AppPreferences.needsWelcome`) and from Settings › About. Closing it early
 /// counts as done; everything it asks is in Settings too.
@@ -11,7 +11,7 @@ struct WelcomeView: View {
 
     let model: AppModel
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(AppPreferences.Key.icon) private var icon = AppPreferences.Icon.pistachio.rawValue
+    @AppStorage(AppPreferences.Key.palette) private var palette = AppPreferences.Palette.pistachio.rawValue
     @State private var page: Page
     @State private var forward = true
 
@@ -24,13 +24,13 @@ struct WelcomeView: View {
         _page = State(initialValue: startPage)
     }
 
-    private var theme: WelcomeTheme { WelcomeTheme(icon: AppPreferences.Icon(preference: icon)) }
+    private var theme: WelcomeTheme { WelcomeTheme(palette: AppPreferences.Palette(preference: palette)) }
 
     var body: some View {
         ZStack(alignment: .top) {
             LinearGradient(colors: [theme.accent.opacity(0.16), theme.accent.opacity(0)], startPoint: .top, endPoint: .center)
                 .ignoresSafeArea()
-                .animation(.easeInOut(duration: 0.3), value: icon)
+                .animation(.easeInOut(duration: 0.3), value: palette)
 
             VStack(spacing: 0) {
                 ZStack {
@@ -119,33 +119,19 @@ struct WelcomeView: View {
     }
 }
 
-/// The welcome's colours follow the chosen icon: pistachio green from the kernel, or the key's blue. Brighter in dark
-/// mode, deeper in light mode so text in them stays readable; the button fill is dark enough for white text in both.
+/// The welcome's colours: the chosen palette (AppPalette), which the rest of the app uses as its tint too.
 struct WelcomeTheme: Equatable {
     let accent: Color
     let buttonFill: Color
 
-    init(icon: AppPreferences.Icon) {
-        switch icon {
-        case .pistachio:
-            accent = Self.dynamic(dark: (0.69, 0.75, 0.36), light: (0.36, 0.44, 0.15))
-            buttonFill = Color(nsColor: NSColor(srgbRed: 0.33, green: 0.42, blue: 0.13, alpha: 1))
-        case .key:
-            accent = Self.dynamic(dark: (0.42, 0.64, 1.0), light: (0.10, 0.40, 0.85))
-            buttonFill = Color(nsColor: NSColor(srgbRed: 0.10, green: 0.38, blue: 0.80, alpha: 1))
-        }
-    }
-
-    private static func dynamic(dark: (CGFloat, CGFloat, CGFloat), light: (CGFloat, CGFloat, CGFloat)) -> Color {
-        Color(nsColor: NSColor(name: nil) { appearance in
-            let c = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light
-            return NSColor(srgbRed: c.0, green: c.1, blue: c.2, alpha: 1)
-        })
+    init(palette: AppPreferences.Palette) {
+        accent = AppPalette.accent(palette)
+        buttonFill = AppPalette.fill(palette)
     }
 }
 
 private struct WelcomeThemeKey: EnvironmentKey {
-    static let defaultValue = WelcomeTheme(icon: .pistachio)
+    static let defaultValue = WelcomeTheme(palette: .pistachio)
 }
 
 extension EnvironmentValues {
@@ -242,34 +228,78 @@ private struct WelcomePage: View {
 
 private struct LookPage: View {
     @AppStorage(AppPreferences.Key.icon) private var icon = AppPreferences.Icon.pistachio.rawValue
-    @AppStorage(AppPreferences.Key.appearance) private var appearance = "system"
+    @AppStorage(AppPreferences.Key.palette) private var palette = AppPreferences.Palette.pistachio.rawValue
+    @Environment(\.welcomeTheme) private var theme
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            PageTitle(title: Text("Make it yours"),
-                      subtitle: "The Dock, the menu bar and this window change as you choose.")
+        HStack(alignment: .center, spacing: 28) {
+            PistachioHero(size: 250, open: true)
 
-            HStack(spacing: 14) {
-                ForEach(AppPreferences.Icon.allCases, id: \.rawValue) { choice in
-                    ChoiceCard(image: AppBranding.image(for: choice), title: choice.title,
-                               detail: choice == .pistachio ? "Pistachio green, with the nut in its shell." : "The original key, in blue.",
-                               badge: nil, selected: AppPreferences.Icon(preference: icon) == choice) {
-                        withAnimation(.easeInOut(duration: 0.25)) { icon = choice.rawValue }
+            VStack(alignment: .leading, spacing: 24) {
+                PageTitle(eyebrow: "Appearance",
+                          title: Text("Make it ") + Text("yours.").foregroundColor(theme.accent),
+                          subtitle: "See your choices in the Dock and menu bar as you go.")
+
+                Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 18) {
+                    GridRow {
+                        Text("Icon").font(.headline)
+                        HStack(spacing: 18) {
+                            ForEach(AppPreferences.Icon.allCases, id: \.rawValue) { choice in
+                                iconChoice(choice)
+                            }
+                        }
+                    }
+                    GridRow {
+                        Text("Palette").font(.headline)
+                        HStack(spacing: 10) {
+                            ForEach(AppPreferences.Palette.allCases, id: \.rawValue) { choice in
+                                swatch(choice)
+                            }
+                        }
                     }
                 }
             }
-
-            OptionRow(symbol: "circle.lefthalf.filled", title: "Theme", detail: "Light, dark, or the same as macOS.") {
-                Picker("Theme", selection: $appearance) {
-                    Text("Follow macOS").tag("system")
-                    Text("Light").tag("light")
-                    Text("Dark").tag("dark")
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .fixedSize()
-            }
         }
+        .frame(maxHeight: .infinity)
+    }
+
+    private func iconChoice(_ choice: AppPreferences.Icon) -> some View {
+        let selected = AppPreferences.Icon(preference: icon) == choice
+        return Button {
+            withAnimation(.easeInOut(duration: 0.25)) { icon = choice.rawValue }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: selected ? "largecircle.fill.circle" : "circle")
+                    .font(.title3)
+                    .foregroundStyle(selected ? theme.accent : Color.secondary)
+                Image(nsImage: AppBranding.image(for: choice)).resizable().scaledToFit().frame(width: 36, height: 36)
+                Text(choice.title).font(.body.weight(.medium))
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(choice.title) icon")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private func swatch(_ choice: AppPreferences.Palette) -> some View {
+        let selected = AppPreferences.Palette(preference: palette) == choice
+        return Button {
+            withAnimation(.easeInOut(duration: 0.25)) { palette = choice.rawValue }
+        } label: {
+            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .fill(AppPalette.fill(choice))
+                .frame(width: 38, height: 38)
+                .overlay {
+                    if selected { Image(systemName: "checkmark").font(.headline.weight(.bold)).foregroundStyle(.white) }
+                }
+                .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .strokeBorder(selected ? AppPalette.accent(choice) : Color.primary.opacity(0.12), lineWidth: selected ? 2 : 1))
+        }
+        .buttonStyle(.plain)
+        .help(choice.title)
+        .accessibilityLabel("\(choice.title) palette")
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
 
@@ -698,8 +728,8 @@ private struct Done: View {
     }
 }
 
-/// The pistachio, cracked on the welcome and open on the last page; the key icon instead when that's the choice. It
-/// settles into place as the page opens.
+/// The pistachio, cracked on the welcome and open after it, or the key when that's the chosen icon. It settles into
+/// place as the page opens.
 private struct PistachioHero: View {
     let size: CGFloat
     let open: Bool
@@ -707,22 +737,23 @@ private struct PistachioHero: View {
     @Environment(\.welcomeTheme) private var theme
     @State private var shown = false
 
+    private var imageName: String {
+        if AppPreferences.Icon(preference: icon) == .key { return "WelcomeKey" }
+        return open ? "WelcomePistachioOpen" : "WelcomePistachio"
+    }
+
     var body: some View {
-        Group {
-            if AppPreferences.Icon(preference: icon) == .key {
-                BrandAppIcon(size: size * 0.8)
-            } else {
-                Image(open ? "WelcomePistachioOpen" : "WelcomePistachio")
-                    .resizable()
-                    .scaledToFit()
+        Image(imageName)
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .id(imageName)
+            .transition(.opacity.combined(with: .scale(scale: 0.94)))
+            .scaleEffect(shown ? 1 : 0.9)
+            .rotationEffect(.degrees(shown ? 0 : (open ? 6 : -6)))
+            .shadow(color: theme.accent.opacity(0.35), radius: 30, y: 14)
+            .onAppear {
+                withAnimation(.spring(response: 0.8, dampingFraction: 0.62).delay(0.25)) { shown = true }
             }
-        }
-        .frame(width: size, height: size)
-        .scaleEffect(shown ? 1 : 0.9)
-        .rotationEffect(.degrees(shown ? 0 : (open ? 6 : -6)))
-        .shadow(color: theme.accent.opacity(0.35), radius: 30, y: 14)
-        .onAppear {
-            withAnimation(.spring(response: 0.8, dampingFraction: 0.62).delay(0.25)) { shown = true }
-        }
     }
 }

@@ -22,7 +22,9 @@
 
 ### App
 
-- Added a welcome window on a new Mac. Pick the icon and theme and watch the Dock, menu bar and window change;
+- Added a palette (pistachio green, blue, plum or graphite) for the app's selections, highlights and buttons, in
+  Settings › General › Appearance. Key's Dock icon uses the supplied macOS icon artwork, light and dark.
+- Added a welcome window on a new Mac. Pick the icon and palette and watch the Dock, menu bar and window change;
   choose what quitting does and whether to open at login; turn on Pistachio for Safari, with the status of Chrome,
   Brave and Firefox; and connect Claude Code, Claude Desktop, Codex, Cursor and Gemini CLI to Pistachio's MCP server
   and skill in one click. Settings › About › **Show Welcome Again…** reopens it. Macs already using Pistachio don't
@@ -33,7 +35,7 @@
 - Completed Pistachio naming in native windows, menus, Settings, membership and approval copy. Stored identities
   and existing references remain compatible.
 - Pistachio uses its bundled layered Dock icon with solid neutral backgrounds and no gradient, specular overlay
-  or translucency. Key keeps its original shape on a solid black tile with flat blue artwork and no lighting.
+  or translucency.
 - Sized the Pistachio menu bar symbol to 14 points while retaining Key at 18 points. Both icon choices persist
   locally, and Key’s Dock tile uses native canvas margins.
 

@@ -265,7 +265,8 @@ enum Snapshot {
 
     /// For views the window snapshot cannot capture (the floating glass sidebar, the menu bar panel).
     static func drawOffscreen<V: View>(_ view: V, to path: String) {
-        let host = NSHostingView(rootView: view.background(Color(nsColor: .windowBackgroundColor)))
+        // Tinted like the app's windows (paletteTint), which these parts are drawn outside of.
+        let host = NSHostingView(rootView: view.background(Color(nsColor: .windowBackgroundColor)).paletteTint())
         host.frame.size = host.fittingSize
         let window = NSWindow(contentRect: host.frame, styleMask: .borderless, backing: .buffered, defer: false)
         window.contentView = host
