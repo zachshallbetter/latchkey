@@ -6,10 +6,10 @@ review notes 4000 bytes; `scripts/appstore-preflight.py` checks them.
 
 ## App information
 
-- **Name:** Pistachio: Dev Secrets
-  (the app itself is called Pistachio; the suffix helps search and avoids a clash with other apps named Pistachio.)
-- **Subtitle:** Secrets for Macs and AI agents
-- **Bundle ID:** io.snackstud.latchkey (extension io.snackstud.latchkey.safari). **SKU:** pistachio-mac
+- **Name:** Pistachio: Secrets in a Shell
+  (the app itself is called Pistachio.)
+- **Subtitle:** Less copying. More building.
+- **Bundle ID:** io.snackstud.latchkey (extension io.snackstud.latchkey.safari). **SKU:** latchkey-mac (set when the record was created; App Store Connect can't change it)
 - **Primary category:** Developer Tools. **Secondary:** Productivity
 - **Primary language:** English (U.S.)
 - **Content rights:** the app contains no third-party content that needs rights.
