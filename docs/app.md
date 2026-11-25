@@ -213,12 +213,22 @@ Snack Studio in your browser.
 
 ## Settings
 
-On a new Mac, Pistachio opens a welcome window over the item list. It shows whether the app is in Applications and
-whether iCloud Keychain is on, asks what quitting does (stay in the menu bar, the default, or quit completely) and
-whether to open at login, offers to install the command-line tool (the App Store version links to its download) and
-to turn on Pistachio for Safari, then lists where to start. Every choice is also in Settings, and closing the window
-early counts as finished. A Mac where Pistachio already has items, or has recorded a version, never sees it.
-**Show Welcome Again…** in Settings › About reopens it.
+On a new Mac, Pistachio opens a welcome window over the item list. Its pages:
+
+- **Make it yours:** the icon (Pistachio or Key) and theme. The Dock icon, the menu bar symbol and the welcome's own
+  colours (green for Pistachio, blue for Key) change as you choose.
+- **When you quit Pistachio…:** stay in the menu bar (the default) or quit completely, and whether to open at login.
+- **Save keys from your browser:** each of Safari, Chrome, Brave and Firefox that's installed, with the default
+  browser marked. Safari's extension comes with the app and opens Safari's settings to turn it on. Chrome and Firefox
+  say their extensions aren't published yet; Brave says it isn't supported, because the browser helper checks which
+  browser is connecting and hasn't been reviewed for Brave.
+- **Connect your agents:** installs the command-line tool, then lists Claude Code, Claude Desktop, Codex, Cursor and
+  Gemini CLI where each has been used on this Mac. **Add** (or **Add to All**) registers `pst mcp` in that agent's
+  user configuration and, for Claude Code and Codex, copies the Pistachio skill (see [agents](agents.md#skills-and-plugins)).
+  The App Store version links to the setup guide instead.
+
+Every choice is also in Settings, and closing the window early counts as finished. A Mac where Pistachio already has
+items, or has recorded a version, never sees it. **Show Welcome Again…** in Settings › About reopens it.
 
 **What's New in Pistachio…** in the app menu (and **What's New in This Version…** in Settings › About) shows the
 current version's notes from the changelog bundled with the app, with earlier versions folded below. It opens once

@@ -22,9 +22,11 @@
 
 ### App
 
-- Added a welcome window on a new Mac: what quitting does, opening at login, the command-line tool and Pistachio
-  for Safari, then a short list of where to start. Settings › About › **Show Welcome Again…** reopens it. Macs
-  already using Pistachio don't see it.
+- Added a welcome window on a new Mac. Pick the icon and theme and watch the Dock, menu bar and window change;
+  choose what quitting does and whether to open at login; turn on Pistachio for Safari, with the status of Chrome,
+  Brave and Firefox; and connect Claude Code, Claude Desktop, Codex, Cursor and Gemini CLI to Pistachio's MCP server
+  and skill in one click. Settings › About › **Show Welcome Again…** reopens it. Macs already using Pistachio don't
+  see it.
 - Updated Safari’s extension name, popup, page controls, menu and native messages to Pistachio. Save/fill badges
   now use the supplied pistachio mark. The localized host name also reads Pistachio in macOS; browser permissions,
   credential handling and the compatibility installation path are unchanged.
