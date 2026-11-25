@@ -25,7 +25,7 @@ Keep API keys out of your project files. Pistachio fills them in when a command 
 
 ## Description
 
-Your project files keep references like latchkey://shop/production/DATABASE_URL. Pistachio keeps the values in iCloud Keychain and fills them in when a command starts, so .env files stop holding secrets, values follow you to every Mac you use, and an agent only gets what you've allowed.
+Your project files keep references like pistachio://shop/production/DATABASE_URL. Pistachio keeps the values in iCloud Keychain and fills them in when a command starts, so .env files stop holding secrets, values follow you to every Mac you use, and an agent only gets what you've allowed.
 
 KEEPS VALUES OUT OF FILES
 Import a .env file, or a hundred, and Pistachio places each value for you and can replace it in the file with a reference. Settings and public values are recognized and left alone; anything unclear is treated as a secret. Export an environment back to an env file or copy it as a .env block, each time after you approve it.
