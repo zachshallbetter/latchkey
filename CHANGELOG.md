@@ -22,6 +22,9 @@
 
 ### App
 
+- Added a welcome window on a new Mac: what quitting does, opening at login, the command-line tool and Pistachio
+  for Safari, then a short list of where to start. Settings › About › **Show Welcome Again…** reopens it. Macs
+  already using Pistachio don't see it.
 - Updated Safari’s extension name, popup, page controls, menu and native messages to Pistachio. Save/fill badges
   now use the supplied pistachio mark. The localized host name also reads Pistachio in macOS; browser permissions,
   credential handling and the compatibility installation path are unchanged.

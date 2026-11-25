@@ -106,6 +106,11 @@ enum Snapshot {
             drawOffscreen(MenuBarPanel(model: model) {}, to: path)
             return
         }
+        if arg("--part") == "welcome" {
+            let page = WelcomeView.Page(rawValue: Int(arg("--page") ?? "0") ?? 0) ?? .welcome
+            drawOffscreen(WelcomeView(model: model, startPage: page), to: path)
+            return
+        }
         if arg("--part") == "whatsnew" {
             drawOffscreen(WhatsNewView(), to: path)
             return

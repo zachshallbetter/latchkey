@@ -12,6 +12,7 @@ public struct AppPreferences {
         public static let lockApp = "lockApp"
         public static let lockAfterMinutes = "lockAfterMinutes"
         public static let lastSeenVersion = "lastSeenVersion"
+        public static let welcomeDone = "welcomeDone"
     }
     public static let clipboardChoices = [15, 30, 60, 120]
     public static let revealChoices = [10, 30, 60]
@@ -61,4 +62,18 @@ public struct AppPreferences {
         defaults.set(version, forKey: Key.lastSeenVersion)
         return last.map { $0 != version } ?? existingUser
     }
+
+    /// Whether to open the welcome window. A Mac where Pistachio was already in use (it has items, or has recorded a
+    /// version) never sees it and is marked done; otherwise it opens until `finishWelcome()`. Call before `takeWhatsNew`.
+    public func needsWelcome(existingUser: Bool) -> Bool {
+        if defaults.bool(forKey: Key.welcomeDone) { return false }
+        if existingUser || defaults.string(forKey: Key.lastSeenVersion) != nil {
+            finishWelcome()
+            return false
+        }
+        return true
+    }
+
+    /// Closing the welcome early counts too: everything it asks is in Settings.
+    public func finishWelcome() { defaults.set(true, forKey: Key.welcomeDone) }
 }

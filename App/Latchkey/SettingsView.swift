@@ -219,6 +219,7 @@ struct SettingsView: View {
         Section("Pistachio") {
             LabeledContent("Version", value: "\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Development") (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"))")
             Button("What's New in This Version…") { model.openWhatsNew() }
+            Button("Show Welcome Again…") { model.openWelcome() }
             #if LATCHKEY_APP_STORE
             LabeledContent("Distribution", value: "Mac App Store")
             SettingsNote("Updates are delivered through the Mac App Store.")
@@ -249,13 +250,31 @@ struct SettingsView: View {
     }
 }
 
-/// Latchkey for Safari ships inside the app; Safari lists it once the app has run, and the user turns it on in Safari's
+/// Pistachio for Safari ships inside the app; Safari lists it once the app has run, and the user turns it on in Safari's
 /// own settings. Apple offers no way for an app to turn its extension on, only to open that page with it selected.
+enum SafariExtension {
+    static let identifier = (Bundle.main.bundleIdentifier ?? "io.snackstud.latchkey") + ".safari"
+
+    /// On the main queue: whether it's on, or nil when Safari couldn't say (it hasn't seen this copy's extension yet).
+    static func state(_ done: @escaping @MainActor (Bool?) -> Void) {
+        SFSafariExtensionManager.getStateOfSafariExtension(withIdentifier: identifier) { state, _ in
+            let on = state?.isEnabled
+            DispatchQueue.main.async { done(on) }
+        }
+    }
+
+    /// On the main queue: why Safari's Extensions settings didn't open, or nil when they did.
+    static func openSettings(_ done: @escaping @MainActor (String?) -> Void) {
+        SFSafariApplication.showPreferencesForExtension(withIdentifier: identifier) { failure in
+            let message = failure.map { "Couldn't open Safari's settings: \($0.localizedDescription)" }
+            DispatchQueue.main.async { done(message) }
+        }
+    }
+}
+
 private struct SafariExtensionSettings: View {
-    /// nil while checking, or when Safari couldn't say (it hasn't seen this copy's extension yet).
     @State private var enabled: Bool?
     @State private var error: String?
-    private static let identifier = (Bundle.main.bundleIdentifier ?? "io.snackstud.latchkey") + ".safari"
 
     var body: some View {
         Section("Safari Extension") {
@@ -268,18 +287,11 @@ private struct SafariExtensionSettings: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in refresh() }
     }
 
-    private func refresh() {
-        SFSafariExtensionManager.getStateOfSafariExtension(withIdentifier: Self.identifier) { state, _ in
-            DispatchQueue.main.async { enabled = state?.isEnabled }
-        }
-    }
+    private func refresh() { SafariExtension.state { enabled = $0 } }
 
     private func open() {
         error = nil
-        SFSafariApplication.showPreferencesForExtension(withIdentifier: Self.identifier) { failure in
-            guard let failure else { return }
-            DispatchQueue.main.async { error = "Couldn't open Safari's settings: \(failure.localizedDescription)" }
-        }
+        SafariExtension.openSettings { error = $0 }
     }
 }
 

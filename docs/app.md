@@ -213,6 +213,13 @@ Snack Studio in your browser.
 
 ## Settings
 
+On a new Mac, Pistachio opens a welcome window over the item list. It shows whether the app is in Applications and
+whether iCloud Keychain is on, asks what quitting does (stay in the menu bar, the default, or quit completely) and
+whether to open at login, offers to install the command-line tool (the App Store version links to its download) and
+to turn on Pistachio for Safari, then lists where to start. Every choice is also in Settings, and closing the window
+early counts as finished. A Mac where Pistachio already has items, or has recorded a version, never sees it.
+**Show Welcome Again…** in Settings › About reopens it.
+
 **What's New in Pistachio…** in the app menu (and **What's New in This Version…** in Settings › About) shows the
 current version's notes from the changelog bundled with the app, with earlier versions folded below. It opens once
 by itself after Pistachio updates. In the direct download, the update notice shows the same notes before you install.
