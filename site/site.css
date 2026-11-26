@@ -460,21 +460,12 @@ figure.code + .more { margin-top: 12px; }
   .state.ask .fp, .sync-arc.on, .cursor.press, .mw.app .row.new { animation: none; }
 }
 
-/* The header stays one row at every width. Below 1000px it drops How it works and Security, below 720px the download
-   button, and below 480px Features; each is on the pages and in the footer. */
-@media (max-width: 1000px) {
-  nav.top ul li:has(a[href$="#how"]), nav.top ul li:has(a[href$="security.html"]) { display: none; }
-}
+/* The header stays one row: its five links fit down to 720px, tighten below that, and phones use the Menu. */
 @media (max-width: 720px) {
   nav.top { gap: 8px; }
   .brand { font-size: 17px; }
   nav.top ul { gap: 0; }
   nav.top ul a { min-height: 36px; padding: 0 8px; font-size: 14px; white-space: nowrap; }
-  nav.top ul li:has(.button) { display: none; }
-}
-@media (max-width: 480px) {
-  nav.top ul li:has(a[href$="features.html"]) { display: none; }
-  nav.top ul a { padding: 0 6px; }
 }
 @media (max-width: 360px) {
   nav.top { gap: 4px; }
