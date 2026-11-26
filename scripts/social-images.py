@@ -89,7 +89,9 @@ def main():
             svg = temporary / f'{index}.svg'
             svg.write_text(svg_card(title, description))
             destination = SITE / 'og.png' if home else out / f'{slug}.jpg'
-            jobs.append(dict(input=str(svg), output=str(destination), width=1200, height=630, jpeg=not home))
+            # The home card is the supplied artwork (1731 × 908, the same shape as 1200 × 630); other pages get a drawn card.
+            source = pathlib.Path(__file__).with_name('og-home.webp') if home else svg
+            jobs.append(dict(input=str(source), output=str(destination), width=1200, height=630, jpeg=not home))
             image_url = BASE + destination.relative_to(SITE).as_posix()
             alt = f'{title.rstrip(".")}. Pistachio, a Mac app from Snack Studio.'
             for key in ('og:image', 'twitter:image'):
