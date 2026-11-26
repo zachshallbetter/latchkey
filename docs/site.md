@@ -187,8 +187,9 @@ Features and Guides are in every footer. Small screens use a native disclosure m
 The home hero starts with a decision: five columns of copy and the one Download for Mac button (Try the demo beside
 it moves focus to the example, compatibility beneath), seven of art. The open-shell photograph (`hero-pistachio.webp`,
 from the app's welcome artwork) sits in a local olive wash beside the approval request, labelled "Interactive demo ·
-Example credentials", which uses the generic requester "Agent". Below 1100px the hero stacks and the nut shrinks;
-below 760px the nut is left out so the demo keeps two legible key names and both actions. Appearance choices restore
+Example credentials", which uses the generic requester "Agent". Below 1280px copy and demo stay side by side and the nut
+shrinks behind the demo; below 760px the hero stacks and the nut is left out, so the demo (at most 520px wide) keeps
+two legible key names and both actions. Appearance choices restore
 before page styling on every page. No new command, wire protocol, trust identity, domain or payment product is
 introduced.
 

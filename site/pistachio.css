@@ -86,16 +86,33 @@ a:focus-visible,button:focus-visible,.button:focus-visible { outline:2px solid v
 .sg-band h2 { margin:0; font-family:var(--display); font-size:clamp(32px,2.9vw,42px); line-height:1.1; font-weight:750; letter-spacing:-.03em; }
 .sg-ref { padding:14px 20px; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink); font:500 clamp(14px,1.25vw,18px)/1.4 var(--mono); overflow-wrap:anywhere; }
 .sg-ref span { color:var(--accent); }
-@media (max-width:1099px) {
-  .sg-hero { min-height:0; padding-top:48px; }
-  .sg-hero .hero-copy,.hero-stage { grid-column:1 / -1; }
-  .hero-stage { grid-template-columns:minmax(0,.6fr) minmax(0,1.4fr); max-width:760px; }
+.sg-demo { max-width:520px; justify-self:end; width:100%; }
+/* Below 1280px copy and demo stay side by side and shrink the nut first (it tucks behind the demo); phones stack,
+   leaving the nut out so the demo keeps two legible key names and both actions. */
+@media (max-width:1279px) {
+  .sg-hero { min-height:0; padding:48px 0 48px; gap:24px; }
+  .sg-hero .hero-copy { grid-column:1 / span 6; }
+  .sg-hero h1 { font-size:clamp(44px,6.4vw,64px); margin-bottom:20px; }
+  .sg-hero .lede { font-size:clamp(17px,2vw,20px); margin-bottom:24px; }
+  .sg-hero .cta { gap:12px 20px; }
+  .sg-hero .cta .button.primary { min-height:48px; padding:12px 18px; font-size:16px; }
+  .hero-secondary { font-size:16px; }
+  .hero-stage { grid-column:7 / span 6; grid-template-columns:1fr; }
+  .hero-nut { position:absolute; z-index:-1; width:62%; left:-30%; bottom:4%; margin:0; }
+  .hero-stage::before { inset:0 40% 0 -40%; }
+  .sg-body { padding:14px; gap:10px; }
+  .sg-head b { font-size:16px; }
+  .sg-keys small { display:none; }
+  .sg-tty { font-size:12px; letter-spacing:-.01em; }
+  .hero-nut { left:-26%; width:54%; }
 }
 @media (max-width:759px) {
-  .sg-hero { padding:32px 0 40px; gap:32px; }
-  .sg-hero h1 { font-size:clamp(44px,12vw,56px); margin-bottom:20px; }
-  .hero-stage { grid-template-columns:1fr; }
+  .sg-hero { grid-template-columns:1fr; padding:32px 0 40px; gap:32px; }
+  .sg-hero .hero-copy,.hero-stage { grid-column:1 / -1; }
+  .sg-hero h1 { font-size:clamp(44px,12vw,56px); }
   .hero-stage::before,.hero-nut { display:none; }
+  .sg-demo { justify-self:start; }
+  .sg-keys small { display:inline; }
   .sg-band { padding:32px 0 48px; }
 }
 .home #how>.shead { text-align:center; margin-inline:auto; max-width:780px; }

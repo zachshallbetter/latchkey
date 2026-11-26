@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 423,
-    "includedBytes": 3808254,
+    "includedBytes": 3809304,
     "excludedCounts": {
       "extension": 146,
       "generated-or-transient-file": 2
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "04d5411cbd293cbcbb7e238995e75dd52b09cc64",
+        "commit": "2d791c0aaae37f09a409744a71c3458a6f587c3b",
         "branch": "site/styleguide-hero",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "1fe596b1eab1acc0d5a709159db644655c15b2ab08f0e11e7cb028952521c3ca",
+  "aggregateSourceDigest": "0ce73144da7b1cbf380d8347edb4d1777df8bc0de0292bf9f7919702c10d3869",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -1764,8 +1764,8 @@
     },
     {
       "path": "docs/site.md",
-      "bytes": 22385,
-      "sha256": "9184f73d4072fbdd81496e66c0f509a7c4895d2e26bfc28c3e41c33d8ef30e06"
+      "bytes": 22459,
+      "sha256": "037500d3b742bbbd59d68cb0d61624a4f4ff2b7d5d9a290f9e6f2d4a5f6bad50"
     },
     {
       "path": "docs/troubleshooting.md",
@@ -2079,8 +2079,8 @@
     },
     {
       "path": "site/pistachio.css",
-      "bytes": 18859,
-      "sha256": "8cd45f68b3ea87f902b557ad1676369dd3cebd1059a06fa729218a12653e72d7"
+      "bytes": 19835,
+      "sha256": "5a957f9755fe9c8f186085f07d4f002365757444bacb98e2ac472bc608491cd7"
     },
     {
       "path": "site/pricing.html",
