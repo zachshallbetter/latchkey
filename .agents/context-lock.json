@@ -6,9 +6,9 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 423,
-    "includedBytes": 3805172,
+    "includedBytes": 3809925,
     "excludedCounts": {
-      "extension": 142,
+      "extension": 146,
       "generated-or-transient-file": 2
     }
   },
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "f43953ae0d040575ef11cf57caa85a2aa1627af5",
-        "branch": "ui/welcome",
+        "commit": "b58d0242b94bd11b587829e4f9b9bf934637496d",
+        "branch": "appstore/screenshots",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "1c97ff477bc2368129fc81f39d52a4c30a2bc9104613347b86e96ea6f4e0ab1f",
+  "aggregateSourceDigest": "b581891b616fbf9304f7d84d6e473f810af16bdb2c1e68eeb89ab08d22288cb0",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -1069,8 +1069,8 @@
     },
     {
       "path": "App/Latchkey/Snapshot.swift",
-      "bytes": 15232,
-      "sha256": "4cf86f8d8a935870ba4e1b57872b1596eb9bc830cfe0aaecf69a3ba6bb92b18c"
+      "bytes": 15408,
+      "sha256": "a2ce6aa4f46750306b3d27c3ed556c3e501dc6a590aeabb099b04cd444d4e86a"
     },
     {
       "path": "App/Latchkey/Style.swift",
@@ -1594,8 +1594,8 @@
     },
     {
       "path": "docs/app-store.md",
-      "bytes": 27579,
-      "sha256": "02730219d4d1507e7374131c438747d270745f2423b5bf267b7d4f00e5bdcac2"
+      "bytes": 28216,
+      "sha256": "4a47a42737767225c5c5e715c9245b460cb70e40223e657b6996f60b7423634c"
     },
     {
       "path": "docs/app.md",
@@ -1684,8 +1684,8 @@
     },
     {
       "path": "docs/development.md",
-      "bytes": 16236,
-      "sha256": "289adf1dfc3a2fe254717f366961240c24e2dee83c31ae24d2ab5aedee00c5a7"
+      "bytes": 16243,
+      "sha256": "fbae24a3540913a8d744e15ba0d2fdc96c01cee5755aa874f2323cb18bed4ceb"
     },
     {
       "path": "docs/evidence/app-store/2026-11-11-cli-transport.json",
@@ -1774,8 +1774,8 @@
     },
     {
       "path": "packaging/app-store/listing.md",
-      "bytes": 7682,
-      "sha256": "d51e3df6643afb9237585926435b58598ee64bbcc36b97da5210828f168df2da"
+      "bytes": 8732,
+      "sha256": "765a20b2579a57d7a5c4124cf75e7b5f045e591d0b52548f600b09e69b83a9e0"
     },
     {
       "path": "packaging/app-store/readiness.json",
@@ -1824,8 +1824,8 @@
     },
     {
       "path": "scripts/compose-screenshot.swift",
-      "bytes": 2636,
-      "sha256": "d24f46b30162923f481c2a9a2e11de0c0b71433b0169deff7fe6e9a2393272c4"
+      "bytes": 5519,
+      "sha256": "351ffc274285535f38b74c34e4ca37324e4d4228b1d597d16a0ba53e0909d000"
     },
     {
       "path": "scripts/discovery.py",

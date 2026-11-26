@@ -46,14 +46,22 @@ Steps, in order:
    review.
 
 Screenshots come from the app's own views with example data: render the parts from a development-signed store Debug
-build into its container (it can't write elsewhere), then compose them:
+build (`scripts/build-appstore-sandbox.py`) into its container (it can't write elsewhere), then compose each with its
+caption. Pass `-paletteChoice "" -appIconChoice pistachio` so the shots use the default look whatever this Mac chose:
 
 ```bash
-APP=build/.../Debug/Latchkey.app/Contents/MacOS/Pistachio; C=~/Library/Containers/io.snackstud.latchkey/Data/tmp
-$APP --snapshot $C/window.png --sample --select shop/development/DATABASE_URL --part window -ApplePersistenceIgnoreState YES
-$APP --snapshot $C/sidebar.png --sample --part sidebar --height 900 -ApplePersistenceIgnoreState YES
-swift scripts/compose-screenshot.swift packaging/app-store/screenshots/1-items.jpg $C/window.png $C/sidebar.png
+APP=build/.../Debug/Latchkey.app/Contents/MacOS/Latchkey; C=~/Library/Containers/io.snackstud.latchkey/Data/tmp/pist
+LOOK=(--sample --appearance dark -paletteChoice "" -appIconChoice pistachio -ApplePersistenceIgnoreState YES)
+$APP --snapshot $C/window.png "${LOOK[@]}" --select shop/development/DATABASE_URL --part window
+$APP --snapshot $C/sidebar.png "${LOOK[@]}" --part sidebar --height 900
+swift scripts/compose-screenshot.swift --title "Secrets, sorted by project." \
+  --subtitle "References in your files. Values in iCloud Keychain." \
+  packaging/app-store/screenshots/01-items.jpg $C/window.png $C/sidebar.png
 ```
+
+The other shots add a panel as the last argument (`--part approval`, `import` with `--import FILE`, `pushapproval`,
+`menubar`, `welcome --page 1`, `lock`) or change the view with `--filter project:shop|review|activity` on both the
+window and the sidebar. Captions are in packaging/app-store/listing.md.
 
 ## Reference and Apple SDK choices
 
