@@ -50,7 +50,9 @@ def main():
     for name in ("App", "Sources", "Tests"):
         shutil.copytree(ROOT / name, source / name,
                         ignore=shutil.ignore_patterns(".git", ".build", "build", "*.xcodeproj", ".DS_Store", ".env", ".env.*"))
-    shutil.copy2(ROOT / "Package.swift", source / "Package.swift")
+    # The app bundles CHANGELOG.md (What's New reads it), so the snapshot needs it as the sandbox build does.
+    for name in ("Package.swift", "CHANGELOG.md"):
+        shutil.copy2(ROOT / name, source / name)
     subprocess.run(["xcodegen", "generate", "--spec", str(source / "App/project.appstore.yml"), "--project", str(source / "App")],
                    check=True)
 

@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 423,
-    "includedBytes": 3809992,
+    "includedBytes": 3810135,
     "excludedCounts": {
       "extension": 146,
       "generated-or-transient-file": 2
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "d2e46263d4629743e858299aa10cb7eb383fb53f",
-        "branch": "docs/store-accuracy",
+        "commit": "cfae24c0aa45df3c0a4002a588fe91e32f7c1219",
+        "branch": "fix/release-changelog",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "6ea6229cab27cc9b295bb26fbccb11864f03c0ffd6b3e596d77b10f12113cdac",
+  "aggregateSourceDigest": "49f6bc6913c0de12199452073d4bf86aaeae450f5d288a62571bf230c12b2a8e",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -1854,8 +1854,8 @@
     },
     {
       "path": "scripts/release-appstore.py",
-      "bytes": 6228,
-      "sha256": "ed8f20bc87acab9054678539d259b538c5897324e2ec39caa25066a40c52cfc0"
+      "bytes": 6371,
+      "sha256": "ffd81137963a227ffdd968bf23adf5cd2ff31457962e716863429690f7a17367"
     },
     {
       "path": "scripts/release.sh",
