@@ -34,11 +34,8 @@ struct WelcomeView: View {
                 .animation(.easeInOut(duration: 0.3), value: theme.accent)
 
             VStack(spacing: 0) {
-                // The margins are inside the clip so the hero's glow fades out instead of being cut at their edge.
                 ZStack {
                     pageView
-                        .padding(.horizontal, 44)
-                        .padding(.top, 44)
                         .id(page)
                         .transition(.asymmetric(
                             insertion: .move(edge: forward ? .trailing : .leading).combined(with: .opacity),
@@ -49,8 +46,9 @@ struct WelcomeView: View {
                 .clipped()
 
                 footer
-                    .padding(.horizontal, 44)
             }
+            .padding(.horizontal, 44)
+            .padding(.top, 44)
             .padding(.bottom, 26)
         }
         .frame(width: Self.size.width, height: Self.size.height)
@@ -737,7 +735,6 @@ private struct PistachioHero: View {
     let size: CGFloat
     let open: Bool
     @AppStorage(AppPreferences.Key.icon) private var icon = AppPreferences.Icon.pistachio.rawValue
-    @Environment(\.welcomeTheme) private var theme
     @State private var shown = false
 
     private var imageName: String {
@@ -754,7 +751,6 @@ private struct PistachioHero: View {
             .transition(.opacity.combined(with: .scale(scale: 0.94)))
             .scaleEffect(shown ? 1 : 0.9)
             .rotationEffect(.degrees(shown ? 0 : (open ? 6 : -6)))
-            .shadow(color: theme.accent.opacity(0.35), radius: 30, y: 14)
             .onAppear {
                 withAnimation(.spring(response: 0.8, dampingFraction: 0.62).delay(0.25)) { shown = true }
             }
