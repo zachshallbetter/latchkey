@@ -18,8 +18,8 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "4b8840c3943a8b9622971eafce0e16502766a48f",
-        "branch": "ui/hero-glow",
+        "commit": "aaa001ae4e409b9d7a5bdd347976a2dab971ef5e",
+        "branch": "assets/screenshots-icon",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
