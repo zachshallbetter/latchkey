@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 423,
-    "includedBytes": 3826506,
+    "includedBytes": 3826582,
     "excludedCounts": {
       "extension": 144,
       "generated-or-transient-file": 2
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "8b493399fb774899c969fb63e4d247820cc45a13",
-        "branch": "ui/store-design",
+        "commit": "bc3e2ef88cb065663354182e1600680dfb2e9088",
+        "branch": "docs/review-note-import",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "dbdf6824f2f8afe40806cfcbefaa2ff35f2fca5bc98570ccb4e7078555b25a86",
+  "aggregateSourceDigest": "7824e982e0805ab349cd703593cc67625079c91e4081482b7e7227e28090c3c5",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -1774,8 +1774,8 @@
     },
     {
       "path": "packaging/app-store/listing.md",
-      "bytes": 8732,
-      "sha256": "765a20b2579a57d7a5c4124cf75e7b5f045e591d0b52548f600b09e69b83a9e0"
+      "bytes": 8808,
+      "sha256": "54d5d0ed299c77315d3d87914cbeffefde94a19e57e0ec0f9cbbd5686ec186eb"
     },
     {
       "path": "packaging/app-store/readiness.json",
