@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 423,
-    "includedBytes": 3809623,
+    "includedBytes": 3826506,
     "excludedCounts": {
       "extension": 144,
       "generated-or-transient-file": 2
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "4b8840c3943a8b9622971eafce0e16502766a48f",
-        "branch": "ui/hero-glow",
+        "commit": "8b493399fb774899c969fb63e4d247820cc45a13",
+        "branch": "ui/store-design",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "7e2690461804c21e93c8d471be36d20f1b92790b0237cf64b63fbac0af9d2f5f",
+  "aggregateSourceDigest": "dbdf6824f2f8afe40806cfcbefaa2ff35f2fca5bc98570ccb4e7078555b25a86",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -759,8 +759,8 @@
     },
     {
       "path": "App/Latchkey/ApprovalPanel.swift",
-      "bytes": 26075,
-      "sha256": "0afad73b7d881b80bfad2bb9b82aab74cc606a7b5ebd0fa968e7505c0b4b3405"
+      "bytes": 29356,
+      "sha256": "e7ccf135d5f5cf7a108131b1083462c2811cacd88f84b530f3bf77c88e8b454a"
     },
     {
       "path": "App/Latchkey/Assets.xcassets/Contents.json",
@@ -1014,13 +1014,13 @@
     },
     {
       "path": "App/Latchkey/ItemDetail.swift",
-      "bytes": 16006,
-      "sha256": "e2ce20d03f56ed7d86373942ed3e46da4c11fbdeda7a89f0d589fbea25a10f38"
+      "bytes": 19082,
+      "sha256": "944135428e571fc3cff239a74886372c043e25b12001521c06f42e8b7f8a399b"
     },
     {
       "path": "App/Latchkey/LatchkeyApp.swift",
-      "bytes": 68185,
-      "sha256": "dc2425714b018a2c3dedfda25554b81d374180a02188ac2d77767b95f0ca64c1"
+      "bytes": 68260,
+      "sha256": "d2b561506aca74f54baf33fa8cead8bd7e39ba0368b47ad9bb135132e694e5f1"
     },
     {
       "path": "App/Latchkey/MainWindow.swift",
@@ -1034,8 +1034,8 @@
     },
     {
       "path": "App/Latchkey/Pages.swift",
-      "bytes": 47884,
-      "sha256": "1b1c034805be5cd067d848eb2e7669fbf962daefe86c35f8139016ffa75f8cda"
+      "bytes": 50580,
+      "sha256": "c00e4ed37d1c3afb8627dfe901ce2d227e602865e57e43968c6540c938107cd7"
     },
     {
       "path": "App/Latchkey/ProEntitlement.swift",
@@ -1064,13 +1064,13 @@
     },
     {
       "path": "App/Latchkey/Sheets.swift",
-      "bytes": 20960,
-      "sha256": "4d240f5bf172c5cbbee05036512d16c04bdc1c66fb52d5738cd6485993487a5d"
+      "bytes": 23047,
+      "sha256": "e16f36cacc81911cc28a10d24737c2aa46392f34282e51180c6e68e608536875"
     },
     {
       "path": "App/Latchkey/Snapshot.swift",
-      "bytes": 15408,
-      "sha256": "a2ce6aa4f46750306b3d27c3ed556c3e501dc6a590aeabb099b04cd444d4e86a"
+      "bytes": 15960,
+      "sha256": "01cda6b24091d00287ebbf224603c3eccbcd27178e645a1350179fe05b6c72b6"
     },
     {
       "path": "App/Latchkey/Style.swift",
@@ -1084,8 +1084,8 @@
     },
     {
       "path": "App/Latchkey/Welcome.swift",
-      "bytes": 31909,
-      "sha256": "7465bad449df89670484d42db7c1a43dde53ff137590a74b865e722c23092429"
+      "bytes": 32064,
+      "sha256": "7246f798d26bde75c435c709f2816acd6d37ea3a9e7f1eaf5cf572c1257a24e9"
     },
     {
       "path": "App/Latchkey/WhatsNew.swift",
@@ -1099,8 +1099,8 @@
     },
     {
       "path": "App/Safari/Resources/content.js",
-      "bytes": 38163,
-      "sha256": "9f5f3c4fb71c4d1b11fca72dd8c1be00f08873d9c499710bbd48d5e9242eb946"
+      "bytes": 41299,
+      "sha256": "4e9535dc7b7938d5aa42b14cfb601f3c07358871e6dc71ef9044182862297581"
     },
     {
       "path": "App/Safari/Resources/detector.js",
@@ -1154,8 +1154,8 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 45341,
-      "sha256": "d24b50696fcf02f03e11db1a00ea4eeae80f3107ef4d3f966dad3efe9cf43965"
+      "bytes": 46165,
+      "sha256": "97410560716e041bb09cdf4890567e084ab4700e9e0f6874b6139b545749a5c1"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1599,8 +1599,8 @@
     },
     {
       "path": "docs/app.md",
-      "bytes": 23183,
-      "sha256": "e97e3f6ce4ac606d3b791903ebcdf3d99717e7b762f8665a9d0d9362c7248287"
+      "bytes": 23675,
+      "sha256": "4fecf047ebbbb19d93f4e4c98a4add1b18c20dc332e1df1ca97ee5bffb8266c4"
     },
     {
       "path": "docs/apple-passwords-and-passkeys.md",
@@ -1684,8 +1684,8 @@
     },
     {
       "path": "docs/development.md",
-      "bytes": 16113,
-      "sha256": "f70ebd89663a28d10e5dd32672082efee65450a643b6355b561265fe392cd9e1"
+      "bytes": 16325,
+      "sha256": "2fb5168a711a36bca68d0d2d05a69b5cde7971858b192a73b2cb0fa4b48bba23"
     },
     {
       "path": "docs/evidence/app-store/2026-11-11-cli-transport.json",
@@ -1739,8 +1739,8 @@
     },
     {
       "path": "docs/import.md",
-      "bytes": 6652,
-      "sha256": "e6531bbbe43f9f3623c3f0e1ae66eae264cf48068081c3a642b4a0f26920d2c1"
+      "bytes": 6949,
+      "sha256": "54b757ada6ad70b4008f28fe0f84ac76b03b02c17f980b8e06fa608e74a234fb"
     },
     {
       "path": "docs/presence.md",

@@ -58,7 +58,8 @@ Each is a list with the selected entry's detail on the right.
   Environments and the files they were imported from follow, and the originals go to Recently Deleted. Groups are kept in memory until the
   app quits; no value is shown.
 - **Activity** has search and filters by event and project, grouped by day. An entry's detail shows the action, the
-  items, the decision, who asked through which programs, the folder and the command. Values are never logged.
+  items, the decision, who asked through which programs, the folder and the command, and for a request for values a short timeline above them: who asked, the decision and how
+  many items were released. Values are never logged.
 - **Recently Deleted** has search; an item's detail shows when and by whom it was deleted, its ID, service and last
   value (shown only with approval), with **Restore Item** and **Permanently Delete…**.
 - **Grants** is a table of item, folder, limits, status and end; a grant's detail has **Revoke Grant** and **Show
@@ -92,17 +93,20 @@ Deleting always asks first. Kind has no shortcut; it's in both menus.
   managers skip it, and clears it after the chosen delay, 60 seconds unless changed. Both ask unless the item is
   agent-safe.
 - **Reference**: the `pistachio://` text to paste into a file.
-- The header shows the item's project, environment and service. **Edit** offers **Change Value…**, **Edit
+- The header shows the item's name, its type (Database URL, API Key…) underneath, and its project, environment and
+  service. **Edit** offers **Change Value…**, **Edit
   Details…** (kind, access, service, note and Safari fill sites, saved together with one Touch ID), **Move…**,
   **Remote Locations…**, **Export Environment…**, **Copy Environment as .env…**, **Copy Reference** and **Delete…**
   (the item moves to Recently Deleted for 30 days).
-- **Type** (hover for how it's stored and whether it's masked), **Access** (switch it to let any program read it
-  without approval), **Service** (with a link to make a new key there), **Project**, **Environment**, **Note**, and
-  **Location**: the files it was imported from; click to list them.
+- **Type** (hover for how it's stored and whether it's masked), **Access** (a menu: **Ask first**, or **No approval** to let any
+  program read it without approval), **Service** (with a link to make a new key there), **Project**, **Environment**, **Note**, and
+  **Location**: the files it was imported from; click to list them. Under them, **Storage** says
+  **iCloud Keychain** or **This Mac only**, as the sidebar does.
 - Grants that cover it, with **Revoke**.
 - **Remote**, when its environment is linked: where the item stands; click to manage the locations.
-- **Recent Activity**, then **History**: click for earlier values, with show and restore; **Forget History…** deletes
-  them for good.
+- **Recent Activity**, then **History**: click for the current value and each earlier one as cards, masked, with show
+  and restore on the earlier ones, and the item's reference below (files keep it when the value changes); **Forget
+  History…** deletes them for good.
 
 ### Exporting an environment
 
@@ -124,7 +128,7 @@ clipboard", never the values. Agents can't do this.
 
 - **New Item** in the list's header, or **File › New Item…** (⌘N).
 - **File › Import .env File…** (⇧⌘I), or drop a file on the window. The sheet proposes the project and environment,
-  lists each key with its kind and agent-safe setting, marks keys that already exist, and lists lines it leaves alone
+  lists each variable with an Action (Save to Keychain or Keep in file), marks keys that already exist, previews the file after import, and lists lines it leaves alone
   (empty, already references, or expiring Vercel and Turbo tokens). Import asks once. **Replace values in the file
   with pistachio:// references** rewrites the file afterwards.
 

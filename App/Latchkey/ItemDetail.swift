@@ -59,7 +59,10 @@ struct ItemDetail: View {
         return HStack(alignment: .top, spacing: 14) {
             IconTile(symbol: type.symbol, tint: type.tint, size: 52)
             VStack(alignment: .leading, spacing: 6) {
-                Text(item.ref.name).font(.title2.weight(.semibold)).textSelection(.enabled).lineLimit(2)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.ref.name).font(.title2.weight(.semibold)).textSelection(.enabled).lineLimit(2)
+                    Text(type.label).font(.callout).foregroundStyle(.secondary)
+                }
                 HStack(spacing: 6) {
                     if item.ref.isShared {
                         Chip(text: "Shared")
@@ -133,11 +136,13 @@ struct ItemDetail: View {
                         .help("Stored as a \(item.kind.label.lowercased()). \(item.kind.isSecret ? "Masked in command output." : "Not masked in output.")")
                 }
                 CardRow(label: "Access") {
-                    Text(item.agentSafe ? "No approval" : "Requires approval").foregroundStyle(.secondary)
-                    Toggle("", isOn: Binding(get: { item.agentSafe }, set: { on in
+                    Picker("", selection: Binding(get: { item.agentSafe }, set: { on in
                         act { if let e = await model.updateDetails(item.name, kind: nil, agentSafe: on, service: nil, note: nil, fillSites: nil) { model.notice = e } }
-                    }))
-                    .toggleStyle(.switch).labelsHidden().controlSize(.small)
+                    })) {
+                        Text("Ask first").tag(false)
+                        Text("No approval").tag(true)
+                    }
+                    .pickerStyle(.menu).labelsHidden().fixedSize()
                     .help(item.agentSafe ? "Any program in your Mac account may request this value." : "Reads ask for approval unless a grant covers them.")
                 }
                 CardRow(label: "Service") {
@@ -154,7 +159,7 @@ struct ItemDetail: View {
                 CardRow(label: "Note") {
                     Text(item.note.isEmpty ? "None" : item.note).foregroundStyle(.secondary).lineLimit(2).multilineTextAlignment(.trailing)
                 }
-                CardRow(label: "Location", last: true) {
+                CardRow(label: "Location") {
                     let paths = item.usedIn ?? []
                     if paths.isEmpty {
                         Text("No files yet").foregroundStyle(.secondary)
@@ -174,7 +179,21 @@ struct ItemDetail: View {
                 }
             }
             usedIn
+            storageRow
         }
+    }
+
+    /// Where the value is kept: the same state as the sidebar's storage badge.
+    private var storageRow: some View {
+        Card {
+            CardRow(label: "Storage", last: true) {
+                Label(model.synced ? "iCloud Keychain" : "This Mac only", systemImage: model.synced ? "icloud" : "desktopcomputer")
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .help(model.synced
+              ? "Items are kept in iCloud Keychain and sync to your Macs signed in to the same Apple Account."
+              : "Items are kept in this Mac's login keychain and don't sync.")
     }
 
     @ViewBuilder
@@ -243,37 +262,71 @@ struct ItemDetail: View {
             withAnimation(.snappy) { showsHistory.toggle() }
         }
         if showsHistory && !versions.isEmpty {
-            Card {
-                ForEach(Array(versions.enumerated()), id: \.element.id) { i, v in
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(v.savedAt.formatted(date: .abbreviated, time: .shortened)).font(.callout)
-                                Text("\(v.reason == .changed ? "Replaced" : v.reason == .restored ? "Replaced by a restore" : "Deleted") by \(v.by)")
-                                    .font(.caption).foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Button {
-                                if model.revealedVersions[v.id] != nil { model.revealedVersions[v.id] = nil }
-                                else { act { await model.revealVersion(v) } }
-                            } label: { Image(systemName: model.revealedVersions[v.id] == nil ? "eye" : "eye.slash") }
-                            .buttonStyle(.borderless).help("Show this earlier value (asks for approval)")
-                            Button("Restore") { act { await model.restore(v) } }
-                        }
-                        if let value = model.revealedVersions[v.id] {
-                            Text(value).font(.caption.monospaced()).textSelection(.enabled).lineLimit(4)
-                        }
-                    }
-                    .padding(.vertical, 10)
-                    if i < versions.count - 1 { Divider() }
-                }
+            valueVersionCard(badge: "Current", title: "Current value", subtitle: "Saved \(item.updatedAt.formatted(date: .abbreviated, time: .shortened))",
+                             revealed: model.revealed[item.name], help: "Show the current value (asks unless a grant or No Approval setting permits it)",
+                             toggle: {
+                                 if model.revealed[item.name] != nil { model.revealed[item.name] = nil }
+                                 else { act { await model.reveal(item.name) } }
+                             }, restore: nil)
+            ForEach(versions) { v in
+                valueVersionCard(badge: nil, title: "Previous", subtitle: v.savedAt.formatted(date: .abbreviated, time: .shortened),
+                                 detail: "\(v.reason == .changed ? "Replaced" : v.reason == .restored ? "Replaced by a restore" : "Deleted") by \(v.by)",
+                                 revealed: model.revealedVersions[v.id], help: "Show this earlier value (asks for approval)",
+                                 toggle: {
+                                     if model.revealedVersions[v.id] != nil { model.revealedVersions[v.id] = nil }
+                                     else { act { await model.revealVersion(v) } }
+                                 }, restore: { act { await model.restore(v) } })
             }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(References.scheme + item.name).font(.callout.monospaced()).textSelection(.enabled)
+                    .lineLimit(1).truncationMode(.middle)
+                Text("Files keep this reference when the value changes.").font(.caption).foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 4)
             HStack {
                 Text("Restoring keeps the current value too.").font(.caption).foregroundStyle(.secondary)
                 Spacer()
                 Button("Forget History…") { confirmingForget = true }.buttonStyle(.link).font(.caption)
             }
             .padding(.horizontal, 4)
+        }
+    }
+
+    /// One value in the history: a masked field with the reveal control, and Restore for an earlier one.
+    private func valueVersionCard(badge: String?, title: String, subtitle: String, detail: String? = nil, revealed: String?,
+                                  help: String, toggle: @escaping () -> Void, restore: (() -> Void)?) -> some View {
+        Card {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    Text(title).font(.body.weight(.semibold))
+                    if let badge {
+                        Text(badge).font(.caption.weight(.semibold)).foregroundStyle(.green)
+                            .padding(.horizontal, 7).padding(.vertical, 1)
+                            .background(Capsule().fill(Color.green.opacity(0.18)))
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 1) {
+                        Text(subtitle).font(.caption).foregroundStyle(.secondary)
+                        if let detail { Text(detail).font(.caption).foregroundStyle(.secondary) }
+                    }
+                }
+                HStack(spacing: 8) {
+                    Group {
+                        if let revealed {
+                            Text(revealed).font(.callout.monospaced()).textSelection(.enabled).lineLimit(4)
+                        } else {
+                            Text(String(repeating: "•", count: 18)).foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 10).padding(.vertical, 6)
+                    .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(.quaternary.opacity(0.6)))
+                    Button(action: toggle) { Image(systemName: revealed == nil ? "eye" : "eye.slash") }
+                        .buttonStyle(.borderless).help(help)
+                    if let restore { Button("Restore", action: restore) }
+                }
+            }
+            .padding(.vertical, 12)
         }
     }
 

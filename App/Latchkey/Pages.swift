@@ -618,6 +618,7 @@ struct ActivityDetail: View {
                              tint: entry.tint == .secondary ? .gray : entry.tint, title: entry.title) {
                     if entry.names.count == 1 { PlaceChips(project: entry.place?.project, environment: entry.place?.environment) }
                 } trailing: { EmptyView() }
+                timeline
                 Card {
                     CardRow(label: "Action") { Text(entry.verb).foregroundStyle(.secondary) }
                     CardRow(label: entry.names.count == 1 ? "Item" : "Items") {
@@ -659,6 +660,50 @@ struct ActivityDetail: View {
                 Text("The access log records what was asked and decided, never values.").font(.caption).foregroundStyle(.secondary)
             }
             .padding(16)
+        }
+    }
+
+    /// What happened in order, from the entry's own fields. The log keeps one time per entry, so only the first step has one.
+    /// Only requests for values have these steps.
+    @ViewBuilder
+    private var timeline: some View {
+        if ["get", "version", "export", "fill"].contains(entry.op) {
+            let approved = entry.decision.hasPrefix("approved")
+            let decision = entry.decision.prefix(1).uppercased() + entry.decision.dropFirst()
+            let count = entry.names.count
+            Card {
+                VStack(alignment: .leading, spacing: 0) {
+                    step(symbol: "hand.raised", tint: .secondary, title: "\(entry.actor.isEmpty ? "A program" : entry.actor) requested access",
+                         detail: entry.cwd.isEmpty ? nil : Broker.tilde(entry.cwd), time: entry.time.formatted(date: .omitted, time: .shortened), last: false)
+                    step(symbol: approved ? "touchid" : entry.denied ? "xmark.circle.fill" : "checkmark.shield",
+                         tint: entry.denied ? .red : approved ? .green : .secondary, title: decision, detail: nil, time: nil, last: false)
+                    if entry.denied {
+                        step(symbol: "lock", tint: .secondary, title: "Nothing released", detail: nil, time: nil, last: true)
+                    } else {
+                        step(symbol: "key", tint: .secondary, title: "\(count) item\(count == 1 ? "" : "s") released", detail: nil, time: nil, last: true)
+                    }
+                }
+                .padding(.vertical, 12)
+            }
+        }
+    }
+
+    private func step(symbol: String, tint: Color, title: String, detail: String?, time: String?, last: Bool) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(spacing: 0) {
+                Image(systemName: symbol).font(.system(size: 13, weight: .medium)).foregroundStyle(tint)
+                    .frame(width: 28, height: 28).background(Circle().fill(.quaternary.opacity(0.7)))
+                if !last { Rectangle().fill(.separator).frame(width: 1).frame(maxHeight: .infinity) }
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(title).font(.body.weight(.medium))
+                    Spacer(minLength: 8)
+                    if let time { Text(time).font(.caption).foregroundStyle(.secondary) }
+                }
+                if let detail { Text(detail).font(.callout.monospaced()).foregroundStyle(.secondary).lineLimit(1).truncationMode(.head) }
+            }
+            .padding(.top, 4).padding(.bottom, last ? 0 : 14)
         }
     }
 }

@@ -10,6 +10,8 @@ struct WelcomeView: View {
     static let size = CGSize(width: 720, height: 540)
 
     let model: AppModel
+    /// The window's size; snapshots (the App Store shot) render it wider.
+    var size = WelcomeView.size
     @Environment(\.dismiss) private var dismiss
     @AppStorage(AppPreferences.Key.palette) private var palette = ""
     @AppStorage(AppPreferences.Key.icon) private var icon = AppPreferences.Icon.pistachio.rawValue
@@ -20,8 +22,9 @@ struct WelcomeView: View {
         case welcome, look, quitting, browsers, agents, ready
     }
 
-    init(model: AppModel, startPage: Page = .welcome) {
+    init(model: AppModel, startPage: Page = .welcome, size: CGSize = WelcomeView.size) {
         self.model = model
+        self.size = size
         _page = State(initialValue: startPage)
     }
 
@@ -51,7 +54,7 @@ struct WelcomeView: View {
             .padding(.top, 44)
             .padding(.bottom, 26)
         }
-        .frame(width: Self.size.width, height: Self.size.height)
+        .frame(width: size.width, height: size.height)
         .environment(\.welcomeTheme, theme)
         .focusEffectDisabled()
         .onDisappear { AppPreferences().finishWelcome() }

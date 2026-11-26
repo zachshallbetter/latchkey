@@ -56,8 +56,8 @@ Each line is classed before anything is saved:
 
 A value that carries credentials (a key block, a URL with a user or password) is a secret whatever its name says,
 and anything unclear is a secret. `--dry-run` prints a count per class and each setting it would leave. Change a line
-with `--class KEY=secret|setting|public` (or `--kind KEY=...`, which also decides the class); in the app, the Class
-column of the import sheet does the same. Settings stay in the file, so `--rewrite` doesn't touch them. Classes
+with `--class KEY=secret|setting|public` (or `--kind KEY=...`, which also decides the class); in the app, each line's Action
+(Save to Keychain or Keep in file) does the same: secrets start as Save to Keychain, settings and public values as Keep in file. Settings stay in the file, so `--rewrite` doesn't touch them. Classes
 aren't remembered between imports yet.
 
 ## Kinds, services and agent-safe
@@ -99,7 +99,9 @@ and pass `--batch envs.txt`.
 ## In the app
 
 **File › Import .env File…** or drop a file on the window. The sheet does the same as a single-file import, with the
-project, environment, classes, kinds and agent-safe settings editable before you approve.
+project and environment editable and an Action per variable (Save to Keychain or Keep in file). It previews the file as it will be
+after import, with values masked except for settings and public values. Kinds and agent access take the defaults above and
+are editable on the item afterwards.
 
 ## If something goes wrong
 
