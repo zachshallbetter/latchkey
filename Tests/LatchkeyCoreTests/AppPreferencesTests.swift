@@ -29,6 +29,46 @@ final class AppPreferencesTests: XCTestCase {
         XCTAssertEqual(reloaded.lockAfterMinutes, 15)
     }
 
+    func testPaletteFollowsTheIconUntilChosenAndIgnoresUnknownChoices() throws {
+        let suite = "latchkey-preferences-test-" + UUID().uuidString
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        XCTAssertEqual(AppPreferences(defaults: defaults).palette, .pistachio)
+        defaults.set("key", forKey: AppPreferences.Key.icon)
+        XCTAssertEqual(AppPreferences(defaults: defaults).palette, .blue)
+        defaults.set("plum", forKey: AppPreferences.Key.palette)
+        XCTAssertEqual(AppPreferences(defaults: defaults).palette, .plum, "a chosen palette stays when the icon changes")
+        defaults.set("pistachio", forKey: AppPreferences.Key.icon)
+        XCTAssertEqual(AppPreferences(defaults: defaults).palette, .plum)
+        defaults.set("neon", forKey: AppPreferences.Key.palette)
+        XCTAssertEqual(AppPreferences(defaults: defaults).palette, .pistachio)
+        XCTAssertEqual(AppPreferences.Palette(preference: "", iconPreference: "key"), .blue)
+        XCTAssertEqual(AppPreferences.Palette.graphite.title, "Graphite")
+    }
+
+    func testWelcomeOpensOnAFreshMacUntilFinished() throws {
+        let suite = "latchkey-preferences-test-" + UUID().uuidString
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let preferences = AppPreferences(defaults: defaults)
+        XCTAssertTrue(preferences.needsWelcome(existingUser: false))
+        XCTAssertTrue(preferences.needsWelcome(existingUser: false), "only finishing it, or closing it, counts")
+        preferences.finishWelcome()
+        XCTAssertFalse(preferences.needsWelcome(existingUser: false))
+    }
+
+    func testWelcomeNeverOpensWherePistachioWasAlreadyInUse() throws {
+        for setUp in [{ (_: UserDefaults) in }, { $0.set("0.5.0", forKey: AppPreferences.Key.lastSeenVersion) }] {
+            let suite = "latchkey-preferences-test-" + UUID().uuidString
+            let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+            defer { defaults.removePersistentDomain(forName: suite) }
+            setUp(defaults)
+            let hasItems = defaults.string(forKey: AppPreferences.Key.lastSeenVersion) == nil
+            XCTAssertFalse(AppPreferences(defaults: defaults).needsWelcome(existingUser: hasItems))
+            XCTAssertTrue(defaults.bool(forKey: AppPreferences.Key.welcomeDone), "marked done, so it stays closed")
+        }
+    }
+
     func testUnsupportedDurationsCannotDisableAutomaticClearing() throws {
         let suite = "latchkey-preferences-test-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))

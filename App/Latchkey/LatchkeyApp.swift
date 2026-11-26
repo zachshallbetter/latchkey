@@ -72,6 +72,7 @@ struct LatchkeyApp: App {
                 // No keyboard focus rings anywhere in the app: here, in its sheets, Settings, What's New, the menu bar
                 // panel and the approval panel (each sets the same).
                 .focusEffectDisabled()
+                .paletteTint()
                 .frame(minWidth: 860, minHeight: 520)
                 // In the Dock while the window is open; closing it (or quitting from the Dock) leaves the menu bar icon.
                 .onAppear { NSApp.setActivationPolicy(.regular) }
@@ -114,9 +115,19 @@ struct LatchkeyApp: App {
         }
 
 
+        // The first-run walkthrough (Welcome.swift): opened on a new Mac and from Settings › About.
+        Window("Welcome to Pistachio", id: "welcome") {
+            WelcomeView(model: model)
+        }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
+        .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
+
         // Release notes for this version (WhatsNew.swift): opened after an update and from the app menu.
         Window("What's New in Pistachio", id: "whats-new") {
-            WhatsNewView()
+            WhatsNewView().paletteTint()
         }
         .windowResizability(.contentSize)
         .defaultLaunchBehavior(.suppressed)
@@ -128,6 +139,7 @@ struct LatchkeyApp: App {
                 if model.locked { LockScreen(model: model).frame(width: 620, height: 560) } else { SettingsWindow(model: model) }
             }
             .focusEffectDisabled()
+            .paletteTint()
         }
     }
 }
@@ -141,14 +153,19 @@ private struct InstallsMenuBarItem: ViewModifier {
         content.onAppear {
             model.openSettingsWindow = { openSettings(); NSApp.activate() }
             model.openWhatsNew = { openWindow(id: "whats-new"); NSApp.activate() }
+            model.openWelcome = { openWindow(id: "welcome"); NSApp.activate() }
             #if DEBUG
             if Snapshot.requested { return }
             #endif
             MenuBarItem.install(model, openWindow: openWindow)
             AppBranding.apply()
-            // Once after each update. A Mac with items already in Latchkey was using an earlier version, even one that
-            // didn't record which.
-            if AppPreferences().takeWhatsNew(for: WhatsNewView.version, existingUser: !model.items.isEmpty) {
+            // The welcome on a new Mac, else What's New once after each update. A Mac with items already in Pistachio
+            // was using an earlier version, even one that didn't record which. needsWelcome reads the recorded version,
+            // so it goes first.
+            if AppPreferences().needsWelcome(existingUser: !model.items.isEmpty) {
+                _ = AppPreferences().takeWhatsNew(for: WhatsNewView.version, existingUser: false)
+                model.openWelcome()
+            } else if AppPreferences().takeWhatsNew(for: WhatsNewView.version, existingUser: !model.items.isEmpty) {
                 model.openWhatsNew()
             }
         }
@@ -342,6 +359,8 @@ final class AppModel {
     @ObservationIgnored var openSettingsWindow: () -> Void = {}
     /// Opens the What's New window; set once the main window's scene is up (InstallsMenuBarItem).
     @ObservationIgnored var openWhatsNew: () -> Void = {}
+    /// Opens the welcome window; set once the main window's scene is up (InstallsMenuBarItem).
+    @ObservationIgnored var openWelcome: () -> Void = {}
 
     func openSettings(_ section: SettingsSection? = nil) {
         if let section { settingsSection = section }

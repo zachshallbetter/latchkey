@@ -133,10 +133,10 @@ struct ChoicePill<Items: View>: View {
                 Image(systemName: "chevron.down").font(.caption2.weight(.semibold))
             }
             .font(.callout)
-            .foregroundStyle(choice == nil ? Color.primary : Color.accentColor)
+            .foregroundStyle(choice == nil ? AnyShapeStyle(.primary) : AnyShapeStyle(.tint))
             .padding(.horizontal, 10).padding(.vertical, 5)
             .background(RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(choice == nil ? AnyShapeStyle(.quaternary.opacity(0.3)) : AnyShapeStyle(Color.accentColor.opacity(0.15))))
+                .fill(choice == nil ? AnyShapeStyle(.quaternary.opacity(0.3)) : AnyShapeStyle(.tint.opacity(0.15))))
             .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(.separator.opacity(0.8)))
             .contentShape(RoundedRectangle(cornerRadius: 8))
         }

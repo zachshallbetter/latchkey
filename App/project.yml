@@ -30,6 +30,9 @@ targets:
       # Release notes for the What's New window (WhatsNew.swift).
       - path: ../CHANGELOG.md
         buildPhase: resources
+      # The agent skill the welcome window copies into Claude Code and Codex (Welcome.swift).
+      - path: ../plugins/latchkey/skills/latchkey/SKILL.md
+        buildPhase: resources
     dependencies:
       - package: LatchkeyCore
         product: LatchkeyCore

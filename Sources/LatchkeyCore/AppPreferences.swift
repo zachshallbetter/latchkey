@@ -5,6 +5,7 @@ public struct AppPreferences {
     public enum Key {
         public static let appearance = "appearance"
         public static let icon = "appIconChoice"
+        public static let palette = "paletteChoice"
         public static let clipboardSeconds = "clipboardClearSeconds"
         public static let revealSeconds = "revealSeconds"
         public static let hideOnDeactivate = "hideValuesOnDeactivate"
@@ -12,6 +13,7 @@ public struct AppPreferences {
         public static let lockApp = "lockApp"
         public static let lockAfterMinutes = "lockAfterMinutes"
         public static let lastSeenVersion = "lastSeenVersion"
+        public static let welcomeDone = "welcomeDone"
     }
     public static let clipboardChoices = [15, 30, 60, 120]
     public static let revealChoices = [10, 30, 60]
@@ -29,9 +31,27 @@ public struct AppPreferences {
 
         public var title: String { self == .pistachio ? "Pistachio" : "Key" }
         public init(preference: String?) { self = preference.flatMap(Self.init(rawValue:)) ?? .pistachio }
+        /// The palette used until one is chosen: green with the pistachio, blue with the key.
+        public var defaultPalette: Palette { self == .pistachio ? .pistachio : .blue }
     }
 
     public var icon: Icon { Icon(preference: defaults.string(forKey: Key.icon)) }
+
+    /// The app's accent colour, chosen apart from the icon. Until one is chosen it follows the icon (`defaultPalette`).
+    public enum Palette: String, CaseIterable, Sendable {
+        case pistachio, blue, plum, graphite
+
+        public var title: String { rawValue.prefix(1).uppercased() + rawValue.dropFirst() }
+        public init(preference: String?, icon: Icon) {
+            self = preference.flatMap(Self.init(rawValue:)) ?? icon.defaultPalette
+        }
+        /// Resolves the stored strings, as views reading both preferences do.
+        public init(preference: String?, iconPreference: String?) {
+            self.init(preference: preference, icon: Icon(preference: iconPreference))
+        }
+    }
+
+    public var palette: Palette { Palette(preference: defaults.string(forKey: Key.palette), icon: icon) }
 
     public var clipboardSeconds: Int { Self.clipboardSeconds(defaults.integer(forKey: Key.clipboardSeconds)) }
 
@@ -61,4 +81,18 @@ public struct AppPreferences {
         defaults.set(version, forKey: Key.lastSeenVersion)
         return last.map { $0 != version } ?? existingUser
     }
+
+    /// Whether to open the welcome window. A Mac where Pistachio was already in use (it has items, or has recorded a
+    /// version) never sees it and is marked done; otherwise it opens until `finishWelcome()`. Call before `takeWhatsNew`.
+    public func needsWelcome(existingUser: Bool) -> Bool {
+        if defaults.bool(forKey: Key.welcomeDone) { return false }
+        if existingUser || defaults.string(forKey: Key.lastSeenVersion) != nil {
+            finishWelcome()
+            return false
+        }
+        return true
+    }
+
+    /// Closing the welcome early counts too: everything it asks is in Settings.
+    public func finishWelcome() { defaults.set(true, forKey: Key.welcomeDone) }
 }

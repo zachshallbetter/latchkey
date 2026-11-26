@@ -245,7 +245,7 @@ struct NavRow: View {
                 Spacer(minLength: 4)
                 if let count, badge {
                     Text("\(count)").font(.caption.weight(.semibold)).monospacedDigit()
-                        .foregroundStyle(selected ? Color.accentColor : Color.primary)
+                        .foregroundStyle(selected ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary))
                         .padding(.horizontal, 7).padding(.vertical, 1)
                         .background(Capsule().fill(selected ? AnyShapeStyle(Color.white) : AnyShapeStyle(.quaternary)))
                 } else if let count {
@@ -253,7 +253,7 @@ struct NavRow: View {
                 }
             }
             .padding(.horizontal, 10).padding(.vertical, 7)
-            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(selected ? AnyShapeStyle(Color.accentColor.gradient) : AnyShapeStyle(.clear)))
+            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(selected ? AnyShapeStyle(.tint) : AnyShapeStyle(.clear)))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

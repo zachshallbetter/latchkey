@@ -40,7 +40,7 @@ final class MenuBarItem: NSObject {
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(rootView: MenuBarPanel(model: model) { [weak self] in
             self?.popover.performClose(nil)
-        })
+        }.paletteTint())
         guard let button = item.button else { return }
         updateIcon()
         button.imageScaling = .scaleProportionallyDown

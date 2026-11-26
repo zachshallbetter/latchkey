@@ -44,6 +44,21 @@ person the `pst set` command for a missing key, suggest a session grant when the
   [Pistachio's MCP server](#pistachios-mcp-server)). Chat apps that only reach MCP servers on the internet can't use
   Pistachio: its MCP server runs on your Mac.
 
+The direct download's welcome window (and Settings › About › **Show Welcome Again…**) does this for you: **Add**
+next to an agent registers `pst mcp` with the full path of the `pst` link (or the tool inside the app) in:
+
+| Agent | MCP server | Skill |
+|---|---|---|
+| Claude Code | `claude mcp add --scope user pistachio -- <pst> mcp`, run by the app | `~/.claude/skills/pistachio/SKILL.md` |
+| Claude Desktop | `~/Library/Application Support/Claude/claude_desktop_config.json` | — |
+| Codex | `[mcp_servers.pistachio]` in `~/.codex/config.toml` | `~/.codex/skills/pistachio/SKILL.md` |
+| Cursor | `~/.cursor/mcp.json` | — |
+| Gemini CLI | `~/.gemini/settings.json` | — |
+
+Other servers and settings in those files stay as they are, the first change keeps the original beside it as
+`<file>.before-pistachio`, and a file that isn't plain JSON (comments, for example) is left alone and reported. Only
+agents whose folder exists on the Mac are listed. If `claude` isn't found, the welcome shows the command to run.
+
 The marketplace install works once the repository is public; until then, add the plugin from a local checkout
 (`/plugin marketplace add /path/to/pistachio`).
 
