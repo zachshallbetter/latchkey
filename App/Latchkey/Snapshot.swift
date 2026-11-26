@@ -97,6 +97,10 @@ enum Snapshot {
             return
         }
         if let f = arg("--import") { model.beginImport(URL(fileURLWithPath: f)) }
+        if arg("--part") == "import", let draft = model.importDraft {
+            drawOffscreen(ImportSheet(model: model, draft: draft), to: path)
+            return
+        }
         if arg("--part") == "lock" {
             drawOffscreen(LockScreen(model: model).frame(width: 860, height: 520), to: path)
             return

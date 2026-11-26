@@ -148,7 +148,7 @@ Debug builds can draw their own UI to a PNG:
 ```bash
 build/DerivedData/Build/Products/Debug/Latchkey.app/Contents/MacOS/Pistachio \
   --snapshot out.png [--sample] [--select ID,...] [--filter all|activity|grants|project:NAME] \
-  [--part sidebar|menubar|approval|list|bulk|move|grant|detail|deleted|remote|pushapproval] -ApplePersistenceIgnoreState YES
+  [--part sidebar|menubar|approval|list|bulk|move|grant|detail|deleted|remote|pushapproval|import] -ApplePersistenceIgnoreState YES
 ```
 
 Snapshot startup uses an in-memory broker and skips the live Keychain, migration, background service and updater.

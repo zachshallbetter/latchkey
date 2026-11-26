@@ -63,9 +63,22 @@ Not shown for a first version.
 
 ## Screenshots
 
-`packaging/app-store/screenshots/` holds six 2880 × 1800 JPEGs (no transparency) made from the app's own views with
-example data (`scripts/compose-screenshot.swift`; see docs/app-store.md). Upload them in order; they show fictional
-projects and values only.
+`packaging/app-store/screenshots/` holds ten 2880 × 1800 JPEGs (no transparency) made from the app's own views with
+example data and composed with a caption (`scripts/compose-screenshot.swift`; see docs/app-store.md). Upload them in
+order; they show fictional projects and values only.
+
+| File | Caption | Subtitle |
+| --- | --- | --- |
+| 01-items | Secrets, sorted by project. | References in your files. Values in iCloud Keychain. |
+| 02-approval | Nothing shared without asking. | Touch ID shows which program wants which value, and why. |
+| 03-import | Import a .env in seconds. | Each line is sorted: secrets kept, settings left alone. |
+| 04-project | Every environment in one place. | Development, preview and production, side by side. |
+| 05-review | Catches duplicates and strays. | Review finds the same key stored twice, and more. |
+| 06-activity | Know what read what. | Every read and change is logged. Never the value. |
+| 07-push | Push to your platforms. | Send variables to Vercel, Railway or Fly, with a second check for production. |
+| 08-menubar | Always a click away. | Requests and items, right in the menu bar. |
+| 09-appearance | Make it yours. | The pistachio or the key, in the palette you like. |
+| 10-lock | Locks when you step away. | Touch ID or your password opens it again. |
 
 ## App Review information
 
