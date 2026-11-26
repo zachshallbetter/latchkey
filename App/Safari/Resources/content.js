@@ -250,7 +250,27 @@
     "button.go{background:#0a63d1;border-color:#0a63d1;color:#fff}button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #0a63d1;outline-offset:1px}" +
     ".s{margin:10px 0 0;min-height:1em}.hint{margin:4px 0 0;font-size:12px}.conf{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:5px;font-size:11px;font-weight:600;background:rgba(127,127,127,.18)}" +
     "details{margin:8px 0}summary{cursor:pointer;font-size:12px}details p{margin:8px 0 0}summary:focus-visible{outline:2px solid #0a63d1;outline-offset:2px}" +
-    ".ref{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:6px 8px;border-radius:7px;background:rgba(127,127,127,.14)}.ref code{flex:1;overflow-wrap:anywhere}";
+    ".ref{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:6px 8px;border-radius:7px;background:rgba(127,127,127,.14)}.ref code{flex:1;overflow-wrap:anywhere}" +
+    // The save panel: header with the mark, label-left rows, a caret toward the key, and the Pistachio green.
+    ".b.save{--bg:#fff;--bd:#dde2e9;--ac:#a8c94a;--ink:#1b2406;--ring:#5f7a14;position:relative;background:var(--bg);border-color:var(--bd);width:352px}" +
+    "@media (prefers-color-scheme:dark){.b.save{--bg:#1c2128;--bd:#2f3640;--ring:#a8c94a}}" +
+    ".save .hd{display:flex;align-items:center;gap:10px;margin:0 0 10px}.save .hd .m{margin:0}.save .hd b.t{margin:0;font-size:15px}" +
+    ".save .hd div{min-width:0}.save #lk-source{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
+    ".save .mk{flex:none;width:34px;height:34px;border-radius:9px;background:var(--ac);display:flex;align-items:center;justify-content:center}" +
+    ".save .mk svg{width:16px;height:19px;fill:var(--ink)}" +
+    ".save .row{display:grid;grid-template-columns:62px 1fr;align-items:center;gap:8px;margin:0 0 8px}" +
+    ".save .row label{margin:0;font-weight:500;color:#5a6472}@media (prefers-color-scheme:dark){.save .row label{color:#a3adb9}}" +
+    ".save .kind{font-size:12px;margin:0 0 10px;overflow-wrap:anywhere}.save details{margin:2px 0 0}" +
+    ".save button.go{background:var(--ac);border-color:var(--ac);color:var(--ink)}.save button.go:hover:not(:disabled){filter:brightness(1.06)}" +
+    ".save button:focus-visible,.save select:focus-visible,.save input:focus-visible,.save summary:focus-visible{outline:2px solid var(--ring);outline-offset:2px}" +
+    ".save button:disabled{opacity:.6;cursor:default}.save .s{min-height:0;margin:0}.save .s:not(:empty){margin-top:10px}" +
+    "@media (prefers-color-scheme:dark){.save button.x:not(.go){border-color:#3a4350}}" +
+    ".save::before{content:'';position:absolute;width:12px;height:12px;background:var(--bg);border:1px solid var(--bd);transform:rotate(45deg);display:none}" +
+    ".save[data-side]::before{display:block}" +
+    ".save[data-side=top]::before{top:-7px;left:var(--lk-ax,calc(100% - 28px));margin-left:-6px;border-right:0;border-bottom:0}" +
+    ".save[data-side=bottom]::before{bottom:-7px;left:var(--lk-ax,calc(100% - 28px));margin-left:-6px;border-left:0;border-top:0}" +
+    ".save[data-side=left]::before{left:-7px;top:var(--lk-ay,24px);margin-top:-6px;border-right:0;border-top:0}" +
+    ".save[data-side=right]::before{right:-7px;top:var(--lk-ay,24px);margin-top:-6px;border-left:0;border-bottom:0}";
   var MARK_PATHS = ["M166.72,301.46c-191.45,63.02-11.04-197.77,68.73-215.65,27.11-4.15,24.34,48.9,26.61,67,.17,14.74-1.54,28.75-4.76,43.15C246.81,243.37,211.51,283.29,166.72,301.46Z", "M98.99,190.28c-6.59-41.74-20.77-88.47-7.1-129.12,44.38-72.13,123.56-95.35,128.39,13.54C170.16,101.86,127.19,140.29,98.99,190.28Z", "M67.72,295.22C-3.06,263.39-17.65,168.05,20.63,105.54c11.63-17.54,36.47-69.19,60.74-60.54-23.72,47.86-5.36,106.51,1.22,156.81,0,0,2.59,12.73,2.59,12.73C73.26,239.23,63.63,267.51,67.72,295.22Z"];
 
   function addStyle(root, extra) {
@@ -316,6 +336,11 @@
     }
     h.style.left = Math.round(left) + "px"; h.style.top = Math.round(top) + "px";
     h._panel.style.transformOrigin = origin; h._panel.style.setProperty("--lk-dy", dy);
+    var side = origin === "top right" && dy === "-6px" ? "top" : origin === "bottom right" ? "bottom" : origin === "top left" ? "left" : "right";
+    h._panel.dataset.side = side;
+    var cx = Math.min(w - 24, Math.max(24, (r.left + r.right) / 2 - left)), cy = Math.min(ht - 24, Math.max(24, (r.top + r.bottom) / 2 - top));
+    h._panel.style.setProperty("--lk-ax", Math.round(side === "top" || side === "bottom" ? Math.min(w - 24, Math.max(24, r.right - 20 - left)) : cx) + "px");
+    h._panel.style.setProperty("--lk-ay", Math.round(cy) + "px");
     h.style.visibility = "visible";
   }
 
@@ -373,15 +398,15 @@
     var root = h.attachShadow({ mode: "closed" });
     var label = r.type + (r.environment ? " · " + (r.environment === "production" ? "live" : "test") : "");
     root.innerHTML =
-      '<div class="b" role="dialog" aria-label="Save to Pistachio">' +
-      '<b class="t" id="lk-heading">Save to Pistachio?</b>' +
-      '<p class="m" id="lk-source"></p>' +
+      '<div class="b save" role="dialog" aria-label="Save to Pistachio">' +
+      '<div class="hd"><span class="mk" id="lk-mark" aria-hidden="true"></span><div><b class="t" id="lk-heading">Save to Pistachio?</b>' +
+      '<p class="m" id="lk-source"></p></div></div>' +
       '<div id="lk-form">' +
-      '<p class="m"><span id="what"></span><span class="conf" id="conf" hidden></span><br><code id="prev"></code></p>' +
-      '<details class="m"><summary>About this suggestion</summary><p id="lk-page-title"></p><p id="lk-evidence"></p></details>' +
-      '<label for="lk-place">Where</label><select id="lk-place"><option value="">Shared (every project)</option></select>' +
-      '<label for="lk-name">Name</label><input id="lk-name" autocomplete="off" spellcheck="false">' +
+      '<p class="m kind"><span id="what"></span><span class="conf" id="conf" hidden></span> · <code id="prev"></code></p>' +
+      '<div class="row"><label for="lk-place">Project</label><select id="lk-place"><option value="">Shared (every project)</option></select></div>' +
+      '<div class="row"><label for="lk-name">Name</label><input id="lk-name" autocomplete="off" spellcheck="false"></div>' +
       '<p class="m hint" id="lk-hint" hidden></p>' +
+      '<details class="m"><summary>About this suggestion</summary><p id="lk-page-title"></p><p id="lk-evidence"></p></details>' +
       '<div class="r"><button type="button" class="x" id="lk-no">Not now</button><button type="button" class="x go" id="lk-save">Save to Pistachio</button></div></div>' +
       '<p class="s m" id="lk-status" aria-live="polite"></p>' +
       '<div id="lk-next" hidden>' +
@@ -392,7 +417,8 @@
     addStyle(root);
     h._panel = root.querySelector(".b");
     var title = (document.title || "").split(r.value).join(D.preview(r.value)).trim().slice(0, 120);
-    root.getElementById("lk-source").textContent = "From " + location.host;
+    root.getElementById("lk-source").textContent = location.host;
+    addMark(root.getElementById("lk-mark"));
     root.getElementById("lk-page-title").textContent = title;
     label = label.replace(" (suggested)", "").replace(/\bapi\b/gi, "API");
     root.getElementById("what").textContent = label;

@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 423,
-    "includedBytes": 3815837,
+    "includedBytes": 3812759,
     "excludedCounts": {
       "extension": 144,
       "generated-or-transient-file": 2
@@ -19,13 +19,13 @@
       {
         "path": ".",
         "commit": "aaa001ae4e409b9d7a5bdd347976a2dab971ef5e",
-        "branch": "ui/detail-views",
+        "branch": "ui/safari-panel",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "dec8cfc5f15a5d3b78371882ad825f9a8606b3b736ee057dbeae3a5473741f6c",
+  "aggregateSourceDigest": "99f2230b59d8449401dff1a661d506878d6ef9c1c024cbf0bf68c3a92d8974b9",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -1099,8 +1099,8 @@
     },
     {
       "path": "App/Safari/Resources/content.js",
-      "bytes": 38163,
-      "sha256": "9f5f3c4fb71c4d1b11fca72dd8c1be00f08873d9c499710bbd48d5e9242eb946"
+      "bytes": 41299,
+      "sha256": "4e9535dc7b7938d5aa42b14cfb601f3c07358871e6dc71ef9044182862297581"
     },
     {
       "path": "App/Safari/Resources/detector.js",
