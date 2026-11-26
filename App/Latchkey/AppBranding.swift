@@ -72,8 +72,11 @@ enum AppPalette {
 
 /// Tints a window's controls and selections with the chosen palette, following the preference as it changes.
 private struct PaletteTint: ViewModifier {
-    @AppStorage(AppPreferences.Key.palette) private var palette = AppPreferences.Palette.pistachio.rawValue
-    func body(content: Content) -> some View { content.tint(AppPalette.tint(AppPreferences.Palette(preference: palette))) }
+    @AppStorage(AppPreferences.Key.palette) private var palette = ""
+    @AppStorage(AppPreferences.Key.icon) private var icon = AppPreferences.Icon.pistachio.rawValue
+    func body(content: Content) -> some View {
+        content.tint(AppPalette.tint(AppPreferences.Palette(preference: palette, iconPreference: icon)))
+    }
 }
 
 extension View {

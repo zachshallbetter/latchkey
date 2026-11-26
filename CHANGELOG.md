@@ -23,7 +23,7 @@
 ### App
 
 - Added a palette (pistachio green, blue, plum or graphite) for the app's selections, highlights and buttons, in
-  Settings › General › Appearance. Key's Dock icon uses the supplied macOS icon artwork, light and dark.
+  Settings › General › Appearance. Until one is picked it follows the icon: green with the pistachio, blue with the key. Key's Dock icon uses the supplied macOS icon artwork, light and dark.
 - Added a welcome window on a new Mac. Pick the icon and palette and watch the Dock, menu bar and window change;
   choose what quitting does and whether to open at login; turn on Pistachio for Safari, with the status of Chrome,
   Brave and Firefox; and connect Claude Code, Claude Desktop, Codex, Cursor and Gemini CLI to Pistachio's MCP server

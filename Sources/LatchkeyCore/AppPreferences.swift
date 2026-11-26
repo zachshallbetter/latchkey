@@ -31,19 +31,27 @@ public struct AppPreferences {
 
         public var title: String { self == .pistachio ? "Pistachio" : "Key" }
         public init(preference: String?) { self = preference.flatMap(Self.init(rawValue:)) ?? .pistachio }
+        /// The palette used until one is chosen: green with the pistachio, blue with the key.
+        public var defaultPalette: Palette { self == .pistachio ? .pistachio : .blue }
     }
 
     public var icon: Icon { Icon(preference: defaults.string(forKey: Key.icon)) }
 
-    /// The app's accent colour, chosen apart from the icon.
+    /// The app's accent colour, chosen apart from the icon. Until one is chosen it follows the icon (`defaultPalette`).
     public enum Palette: String, CaseIterable, Sendable {
         case pistachio, blue, plum, graphite
 
         public var title: String { rawValue.prefix(1).uppercased() + rawValue.dropFirst() }
-        public init(preference: String?) { self = preference.flatMap(Self.init(rawValue:)) ?? .pistachio }
+        public init(preference: String?, icon: Icon) {
+            self = preference.flatMap(Self.init(rawValue:)) ?? icon.defaultPalette
+        }
+        /// Resolves the stored strings, as views reading both preferences do.
+        public init(preference: String?, iconPreference: String?) {
+            self.init(preference: preference, icon: Icon(preference: iconPreference))
+        }
     }
 
-    public var palette: Palette { Palette(preference: defaults.string(forKey: Key.palette)) }
+    public var palette: Palette { Palette(preference: defaults.string(forKey: Key.palette), icon: icon) }
 
     public var clipboardSeconds: Int { Self.clipboardSeconds(defaults.integer(forKey: Key.clipboardSeconds)) }
 

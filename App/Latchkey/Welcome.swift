@@ -11,7 +11,8 @@ struct WelcomeView: View {
 
     let model: AppModel
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(AppPreferences.Key.palette) private var palette = AppPreferences.Palette.pistachio.rawValue
+    @AppStorage(AppPreferences.Key.palette) private var palette = ""
+    @AppStorage(AppPreferences.Key.icon) private var icon = AppPreferences.Icon.pistachio.rawValue
     @State private var page: Page
     @State private var forward = true
 
@@ -24,13 +25,13 @@ struct WelcomeView: View {
         _page = State(initialValue: startPage)
     }
 
-    private var theme: WelcomeTheme { WelcomeTheme(palette: AppPreferences.Palette(preference: palette)) }
+    private var theme: WelcomeTheme { WelcomeTheme(palette: AppPreferences.Palette(preference: palette, iconPreference: icon)) }
 
     var body: some View {
         ZStack(alignment: .top) {
             LinearGradient(colors: [theme.accent.opacity(0.16), theme.accent.opacity(0)], startPoint: .top, endPoint: .center)
                 .ignoresSafeArea()
-                .animation(.easeInOut(duration: 0.3), value: palette)
+                .animation(.easeInOut(duration: 0.3), value: theme.accent)
 
             VStack(spacing: 0) {
                 ZStack {
@@ -228,7 +229,7 @@ private struct WelcomePage: View {
 
 private struct LookPage: View {
     @AppStorage(AppPreferences.Key.icon) private var icon = AppPreferences.Icon.pistachio.rawValue
-    @AppStorage(AppPreferences.Key.palette) private var palette = AppPreferences.Palette.pistachio.rawValue
+    @AppStorage(AppPreferences.Key.palette) private var palette = ""
     @Environment(\.welcomeTheme) private var theme
 
     var body: some View {
@@ -283,7 +284,7 @@ private struct LookPage: View {
     }
 
     private func swatch(_ choice: AppPreferences.Palette) -> some View {
-        let selected = AppPreferences.Palette(preference: palette) == choice
+        let selected = AppPreferences.Palette(preference: palette, iconPreference: icon) == choice
         return Button {
             withAnimation(.easeInOut(duration: 0.25)) { palette = choice.rawValue }
         } label: {

@@ -29,15 +29,20 @@ final class AppPreferencesTests: XCTestCase {
         XCTAssertEqual(reloaded.lockAfterMinutes, 15)
     }
 
-    func testPaletteDefaultsToPistachioAndIgnoresUnknownChoices() throws {
+    func testPaletteFollowsTheIconUntilChosenAndIgnoresUnknownChoices() throws {
         let suite = "latchkey-preferences-test-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         XCTAssertEqual(AppPreferences(defaults: defaults).palette, .pistachio)
+        defaults.set("key", forKey: AppPreferences.Key.icon)
+        XCTAssertEqual(AppPreferences(defaults: defaults).palette, .blue)
         defaults.set("plum", forKey: AppPreferences.Key.palette)
+        XCTAssertEqual(AppPreferences(defaults: defaults).palette, .plum, "a chosen palette stays when the icon changes")
+        defaults.set("pistachio", forKey: AppPreferences.Key.icon)
         XCTAssertEqual(AppPreferences(defaults: defaults).palette, .plum)
         defaults.set("neon", forKey: AppPreferences.Key.palette)
         XCTAssertEqual(AppPreferences(defaults: defaults).palette, .pistachio)
+        XCTAssertEqual(AppPreferences.Palette(preference: "", iconPreference: "key"), .blue)
         XCTAssertEqual(AppPreferences.Palette.graphite.title, "Graphite")
     }
 

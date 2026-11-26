@@ -217,7 +217,8 @@ On a new Mac, Pistachio opens a welcome window over the item list. Its pages:
 
 - **Make it yours:** the icon (Pistachio or Key) and the palette (pistachio green, blue, plum or graphite), chosen
   separately. The Dock icon, the menu bar symbol and the welcome's colours change as you choose. The palette is the
-  app's accent: selections, highlights and buttons in every window. Both are also in Settings › General › Appearance.
+  app's accent: selections, highlights and buttons in every window. Until a palette is picked it follows the icon:
+  green with the pistachio, blue with the key. Both are also in Settings › General › Appearance.
 - **When you quit Pistachio…:** stay in the menu bar (the default) or quit completely, and whether to open at login.
 - **Save keys from your browser:** each of Safari, Chrome, Brave and Firefox that's installed, with the default
   browser marked. Safari's extension comes with the app and opens Safari's settings to turn it on. Chrome and Firefox
