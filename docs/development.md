@@ -54,7 +54,7 @@ pistachio (CLI) ──JSON over a Unix socket──► Broker (in the app) ─�
 
 - **`Broker`** handles every request: one at a time, so approval panels never stack. It decides what's released,
   asks for approval, writes the log, and keeps versions.
-- **`KeychainStore`** keeps items as generic passwords (service `pistachio`, account = item ID). Kind, agent-safe,
+- **`KeychainStore`** keeps items as generic passwords (service `latchkey`, kept from before the rename so existing items stay readable; account = item ID). Kind, agent-safe,
   service and "used in" are JSON in `kSecAttrGeneric`; the note is `kSecAttrComment`. `.iCloud` mode uses the
   data-protection keychain with `kSecAttrSynchronizable` in the app's access group; `.thisMac` uses the login
   keychain. `KeychainStore.automatic` picks by trying a write (reads from an unentitled process just say "not
