@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 423,
-    "includedBytes": 3809800,
+    "includedBytes": 3810221,
     "excludedCounts": {
       "extension": 146,
       "generated-or-transient-file": 2
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "00ec848f260af66e50e53cd66270b8997e828a4d",
+        "commit": "dcf1b365caa43c3e6dbd59264d26f50e9e997462",
         "branch": "ui/hero-glow",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "08060958da19ba03eb95cf04b9dc2d84649ad23767ff313028d03f600e921c61",
+  "aggregateSourceDigest": "afe99d892f89bbb380d6e8de034fc2d1feb5d41fc31f5b5619301fb57d8d1c7f",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -749,8 +749,8 @@
     },
     {
       "path": "App/Latchkey/AppBranding.swift",
-      "bytes": 3759,
-      "sha256": "e278769147280c95055ef74f0997c41f35a64e4136b614b77cfcdc4b1f2b0533"
+      "bytes": 3911,
+      "sha256": "1f40438bee76f43e6784abc9d412a46d99e0aed69bf5bb53403f065c65453e9b"
     },
     {
       "path": "App/Latchkey/AppIcon.icon/icon.json",
@@ -1084,8 +1084,8 @@
     },
     {
       "path": "App/Latchkey/Welcome.swift",
-      "bytes": 31640,
-      "sha256": "790adf631d52f980e7582e82ddd5c48d2bb3e83f3131fddc440c82a3fae01d03"
+      "bytes": 31909,
+      "sha256": "7465bad449df89670484d42db7c1a43dde53ff137590a74b865e722c23092429"
     },
     {
       "path": "App/Latchkey/WhatsNew.swift",
