@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 423,
-    "includedBytes": 3809623,
+    "includedBytes": 3812979,
     "excludedCounts": {
       "extension": 144,
       "generated-or-transient-file": 2
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "4b8840c3943a8b9622971eafce0e16502766a48f",
-        "branch": "ui/hero-glow",
+        "commit": "aaa001ae4e409b9d7a5bdd347976a2dab971ef5e",
+        "branch": "ui/approval-rows",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "7e2690461804c21e93c8d471be36d20f1b92790b0237cf64b63fbac0af9d2f5f",
+  "aggregateSourceDigest": "6612cf4da5dfe035bc3a3e8b76052fec0d8e546c0dd14eb3d098b0d1a2169bfd",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -759,8 +759,8 @@
     },
     {
       "path": "App/Latchkey/ApprovalPanel.swift",
-      "bytes": 26075,
-      "sha256": "0afad73b7d881b80bfad2bb9b82aab74cc606a7b5ebd0fa968e7505c0b4b3405"
+      "bytes": 29356,
+      "sha256": "e7ccf135d5f5cf7a108131b1083462c2811cacd88f84b530f3bf77c88e8b454a"
     },
     {
       "path": "App/Latchkey/Assets.xcassets/Contents.json",
@@ -1019,8 +1019,8 @@
     },
     {
       "path": "App/Latchkey/LatchkeyApp.swift",
-      "bytes": 68185,
-      "sha256": "dc2425714b018a2c3dedfda25554b81d374180a02188ac2d77767b95f0ca64c1"
+      "bytes": 68260,
+      "sha256": "d2b561506aca74f54baf33fa8cead8bd7e39ba0368b47ad9bb135132e694e5f1"
     },
     {
       "path": "App/Latchkey/MainWindow.swift",

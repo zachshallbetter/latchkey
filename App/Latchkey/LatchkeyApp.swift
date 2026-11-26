@@ -529,6 +529,7 @@ final class AppModel {
         }
         #endif
         watchForLock()
+        ApprovalWindow.shared.items = { [weak self] in self?.items ?? [] }
         broker.onChange = { [weak self] in Task { @MainActor in self?.refresh() } }
         // Changes made on your other Macs arrive through iCloud Keychain without any notice to the app, so look again
         // whenever Latchkey comes to the front, and every 30 seconds while one of its windows is open.

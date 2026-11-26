@@ -85,6 +85,8 @@ final class ApprovalWindow {
     static let shared = ApprovalWindow()
     /// Rows one panel holds; more from the same caller wait for the next panel.
     static let most = 12
+    /// The items Pistachio holds, to show each requested name with its type's icon. Set by the app model.
+    var items: () -> [SecretInfo] = { [] }
     private var panel: NSPanel?
     private var group: ApprovalGroup?
     private var waiting: [ApprovalTicket] = []
@@ -114,7 +116,9 @@ final class ApprovalWindow {
             waiting.removeAll { t in group.tickets.contains { $0 === t } }
         }
         self.group = group
+        let known = items()
         let view = ApprovalView(group: group,
+                                item: { ApprovalView.item(named: $0, in: known) },
                                 deny: { [weak self] ticket in self?.deny(ticket) },
                                 decide: { [weak self] decision in self?.finish(decision) })
         // The default sizing (the window follows the view's size through constraints). `.preferredContentSize` fed the
@@ -182,6 +186,8 @@ final class ApprovalChoice: ObservableObject {
 
 struct ApprovalView: View {
     @ObservedObject var group: ApprovalGroup
+    /// The item a requested name is, for its icon; nil when it can't be told which.
+    var item: (String) -> SecretInfo? = { _ in nil }
     /// Denies one row; the rest stay.
     var deny: (ApprovalTicket) -> Void = { _ in }
     let decide: (ApprovalDecision) -> Void
@@ -195,6 +201,19 @@ struct ApprovalView: View {
     @State private var sheetUp = false
     /// Who's asking in full (the process chain, the folder, the command), folded until asked for.
     @State private var showDetails = false
+    /// Every requested item listed, instead of the first few and a count.
+    @State private var showAllItems = false
+
+    /// Rows of requested items shown before "and N more".
+    static let itemRowsShown = 4
+
+    /// The item a requested name stands for: the exact full name first; a bare name only when one item has it.
+    static func item(named name: String, in items: [SecretInfo]) -> SecretInfo? {
+        if let exact = items.first(where: { $0.name == name }) { return exact }
+        guard !name.contains("/") else { return nil }
+        let same = items.filter { $0.ref.name == name }
+        return same.count == 1 ? same[0] : nil
+    }
 
     /// The caller and folder every row shares.
     private var request: ApprovalRequest { group.first }
@@ -274,7 +293,7 @@ struct ApprovalView: View {
             // What the answer covers stays in view: every item (one is named in the title), the change's own words,
             // and where values go. Who's asking in detail is folded below.
             if !many {
-                if request.names.count > 1 { covered(request.names.joined(separator: ", "), mono: true) }
+                if request.names.count > 1 { itemList(request.names) }
                 if [.add, .change, .importItems, .restore].contains(request.action), !request.summary.isEmpty, request.summary != Self.what(request) {
                     covered(request.summary.prefix(1).uppercased() + request.summary.dropFirst())
                 }
@@ -374,10 +393,7 @@ struct ApprovalView: View {
                             Text(what.prefix(1).uppercased() + what.dropFirst())
                                 .font(.callout.weight(.medium)).fixedSize(horizontal: false, vertical: true)
                             // One item is named in full above; more are listed here, every one of them.
-                            if ticket.request.names.count > 1 {
-                                Text(ticket.request.names.joined(separator: ", ")).font(.caption.monospaced())
-                                    .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
-                            }
+                            if ticket.request.names.count > 1 { itemList(ticket.request.names) }
                             if !ticket.request.targets.isEmpty {
                                 Text("To " + ticket.request.targets.joined(separator: ", ")).font(.caption)
                                     .fixedSize(horizontal: false, vertical: true)
@@ -442,6 +458,54 @@ struct ApprovalView: View {
         if request.overSSH { return "From another computer" }
         let place = request.folder.isEmpty || request.folder == "/" ? "" : " in " + Broker.tilde(request.folder)
         return (request.asker ?? (request.fromApp ? "Pistachio" : "A program")) + place
+    }
+
+    /// The requested items as a grouped list, one row each with its type's icon: the first few, then "and N more",
+    /// which opens the rest so every item the answer covers can still be read before it's given.
+    private func itemList(_ names: [String]) -> some View {
+        let hidden = showAllItems ? 0 : max(0, names.count - Self.itemRowsShown)
+        let shown = Array(names.prefix(names.count - hidden))
+        return ScrollView(.vertical) {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(shown.enumerated()), id: \.offset) { i, name in
+                    if i > 0 { Divider().padding(.leading, 38) }
+                    HStack(spacing: 10) {
+                        itemIcon(item(name))
+                        Text(name).font(.callout.monospaced().weight(.medium)).textSelection(.enabled)
+                            .lineLimit(1).truncationMode(.middle)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 10).padding(.vertical, 7)
+                }
+                if hidden > 0 || showAllItems {
+                    Divider().padding(.leading, 38)
+                    Button { showAllItems.toggle() } label: {
+                        HStack {
+                            Text(showAllItems ? "Show fewer" : "and \(hidden) more").font(.callout).foregroundStyle(.secondary)
+                            Spacer(minLength: 0)
+                            Image(systemName: showAllItems ? "chevron.up" : "chevron.down").font(.caption.weight(.semibold))
+                                .foregroundStyle(.tertiary)
+                        }
+                        .padding(.horizontal, 10).padding(.vertical, 7).contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .frame(maxHeight: 200)
+        .fixedSize(horizontal: false, vertical: true)
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.quaternary.opacity(0.5)))
+    }
+
+    /// The type's symbol in its tint; a neutral one when the item can't be told.
+    @ViewBuilder
+    private func itemIcon(_ item: SecretInfo?) -> some View {
+        if let item {
+            let type = ItemType(item)
+            Image(systemName: type.symbol).foregroundStyle(type.tint).frame(width: 18)
+        } else {
+            Image(systemName: "square.dashed").foregroundStyle(.secondary).frame(width: 18)
+        }
     }
 
     /// A line of what the answer covers, in full.
