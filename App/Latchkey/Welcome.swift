@@ -34,8 +34,11 @@ struct WelcomeView: View {
                 .animation(.easeInOut(duration: 0.3), value: theme.accent)
 
             VStack(spacing: 0) {
+                // The margins are inside the clip so the hero's glow fades out instead of being cut at their edge.
                 ZStack {
                     pageView
+                        .padding(.horizontal, 44)
+                        .padding(.top, 44)
                         .id(page)
                         .transition(.asymmetric(
                             insertion: .move(edge: forward ? .trailing : .leading).combined(with: .opacity),
@@ -46,9 +49,8 @@ struct WelcomeView: View {
                 .clipped()
 
                 footer
+                    .padding(.horizontal, 44)
             }
-            .padding(.horizontal, 44)
-            .padding(.top, 44)
             .padding(.bottom, 26)
         }
         .frame(width: Self.size.width, height: Self.size.height)
