@@ -91,7 +91,7 @@ Pistachio needs no account, sign-in or developer environment to review. Everythi
 
 To exercise the app:
 1. Open Pistachio and choose New Item. Enter a name such as demo/development/API_KEY and any test value, and save. Approve the macOS prompt (Touch ID or the Mac's password).
-2. Choose File > Import .env File and pick a text file with lines like API_KEY=test123. The sheet classes each line; save to import.
+2. Choose File > Import .env File and pick a text file with lines like API_KEY=test123. Each line gets an action, Save to Keychain or Keep in file, and the sheet previews the file after import; choose Import.
 3. Control-click a project in the sidebar and choose Export Environment or Copy Environment as .env. Files are written only where you choose in the system file picker.
 4. Review lists findings such as duplicates; Activity logs every read and change (never values); Recently Deleted restores items.
 5. Safari: enable Pistachio for Safari in Safari Settings > Extensions. On any page, select text, Control-click and choose Save Selection to Pistachio; the app asks before saving.
