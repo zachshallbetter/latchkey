@@ -6,9 +6,9 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 423,
-    "includedBytes": 3810221,
+    "includedBytes": 3809623,
     "excludedCounts": {
-      "extension": 146,
+      "extension": 144,
       "generated-or-transient-file": 2
     }
   },
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "dcf1b365caa43c3e6dbd59264d26f50e9e997462",
+        "commit": "4b8840c3943a8b9622971eafce0e16502766a48f",
         "branch": "ui/hero-glow",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "afe99d892f89bbb380d6e8de034fc2d1feb5d41fc31f5b5619301fb57d8d1c7f",
+  "aggregateSourceDigest": "7e2690461804c21e93c8d471be36d20f1b92790b0237cf64b63fbac0af9d2f5f",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -729,8 +729,8 @@
     },
     {
       "path": "App/Branding/KeyIcon.icon/icon.json",
-      "bytes": 1033,
-      "sha256": "8e0f472682ce3d40e00404ef0460635d72b80d6b433af5e4335ac674517c30e0"
+      "bytes": 991,
+      "sha256": "93360f5ef997acd07f20dfa292a9d8692a4009aa21d7a30488f25dccd2784bd7"
     },
     {
       "path": "App/Browser/browser-api.js",
@@ -754,8 +754,8 @@
     },
     {
       "path": "App/Latchkey/AppIcon.icon/icon.json",
-      "bytes": 949,
-      "sha256": "ab9b9fea429bbc7c94851c413209b70027dba9e9dc0110b4cccff5ff06b65e8d"
+      "bytes": 906,
+      "sha256": "378f494f7cc38695f4fcf5f29366509d524403cf22656613dbc819bd2766db45"
     },
     {
       "path": "App/Latchkey/ApprovalPanel.swift",
@@ -1154,8 +1154,8 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 45276,
-      "sha256": "095ed7d19b411b9b0f0173d2afadb37f48907d2b2a08f2ed9010ba4386806f47"
+      "bytes": 45341,
+      "sha256": "d24b50696fcf02f03e11db1a00ea4eeae80f3107ef4d3f966dad3efe9cf43965"
     },
     {
       "path": "CODE_OF_CONDUCT.md",
@@ -1684,8 +1684,8 @@
     },
     {
       "path": "docs/development.md",
-      "bytes": 16243,
-      "sha256": "fbae24a3540913a8d744e15ba0d2fdc96c01cee5755aa874f2323cb18bed4ceb"
+      "bytes": 16113,
+      "sha256": "f70ebd89663a28d10e5dd32672082efee65450a643b6355b561265fe392cd9e1"
     },
     {
       "path": "docs/evidence/app-store/2026-11-11-cli-transport.json",
@@ -1804,8 +1804,8 @@
     },
     {
       "path": "scripts/brand-icons.swift",
-      "bytes": 4980,
-      "sha256": "eb229e8548347fac61fe88b7d24c269aee6fe34db31c8a71e3e81c6c1c5283a9"
+      "bytes": 4532,
+      "sha256": "44dd08a5d23fd14ddff0d2330d0ae2caf713d6d0d15cfad56f176291244e66d9"
     },
     {
       "path": "scripts/build-appstore-sandbox.py",

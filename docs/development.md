@@ -181,17 +181,17 @@ Pistachio, including for malformed values. Pistachio restores the bundled Icon C
 `NSApplication.applicationIconImage` to `nil`, so macOS handles the bundled icon’s masking and appearance.
 Key uses a runtime alternative. Both choices update the template status item and in-app marks.
 The Pistachio status symbol is bounded to 14 points; Key retains its original 18-point canvas. Both preserve aspect ratio.
-Key Dock alternatives use the original vector in `App/Branding/KeyIcon.icon`, drawn with AppKit on a solid black
-rounded tile. The blue mark is flat in both appearances: no gradient, lighting, gloss, translucency or stroke.
-The tile is inset 100 points on a 1024-point runtime canvas to retain native Dock sizing.
+The Key's runtime Dock icon is rendered from `App/Branding/KeyIcon.icon`, the same design as the bundled icon with
+the key mark in place of the pistachio.
 The choice is reapplied on launch; it changes no broker policy, credentials, bundle IDs or signed bundle files.
 Finder and Safari retain the bundled Pistachio icon. macOS does not provide this running-app preference as a Finder
 icon choice; do not write Finder custom-icon metadata or modify the signed application bundle to simulate it.
 
-`App/Latchkey/AppIcon.icon` is the default Icon Composer document, with three separate Pistachio layers and solid
-light/dark backgrounds. Specular highlights and translucency are disabled to keep the supplied artwork free of overlays.
-Key/Pistachio runtime image assets and Safari’s 48/96/128px icons are generated from checked-in vectors by
-`swift scripts/brand-icons.swift`, through the register. The runtime image sets include light and dark appearances.
+`App/Latchkey/AppIcon.icon` is the default Icon Composer document: the full-colour pistachio as one glass layer on
+the automatic fill, white in light mode and black in dark, so macOS draws its tinted and clear styles from it.
+`swift scripts/brand-icons.swift`, run through the register, renders the Key/Pistachio runtime image sets (light and
+dark) from both Icon Composer documents with Xcode's `ictool` at design generation 27, and Safari's 48/96/128px icons
+from the checked-in vector.
 `Logo`/`MenuBarIcon` remain the key assets; `PistachioLogo`/`PistachioMenuBarIcon` are the supplied mark. `LogoMark`,
 `BrandAppIcon` and `AppBranding` centralize the presentation choice. The website’s branding is maintained separately
 in its website worktree; see [site.md](site.md).
