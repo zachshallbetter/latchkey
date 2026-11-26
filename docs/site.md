@@ -10,7 +10,7 @@ served. It's published at https://latchkey.snackstud.io from a Vercel project th
 
 | File | What it is |
 |---|---|
-| `index.html` | The home page, led by "Your secrets. In a shell.": a static, labelled design preview of the app, terminal and approval card, then four numbered movements (importing an env file, bringing the environment to a fresh clone, a second Mac, an agent asking), each beside a scene; the interactive approval panel; the app window; rotation; the key proxy; integrations; security in brief; Pistachio Pro's planned pricing; three ways in; and the closing band with install. Page-specific CSS is inline; `pistachio.css` supplies the shared brand treatment |
+| `index.html` | The home page, led by "Your secrets. In a shell.": the open-shell photograph beside an interactive approval request (Deny prints the tool's refusal, Allow once runs the tests; both add an Activity line and offer Try again), then the "References in files. Values in Keychain." band, four numbered movements (importing an env file, bringing the environment to a fresh clone, a second Mac, an agent asking), each beside a scene; the interactive approval panel; the app window; rotation; the key proxy; integrations; security in brief; Pistachio Pro's planned pricing; three ways in; and the closing band with install. Page-specific CSS is inline; `pistachio.css` supplies the shared brand treatment |
 | `features.html` | Capabilities in six groups (credentials, environments, devices, agents and tools, integrations, visibility), each with one example, an availability label and a link to its docs. Credentials opens with the working app window (`app-demo.js`); the other groups with scenes |
 | `roadmap.html` | What's built, what's next and what's out of scope, by tier. The items are written in the HTML (the script only filters them); mark one **Built** only when the docs describe it as shipped |
 | `pricing.html` | Plans modelled on Peel's: what stays free (storage, references, import, run, approvals, export), Pistachio Pro as a planned one-time in-app purchase in the Mac App Store ($79, updates included, no subscription), Pistachio Teams ($15 per user a month, planned), a comparison marking planned rows, the purchase policy and short answers. Nothing is on sale; early-access requests go to latchkey@snackstud.io |
@@ -34,7 +34,7 @@ served. It's published at https://latchkey.snackstud.io from a Vercel project th
 | `logo.svg` | The supplied three-piece Pistachio vector mark, used in the header, the illustrated interfaces and generated web assets. Geometry and colors are retained from the owner’s asset |
 | `apple-touch-icon.png` | 180×180, rendered from `logo.svg` by `scripts/social-images.py` |
 | `developers/` | Developer docs: overview, quickstart, CLI reference, agents and MCP, references and API. The Quickstart plays the import and run scenes, Agents and MCP the agent scene. Code wraps instead of scrolling, and tables become one labelled block per row on phones (each `td` carries `data-th`) |
-| `llms.txt` | Everything an agent needs in one file: the facts, the rules to follow, whether Pistachio is installed and how to get it, running commands, exit codes, approvals and grants, new clones, the proxy and AWS, MCP, keeping values out of files, the limits, and absolute links to every page and guide. Keep it in step with `docs/agents.md` and `docs/cli.md`. The home page's **For humans / For agents** switch, under the buttons, shows the line to give an agent (pointing at this file), remembers the choice on the device, and opens with `#agents`; every footer links here as **For agents (llms.txt)** |
+| `llms.txt` | Everything an agent needs in one file: the facts, the rules to follow, whether Pistachio is installed and how to get it, running commands, exit codes, approvals and grants, new clones, the proxy and AWS, MCP, keeping values out of files, the limits, and absolute links to every page and guide. Keep it in step with `docs/agents.md` and `docs/cli.md`. Every page's header links here as **For agents**, and every footer as **For agents (llms.txt)** |
 | `robots.txt` | Crawl policy |
 
 The footer’s Appearance button cycles System, Light and Dark, saves `pistachio-theme` in this browser only, and restores it before paint. The privacy page states this local storage use.
@@ -175,32 +175,33 @@ checks through `reg build --label <check-name> -- <command>` as well.
 
 ## Pistachio presentation
 
-The approved design puts the product UI in the hero, with the supplied three-piece Pistachio mark. The hero is explicitly an illustration with example data; the working app demo below remains interactive.
-Small screens use a native disclosure menu so every navigation destination stays available without horizontal overflow.
-Appearance choices restore before page styling on every page and persist across navigation.
-No new command, wire protocol, trust identity, domain or payment product is introduced.
+The website follows the owner's style guide (November 2026): Canvas `#191C19`, Surface `#252825`, Raised `#343834`,
+Rule `#474D47`, Ink `#F6F7F2`, Muted `#C1C7BD` and Pistachio `#C6EF61` with `#17200D` labels, in `pistachio.css`. That
+palette is the default appearance; the footer's Appearance control still offers the earlier light palette. Pistachio
+green marks actions, selection and emphasised phrases; blue, amber and rose stay with item and Touch ID glyphs. Focus
+is a 2px Pistachio outline offset 3px.
+
+The header is the same on every page: How it works, Pricing, Security, Developers and **For agents** (`llms.txt`).
+Features and Guides are in every footer. Small screens use a native disclosure menu with the same links.
+
+The home hero starts with a decision: five columns of copy and the one Download for Mac button (Try the demo beside
+it moves focus to the example, compatibility beneath), seven of art. The open-shell photograph (`hero-pistachio.webp`,
+from the app's welcome artwork) sits in a local olive wash beside the approval request, labelled "Interactive demo ·
+Example credentials", which uses the generic requester "Agent". Below 1100px the hero stacks and the nut shrinks;
+below 760px the nut is left out so the demo keeps two legible key names and both actions. Appearance choices restore
+before page styling on every page. No new command, wire protocol, trust identity, domain or payment product is
+introduced.
 
 Regenerate social cards and icons through the register on macOS, then discovery and context. Check all local links,
 page titles/metadata, JavaScript syntax, and representative desktop/mobile and light/dark browser flows. A new
 public domain, app rename and production deployment remain separate owner-directed work.
 
-The homepage groups the download and secondary action, places compatibility information beside that decision, and
-uses a quiet principles strip followed by a split heading/introduction. Audience destinations are compact rows;
-the maker note shares that alignment. The proxy example is a bordered panel with responsive request lanes,
-action controls and a reserved result/status area; supporting prose and command examples sit beneath it.
-These refinements preserve the existing links and demo behavior in both themes.
-
 The brand line is “Your secrets. In a shell.”: a reference to the Pistachio name and terminal workflows.
 The owner-selected future domain is `secretsinashell.com`; canonical URLs and the production host remain
 unchanged until a separate domain migration.
 
-App depictions use an independent neutral palette: white/gray in light mode, charcoal in dark mode,
-and blue controls/selections. The hero illustration, working app demo and approval scenes retain the
-site’s selected appearance without inheriting its green surfaces. This changes web depictions only.
-
-Large website surfaces use neutral charcoal or warm gray, including code blocks, cards, scene washes
-and callout bands. Pistachio green is limited to small brand highlights and primary actions. App
-depictions retain their separate neutral/blue palette.
+App depictions (the working app demo and the approval scenes) use an independent neutral palette with blue
+controls and selections, and don't inherit the site's green. This changes web depictions only.
 
 Container depth uses three shared shadow levels for inset code/callouts, cards, and floating app windows,
 with theme-specific shadows. Flat audience rows and nested app fields inherit their parent’s depth.

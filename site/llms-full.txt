@@ -2105,13 +2105,19 @@ Merge into an existing .env fileAdd variables to a .env and keep your comments a
 Page: Pistachio: Your secrets. In a shell.
 URL: https://latchkey.snackstud.io/
 
-A native Mac app by Snack Studio
 # Your secrets.In a shell.
-API keys and credentials, kept in Keychain. Ready for the commands and coding agents you approve.
-Download for Mac See how it works
+Keep API keys in Apple’s Keychain. Choose which commands and coding agents can use them.
+Download for Mac Try the demo
 Free to use · macOS 15 or later
-Design preview with example data. Try the working app demo.
-Kept in Keychain. References in your files. Access you approve.
+Pistachio Agent wants to use 2 keys~/Projects/shop
+```
+$ pst run --env shop/development -- npm test
+```
+- DATABASE_URLDatabase · Neon
+- STRIPE_KEYAPI key · Stripe
+Interactive demo · Example credentials
+## References in files. Values in Keychain.
+API_KEY=pistachio://shop/development/API_KEY
 ## Less copying. More building.
 Import your environment once. Keep your workflow. Pistachio keeps the values in Keychain and leaves references in your project. Your commands get the credentials you approve when they start.
 1

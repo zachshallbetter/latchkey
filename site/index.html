@@ -72,30 +72,11 @@
     .home #how .feature:first-of-type { margin-top: 32px; }
     .intro { font-size: 19px; color: var(--muted); }
     .lede { font-size: 19px; color: var(--muted); max-width: 62ch; }
-    /* Hero: the pitch beside the scene on wide screens, so both fit the first screen; stacked below 1000px. */
-    /* Top-aligned, so opening "For agents" lengthens the left column without moving the scene beside it. */
-    .hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 40px 72px; align-items: start; padding-top: 72px; }
-    .hero-art { padding-top: 34px; }
-    .hero-art { min-width: 0; }
-    @media (max-width: 1000px) {
-      .hero { grid-template-columns: minmax(0, 1fr); }
-      .hero h1 { max-width: none; }
-      .hero-art { max-width: 720px; padding-top: 0; }
-    }
     .maker-card { display: flex; gap: 20px; align-items: flex-start; max-width: 860px; padding: var(--card-pad) calc(var(--card-pad) + 6px); border: 1px solid var(--line); border-radius: var(--band-radius); background: var(--surface); box-shadow: var(--card-shadow); }
     .maker-card .cico { margin: 0; width: 48px; height: 48px; }
     .maker-card h2 { font-size: clamp(22px, 2.4vw, 28px); margin-bottom: 10px; }
     .maker-card p:last-child { margin: 0; color: var(--muted); }
     @media (max-width: 560px) { .maker-card { flex-direction: column; } }
-    .audience { display: inline-flex; gap: 2px; margin-top: 18px; padding: 3px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); }
-    .audience button { min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: none; color: var(--muted); font: 600 14px/1 var(--sans); cursor: pointer; }
-    .audience button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
-    .audience button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    html:not(.js) .audience { display: none; }
-    .for-agents { margin-top: 14px; max-width: 34rem; }
-    .for-agents p { margin: 0 0 4px; font-size: 15px; color: var(--muted); }
-    .for-agents figure.code { margin-top: 10px; }
-    .for-agents pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
     .hero-facts { margin: 18px 0 0; font-size: 14px; color: var(--muted); }
 
     .scene-cap { max-width: 70ch; margin-top: 12px; }
@@ -359,7 +340,7 @@
   ]
 }
   </script>
-  <link rel="stylesheet" href="pistachio.css?v=20261123-depth">
+  <link rel="stylesheet" href="pistachio.css?v=20261125-guide">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -367,91 +348,69 @@
     <nav class="top wrap" aria-label="Main">
       <a class="brand" href="index.html"><img class="logo" src="logo.svg" alt="">Pistachio</a>
       <ul>
-        <li><a href="features.html">Features</a></li>
         <li><a href="index.html#how">How it works</a></li>
         <li><a href="pricing.html">Pricing</a></li>
         <li><a href="security.html">Security</a></li>
         <li><a href="developers/index.html">Developers</a></li>
-        <li><a href="guides/index.html">Guides</a></li>
-        <li><a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a></li>
+        <li><a class="button agents" href="llms.txt">For agents <span aria-hidden="true">↗</span></a></li>
       </ul>
     <details class="mobile-menu"><summary><i class="ic ic-menu" aria-hidden="true"></i>Menu</summary><div class="mobile-menu-links">
-        <a href="features.html">Features</a>
         <a href="index.html#how">How it works</a>
         <a href="pricing.html">Pricing</a>
         <a href="security.html">Security</a>
         <a href="developers/index.html">Developers</a>
-        <a href="guides/index.html">Guides</a>
-        <a class="button primary" href="index.html#install"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+        <a class="button agents" href="llms.txt">For agents <span aria-hidden="true">↗</span></a>
       </div></details></nav>
   </header>
 
   <main id="main" class="wrap home">
-    <section class="hero pistachio-hero" aria-labelledby="title" data-hue="green">
+    <section class="hero sg-hero" aria-labelledby="title">
       <div class="hero-copy">
-      <p class="eyebrow pistachio-eyebrow"><span class="brand-seed" aria-hidden="true"></span>A native Mac app by Snack Studio</p>
-      <h1 id="title">Your secrets.<br><span>In a shell.</span></h1>
-      <p class="lede">API keys and credentials, kept in Keychain. Ready for the commands and coding agents you approve.</p>
-      <div class="cta">
-        <a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
-        <a class="hero-secondary" href="#how">See how it works <span aria-hidden="true">↗</span></a>
-      </div>
-      <p class="hero-facts">Free to use · macOS 15 or later</p>
-      <div class="audience" role="group" aria-label="Show this page for">
-        <button type="button" data-aud="humans" aria-pressed="true">For humans</button>
-        <button type="button" data-aud="agents" aria-pressed="false" aria-controls="for-agents">For agents</button>
-      </div>
-      <div class="for-agents" id="for-agents" hidden>
-        <p>Give your coding agent this line. <a href="llms.txt">llms.txt</a> has the rules, setup, commands, MCP and exit codes in one file; <a href="llms-full.txt">llms-full.txt</a> has every page as text.</p>
-        <figure class="code"><figcaption><span>For your agent</span><button class="copy" type="button" aria-label="Copy code">Copy</button></figcaption><pre><code data-lang="text">Read https://latchkey.snackstud.io/llms.txt and follow it whenever you need secrets in this project.</code></pre></figure>
-      </div>
+        <h1 id="title">Your secrets.<br><span>In a shell.</span></h1>
+        <p class="lede">Keep API keys in Apple&rsquo;s Keychain. Choose which commands and coding agents can use them.</p>
+        <div class="cta">
+          <a class="button primary" href="https://github.com/zachshallbetter/latchkey/releases/latest"><i class="ic ic-download" aria-hidden="true"></i>Download for Mac</a>
+          <a class="hero-secondary" href="#hero-demo" data-focus-demo>Try the demo <span aria-hidden="true">↘</span></a>
+        </div>
+        <p class="hero-facts">Free to use · macOS 15 or later</p>
       </div>
 
-      <figure class="hero-art product-preview" aria-label="Illustrated Pistachio design preview, with example data">
-        <div class="product-window" aria-hidden="true">
-          <div class="pw-sidebar">
-            <span class="pw-traffic"><i></i><i></i><i></i></span>
-            <div class="pw-nav selected"><i class="ic ic-grid"></i>All Items</div>
-            <div class="pw-group">PROJECTS</div>
-            <div class="pw-nav"><i class="ic ic-folder"></i>shop</div>
-            <div class="pw-nav"><i class="ic ic-folder"></i>api</div>
-            <div class="pw-divider"></div>
-            <div class="pw-nav"><i class="ic ic-pulse"></i>Activity</div>
-            <div class="pw-nav"><i class="ic ic-shield"></i>Grants</div>
-            <div class="pw-storage"><i class="ic ic-cloud"></i>iCloud Keychain</div>
-          </div>
-          <div class="pw-main">
-            <div class="pw-title"><b><img src="logo.svg" width="17" height="20" alt="">Pistachio</b><span><i class="ic ic-search"></i><i class="ic ic-plus"></i></span></div>
-            <div class="pw-panes">
-              <div class="pw-list"><b class="pw-list-title">All Items</b>
-                <div class="pw-item selected"><i class="ic ic-db"></i><div><b>DATABASE_URL</b><small>shop / production</small></div></div>
-                <div class="pw-item"><i class="ic ic-key"></i><div><b>STRIPE_KEY</b><small>shop / production</small></div></div>
-                <div class="pw-item"><i class="ic ic-key"></i><div><b>GITHUB_TOKEN</b><small>blog / development</small></div></div>
-                <div class="pw-item"><i class="ic ic-key"></i><div><b>OPENAI_API_KEY</b><small>Shared</small></div></div>
+      <div class="hero-stage">
+        <img class="hero-nut" src="hero-pistachio.webp" width="760" height="750" alt="" decoding="async" fetchpriority="high">
+        <figure class="sg-demo" id="hero-demo" tabindex="-1" aria-labelledby="demo-title">
+          <div class="sg-panel" data-state="ask">
+            <div class="sg-bar"><img src="logo.svg" width="17" height="20" alt="">Pistachio</div>
+            <div class="sg-body">
+              <div class="sg-head">
+                <svg class="sg-touch" viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12M18 34c0-6 2-10 6-10s6 4 6 10M24 30v8M10 26c1-9 7-15 14-15s13 6 14 15M12 16c3-4 7-6 12-6s9 2 12 6"/></svg>
+                <div><b id="demo-title">Agent wants to use 2 keys</b><span class="sg-path">~/Projects/shop</span></div>
               </div>
-              <div class="pw-detail"><div class="pw-detail-head"><span class="pw-keytile"><i class="ic ic-key"></i></span><div><b>DATABASE_URL</b><small>shop / production</small></div></div>
-                <div class="pw-field"><span>Value</span><div class="pw-value">••••••••••••••<i class="ic ic-eye"></i></div></div>
-                <div class="pw-field"><span>Reference</span><code>pistachio://shop/production/DATABASE_URL</code></div>
-                <div class="pw-field"><span>Access</span><div class="pw-value">Ask first<i class="ic ic-shield"></i></div></div>
+              <pre class="sg-tty" aria-label="Terminal"><span class="sg-p">$</span> pst run --env shop/development -- npm test<span class="sg-out" data-out></span></pre>
+              <ul class="sg-keys" aria-label="Requested keys">
+                <li><i class="ic ic-db" aria-hidden="true"></i><code>DATABASE_URL</code><small>Database · Neon</small></li>
+                <li><i class="ic ic-key" aria-hidden="true"></i><code>STRIPE_KEY</code><small>API key · Stripe</small></li>
+              </ul>
+              <div class="sg-actions" data-ask>
+                <button type="button" class="button" data-choice="deny">Deny</button>
+                <button type="button" class="button primary" data-choice="allow">Allow once</button>
               </div>
+              <div class="sg-result" data-result hidden>
+                <p class="sg-activity"><i class="ic ic-pulse" aria-hidden="true"></i><span data-activity></span></p>
+                <button type="button" class="button" data-reset>Try again</button>
+              </div>
+              <p class="sr-only" role="status" aria-live="polite" data-status></p>
             </div>
           </div>
-        </div>
-        <div class="pw-supporting" aria-hidden="true">
-          <div class="pw-terminal"><div class="pw-traffic"><i></i><i></i><i></i></div><pre><span>$</span> pst run --env shop/development -- npm test
-<span class="pw-concealed">&lt;concealed by pistachio&gt;</span>
-<span class="pw-passed">Test Files  2 passed (2)</span></pre></div>
-          <div class="pw-approval"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 30c0-7 4-12 10-12s10 5 10 12M18 34c0-6 2-10 6-10s6 4 6 10M24 30v8M10 26c1-9 7-15 14-15s13 6 14 15M12 16c3-4 7-6 12-6s9 2 12 6"/></svg><div><b>Claude wants to use 2 items</b><div class="pw-choices"><span>Deny</span><span>Allow Once</span></div></div></div>
-        </div>
-        <figcaption>Design preview with example data. <a href="#app">Try the working app demo</a>.</figcaption>
-      </figure>
+          <figcaption>Interactive demo · Example credentials</figcaption>
+        </figure>
+      </div>
     </section>
 
-    <div class="pistachio-principles" aria-label="The essentials">
-      <div><i class="ic ic-key" aria-hidden="true"></i><b>Kept in Keychain.</b></div>
-      <div><i class="ic ic-code" aria-hidden="true"></i><b>References in your files.</b></div>
-      <div><i class="ic ic-shield" aria-hidden="true"></i><b>Access you approve.</b></div>
-    </div>
+    <section class="sg-band" aria-labelledby="refs-title">
+      <h2 id="refs-title">References in files. Values in Keychain.</h2>
+      <code class="sg-ref">API_KEY=<span>pistachio://shop/development/API_KEY</span></code>
+    </section>
+
     <section class="section" id="how" aria-labelledby="how-title" data-hue="blue">
       <div class="shead">
         <h2 id="how-title">Less copying. More building.</h2>
@@ -1118,19 +1077,40 @@ pst run --aws-role arn:aws:iam::123456789012:role/dev -- terraform plan</code></
   </script>
   <script src="app-demo.js"></script>
   <script>
-  // "For humans | For agents" under the hero's buttons. The agents view shows the line to give a coding agent, which
-  // points it at llms.txt. The choice is remembered on this device, and #agents opens it.
+  // The hero's approval demo. Allow once runs the tests with the values concealed; Deny prints the tool's real refusal.
+  // Either way an Activity line records the key names (never values), and Try again resets it. Example data only.
   (function () {
-    var group = document.querySelector(".audience"), panel = document.getElementById("for-agents");
-    if (!group || !panel) return;
-    function set(aud, remember) {
-      group.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.aud === aud)); });
-      panel.hidden = aud !== "agents";
-      if (remember) { try { localStorage.setItem("pistachio-audience", aud); } catch (e) {} }
+    var demo = document.getElementById("hero-demo");
+    if (!demo) return;
+    var out = demo.querySelector("[data-out]"), ask = demo.querySelector("[data-ask]"), result = demo.querySelector("[data-result]");
+    var activity = demo.querySelector("[data-activity]"), status = demo.querySelector("[data-status]");
+    var allow = demo.querySelector('[data-choice="allow"]'), keys = "<code>DATABASE_URL</code>, <code>STRIPE_KEY</code>";
+    function choose(choice) {
+      if (choice === "allow") {
+        out.innerHTML = "&lt;concealed by pistachio&gt;\n<span class=\"ok\"> Test Files  2 passed (2)</span>";
+        activity.innerHTML = "<b>Agent</b> read " + keys + " · Allowed once · just now";
+        status.textContent = "Allowed once. The tests passed, and Activity recorded both keys.";
+      } else {
+        out.innerHTML = "<span class=\"err\">pistachio: refused: shop/development/DATABASE_URL, shop/development/STRIPE_KEY (not agent-safe, not approved, no grant)</span>";
+        activity.innerHTML = "<b>Agent</b> was denied " + keys + " · just now";
+        status.textContent = "Denied. The command was refused, and Activity recorded the request.";
+      }
+      ask.hidden = true; result.hidden = false;
+      result.querySelector("[data-reset]").focus();
     }
-    group.addEventListener("click", function (e) { var b = e.target.closest("button[data-aud]"); if (b) set(b.dataset.aud, true); });
-    var saved = null; try { saved = localStorage.getItem("pistachio-audience"); } catch (e) {}
-    if (location.hash === "#agents") set("agents", false); else if (saved === "agents") set("agents", false);
+    demo.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-choice]");
+      if (b) { choose(b.dataset.choice); return; }
+      if (e.target.closest("[data-reset]")) {
+        out.textContent = ""; status.textContent = ""; result.hidden = true; ask.hidden = false; allow.focus();
+      }
+    });
+    var go = document.querySelector("[data-focus-demo]");
+    if (go) go.addEventListener("click", function (e) {
+      e.preventDefault();
+      demo.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+      (ask.hidden ? result.querySelector("[data-reset]") : allow).focus({ preventScroll: true });
+    });
   })();
   </script>
 </body>
