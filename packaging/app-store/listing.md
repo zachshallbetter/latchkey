@@ -21,37 +21,36 @@ review notes 4000 bytes; `scripts/appstore-preflight.py` checks them.
 
 ## Promotional text
 
-Keep API keys out of your project files. Pistachio fills them in when a command starts and asks you, with Touch ID, before a program or agent gets a value.
+Your secrets. In a shell. API keys live in iCloud Keychain, not your .env files, and nothing uses one until you approve it with Touch ID.
 
 ## Description
 
-Your project files keep references like pistachio://shop/production/DATABASE_URL. Pistachio keeps the values in iCloud Keychain and fills them in when a command starts, so .env files stop holding secrets, values follow you to every Mac you use, and an agent only gets what you've allowed.
+Your secrets. In a shell.
 
-KEEPS VALUES OUT OF FILES
-Import a .env file, or a hundred, and Pistachio places each value for you and can replace it in the file with a reference. Settings and public values are recognized and left alone; anything unclear is treated as a secret. Export an environment back to an env file or copy it as a .env block, each time after you approve it.
+Pistachio keeps API keys in iCloud Keychain and out of your .env files. Your files hold references. Pistachio holds the values, and asks you before anything uses one.
 
-ASKS BEFORE IT SHARES
-Reading an item asks you (Touch ID, Apple Watch or your Mac password) and shows which program is asking, from which folder, for which command. Allow once, allow a folder for a while, or mark an item safe for agents to read.
+IMPORT ONCE
+Import a .env file. Secrets move to Keychain; settings stay put. The file keeps a reference in place of each value.
 
-ORGANIZED BY PROJECT
-Items belong to a project's environment (shop/development, shop/production) or are shared. Search, filter by service, move items between environments, and review findings such as the same key stored twice.
+APPROVE WITH TOUCH ID
+See which agent is asking, from which folder, for which keys. Allow once or deny.
 
-PUSHES TO YOUR PLATFORMS
-Send an environment's variables to Vercel, Railway or Fly with an access token you keep in Pistachio. Every push asks first, and production needs an extra confirmation.
+GRANT A FOLDER TIME
+Let one project read the keys you pick for a set time, like two hours. Then it asks again.
 
-REMEMBERS
-Every read and change is logged without values. Earlier values are kept, and a deleted item can be restored for 30 days.
+SEE WHAT WAS USED
+Activity lists every request and every key released. Never the value.
 
-SYNCS
-Values are stored in iCloud Keychain, end-to-end encrypted, on every Mac signed in to your Apple Account. Pistachio has no server of its own and collects no data.
+ROTATE WITHOUT EDITING FILES
+Change a key and every reference keeps working. Old values stay in History.
 
-PISTACHIO FOR SAFARI
-When a page shows you a new API key, the Safari extension offers to save it to Pistachio, and can fill a saved key into the site it belongs to. Each save and each fill asks you first. Turn it on in Safari Settings > Extensions.
+SAVE FROM SAFARI
+A new key on a dashboard? Save it to Pistachio before you close the tab.
 
-FOR THE COMMAND LINE AND CODING AGENTS
-The free Pistachio command-line tool, a separate download from secretsinashell.com, runs your commands with values filled in and works with coding agents, which never hold the values. You choose what each one can use, and every value it asks for is approved in this app.
+PRIVATE AND FREE
+End-to-end encrypted in iCloud Keychain, synced to your Macs. No account, no server, no subscription, no data collected.
 
-Requires macOS 15 or later. iCloud Keychain must be on to sync between Macs.
+Works with the free Pistachio command-line tool and coding agents (separate download at secretsinashell.com). Requires macOS 15 or later.
 
 ## Keywords
 
