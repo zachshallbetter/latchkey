@@ -49,9 +49,12 @@ struct AddItemSheet: View {
                     TextField("Note", text: $note, prompt: Text("Optional"))
                 }
                 FieldRow(label: "Access", last: true) {
-                    Text(agentSafe ? "No approval" : "Requires approval").foregroundStyle(.secondary)
+                    Picker("Access", selection: $agentSafe) {
+                        Text("Ask first").tag(false)
+                        Text("No approval").tag(true)
+                    }
+                    .labelsHidden().fixedSize()
                     Spacer()
-                    Toggle("", isOn: $agentSafe).toggleStyle(.switch).labelsHidden().controlSize(.small)
                 }
             }
             if let p = nameProblem ?? error { Text(p).font(.callout).foregroundStyle(.red) }
@@ -162,9 +165,12 @@ struct EditItemSheet: View {
                     Spacer()
                 }
                 FieldRow(label: "Access") {
-                    Text(agentSafe ? "No approval" : "Requires approval").foregroundStyle(.secondary)
+                    Picker("Access", selection: $agentSafe) {
+                        Text("Ask first").tag(false)
+                        Text("No approval").tag(true)
+                    }
+                    .labelsHidden().fixedSize()
                     Spacer()
-                    Toggle("", isOn: $agentSafe).toggleStyle(.switch).labelsHidden().controlSize(.small)
                 }
                 FieldRow(label: "Service") { TextField("Service", text: $service, prompt: Text("Stripe, Neon, GitHub…")) }
                 FieldRow(label: "Note") { TextField("Note", text: $note, prompt: Text("What it's for, where it came from")) }
@@ -213,6 +219,9 @@ struct ImportSheet: View {
 
     init(model: AppModel, draft: ImportDraft) {
         self.model = model
+        var draft = draft
+        // Only secrets are saved to the keychain by default; settings and public values stay in the file.
+        for i in draft.rows.indices { draft.rows[i].include = draft.rows[i].include && draft.rows[i].cls == .secret }
         _draft = State(initialValue: draft)
     }
 
@@ -220,10 +229,29 @@ struct ImportSheet: View {
 
     var chosen: Int { draft.rows.filter { $0.include && (!exists($0) || replace) }.count }
 
+    /// What the file will hold after import, built with the importer's own rewrite. Values of secrets, and of
+    /// anything the classifier didn't mark a setting or public value, are masked; the text is never shown as read.
+    var preview: [String]? {
+        let saved = draft.rows.filter { $0.include && (!exists($0) || replace) }
+        let refs = rewrite ? Dictionary(uniqueKeysWithValues: saved.map { ($0.key, draft.itemID($0.key)) }) : [:]
+        let shown = Set(draft.rows.filter { $0.cls == .setting || $0.cls == .publicValue }.map(\.key))
+        guard let text = try? EnvFile.rewrite(draft.text, toReferences: refs),
+              let entries = try? EnvFile.located(text) else { return nil }
+        var masks: [String: String] = [:]
+        for e in entries where !shown.contains(e.key) && !References.containsReference(e.value) { masks[e.key] = "\u{2022}\u{2022}\u{2022}\u{2022}" }
+        guard let masked = try? EnvFile.merge(text, with: masks, pending: Set(masks.keys)).text else { return nil }
+        var lines = masked.replacingOccurrences(of: "\"\u{2022}\u{2022}\u{2022}\u{2022}\"", with: "\u{2022}\u{2022}\u{2022}\u{2022}")
+            .components(separatedBy: .newlines)
+        if lines.last == "" { lines.removeLast() }
+        return lines
+    }
+
+    var destination: String { draft.shared ? "Shared" : "\(draft.project) / \(draft.environment)" }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             SheetHeader(symbol: "square.and.arrow.down", tint: .blue, title: "Import \(draft.url.lastPathComponent)",
-                        subtitle: Broker.tilde(draft.url.path))
+                        subtitle: destination)
             HStack(spacing: 10) {
                 Picker("", selection: $draft.shared) {
                     Text("Project").tag(false)
@@ -245,11 +273,7 @@ struct ImportSheet: View {
                  : "Items become pistachio://\(draft.itemID(draft.rows.first?.key ?? "KEY")). The project is the repository's folder; the environment comes from the file name.")
                 .font(.caption).foregroundStyle(.secondary)
             Table($draft.rows) {
-                TableColumn("") { $row in
-                    Toggle("", isOn: $row.include).labelsHidden().disabled(row.cls == .setting)
-                }
-                .width(24)
-                TableColumn("Key") { $row in
+                TableColumn("Variable") { $row in
                     HStack(spacing: 6) {
                         Text(row.key).font(.body.monospaced())
                         if let s = row.item.service { Text(s).font(.caption).foregroundStyle(.secondary) }
@@ -259,29 +283,40 @@ struct ImportSheet: View {
                         }
                     }
                 }
-                TableColumn("Class") { $row in
-                    Picker("", selection: Binding(get: { row.cls }, set: { row.setClass($0) })) {
-                        ForEach(ImportClass.choices, id: \.self) { Text($0.label).tag($0) }
+                TableColumn("Action") { $row in
+                    Picker("", selection: $row.include) {
+                        Text("Save to Keychain").tag(true)
+                        Text("Keep in file").tag(false)
                     }
                     .labelsHidden()
-                    .help("Secret: saved masked. Setting: left in the file. Public: saved as a plain value.")
+                    .help("Save to Keychain imports the line as an item. Keep in file leaves it as it is.")
                 }
-                .width(100)
-                TableColumn("Kind") { $row in
-                    Picker("", selection: Binding(get: { row.item.kind ?? .token }, set: { row.item.kind = $0 })) {
-                        ForEach(ItemKind.allCases, id: \.self) { Text($0.label).tag($0) }
-                    }
-                    .labelsHidden()
-                    .disabled(row.cls != .secret)
-                }
-                .width(120)
-                TableColumn("Agents") { $row in
-                    Toggle("", isOn: Binding(get: { row.item.agentSafe ?? false }, set: { row.item.agentSafe = $0 }))
-                        .labelsHidden()
-                }
-                .width(56)
+                .width(150)
             }
-            .frame(minHeight: 220)
+            .frame(minHeight: 180)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(".env after import").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                ScrollView {
+                    if let lines = preview {
+                        HStack(alignment: .top, spacing: 10) {
+                            VStack(alignment: .trailing, spacing: 0) {
+                                ForEach(lines.indices, id: \.self) { Text("\($0 + 1)").foregroundStyle(.tertiary) }
+                            }
+                            VStack(alignment: .leading, spacing: 0) {
+                                ForEach(lines.indices, id: \.self) { Text(lines[$0].isEmpty ? " " : lines[$0]).textSelection(.enabled) }
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .font(.caption.monospaced())
+                        .padding(8)
+                    } else {
+                        Text("Preview unavailable: the file has invalid syntax.").font(.caption).foregroundStyle(.secondary).padding(8)
+                    }
+                }
+                .frame(height: 110)
+                .background(RoundedRectangle(cornerRadius: 6).fill(.quaternary.opacity(0.6)))
+            }
 
             if !draft.ignored.isEmpty {
                 Text("Left alone: " + draft.ignored.sorted { $0.key < $1.key }.map { "\($0.key) (\($0.value))" }.joined(separator: ", "))
@@ -292,7 +327,7 @@ struct ImportSheet: View {
             if let error { Text(error).font(.caption).foregroundStyle(.red) }
             SheetFooter(note: "One Touch ID approval covers the whole import.", noteSymbol: "touchid") {
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
-                Button("Import \(chosen) Item\(chosen == 1 ? "" : "s")") {
+                Button("Import \(chosen) Secret\(chosen == 1 ? "" : "s")") {
                     working = true
                     Task {
                         error = await model.runImport(draft, replace: replace, rewrite: rewrite)
@@ -305,7 +340,7 @@ struct ImportSheet: View {
             }
         }
         .padding(20)
-        .frame(width: 620, height: 480)
+        .frame(width: 620, height: 660)
     }
 }
 

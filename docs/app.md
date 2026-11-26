@@ -124,7 +124,7 @@ clipboard", never the values. Agents can't do this.
 
 - **New Item** in the list's header, or **File › New Item…** (⌘N).
 - **File › Import .env File…** (⇧⌘I), or drop a file on the window. The sheet proposes the project and environment,
-  lists each key with its kind and agent-safe setting, marks keys that already exist, and lists lines it leaves alone
+  lists each variable with an Action (Save to Keychain or Keep in file), marks keys that already exist, previews the file after import, and lists lines it leaves alone
   (empty, already references, or expiring Vercel and Turbo tokens). Import asks once. **Replace values in the file
   with pistachio:// references** rewrites the file afterwards.
 

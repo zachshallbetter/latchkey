@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 423,
-    "includedBytes": 3812979,
+    "includedBytes": 3812057,
     "excludedCounts": {
       "extension": 144,
       "generated-or-transient-file": 2
@@ -19,13 +19,13 @@
       {
         "path": ".",
         "commit": "aaa001ae4e409b9d7a5bdd347976a2dab971ef5e",
-        "branch": "ui/approval-rows",
+        "branch": "ui/import-action",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "6612cf4da5dfe035bc3a3e8b76052fec0d8e546c0dd14eb3d098b0d1a2169bfd",
+  "aggregateSourceDigest": "5be9cf92a912f5fe991de3dfe852e7354ccb2912da52ceb6231a1849583a1897",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -1064,8 +1064,8 @@
     },
     {
       "path": "App/Latchkey/Sheets.swift",
-      "bytes": 20960,
-      "sha256": "4d240f5bf172c5cbbee05036512d16c04bdc1c66fb52d5738cd6485993487a5d"
+      "bytes": 23047,
+      "sha256": "e16f36cacc81911cc28a10d24737c2aa46392f34282e51180c6e68e608536875"
     },
     {
       "path": "App/Latchkey/Snapshot.swift",
@@ -1599,8 +1599,8 @@
     },
     {
       "path": "docs/app.md",
-      "bytes": 23183,
-      "sha256": "e97e3f6ce4ac606d3b791903ebcdf3d99717e7b762f8665a9d0d9362c7248287"
+      "bytes": 23233,
+      "sha256": "d246f5be87a6761dcbe2b3560cfd42cc47d241594083ba887fd73ec2f14ea398"
     },
     {
       "path": "docs/apple-passwords-and-passkeys.md",
@@ -1739,8 +1739,8 @@
     },
     {
       "path": "docs/import.md",
-      "bytes": 6652,
-      "sha256": "e6531bbbe43f9f3623c3f0e1ae66eae264cf48068081c3a642b4a0f26920d2c1"
+      "bytes": 6949,
+      "sha256": "54b757ada6ad70b4008f28fe0f84ac76b03b02c17f980b8e06fa608e74a234fb"
     },
     {
       "path": "docs/presence.md",
