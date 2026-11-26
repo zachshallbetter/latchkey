@@ -42,39 +42,28 @@ func render(source: String, pixels: Int, dark: Bool) throws -> Data {
 }
 
 
-// Draw the Key's flat appearance directly: the compositor otherwise adds system lighting to the tile.
-func exportKey(to output: URL) throws {
-    let source = root.appendingPathComponent("App/Branding/KeyIcon.icon/Assets/key.svg")
-    guard let mark = NSImage(contentsOf: source),
-          let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 1024, pixelsHigh: 1024,
-                                        bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
-                                        isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0),
-          let context = NSGraphicsContext(bitmapImageRep: bitmap)
-    else { throw IconError.bitmap }
-    NSGraphicsContext.saveGraphicsState()
-    NSGraphicsContext.current = context
-    defer { NSGraphicsContext.restoreGraphicsState() }
-    let tile = NSRect(x: 100, y: 100, width: 824, height: 824)
-    NSColor.black.setFill()
-    NSBezierPath(roundedRect: tile, xRadius: 184, yRadius: 184).fill()
-    let tinted = NSImage(size: mark.size)
-    tinted.lockFocus()
-    mark.draw(in: NSRect(origin: .zero, size: mark.size))
-    NSColor(srgbRed: 0.25098, green: 0.61176, blue: 1, alpha: 1).setFill()
-    NSRect(origin: .zero, size: mark.size).fill(using: .sourceIn)
-    tinted.unlockFocus()
-    tinted.draw(in: tile)
-    guard let png = bitmap.representation(using: .png, properties: [:]) else { throw IconError.encoding }
-    try png.write(to: output)
+// Dock alternatives come from the Icon Composer documents themselves, rendered by Xcode's ictool, so the in-app
+// previews and the Key's runtime Dock icon match what macOS draws for the bundled icon in light and dark.
+let ictool = "/Applications/Xcode.app/Contents/Applications/Icon Composer.app/Contents/Executables/ictool"
+func exportIcon(_ document: String, rendition: String, to output: URL) throws {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: ictool)
+    process.arguments = [root.appendingPathComponent(document).path, "--export-image", "--output-file", output.path,
+                         "--platform", "macOS", "--rendition", rendition, "--width", "1024", "--height", "1024",
+                         "--scale", "1", "--design-generation", "27"]
+    process.standardOutput = FileHandle.nullDevice
+    try process.run()
+    process.waitUntilExit()
+    guard process.terminationStatus == 0, FileManager.default.fileExists(atPath: output.path)
+    else { throw IconError.missingSource(document) }
 }
 
-for (name, source, key) in [("PistachioDockIcon", "pistachio.svg", false), ("KeyDockIcon", "logo.svg", true)] {
+for (name, document) in [("PistachioDockIcon", "App/Latchkey/AppIcon.icon"), ("KeyDockIcon", "App/Branding/KeyIcon.icon")] {
     let directory = assets.appendingPathComponent(name + ".imageset")
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     for dark in [false, true] {
-        let output = directory.appendingPathComponent(dark ? "dark.png" : "light.png")
-        if key { try exportKey(to: output) }
-        else { try render(source: source, pixels: 1024, dark: dark).write(to: output) }
+        try exportIcon(document, rendition: dark ? "Dark" : "Default",
+                       to: directory.appendingPathComponent(dark ? "dark.png" : "light.png"))
     }
     let contents: [String: Any] = ["images": [
         ["idiom": "universal", "filename": "light.png"],

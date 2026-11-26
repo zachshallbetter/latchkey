@@ -6,7 +6,9 @@ import SwiftUI
 @MainActor
 enum AppBranding {
     static func image(for choice: AppPreferences.Icon) -> NSImage {
-        NSImage(named: choice == .key ? "KeyDockIcon" : NSImage.applicationIconName)
+        // Both previews follow light and dark the same way; the running app's icon can come back in another
+        // appearance (a dark tile in light mode).
+        NSImage(named: choice == .key ? "KeyDockIcon" : "PistachioDockIcon")
             ?? NSImage(named: NSImage.applicationIconName)
             ?? NSImage(size: NSSize(width: 1024, height: 1024))
     }

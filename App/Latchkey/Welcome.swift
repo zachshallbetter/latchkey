@@ -201,6 +201,13 @@ private struct PageTitle: View {
 
 private struct WelcomePage: View {
     @Environment(\.welcomeTheme) private var theme
+    @AppStorage(AppPreferences.Key.icon) private var icon = AppPreferences.Icon.pistachio.rawValue
+
+    private var title: Text {
+        AppPreferences.Icon(preference: icon) == .key
+            ? Text("Let’s turn the ") + Text("key.").foregroundColor(theme.accent)
+            : Text("Let’s crack it ") + Text("open.").foregroundColor(theme.accent)
+    }
 
     private var inApplications: Bool {
         let path = Bundle.main.bundleURL.standardizedFileURL.path
@@ -212,8 +219,7 @@ private struct WelcomePage: View {
             PistachioHero(size: 250, open: false)
 
             VStack(alignment: .leading, spacing: 22) {
-                PageTitle(eyebrow: "Welcome to Pistachio",
-                          title: Text("Let’s crack it ") + Text("open.").foregroundColor(theme.accent))
+                PageTitle(eyebrow: "Welcome to Pistachio", title: title)
                 if !inApplications {
                     Label("Move Pistachio to Applications so Safari and the command-line tool can find it.",
                           systemImage: "exclamationmark.circle.fill")
@@ -735,7 +741,6 @@ private struct PistachioHero: View {
     let size: CGFloat
     let open: Bool
     @AppStorage(AppPreferences.Key.icon) private var icon = AppPreferences.Icon.pistachio.rawValue
-    @Environment(\.welcomeTheme) private var theme
     @State private var shown = false
 
     private var imageName: String {
@@ -752,7 +757,6 @@ private struct PistachioHero: View {
             .transition(.opacity.combined(with: .scale(scale: 0.94)))
             .scaleEffect(shown ? 1 : 0.9)
             .rotationEffect(.degrees(shown ? 0 : (open ? 6 : -6)))
-            .shadow(color: theme.accent.opacity(0.35), radius: 30, y: 14)
             .onAppear {
                 withAnimation(.spring(response: 0.8, dampingFraction: 0.62).delay(0.25)) { shown = true }
             }
