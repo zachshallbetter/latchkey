@@ -21,13 +21,13 @@ review notes 4000 bytes; `scripts/appstore-preflight.py` checks them.
 
 ## Promotional text
 
-Your secrets. In a shell. API keys live in iCloud Keychain, not your .env files, and nothing uses one until you approve it with Touch ID.
+Your secrets. In a shell. API keys live in Keychain, not your .env files, and a command or agent gets one only when you approve it or grant its folder.
 
 ## Description
 
 Your secrets. In a shell.
 
-Pistachio keeps API keys in iCloud Keychain and out of your .env files. Your files hold references. Pistachio holds the values, and asks you before anything uses one.
+Pistachio keeps API keys in iCloud Keychain and out of your .env files. Your files hold references. Pistachio holds the values, and asks you before anything uses one, unless you've allowed it ahead of time.
 
 IMPORT ONCE
 Import a .env file. Secrets move to Keychain; settings stay put. The file keeps a reference in place of each value.
@@ -48,7 +48,7 @@ SAVE FROM SAFARI
 A new key on a dashboard? Save it to Pistachio before you close the tab.
 
 PRIVATE AND FREE
-End-to-end encrypted in iCloud Keychain, synced to your Macs. No account, no server, no subscription, no data collected.
+With iCloud Keychain on, values are end-to-end encrypted and synced to your Macs. No account, no server, no subscription, no data collected.
 
 Works with the free Pistachio command-line tool and coding agents (separate download at secretsinashell.com). Requires macOS 15 or later.
 
@@ -90,13 +90,17 @@ Pistachio needs no account, sign-in or developer environment to review. Everythi
 
 To exercise the app:
 1. Open Pistachio and choose New Item. Enter a name such as demo/development/API_KEY and any test value, and save. Approve the macOS prompt (Touch ID or the Mac's password).
-2. Choose File > Import .env File and pick a text file with lines like API_KEY=test123. Each line gets an action, Save to Keychain or Keep in file, and the sheet previews the file after import; choose Import.
+2. Choose File > Import .env File and pick a text file with lines like API_KEY=test123. Each line gets an action, Save to Keychain or Keep in file, and the sheet previews the file after import; choose Import. A sample file: put these four example lines (no real credentials) in a text file named sample.env inside a folder named shop, and import it. DATABASE_URL and API_KEY default to Save to Keychain, LOG_LEVEL and NEXT_PUBLIC_SITE_URL to Keep in file:
+DATABASE_URL=postgres://demo:demo@localhost:5432/shop
+API_KEY=test_not_a_real_key_123456
+LOG_LEVEL=info
+NEXT_PUBLIC_SITE_URL=https://example.com
 3. Control-click a project in the sidebar and choose Export Environment or Copy Environment as .env. Files are written only where you choose in the system file picker.
 4. Review lists findings such as duplicates; Activity logs every read and change (never values); Recently Deleted restores items.
 5. Safari: enable Pistachio for Safari in Safari Settings > Extensions. On any page, select text, Control-click and choose Save Selection to Pistachio; the app asks before saving.
 6. Settings (Command-comma) has every option; the Help menu opens support, privacy policy and terms.
 
-Approvals use the standard macOS authentication sheet, which accepts Touch ID, Apple Watch or the login password, so a Mac without Touch ID works. An unanswered prompt is a denial after 90 seconds.
+Approvals appear in Pistachio's panel: Touch ID, or Use Password for the standard macOS sheet (which also accepts Apple Watch), so a Mac without Touch ID works. A request left unanswered for two minutes is denied. Items marked safe for agents, and items covered by a folder grant the person created, are released without a prompt and still logged in Activity.
 
 Safari extension access: its content script runs on all sites because API keys are shown on many dashboards. It looks for key-shaped text in the page locally and sends nothing anywhere until the person clicks Save; fills happen only on the item's own service site and deployment dashboards, after approval.
 

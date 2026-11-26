@@ -6,7 +6,7 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 423,
-    "includedBytes": 3809304,
+    "includedBytes": 3809992,
     "excludedCounts": {
       "extension": 146,
       "generated-or-transient-file": 2
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "2d791c0aaae37f09a409744a71c3458a6f587c3b",
-        "branch": "site/styleguide-hero",
+        "commit": "d2e46263d4629743e858299aa10cb7eb383fb53f",
+        "branch": "docs/store-accuracy",
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "0ce73144da7b1cbf380d8347edb4d1777df8bc0de0292bf9f7919702c10d3869",
+  "aggregateSourceDigest": "6ea6229cab27cc9b295bb26fbccb11864f03c0ffd6b3e596d77b10f12113cdac",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -1684,8 +1684,8 @@
     },
     {
       "path": "docs/development.md",
-      "bytes": 16325,
-      "sha256": "2fb5168a711a36bca68d0d2d05a69b5cde7971858b192a73b2cb0fa4b48bba23"
+      "bytes": 16385,
+      "sha256": "d5a6a0d68862ab26b6d741e51a2be94b79239fa0300b33694a700b0c6235ee54"
     },
     {
       "path": "docs/evidence/app-store/2026-11-11-cli-transport.json",
@@ -1774,8 +1774,8 @@
     },
     {
       "path": "packaging/app-store/listing.md",
-      "bytes": 7643,
-      "sha256": "62aff15337a2259e8ec98ab01465127f08462e0cb884bdf51620a40d3fa74abd"
+      "bytes": 8271,
+      "sha256": "843bac5826ef779d3a7cbb9343084e9a497f30647bbd9f4aee20008924e9f30f"
     },
     {
       "path": "packaging/app-store/readiness.json",
