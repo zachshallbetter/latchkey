@@ -6,9 +6,9 @@
   "selectedPaths": [],
   "sourceSelection": {
     "includedCount": 423,
-    "includedBytes": 3825417,
+    "includedBytes": 3825691,
     "excludedCounts": {
-      "extension": 144,
+      "extension": 145,
       "generated-or-transient-file": 2
     }
   },
@@ -18,14 +18,14 @@
     "repositories": [
       {
         "path": ".",
-        "commit": "eda3ea4159a9bdd64f5c58e6e8764750e48ff3b2",
-        "branch": "docs/store-copy",
+        "commit": "7129aee7e44398deb02fe23ffe2e21809c31e904",
+        "branch": null,
         "dirty": true,
         "remote": "https://github.com/zachshallbetter/latchkey.git"
       }
     ]
   },
-  "aggregateSourceDigest": "79b275e1dac654088a5fe9ee7d86728cc8e1d8e4ed5c823baa3afdb35ed67cdc",
+  "aggregateSourceDigest": "41ea698b27cddd919f9074bcc1111607e94b63a85ce5170e1a891447f5617656",
   "sources": [
     {
       "path": ".agents/acp/README.md",
@@ -1764,8 +1764,8 @@
     },
     {
       "path": "docs/site.md",
-      "bytes": 22265,
-      "sha256": "85fda3a4ba1b1aea2467bdb8d67be1747cf3f1a8677b233a4e199eb39d3adad7"
+      "bytes": 22321,
+      "sha256": "48c9c071107eac9f4c2c1ced2861b91d38b4969885ae176594a670fbf9a2f0b5"
     },
     {
       "path": "docs/troubleshooting.md",
@@ -1874,8 +1874,8 @@
     },
     {
       "path": "scripts/social-images.py",
-      "bytes": 7781,
-      "sha256": "fe54d95c2d26383063cde4ff075244ddeb56945928dd1073cfd5581fe585b4b8"
+      "bytes": 7999,
+      "sha256": "534d643a1e8fcd9fe25f0e2844a78e3a3f9bed9acc5082ae79867476f1f08d9f"
     },
     {
       "path": "scripts/test-appstore-cli.py",
