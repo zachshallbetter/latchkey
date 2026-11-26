@@ -72,12 +72,13 @@ enum Snapshot {
             return
         }
         if arg("--part") == "approval" {
-            var sample = ApprovalRequest(action: .read, names: ["DATABASE_URL", "STRIPE_KEY"], chain: ["zsh", "agent", "Terminal"],
-                                         folder: NSHomeDirectory() + "/Projects/site", command: "npm test -- --watch=false",
-                                         reason: "release DATABASE_URL and STRIPE_KEY")
+            var sample = ApprovalRequest(action: .read, names: ["shop/development/DATABASE_URL", "shop/development/API_TOKEN"],
+                                         chain: ["zsh", "agent", "Terminal"], folder: NSHomeDirectory() + "/Projects/shop",
+                                         command: "pst run --env shop/development -- npm test",
+                                         reason: "release DATABASE_URL and API_TOKEN")
             sample.sessionName = "agent"
             sample.offersGrant = true
-            drawOffscreen(ApprovalView(group: ApprovalGroup(ApprovalTicket(sample))) { _ in }, to: path)
+            drawOffscreen(ApprovalView(group: ApprovalGroup(ApprovalTicket(sample)), item: { ApprovalView.item(named: $0, in: model.items) }) { _ in }, to: path)
             return
         }
         if arg("--part") == "approvalgroup" {
@@ -112,7 +113,9 @@ enum Snapshot {
         }
         if arg("--part") == "welcome" {
             let page = WelcomeView.Page(rawValue: Int(arg("--page") ?? "0") ?? 0) ?? .welcome
-            drawOffscreen(WelcomeView(model: model, startPage: page), to: path)
+            let size = CGSize(width: Double(arg("--width") ?? "") ?? WelcomeView.size.width,
+                              height: Double(arg("--height") ?? "") ?? WelcomeView.size.height)
+            drawOffscreen(WelcomeView(model: model, startPage: page, size: size), to: path)
             return
         }
         if arg("--part") == "whatsnew" {
@@ -193,7 +196,9 @@ enum Snapshot {
             return
         }
         if arg("--part") == "grant" {
-            drawOffscreen(NewGrantSheet(model: model, request: GrantRequest(ids: model.selection.sorted())), to: path)
+            // `--grant-items a,b` preselects items (the App Store shot); otherwise the list selection.
+            let ids = arg("--grant-items").map { $0.split(separator: ",").map(String.init) } ?? model.selection.sorted()
+            drawOffscreen(NewGrantSheet(model: model, request: GrantRequest(ids: ids)), to: path)
             return
         }
         if arg("--part") == "menubar" {

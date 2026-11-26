@@ -4,6 +4,8 @@
 
 ### Browser development builds
 
+- Restyled Safari's save panel: the Pistachio mark and the page's host, a pointer to the key, Project and Name rows,
+  and a Pistachio green Save button. Detection, messages and approvals are unchanged.
 - Added contextual detection for unfamiliar credentials using local labels, exact provider hints and creation/copy
   cues. Preserves complete dotted tokens, suggests names such as `GEMINI_API_KEY`, and explains contextual evidence.
 - Tightened handling of request IDs, hashes, public keys, samples and documentation to reduce false positives.
@@ -22,6 +24,13 @@
 
 ### App
 
+- The approval panel lists the requested items as rows with their type icons; Details and Allow from this folder are
+  unchanged.
+- Importing a .env file is one choice per variable, Save to Keychain or Keep in file, with a preview of the file after
+  import (secret values masked).
+- Access on an item is a menu, Ask first or No approval. The item shows its type under its name and where it's stored
+  (iCloud Keychain or This Mac only). History shows the current and earlier values as cards above the reference
+  files keep, and an access record opens with a timeline of the request, the decision and what was released.
 - Added a palette (pistachio green, blue, plum or graphite) for the app's selections, highlights and buttons, in
   Settings › General › Appearance. Until one is picked it follows the icon: green with the pistachio, blue with the key.
 - Added a welcome window on a new Mac. Pick the icon and palette and watch the Dock, menu bar and window change;

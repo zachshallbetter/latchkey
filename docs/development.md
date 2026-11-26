@@ -157,6 +157,9 @@ Snapshot startup uses an in-memory broker and skips the live Keychain, migration
 
 Add `--appearance light` or `--appearance dark` to draw in that theme instead of the system's.
 
+`--part grant --grant-items ID,ID` opens the grant sheet with those items ticked. `--part welcome --page N` draws one
+welcome page; `--width` and `--height` draw it at another size than the window's 720 × 540.
+
 Use `--settings general|privacy|storage|developer|membership|about --part settings` for one Settings tab, or
 `--settings privacy --part settings-window` for the tabbed window (off screen, the tabs draw as a segmented control).
 Native sidebar materials may be absent from an off-screen full-window capture; `--part sidebar` renders that
